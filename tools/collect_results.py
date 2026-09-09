@@ -35,6 +35,19 @@ FILES = [
 TREES = [
     ("logs/transfer", "logs/transfer", (".log",)),
     ("outputs/shots", "shots", (".png",)),
+    # The example1 A/B run - the evidence that the senior KB produces traceable
+    # rule ids where the upstream KB produced none. Same problem as the transfer
+    # logs: reproducing it costs API spend, and nothing else records it.
+    ("outputs/example1_base", "example1/base", (".tsx", ".log")),
+    ("outputs/example1_seniorkb", "example1/seniorkb", (".tsx", ".log")),
+]
+
+# Run logs for that same A/B pair. outputs/example1_senior and runB_senior.log
+# are deliberately left out: they came from a KB file that no longer exists
+# (kb/system_design_knowledge_base_senior.csv), so they compare nothing.
+RUN_LOGS = [
+    ("logs/runA_base.log", "example1/runA_base.log"),
+    ("logs/runC_seniorkb.log", "example1/runC_seniorkb.log"),
 ]
 
 # per-screen pipeline logs: the guideline counts that property.log records
@@ -68,6 +81,14 @@ def main():
             copy(os.path.join(s, name),
                  os.path.join(RESULTS, dest.replace("/", os.sep), name))
             kept += 1
+
+    for rel, dest in RUN_LOGS:
+        s = os.path.join(ROOT, rel.replace("/", os.sep))
+        if os.path.exists(s):
+            copy(s, os.path.join(RESULTS, dest.replace("/", os.sep)))
+            kept += 1
+        else:
+            missing.append(rel)
 
     for name in SCREENS:
         s = os.path.join(ROOT, "outputs", name, "property.log")

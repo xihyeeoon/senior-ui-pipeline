@@ -479,7 +479,7 @@
     ]
   },
   "inputs": {
-    "original": "http://localhost:3003/original_transfer.html",
-    "repaired": "http://localhost:3003/repaired_transfer.html"
+    "original": "http://localhost:3003/inputs/original_transfer.html",
+    "repaired": "http://localhost:3003/outputs/repaired_transfer.html"
   }
 }
