@@ -1,0 +1,587 @@
+{
+  "home": {
+    "landed_on": "home",
+    "low_contrast": 19,
+    "rows": [
+      {
+        "text": "›",
+        "tag": "span",
+        "cls": "arr",
+        "color": "rgb(185, 190, 199)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 17,
+        "ratio": 1.87,
+        "need": 4.5
+      },
+      {
+        "text": "›",
+        "tag": "span",
+        "cls": "arr",
+        "color": "rgb(185, 190, 199)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 17,
+        "ratio": 1.87,
+        "need": 4.5
+      },
+      {
+        "text": "+100,000원 증가",
+        "tag": "span",
+        "cls": "",
+        "color": "rgb(229, 72, 77)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 13,
+        "ratio": 3.91,
+        "need": 4.5
+      },
+      {
+        "text": "오늘 쓴 돈",
+        "tag": "div",
+        "cls": "",
+        "color": "rgb(138, 143, 152)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 12,
+        "ratio": 3.25,
+        "need": 4.5
+      },
+      {
+        "text": "Pick E 체크 외 1개",
+        "tag": "div",
+        "cls": "",
+        "color": "rgb(138, 143, 152)",
+        "bg": "rgb(245, 246, 249)",
+        "fontSize": 12,
+        "ratio": 3.01,
+        "need": 4.5
+      },
+      {
+        "text": "마이신한포인트",
+        "tag": "div",
+        "cls": "p1",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 12,
+        "ratio": 1,
+        "need": 4.5
+      },
+      {
+        "text": "180P",
+        "tag": "div",
+        "cls": "p2",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 20,
+        "ratio": 1,
+        "need": 3
+      },
+      {
+        "text": "›",
+        "tag": "span",
+        "cls": "arr",
+        "color": "rgb(185, 190, 199)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 17,
+        "ratio": 1.87,
+        "need": 4.5
+      },
+      {
+        "text": "급여이체 우대 혜택",
+        "tag": "div",
+        "cls": "t2",
+        "color": "rgb(138, 143, 152)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 12,
+        "ratio": 3.25,
+        "need": 4.5
+      },
+      {
+        "text": "야구팬 즐길거리 모음",
+        "tag": "div",
+        "cls": "t2",
+        "color": "rgb(138, 143, 152)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 12,
+        "ratio": 3.25,
+        "need": 4.5
+      },
+      {
+        "text": "기프티콘 사고파는 장터",
+        "tag": "div",
+        "cls": "t2",
+        "color": "rgb(138, 143, 152)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 12,
+        "ratio": 3.25,
+        "need": 4.5
+      },
+      {
+        "text": "나에게 맞는 카드 찾기",
+        "tag": "div",
+        "cls": "t2",
+        "color": "rgb(138, 143, 152)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 12,
+        "ratio": 3.25,
+        "need": 4.5
+      },
+      {
+        "text": "지금 뜨는 주식 보러가기",
+        "tag": "div",
+        "cls": "t2",
+        "color": "rgb(138, 143, 152)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 12,
+        "ratio": 3.25,
+        "need": 4.5
+      },
+      {
+        "text": "내게 필요한 보험, 보장분석으로 확인하기",
+        "tag": "div",
+        "cls": "t2",
+        "color": "rgb(138, 143, 152)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 12,
+        "ratio": 3.25,
+        "need": 4.5
+      },
+      {
+        "text": "홈",
+        "tag": "span",
+        "cls": "",
+        "color": "rgb(154, 160, 168)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 11,
+        "ratio": 2.64,
+        "need": 4.5
+      },
+      {
+        "text": "Ⓦ",
+        "tag": "span",
+        "cls": "ti",
+        "color": "rgb(154, 160, 168)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 18,
+        "ratio": 2.64,
+        "need": 4.5
+      },
+      {
+        "text": "금융",
+        "tag": "span",
+        "cls": "",
+        "color": "rgb(154, 160, 168)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 11,
+        "ratio": 2.64,
+        "need": 4.5
+      },
+      {
+        "text": "🎁",
+        "tag": "span",
+        "cls": "ti",
+        "color": "rgb(154, 160, 168)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 18,
+        "ratio": 2.64,
+        "need": 4.5
+      },
+      {
+        "text": "혜택",
+        "tag": "span",
+        "cls": "",
+        "color": "rgb(154, 160, 168)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 11,
+        "ratio": 2.64,
+        "need": 4.5
+      }
+    ]
+  },
+  "recipient": {
+    "landed_on": "recipient",
+    "low_contrast": 8,
+    "rows": [
+      {
+        "text": "계좌번호 직접 입력",
+        "tag": "label",
+        "cls": "ph",
+        "color": "rgb(180, 185, 193)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 17,
+        "ratio": 1.97,
+        "need": 4.5
+      },
+      {
+        "text": "편집",
+        "tag": "span",
+        "cls": "tag",
+        "color": "rgb(107, 114, 128)",
+        "bg": "rgb(239, 241, 245)",
+        "fontSize": 11,
+        "ratio": 4.28,
+        "need": 4.5
+      },
+      {
+        "text": "☆ 선택됨",
+        "tag": "span",
+        "cls": "st",
+        "color": "rgb(211, 215, 221)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 17,
+        "ratio": 1.44,
+        "need": 4.5
+      },
+      {
+        "text": "☆ 선택됨",
+        "tag": "span",
+        "cls": "st",
+        "color": "rgb(211, 215, 221)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 17,
+        "ratio": 1.44,
+        "need": 4.5
+      },
+      {
+        "text": "☆ 선택됨",
+        "tag": "span",
+        "cls": "st",
+        "color": "rgb(211, 215, 221)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 17,
+        "ratio": 1.44,
+        "need": 4.5
+      },
+      {
+        "text": "T",
+        "tag": "div",
+        "cls": "av",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(59, 123, 246)",
+        "fontSize": 15,
+        "ratio": 3.93,
+        "need": 4.5
+      },
+      {
+        "text": "☆ 선택됨",
+        "tag": "span",
+        "cls": "st",
+        "color": "rgb(211, 215, 221)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 17,
+        "ratio": 1.44,
+        "need": 4.5
+      },
+      {
+        "text": "☆ 선택됨",
+        "tag": "span",
+        "cls": "st",
+        "color": "rgb(211, 215, 221)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 17,
+        "ratio": 1.44,
+        "need": 4.5
+      }
+    ]
+  },
+  "bank": {
+    "landed_on": "bank",
+    "low_contrast": 20,
+    "rows": [
+      {
+        "text": "증권사",
+        "tag": "div",
+        "cls": "",
+        "color": "rgb(154, 160, 168)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 18,
+        "ratio": 2.64,
+        "need": 4.5
+      },
+      {
+        "text": "국",
+        "tag": "div",
+        "cls": "bi",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(229, 72, 77)",
+        "fontSize": 14,
+        "ratio": 3.91,
+        "need": 4.5
+      },
+      {
+        "text": "기",
+        "tag": "div",
+        "cls": "bi",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(242, 162, 12)",
+        "fontSize": 14,
+        "ratio": 2.11,
+        "need": 4.5
+      },
+      {
+        "text": "농",
+        "tag": "div",
+        "cls": "bi",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(18, 161, 80)",
+        "fontSize": 14,
+        "ratio": 3.37,
+        "need": 4.5
+      },
+      {
+        "text": "수",
+        "tag": "div",
+        "cls": "bi",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(59, 123, 246)",
+        "fontSize": 14,
+        "ratio": 3.93,
+        "need": 4.5
+      },
+      {
+        "text": "한",
+        "tag": "div",
+        "cls": "bi",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(229, 72, 77)",
+        "fontSize": 14,
+        "ratio": 3.91,
+        "need": 4.5
+      },
+      {
+        "text": "카",
+        "tag": "div",
+        "cls": "bi",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(242, 162, 12)",
+        "fontSize": 14,
+        "ratio": 2.11,
+        "need": 4.5
+      },
+      {
+        "text": "케",
+        "tag": "div",
+        "cls": "bi",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(18, 161, 80)",
+        "fontSize": 14,
+        "ratio": 3.37,
+        "need": 4.5
+      },
+      {
+        "text": "경",
+        "tag": "div",
+        "cls": "bi",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(59, 123, 246)",
+        "fontSize": 14,
+        "ratio": 3.93,
+        "need": 4.5
+      },
+      {
+        "text": "전",
+        "tag": "div",
+        "cls": "bi",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(229, 72, 77)",
+        "fontSize": 14,
+        "ratio": 3.91,
+        "need": 4.5
+      },
+      {
+        "text": "회",
+        "tag": "div",
+        "cls": "bi",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(242, 162, 12)",
+        "fontSize": 14,
+        "ratio": 2.11,
+        "need": 4.5
+      },
+      {
+        "text": "새",
+        "tag": "div",
+        "cls": "bi",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(18, 161, 80)",
+        "fontSize": 14,
+        "ratio": 3.37,
+        "need": 4.5
+      },
+      {
+        "text": "저",
+        "tag": "div",
+        "cls": "bi",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(59, 123, 246)",
+        "fontSize": 14,
+        "ratio": 3.93,
+        "need": 4.5
+      },
+      {
+        "text": "중",
+        "tag": "div",
+        "cls": "bi",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(229, 72, 77)",
+        "fontSize": 14,
+        "ratio": 3.91,
+        "need": 4.5
+      },
+      {
+        "text": "중",
+        "tag": "div",
+        "cls": "bi",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(242, 162, 12)",
+        "fontSize": 14,
+        "ratio": 2.11,
+        "need": 4.5
+      },
+      {
+        "text": "B",
+        "tag": "div",
+        "cls": "bi",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(18, 161, 80)",
+        "fontSize": 14,
+        "ratio": 3.37,
+        "need": 4.5
+      },
+      {
+        "text": "H",
+        "tag": "div",
+        "cls": "bi",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(59, 123, 246)",
+        "fontSize": 14,
+        "ratio": 3.93,
+        "need": 4.5
+      },
+      {
+        "text": "국",
+        "tag": "div",
+        "cls": "bi",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(229, 72, 77)",
+        "fontSize": 14,
+        "ratio": 3.91,
+        "need": 4.5
+      },
+      {
+        "text": "지",
+        "tag": "div",
+        "cls": "bi",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(242, 162, 12)",
+        "fontSize": 14,
+        "ratio": 2.11,
+        "need": 4.5
+      },
+      {
+        "text": "국",
+        "tag": "div",
+        "cls": "bi",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(18, 161, 80)",
+        "fontSize": 14,
+        "ratio": 3.37,
+        "need": 4.5
+      }
+    ]
+  },
+  "account": {
+    "landed_on": "account",
+    "low_contrast": 0,
+    "rows": []
+  },
+  "amount": {
+    "landed_on": "amount",
+    "low_contrast": 2,
+    "rows": [
+      {
+        "text": "출금가능금액 원",
+        "tag": "div",
+        "cls": "amtsub",
+        "color": "rgb(138, 143, 152)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 16,
+        "ratio": 3.25,
+        "need": 4.5
+      },
+      {
+        "text": "100,000",
+        "tag": "u",
+        "cls": "",
+        "color": "rgb(138, 143, 152)",
+        "bg": "rgb(255, 255, 255)",
+        "fontSize": 16,
+        "ratio": 3.25,
+        "need": 4.5
+      }
+    ]
+  },
+  "confirm": {
+    "landed_on": "confirm",
+    "low_contrast": 5,
+    "rows": [
+      {
+        "text": "보내는 계좌",
+        "tag": "span",
+        "cls": "k",
+        "color": "rgb(138, 143, 152)",
+        "bg": "rgb(245, 246, 249)",
+        "fontSize": 14,
+        "ratio": 3.01,
+        "need": 4.5
+      },
+      {
+        "text": "받는 계좌",
+        "tag": "span",
+        "cls": "k",
+        "color": "rgb(138, 143, 152)",
+        "bg": "rgb(245, 246, 249)",
+        "fontSize": 14,
+        "ratio": 3.01,
+        "need": 4.5
+      },
+      {
+        "text": "받는분 메모",
+        "tag": "span",
+        "cls": "k",
+        "color": "rgb(138, 143, 152)",
+        "bg": "rgb(245, 246, 249)",
+        "fontSize": 14,
+        "ratio": 3.01,
+        "need": 4.5
+      },
+      {
+        "text": "내통장 메모",
+        "tag": "span",
+        "cls": "k",
+        "color": "rgb(138, 143, 152)",
+        "bg": "rgb(245, 246, 249)",
+        "fontSize": 14,
+        "ratio": 3.01,
+        "need": 4.5
+      },
+      {
+        "text": "확인",
+        "tag": "span",
+        "cls": "k",
+        "color": "rgb(138, 143, 152)",
+        "bg": "rgb(245, 246, 249)",
+        "fontSize": 14,
+        "ratio": 3.01,
+        "need": 4.5
+      }
+    ]
+  },
+  "password": {
+    "landed_on": "password",
+    "low_contrast": 0,
+    "rows": []
+  },
+  "done": {
+    "landed_on": "done",
+    "low_contrast": 0,
+    "rows": []
+  }
+}

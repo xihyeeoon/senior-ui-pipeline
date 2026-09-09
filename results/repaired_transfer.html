@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>원본 화면 · 이체</title>
+<style>
+  :root{--blue:#1B64DA; --blue-deep:#0046FF; --ink:#1A1A1A; --sub:#8A8F98; --line:#EDEFF3; --bg:#F2F4F8; --card:#FFFFFF; --chip:#F5F6F9;}
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; background:#FFFFFF; font-size:16px;}
+  body{font-family:"Arial", "Helvetica", sans-serif; color:var(--ink); display:flex; justify-content:center; font-size:1rem; line-height:1.5;}
+  #phone{width:390px; height:844px; background:#fff; position:relative; overflow:hidden; box-shadow:0 0 0 1px #cfd4dd;}
+  .screen{position:absolute; inset:0; display:none; flex-direction:column; background:#fff; max-width:600px; margin:auto;}
+  .screen.on{display:flex;}
+  .statusbar{height:44px; flex:0 0 44px; display:flex; align-items:center; justify-content:space-between; padding:0 30px; font-size:15px; font-weight:600; background:#4A4A4A; color:#fff;}
+  .statusbar .right{font-size:15px; letter-spacing:.5px; font-weight:700;}
+  .navbar{height:52px; flex:0 0 52px; display:flex; align-items:center; justify-content:space-between; padding:0 24px;}
+  .navbar .ico{font-size:22px; color:#111; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border:1px solid #111; border-radius:50%;}
+  .navbar .mid{font-size:15px; color:var(--blue); font-weight:600;}
+  .body{flex:1 1 auto; overflow-y:auto; -webkit-overflow-scrolling:touch; background:#FFFFFF; padding:0 30px;}
+  .home{background:var(--bg);}
+  .homehead{display:flex; align-items:center; justify-content:space-between; padding:12px 24px 18px; background:var(--bg);}
+  .homehead .name{font-size:19px; font-weight:700; display:flex; align-items:center; gap:7px;}
+  .homehead .dot{width:22px; height:22px; border-radius:50%; background:#FF7A00; color:#000; font-size:12px; display:flex; align-items:center; justify-content:center; font-weight:700;}
+  .homehead .icons{display:flex; gap:15px; font-size:19px; color:#333;}
+  .card{background:var(--card); border-radius:16px; margin:0 20px 16px; padding:24px 20px;}
+  .card h3{margin:0 0 12px; font-size:19px; font-weight:700; display:flex; justify-content:space-between; align-items:center;}
+  .card h3 span.arr{color:#B9BEC7; font-weight:400; font-size:17px;}
+  .acctrow{display:flex; align-items:flex-start; gap:11px;}
+  .logo{width:34px;height:34px;border-radius:50%;background:#1B4EE8;color:#fff;font-size:15px; display:flex;align-items:center;justify-content:center;flex:0 0 34px;font-weight:700;}
+  .acctname{font-size:12px; color:#6B7280; line-height:1.35;}
+  .acctamt{font-size:20px; font-weight:700; margin-top:3px;}
+  .btn-sm{background:#EAF0FE; color:var(--blue); border:0; border-radius:9px; padding:12px 20px; font-size:14px; font-weight:600; font-family:inherit;}
+  .membership{margin-top:13px; background:#F5F6F9; border-radius:11px; padding:13px; text-align:center; font-size:13px; color:#5A6069;}
+  .btn-wide{width:100%; background:#EAF0FE; color:var(--blue); border:0; border-radius:11px; padding:14px; font-size:15px; font-weight:700; margin-top:14px; font-family:inherit;}
+  .rowlist{display:flex; justify-content:space-around; border-top:1px solid var(--line); margin-top:14px; padding-top:13px; font-size:13px; color:#5A6069;}
+  .svc{display:flex; align-items:center; gap:12px; padding:11px 0;}
+  .svc .sq{width:38px; height:38px; border-radius:11px; background:#EEF1F6; flex:0 0 38px; display:flex; align-items:center; justify-content:center; font-size:16px; color:#000;}
+  .svc .t1{font-size:15px; font-weight:600;}
+  .svc .t2{font-size:12px; color:#8A8F98; margin-top:2px;}
+  .pointbar{margin:0 14px 12px; background:linear-gradient(90deg,#3D6FE8,#5B7FF0); border-radius:16px; padding:16px 18px; color:#fff; display:flex; align-items:center; justify-content:space-between;}
+  .pointbar .p1{font-size:12px; opacity:.85;}
+  .pointbar .p2{font-size:20px; font-weight:700;}
+  .pointbar button{background:#fff; color:var(--blue); border:0; border-radius:8px; padding:12px 20px; font-size:13px; font-weight:700; font-family:inherit;}
+  .tabbar{flex:0 0 62px; display:flex; border-top:1px solid var(--line); background:#fff; padding:10px 0;}
+  .tabbar div{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; font-size:11px; color:#9AA0A8; padding:10px 0;}
+  .tabbar div.act{color:var(--blue); font-weight:700;}
+  .tabbar .ti{font-size:18px;}
+  .footlinks{display:flex; justify-content:space-around; padding:16px 0 22px; font-size:13px; color:#5A6069;}
+  .h1{font-size:25px; font-weight:700; padding:6px 0 18px;}
+  .inputline{margin:0 20px; border-bottom:1px solid #DDE1E7; padding-bottom:11px; display:flex; align-items:center; justify-content:space-between;}
+  .inputline .ph{font-size:17px; color:#B4B9C1;}
+  .filterrow{display:flex; align-items:center; justify-content:space-between; padding:20px 20px;}
+  .filterrow .lbl{font-size:15px; font-weight:600; display:flex; align-items:center; gap:7px;}
+  .tag{background:#EFF1F5; border-radius:6px; padding:3px 7px; font-size:11px; color:#6B7280; font-weight:500;}
+  .pill{border:1px solid #E1E4EA; border-radius:16px; padding:6px 13px; font-size:13px; color:#4B5158;}
+  .person{display:flex; align-items:center; gap:12px; padding:15px 20px;}
+  .person .av{width:38px;height:38px;border-radius:50%;flex:0 0 38px; display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;}
+  .person .nm{font-size:15px; font-weight:600;}
+  .person .ac{font-size:13px; color:#6B7280; margin-top:2px;}
+  .person .st{margin-left:auto; font-size:17px; color:#D3D7DD;}
+  .person .st.on{color:var(--blue);}
+  .sheetwrap{position:absolute; inset:0; background:rgba(0,0,0,.45); display:none; z-index:5;}
+  .sheetwrap.on{display:block;}
+  .sheet{position:absolute; left:0; right:0; bottom:0; top:96px; background:#fff; border-radius:18px 18px 0 0; display:flex; flex-direction:column;}
+  .sheethead{display:flex; align-items:center; justify-content:space-between; padding:25px 25px 19px;}
+  .sheethead b{font-size:17px;}
+  .tabs{display:flex; border-bottom:1px solid var(--line); padding:10px 0;}
+  .tabs div{flex:1; text-align:center; padding:15px 0; font-size:18px; color:#9AA0A8;}
+  .tabs div.act{color:#111; font-weight:700; border-bottom:2px solid #111;}
+  .grid{flex:1; overflow-y:auto; display:grid; grid-template-columns:repeat(3,1fr); gap:9px; padding:14px;}
+  .bk{background:#F4F6FA; border-radius:12px; height:88px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; font-size:12px; font-weight:600;}
+  .bk .bi{width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; color:#fff; font-weight:800;}
+  .tempnote{margin:0 20px 14px; background:#FFF6E5; border:1px solid #FFE0A3; border-radius:10px; padding:10px 12px; font-size:12px; color:#8A6100; line-height:1.5;}
+  .field{margin:0 30px; border-bottom:2px solid var(--blue); padding-bottom:10px;}
+  .field input{width:100%; border:0; outline:0; font-size:22px; font-weight:600; font-family:inherit; letter-spacing:.5px;}
+  .field input::placeholder{color:#C7CBD2; font-weight:400;}
+  .amthead{padding:6px 20px 0; font-size:16px; line-height:1.5; color:#4B5158;}
+  .amthead b{color:#111; font-weight:700;}
+  .amtq{text-align:center; font-size:27px; font-weight:700; color:#111; margin-top:38px;}
+  .amtq.filled{color:#111;}
+  .amtsub{text-align:center; font-size:16px; color:#8A8F98; margin-top:12px; font-weight:600;}
+  .amtsub u{text-decoration-color:#C7CBD2;}
+  .quick{display:flex; gap:12px; padding:0 16px 12px;}
+  .quick button{flex:1; background:#0046FF; border:0; border-radius:20px; padding:11px 0; font-size:14px; font-family:inherit; color:#fff;}
+  .keypad{display:grid; grid-template-columns:repeat(3,1fr);}
+  .keypad button{background:#fff; border:0; height:66px; font-size:25px; font-family:inherit; color:#111;}
+  .btn-next{margin:20px 30px; background:var(--blue-deep); color:#fff; border:0; border-radius:12px; padding:17px; font-size:17px; font-weight:700; font-family:inherit; box-shadow:0 4px 6px rgba(0, 0, 0, 0.1);}
+  .btn-next.on{background:var(--blue-deep); color:#fff;}
+  .center{text-align:center; padding-top:60px;}
+  .bigav{width:62px; height:62px; border-radius:50%; background:#0046FF; margin:0 auto 22px; display:flex; align-items:center; justify-content:center; font-size:27px; font-weight:900; color:#FFFFFF;}
+  .q2{font-size:23px; font-weight:700; line-height:1.45;}
+  .fee{font-size:14px; color:#333333; margin-top:16px;}
+  .summary{background:#F5F6F9; border-radius:13px; margin:34px 20px 0; padding:24px 20px;}
+  .srow{display:flex; justify-content:space-between; align-items:center; padding:7px 0; font-size:14px;}
+  .srow .k{color:#8A8F98;}
+  .srow .v{font-weight:600;}
+  .btn-primary{margin:auto 16px 22px; background:var(--blue-deep); color:#fff; border:0; border-radius:13px; padding:18px; font-size:17px; font-weight:700; font-family:inherit; box-shadow:0 4px 6px rgba(0, 0, 0, 0.1); text-decoration:underline;}
+  .pwtitle{text-align:center; font-size:20px; font-weight:700; margin-top:88px;}
+  .dots{display:flex; justify-content:center; gap:19px; margin-top:26px;}
+  .dots i{width:17px;height:17px;border-radius:50%;border:2px solid #D3D7DD; display:block;}
+  .dots i.cur{border-color:var(--blue-deep);}
+  .dots i.fill{background:var(--blue-deep); border-color:var(--blue-deep);}
+  .pwpad{margin-top:auto; background:var(--blue-deep); display:grid; grid-template-columns:repeat(3,1fr); grid-gap:10px;}
+  .pwpad button{background:transparent; border:0; height:96px; color:#fff; font-size:26px; font-family:inherit;}
+  .pwpad button.sm{font-size:16px;}
+  .okwrap{text-align:center; padding-top:100px;}
+  .okc{width:64px;height:64px;border-radius:50%;background:var(--blue-deep);margin:0 auto 24px; display:flex;align-items:center;justify-content:center;color:#fff;font-size:31px;}
+  .okbtns{display:flex; gap:20px; justify-content:center; margin-top:26px;}
+  .okbtns button{border:1px solid #DDE1E7; background:#fff; border-radius:10px; padding:11px 18px; font-size:14px; font-family:inherit; min-width:44px; min-height:44px;}
+  .bottom2{display:flex; gap:20px; margin:auto 16px 22px;}
+  .bottom2 button{flex:1; border:0; border-radius:13px; padding:18px; font-size:17px; font-weight:700; font-family:inherit;}
+  .bottom2 .ghost{background:#0046FF; color:#FFFFFF; flex:0 0 108px;}
+  .bottom2 .fill{background:var(--blue-deep); color:#fff; border:2px solid #fff;}
+</style>
+</head>
+<body>
+<div id="phone">
+
+<!-- ============ home ============ -->
+<section class="home on screen"  data-screen="home">
+  <div class="statusbar"><span>1:39</span><span class="right">5G 66</span></div>
+  <div class="homehead">
+    <div class="name"><span class="dot">C</span>김시현님</div>
+    <div class="icons"><span>⌕</span></div>
+  </div>
+  <div class="body">
+    <div class="card">
+      <h3>자산 <span class="arr">›</span></h3>
+      <div class="acctrow">
+        <div class="logo">S</div>
+        <div style="flex:1">
+          <div class="acctname">[금융거래한도계좌2]신한 주거래 우대통장<br>(저축예금)</div>
+          <div class="acctamt">100,000원</div>
+        </div>
+        <button class="btn-sm" data-action="go-recipient" style="padding:12px 20px;">송금</button>
+      </div>
+      <div class="membership">김시현님의 SOL멤버십 등급은 클래식 입니다</div>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:17px">Pick E 체크캐릭터형(하리보)</h3>
+      <div style="font-size:13px;color:#6B7280">8월 이용 금액 100,000원</div>
+      <button class="btn-wide">애플리케이션 카드 가입</button>
+    </div>
+
+    <div class="card">
+      <h3>8월 소비 100,000원 ↻ <span class="arr">›</span></h3>
+      <div style="font-size:13px;color:#6B7280">전월 오늘 대비 <span style="color:#E5484D">+100,000원 증가</span></div>
+      <div style="margin-top:14px;font-size:12px;color:#8A8F98">오늘 쓴 돈</div>
+      <div style="font-size:19px;font-weight:700">1,000원</div>
+      <div style="margin-top:12px;background:#F5F6F9;border-radius:11px;padding:13px">
+        <div style="font-size:12px;color:#8A8F98">Pick E 체크 외 1개</div>
+        <div style="font-size:17px;font-weight:700">100,000원</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-size:17px;font-weight:700">가입 즉시 1만원 올영 상품권</div>
+      <div style="font-size:14px;color:var(--blue);margin-top:6px">지금 받으러 가기 ›</div>
+    </div>
+
+    <div class="pointbar">
+      <div><div class="p1">마이신한포인트</div><div class="p2">180P</div></div>
+      <button>포인트 모으기</button>
+    </div>
+
+    <div class="card">
+      <h3>추천서비스 <span class="arr">›</span></h3>
+      <div class="svc-group">
+        <div class="svc"><div class="sq">🅦</div><div><div class="t1">급여클럽+</div><div class="t2">급여이체 우대 혜택</div></div></div>
+        <div class="svc"><div class="sq">⚾</div><div><div class="t1">SOL야구</div><div class="t2">야구팬 즐길거리 모음</div></div></div>
+      </div>
+      <div class="svc-group">
+        <div class="svc"><div class="sq">🎟</div><div><div class="t1">쿠폰 사고팔기</div><div class="t2">기프티콘 사고파는 장터</div></div></div>
+      </div>
+      <div style="text-align:center;font-size:14px;color:#5A6069;padding-top:10px;border-top:1px solid var(--line)">더보기 ⌄</div>
+    </div>
+
+    <div class="card" style="margin: 0 20px 16px; padding: 24px 20px;">
+      <h3>신한금융그룹</h3>
+      <div class="svc"><div class="sq">💳</div><div><div class="t1">신한카드</div><div class="t2">나에게 맞는 카드 찾기</div></div></div>
+      <div class="svc"><div class="sq">📈</div><div><div class="t1">신한투자증권</div><div class="t2">지금 뜨는 주식 보러가기</div></div></div>
+      <div class="svc"><div class="sq">🛡</div><div><div class="t1">신한라이프</div><div class="t2">내게 필요한 보험, 보장분석으로 확인하기</div></div></div>
+    </div>
+
+    <div class="footlinks"><span>쉬운홈</span><span>홈화면 설정</span><span>금액 숨기기</span></div>
+  </div>
+  <div class="tabbar">
+    <div class="act"><span class="ti">⌂</span><span style="font-size:11px; color:#9AA0A8;">홈</span></div>
+    <div><span class="ti">Ⓦ</span><span style="font-size:11px; color:#9AA0A8;">금융</span></div>
+    <div><span class="ti">🎁</span><span style="font-size:11px; color:#9AA0A8;">혜택</span></div>
+  </div>
+</section>
+
+<!-- ============ recipient ============ -->
+<section class="screen"  data-screen="recipient">
+  <div class="statusbar"><span>1:39</span><span class="right">5G 66</span></div>
+  <div class="navbar">
+    <span class="ico" data-action="back-home">‹</span><span class="sr-only">Back to Home</span>
+    <span class="mid">다건이체</span>
+    <span style="display:flex;gap:20px"><span class="ico">👤</span><span class="sr-only">User Profile</span><span class="ico" data-action="back-home">✕</span><span class="sr-only">Close</span></span>
+  </div>
+  <div class="body">
+    <div class="h1">누구에게 보낼까요?</div>
+    <div class="inputline" data-action="go-bank">
+      <label for="account-input" class="ph">계좌번호 직접 입력</label>
+      <input type="text" id="account-input" placeholder="계좌번호 입력" style="font-size:17px;">
+    </div>
+    <div class="filterrow"><span class="lbl">자주쓰는 계좌 <span class="tag">편집</span></span><span class="pill">2개 ⌄</span></div>
+    <div class="person"><div class="av" style="background:#FEE500;color:#000">B</div>
+      <div><div class="nm">김시현</div><div class="ac">카카오뱅크 3333000000000</div></div><span class="st on">★ 선택됨</span></div>
+    <div class="person"><div class="av" style="background:#FEE500;color:#000">B</div>
+      <div><div class="nm">김시현</div><div class="ac">카카오뱅크 3333000000000</div></div><span class="st on">★ 선택됨</span></div>
+    <div class="person"><div class="av" style="background:#1B4EE8">S</div>
+      <div><div class="nm">안성진</div><div class="ac">신한 110-000-000000</div></div><span class="st">☆ 선택됨</span></div>
+    <div class="person"><div class="av" style="background:#0A4E9B">N</div>
+      <div><div class="nm">박정순</div><div class="ac">농협 1110000000000</div></div><span class="st">☆ 선택됨</span></div>
+    <div class="person"><div class="av" style="background:#1B4EE8">S</div>
+      <div><div class="nm">박숙자</div><div class="ac">신한 110-000-000000</div></div><span class="st">☆ 선택됨</span></div>
+    <div class="person"><div class="av" style="background:#3B7BF6">T</div>
+      <div><div class="nm">김시현</div><div class="ac">토스증권 14400000000</div></div><span class="st">☆ 선택됨</span></div>
+    <div class="person"><div class="av" style="background:#1B4EE8">S</div>
+      <div><div class="nm">김명희</div><div class="ac">신한 110-000-000000</div></div><span class="st">☆ 선택됨</span></div>
+    <div style="height:30px"></div>
+  </div>
+</section>
+
+<!-- ============ bank ============ -->
+<section class="screen"  data-screen="bank" aria-label="은행 선택 화면">
+  <div class="statusbar" aria-label="상태 표시줄"><span style="font-size:18px; font-weight:700;">1:40</span><span class="right">5G 66</span></div>
+  <div class="body"></div>
+  <div class="sheetwrap on" aria-label="은행 선택 시트">
+    <div class="sheet">
+      <div class="sheethead"><b>은행 또는 증권사 선택</b><span class="ico" data-action="back-recipient" aria-label="Close">✕</span></div>
+      <div class="tabs">
+        <div class="act" id="tab-bank" data-action="tab-bank" style="font-size:18px;">은행</div>
+        <div id="tab-sec" data-action="tab-sec" style="font-size:18px;">증권사</div>
+      </div>
+      <div class="grid" id="grid-bank" role="list" aria-label="은행 목록">
+        <div class="bk" data-action="pick-bank" data-bank="신한">
+          <div class="bi" style="background:#1B4EE8" aria-label="Shinhan Bank">신</div>신한
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="제주">
+          <div class="bi" style="background:#0A4E9B">제</div>제주
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="국민">
+          <div class="bi" style="background:#E5484D">국</div>국민
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="기업">
+          <div class="bi" style="background:#F2A20C">기</div>기업
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="농협">
+          <div class="bi" style="background:#12A150">농</div>농협
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="산업">
+          <div class="bi" style="background:#4A4A4A;color:#FFFFFF">산</div>산업
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="수협">
+          <div class="bi" style="background:#3B7BF6">수</div>수협
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="신협">
+          <div class="bi" style="background:#333;color:#FFFFFF">신</div>신협
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="우리">
+          <div class="bi" style="background:#1B4EE8">우</div>우리
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="하나">
+          <div class="bi" style="background:#0A4E9B">하</div>하나
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="한국씨티">
+          <div class="bi" style="background:#E5484D">한</div>한국씨티
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="카카오뱅크">
+          <div class="bi" style="background:#F2A20C">카</div>카카오뱅크
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="케이뱅크">
+          <div class="bi" style="background:#12A150">케</div>케이뱅크
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="토스뱅크">
+          <div class="bi" style="background:#6B7280">토</div>토스뱅크
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="경남">
+          <div class="bi" style="background:#3B7BF6">경</div>경남
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="광주">
+          <div class="bi" style="background:#111827">광</div>광주
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="아이엠뱅크(대구)">
+          <div class="bi" style="background:#1B4EE8">아</div>아이엠뱅크(대구)
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="부산">
+          <div class="bi" style="background:#0A4E9B">부</div>부산
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="전북">
+          <div class="bi" style="background:#E5484D">전</div>전북
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="회원수협">
+          <div class="bi" style="background:#F2A20C">회</div>회원수협
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="새마을">
+          <div class="bi" style="background:#12A150">새</div>새마을
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="우체국">
+          <div class="bi" style="background:#6B7280">우</div>우체국
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="저축은행">
+          <div class="bi" style="background:#3B7BF6">저</div>저축은행
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="지역농.축협">
+          <div class="bi" style="background:#111827">지</div>지역농.축협
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="도이치">
+          <div class="bi" style="background:#1B4EE8">도</div>도이치
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="중국">
+          <div class="bi" style="background:#0A4E9B">중</div>중국
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="중국건설">
+          <div class="bi" style="background:#E5484D">중</div>중국건설
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="중국공상">
+          <div class="bi" style="background:#F2A20C">중</div>중국공상
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="BNP파리바">
+          <div class="bi" style="background:#12A150">B</div>BNP파리바
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="BOA">
+          <div class="bi" style="background:#6B7280">B</div>BOA
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="HSBC">
+          <div class="bi" style="background:#3B7BF6">H</div>HSBC
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="JP모간">
+          <div class="bi" style="background:#111827">J</div>JP모간
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="SC">
+          <div class="bi" style="background:#1B4EE8">S</div>SC
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="산림조합">
+          <div class="bi" style="background:#0A4E9B">산</div>산림조합
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="국세">
+          <div class="bi" style="background:#E5484D">국</div>국세
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="지방세">
+          <div class="bi" style="background:#F2A20C">지</div>지방세
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="국고금">
+          <div class="bi" style="background:#12A150">국</div>국고금
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="관세">
+          <div class="bi" style="background:#6B7280">관</div>관세
+        </div>
+      </div>
+      <div class="grid" id="grid-sec" role="list" aria-label="증권사 목록" style="display:none">
+        <div class="bk" data-action="pick-bank" data-bank="신한투자증권">
+          <div class="bi" style="background:#1B4EE8">신</div>신한투자증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="교보증권">
+          <div class="bi" style="background:#0A4E9B">교</div>교보증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="다올투자증권">
+          <div class="bi" style="background:#E5484D">다</div>다올투자증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="대신증권">
+          <div class="bi" style="background:#F2A20C">대</div>대신증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="메리츠증권">
+          <div class="bi" style="background:#12A150">메</div>메리츠증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="미래에셋증권">
+          <div class="bi" style="background:#6B7280">미</div>미래에셋증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="부국증권">
+          <div class="bi" style="background:#3B7BF6">부</div>부국증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="삼성증권">
+          <div class="bi" style="background:#111827">삼</div>삼성증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="상상인증권">
+          <div class="bi" style="background:#1B4EE8">상</div>상상인증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="신영증권">
+          <div class="bi" style="background:#0A4E9B">신</div>신영증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="에스케이증권">
+          <div class="bi" style="background:#E5484D">에</div>에스케이증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="유안타증권">
+          <div class="bi" style="background:#F2A20C">유</div>유안타증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="유진투자증권">
+          <div class="bi" style="background:#12A150">유</div>유진투자증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="LS증권">
+          <div class="bi" style="background:#6B7280">L</div>LS증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="카카오페이증권">
+          <div class="bi" style="background:#3B7BF6">카</div>카카오페이증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="케이프투자증권">
+          <div class="bi" style="background:#111827">케</div>케이프투자증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="키움증권">
+          <div class="bi" style="background:#1B4EE8">키</div>키움증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="토스증권">
+          <div class="bi" style="background:#0A4E9B">토</div>토스증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="우리투자증권">
+          <div class="bi" style="background:#E5484D">우</div>우리투자증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="하나증권">
+          <div class="bi" style="background:#F2A20C">하</div>하나증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="아이엠증권">
+          <div class="bi" style="background:#12A150">아</div>아이엠증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="한국투자증권">
+          <div class="bi" style="background:#6B7280">한</div>한국투자증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="한화투자증권">
+          <div class="bi" style="background:#3B7BF6">한</div>한화투자증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="현대차증권">
+          <div class="bi" style="background:#111827">현</div>현대차증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="BNK투자증권">
+          <div class="bi" style="background:#1B4EE8">B</div>BNK투자증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="DB증권">
+          <div class="bi" style="background:#0A4E9B">D</div>DB증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="IBK투자증권">
+          <div class="bi" style="background:#E5484D">I</div>IBK투자증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="KB증권">
+          <div class="bi" style="background:#F2A20C">K</div>KB증권
+        </div>
+        <div class="bk" data-action="pick-bank" data-bank="NH투자증권">
+          <div class="bi" style="background:#12A150">N</div>NH투자증권
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ account ============ -->
+<section class="screen"  data-screen="account">
+  <div class="statusbar"><span>1:40</span><span class="right">5G 66</span></div>
+  <div class="navbar"><span class="ico" data-action="back-bank">‹<span class="sr-only">Back to Bank</span></span><span></span><span class="ico" data-action="back-home">✕<span class="sr-only">Close</span></span></div>
+  <div class="body">
+    <div class="h1">계좌번호를 입력하세요</div>
+    <div style="padding:0 20px 10px;font-size:14px;color:#000000" id="picked-bank">카카오뱅크</div>
+    <div class="field">
+      <label for="acc-input" class="visually-hidden">계좌번호 입력</label>
+      <input id="acc-input" inputmode="numeric" placeholder="계좌번호 입력" data-action="type-account">
+    </div>
+  </div>
+  <button class="btn-next" id="acc-next" data-action="account-next" onclick="alert('다음 단계로 이동합니다');">다음 단계로 이동</button>
+</section>
+
+<!-- ============ amount ============ -->
+<section class="screen"  data-screen="amount">
+  <div class="statusbar"><span style="font-size:18px; font-weight:600">1:40</span><span class="right">5G 66</span></div>
+  <div class="navbar"><span class="ico" data-action="back-account">‹<span class="sr-only">Back to Account</span></span><span>현재 단계: 이체</span><span class="ico" data-action="back-home">✕<span class="sr-only">Close</span></span></div>
+  <div class="amthead">
+    [금융거래한도계좌2]신한 주… 계좌에서 ⌄<br>
+    <b>김시현님 계좌로</b><br>
+    <span style="font-size:18px; font-weight:600">카카오뱅크 <span id="amt-acc">3333000000000</span></span>
+  </div>
+  <div class="body">
+    <div class="amtq" id="amt-display">얼마를 보낼까요?</div>
+    <div class="amtsub">출금가능금액 <u>100,000</u>원</div>
+  </div>
+  <div class="quick">
+    <button data-action="quick" data-v="10000" style="width: 100px; height: 50px;">1만원 추가</button>
+    <button data-action="quick" data-v="50000" style="width: 100px; height: 50px;">5만원 추가</button>
+    <button data-action="quick" data-v="100000" style="width: 100px; height: 50px;">10만원 추가</button>
+    <button data-action="quick" data-v="all" style="width: 100px; height: 50px;">모두 보내기</button>
+  </div>
+  <div class="keypad">
+    <button data-action="num" data-v="1">1</button><button data-action="num" data-v="2">2</button><button data-action="num" data-v="3">3</button>
+    <button data-action="num" data-v="4">4</button><button data-action="num" data-v="5">5</button><button data-action="num" data-v="6">6</button>
+    <button data-action="num" data-v="7">7</button><button data-action="num" data-v="8">8</button><button data-action="num" data-v="9">9</button>
+    <button data-action="num" data-v="00">00</button><button data-action="num" data-v="0">0</button><button data-action="del">⌫</button>
+  </div>
+  <button class="btn-next" id="amt-next" data-action="amount-next">다음 (다음 화면에서 확인)</button>
+</section>
+
+<!-- ============ confirm ============ -->
+<section class="screen"  data-screen="confirm">
+  <div class="statusbar"><span>1:40</span><span class="right">5G 66</span></div>
+  <div class="navbar"><span class="ico" data-action="back-amount">‹<span class="sr-only">Back to Amount</span></span><span>이전 단계</span><span class="ico" data-action="back-home">✕<span class="sr-only">Close</span></span></div>
+  <div class="body">
+    <div class="center">
+      <div class="bigav">B</div>
+      <div class="q2">김시현님 계좌로<br><span id="cf-amt">1</span>원 보낼까요?</div>
+      <div class="fee">수수료 무료</div>
+    </div>
+    <div class="summary">
+      <div class="srow"><span class="k">보내는 계좌</span><span class="v">신한 110-000-000000</span></div>
+      <div class="srow"><span class="k">받는 계좌</span><span class="v">카카오뱅크 <span id="cf-acc">3333000000000</span></span></div>
+      <div class="srow"><span class="k">받는분 메모</span><span class="v">김시현 ✎</span></div>
+      <div class="srow"><span class="k">내통장 메모</span><span class="v">김시현 ✎</span></div>
+      <div class="srow"><span class="k">확인</span><span class="v">모든 정보가 정확합니까?</span></div>
+    </div>
+  </div>
+  <button class="btn-primary" data-action="send" onclick="alert('1원이 전송됩니다.');">송금하기 (수수료 무료)</button>
+</section>
+
+<!-- ============ password ============ -->
+<section class="screen"  data-screen="password">
+  <div class="statusbar"><span>5:55</span><span class="right">5G 89</span></div>
+  <div class="navbar"><span class="ico" data-action="back">←</span><span class="mid">이체 화면</span><span class="ico" data-action="back-confirm">✕</span></div>
+  <div class="pwtitle">계좌 비밀번호</div>
+  <div class="dots" id="pw-dots"><i class="cur" aria-label="Current"></i><i aria-label=""></i><i aria-label=""></i><i aria-label=""></i></div>
+  <div class="pwpad" id="pwpad" style="grid-gap: 10px;">
+    <button data-action="pw" data-v="1" style="color: #000;">일</button>
+    <button data-action="pw" data-v="2" style="color: #000;">이</button>
+    <button data-action="pw" data-v="3" style="color: #000;">삼</button>
+    <button data-action="pw" data-v="4" style="color: #000;">사</button>
+    <button data-action="pw" data-v="5" style="color: #000;">오</button>
+    <button data-action="pw" data-v="6" style="color: #000;">육</button>
+    <button data-action="pw" data-v="7" style="color: #000;">칠</button>
+    <button data-action="pw" data-v="8" style="color: #000;">팔</button>
+    <button data-action="pw" data-v="9" style="color: #000;">구</button>
+    <button class="sm" data-action="pw-shuffle" style="color: #000;">Shuffle</button>
+    <button data-action="pw" data-v="0" style="color: #000;">영</button>
+    <button data-action="pw-del" style="background-color: #f0f0f0; border: 1px solid #ccc;">삭제</button>
+  </div>
+</section>
+
+<!-- ============ done ============ -->
+<section class="screen"  data-screen="done">
+  <div class="statusbar"><span>1:41</span><span class="right">5G 66</span></div>
+  <div class="body">
+    <div class="okwrap">
+      <div class="okc">✓</div>
+      <div class="q2">김시현님 계좌로<br><span id="dn-amt">1</span>원 보냈어요.</div>
+      <div class="okbtns"><button>다른 계좌로 이체</button><button>자세히 보기</button></div>
+    </div>
+  </div>
+  <div class="bottom2"><button class="ghost">공유하기</button><button class="fill" data-action="finish">완료</button></div>
+</section>
+
+</div>
+
+<script>
+/* ============ 기록 장치 ============ */
+const LOG = [];
+window.__log = LOG;
+window.__task = { startedAt: null, screen: 'home' };
+
+function log(type, data){
+  LOG.push(Object.assign({ t: Date.now(), screen: window.__task.screen, type }, data||{}));
+}
+window.__startTask = function(){ LOG.length = 0; window.__task.startedAt = Date.now(); log('task_start'); };
+window.__dump = function(){ return JSON.parse(JSON.stringify(LOG)); };
+
+document.getElementById('phone').addEventListener('click', function(e){
+  const hit = e.target.closest('[data-action]');
+  log('tap', {
+    x: e.clientX, y: e.clientY,
+    valid: !!hit,
+    action: hit ? hit.dataset.action : null,
+    text: (e.target.textContent||'').trim().slice(0,24)
+  });
+}, true);
+
+/* ============ 화면 전환 ============ */
+function show(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.dataset.screen===name));
+  window.__task.screen = name;
+  log('screen_enter', { to: name });
+  window.scrollTo(0,0);
+  const b = document.querySelector('.screen.on .body'); if(b) b.scrollTop = 0;
+}
+window.__screen = ()=>window.__task.screen;
+
+/* ============ 상태 ============ */
+const S = { bank:'카카오뱅크', account:'', amount:'', pw:'' };
+
+/* ============ 은행 목록 ============ */
+const BANKS = ['신한','제주','국민','기업','농협','산업','수협','신협','우리','하나','한국씨티','카카오뱅크',
+  '케이뱅크','토스뱅크','경남','광주','아이엠뱅크(대구)','부산','전북','회원수협','새마을','우체국','저축은행',
+  '지역농.축협','도이치','중국','중국건설','중국공상','BNP파리바','BOA','HSBC','JP모간','SC','산림조합',
+  '국세','지방세','국고금','관세'];
+const SECS = ['신한투자증권','교보증권','다올투자증권','대신증권','메리츠증권','미래에셋증권','부국증권',
+  '삼성증권','상상인증권','신영증권','에스케이증권','유안타증권','유진투자증권','LS증권','카카오페이증권',
+  '케이프투자증권','키움증권','토스증권','우리투자증권','하나증권','아이엠증권','한국투자증권','한화투자증권',
+  '현대차증권','BNK투자증권','DB증권','IBK투자증권','KB증권','NH투자증권'];
+const COLORS = ['#1B4EE8','#0A4E9B','#E5484D','#F2A20C','#12A150','#6B7280','#3B7BF6','#111827'];
+
+function fillGrid(el, list){
+  el.innerHTML = list.map((n,i)=>
+    `<div class="bk" data-action="pick-bank" data-bank="${n}">
+       <div class="bi" style="background:${COLORS[i%COLORS.length]}">${n[0]}</div>${n}
+     </div>`).join('');
+}
+fillGrid(document.getElementById('grid-bank'), BANKS);
+fillGrid(document.getElementById('grid-sec'), SECS);
+
+/* ============ 비밀번호 키패드 (배열 섞임) ============ */
+function buildPwPad(){
+  const nums = [0,1,2,3,4,5,6,7,8,9].sort(()=>Math.random()-0.5);
+  const pad = document.getElementById('pwpad');
+  const cells = nums.slice(0,9).map(n=>`<button data-action="pw" data-v="${n}">${n}</button>`);
+  cells.splice(9,0,
+    `<button class="sm" data-action="pw-shuffle">재배열</button>`,
+    `<button data-action="pw" data-v="${nums[9]}">${nums[9]}</button>`,
+    `<button data-action="pw-del">⌫</button>`);
+  pad.innerHTML = cells.join('');
+}
+function renderDots(){
+  document.querySelectorAll('#pw-dots i').forEach((d,i)=>{
+    d.className = i < S.pw.length ? 'fill' : (i === S.pw.length ? 'cur' : '');
+  });
+}
+
+/* ============ 금액 표시 ============ */
+function renderAmount(){
+  const d = document.getElementById('amt-display');
+  const n = document.getElementById('amt-next');
+  if(S.amount){ d.textContent = Number(S.amount).toLocaleString()+'원'; d.classList.add('filled'); n.classList.add('on'); }
+  else { d.textContent = '얼마를 보낼까요?'; d.classList.remove('filled'); n.classList.remove('on'); }
+}
+
+/* ============ 동작 ============ */
+document.getElementById('phone').addEventListener('click', function(e){
+  const el = e.target.closest('[data-action]'); if(!el) return;
+  const a = el.dataset.action;
+
+  if(a==='go-recipient') show('recipient');
+  else if(a==='back-home') show('home');
+  else if(a==='go-bank') show('bank');
+  else if(a==='back-recipient') show('recipient');
+  else if(a==='tab-bank'){
+    document.getElementById('tab-bank').classList.add('act');
+    document.getElementById('tab-sec').classList.remove('act');
+    document.getElementById('grid-bank').style.display='grid';
+    document.getElementById('grid-sec').style.display='none';
+  }
+  else if(a==='tab-sec'){
+    document.getElementById('tab-sec').classList.add('act');
+    document.getElementById('tab-bank').classList.remove('act');
+    document.getElementById('grid-sec').style.display='grid';
+    document.getElementById('grid-bank').style.display='none';
+  }
+  else if(a==='pick-bank'){
+    S.bank = el.dataset.bank;
+    document.getElementById('picked-bank').textContent = S.bank;
+    log('pick_bank', { bank: S.bank });
+    show('account');
+  }
+  else if(a==='back-bank') show('bank');
+  else if(a==='account-next'){
+    const v = document.getElementById('acc-input').value.trim();
+    if(!v) return;
+    S.account = v;
+    document.getElementById('amt-acc').textContent = v;
+    document.getElementById('cf-acc').textContent = v;
+    log('account_entered', { account: v });
+    show('amount');
+  }
+  else if(a==='back-account') show('account');
+  else if(a==='num'){ if(S.amount.length<9){ S.amount = (S.amount + el.dataset.v).replace(/^0+/,''); renderAmount(); } }
+  else if(a==='del'){ S.amount = S.amount.slice(0,-1); renderAmount(); }
+  else if(a==='quick'){
+    const v = el.dataset.v;
+    S.amount = v==='all' ? '100000' : String((Number(S.amount)||0) + Number(v));
+    renderAmount();
+  }
+  else if(a==='amount-next'){
+    if(!S.amount) return;
+    document.getElementById('cf-amt').textContent = Number(S.amount).toLocaleString();
+    document.getElementById('dn-amt').textContent = Number(S.amount).toLocaleString();
+    show('confirm');
+  }
+  else if(a==='back-amount') show('amount');
+  else if(a==='send'){ S.pw=''; buildPwPad(); renderDots(); show('password'); }
+  else if(a==='back-confirm') show('confirm');
+  else if(a==='pw'){
+    if(S.pw.length<4){ S.pw += el.dataset.v; renderDots(); }
+    if(S.pw.length===4){
+      log('submit', { bank:S.bank, account:S.account, amount:Number(S.amount) });
+      setTimeout(()=>show('done'), 260);
+    }
+  }
+  else if(a==='pw-del'){ S.pw = S.pw.slice(0,-1); renderDots(); }
+  else if(a==='pw-shuffle'){ buildPwPad(); renderDots(); }
+  else if(a==='finish'){ log('task_end'); show('home'); }
+});
+
+/* 계좌번호 입력 시 다음 버튼 활성화 */
+document.getElementById('acc-input').addEventListener('input', function(){
+  document.getElementById('acc-next').classList.toggle('on', this.value.trim().length>0);
+});
+
+buildPwPad();
+log('screen_enter', { to:'home' });
+</script>
+</body>
+</html>

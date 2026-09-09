@@ -1,0 +1,793 @@
+{
+  "screens": {
+    "home": {
+      "total": 23,
+      "cited": 16,
+      "by_property": {
+        "Group": {
+          "n": 4,
+          "cited": 4,
+          "ids": [
+            "SDF-G2-1",
+            "SDF-G2-2",
+            "SDF-G3-1",
+            "SDF-G3-4"
+          ]
+        },
+        "Clickable": {
+          "n": 2,
+          "cited": 2,
+          "ids": [
+            "SDF-G7-1"
+          ]
+        },
+        "Spacing": {
+          "n": 4,
+          "cited": 4,
+          "ids": [
+            "SDF-G2-4",
+            "SDF-G7-2"
+          ]
+        },
+        "Label": {
+          "n": 4,
+          "cited": 4,
+          "ids": [
+            "SDF-G4-1",
+            "SDF-G4-2"
+          ]
+        },
+        "Text": {
+          "n": 2,
+          "cited": 2,
+          "ids": [
+            "SDF-G1-2"
+          ]
+        },
+        "Color": {
+          "n": 5,
+          "cited": 0,
+          "ids": []
+        },
+        "Icon": {
+          "n": 2,
+          "cited": 0,
+          "ids": []
+        }
+      },
+      "ids": [
+        "SDF-G2-1",
+        "SDF-G2-2",
+        "SDF-G3-1",
+        "SDF-G3-4",
+        "SDF-G7-1",
+        "SDF-G7-1",
+        "SDF-G2-4",
+        "SDF-G2-4",
+        "SDF-G2-4",
+        "SDF-G7-2",
+        "SDF-G4-2",
+        "SDF-G4-2",
+        "SDF-G4-1",
+        "SDF-G4-1",
+        "SDF-G1-2",
+        "SDF-G1-2"
+      ],
+      "distinct": [
+        "SDF-G1-2",
+        "SDF-G2-1",
+        "SDF-G2-2",
+        "SDF-G2-4",
+        "SDF-G3-1",
+        "SDF-G3-4",
+        "SDF-G4-1",
+        "SDF-G4-2",
+        "SDF-G7-1",
+        "SDF-G7-2"
+      ]
+    },
+    "recipient": {
+      "total": 16,
+      "cited": 10,
+      "by_property": {
+        "Group": {
+          "n": 3,
+          "cited": 3,
+          "ids": [
+            "KS-3",
+            "SDF-G2-1",
+            "SDF-G2-3"
+          ]
+        },
+        "Spacing": {
+          "n": 4,
+          "cited": 4,
+          "ids": [
+            "SDF-G2-4",
+            "SDF-G7-2"
+          ]
+        },
+        "Text": {
+          "n": 3,
+          "cited": 3,
+          "ids": [
+            "SDF-G1-1",
+            "SDF-G1-2"
+          ]
+        },
+        "Color": {
+          "n": 3,
+          "cited": 0,
+          "ids": []
+        },
+        "Icon": {
+          "n": 3,
+          "cited": 0,
+          "ids": []
+        }
+      },
+      "ids": [
+        "KS-3",
+        "SDF-G2-1",
+        "SDF-G2-3",
+        "SDF-G2-4",
+        "SDF-G2-4",
+        "SDF-G2-4",
+        "SDF-G7-2",
+        "SDF-G1-2",
+        "SDF-G1-2",
+        "SDF-G1-1"
+      ],
+      "distinct": [
+        "KS-3",
+        "SDF-G1-1",
+        "SDF-G1-2",
+        "SDF-G2-1",
+        "SDF-G2-3",
+        "SDF-G2-4",
+        "SDF-G7-2"
+      ]
+    },
+    "bank": {
+      "total": 20,
+      "cited": 18,
+      "by_property": {
+        "Group": {
+          "n": 6,
+          "cited": 6,
+          "ids": [
+            "KS-3",
+            "KS-5",
+            "SDF-G2-1",
+            "SDF-G2-3",
+            "SDF-G3-1"
+          ]
+        },
+        "Spacing": {
+          "n": 3,
+          "cited": 3,
+          "ids": [
+            "SDF-G2-4",
+            "SDF-G7-2"
+          ]
+        },
+        "Text": {
+          "n": 5,
+          "cited": 5,
+          "ids": [
+            "SDF-G1-1"
+          ]
+        },
+        "Color": {
+          "n": 4,
+          "cited": 4,
+          "ids": [
+            "SDF-G1-3"
+          ]
+        },
+        "Icon": {
+          "n": 2,
+          "cited": 0,
+          "ids": []
+        }
+      },
+      "ids": [
+        "KS-3",
+        "SDF-G2-1",
+        "SDF-G2-3",
+        "SDF-G3-1",
+        "SDF-G3-1",
+        "KS-5",
+        "SDF-G2-4",
+        "SDF-G2-4",
+        "SDF-G7-2",
+        "SDF-G1-1",
+        "SDF-G1-1",
+        "SDF-G1-1",
+        "SDF-G1-1",
+        "SDF-G1-1",
+        "SDF-G1-3",
+        "SDF-G1-3",
+        "SDF-G1-3",
+        "SDF-G1-3"
+      ],
+      "distinct": [
+        "KS-3",
+        "KS-5",
+        "SDF-G1-1",
+        "SDF-G1-3",
+        "SDF-G2-1",
+        "SDF-G2-3",
+        "SDF-G2-4",
+        "SDF-G3-1",
+        "SDF-G7-2"
+      ]
+    },
+    "account": {
+      "total": 19,
+      "cited": 17,
+      "by_property": {
+        "Group": {
+          "n": 5,
+          "cited": 5,
+          "ids": [
+            "SDF-G2-1",
+            "SDF-G2-2",
+            "SDF-G5-1",
+            "SDF-G5-2"
+          ]
+        },
+        "Clickable": {
+          "n": 2,
+          "cited": 2,
+          "ids": [
+            "SDF-G6-1",
+            "SDF-G8-1"
+          ]
+        },
+        "Spacing": {
+          "n": 4,
+          "cited": 4,
+          "ids": [
+            "SDF-G2-4",
+            "SDF-G7-2"
+          ]
+        },
+        "Label": {
+          "n": 2,
+          "cited": 2,
+          "ids": [
+            "SDF-G4-1",
+            "SDF-G4-2"
+          ]
+        },
+        "Text": {
+          "n": 2,
+          "cited": 2,
+          "ids": [
+            "SDF-G1-2",
+            "SDF-G1-4"
+          ]
+        },
+        "Color": {
+          "n": 2,
+          "cited": 2,
+          "ids": [
+            "SDF-G1-3"
+          ]
+        },
+        "Icon": {
+          "n": 2,
+          "cited": 0,
+          "ids": []
+        }
+      },
+      "ids": [
+        "SDF-G2-1",
+        "SDF-G2-2",
+        "SDF-G5-1",
+        "SDF-G5-2",
+        "SDF-G5-2",
+        "SDF-G6-1",
+        "SDF-G8-1",
+        "SDF-G2-4",
+        "SDF-G7-2",
+        "SDF-G2-4",
+        "SDF-G7-2",
+        "SDF-G4-1",
+        "SDF-G4-2",
+        "SDF-G1-2",
+        "SDF-G1-4",
+        "SDF-G1-3",
+        "SDF-G1-3"
+      ],
+      "distinct": [
+        "SDF-G1-2",
+        "SDF-G1-3",
+        "SDF-G1-4",
+        "SDF-G2-1",
+        "SDF-G2-2",
+        "SDF-G2-4",
+        "SDF-G4-1",
+        "SDF-G4-2",
+        "SDF-G5-1",
+        "SDF-G5-2",
+        "SDF-G6-1",
+        "SDF-G7-2",
+        "SDF-G8-1"
+      ]
+    },
+    "amount": {
+      "total": 28,
+      "cited": 26,
+      "by_property": {
+        "Group": {
+          "n": 4,
+          "cited": 4,
+          "ids": [
+            "KS-3",
+            "SDF-G5-1",
+            "SDF-G5-2",
+            "SDF-G5-3"
+          ]
+        },
+        "Clickable": {
+          "n": 4,
+          "cited": 4,
+          "ids": [
+            "SDF-G7-1"
+          ]
+        },
+        "Spacing": {
+          "n": 4,
+          "cited": 4,
+          "ids": [
+            "SDF-G2-4",
+            "SDF-G7-2"
+          ]
+        },
+        "Label": {
+          "n": 4,
+          "cited": 4,
+          "ids": [
+            "SDF-G4-1"
+          ]
+        },
+        "Text": {
+          "n": 4,
+          "cited": 4,
+          "ids": [
+            "SDF-G1-1"
+          ]
+        },
+        "Color": {
+          "n": 6,
+          "cited": 6,
+          "ids": [
+            "SDF-G1-3"
+          ]
+        },
+        "Icon": {
+          "n": 2,
+          "cited": 0,
+          "ids": []
+        }
+      },
+      "ids": [
+        "KS-3",
+        "SDF-G5-1",
+        "SDF-G5-3",
+        "SDF-G5-2",
+        "SDF-G7-1",
+        "SDF-G7-1",
+        "SDF-G7-1",
+        "SDF-G7-1",
+        "SDF-G2-4",
+        "SDF-G7-2",
+        "SDF-G7-2",
+        "SDF-G2-4",
+        "SDF-G4-1",
+        "SDF-G4-1",
+        "SDF-G4-1",
+        "SDF-G4-1",
+        "SDF-G1-1",
+        "SDF-G1-1",
+        "SDF-G1-1",
+        "SDF-G1-1",
+        "SDF-G1-3",
+        "SDF-G1-3",
+        "SDF-G1-3",
+        "SDF-G1-3",
+        "SDF-G1-3",
+        "SDF-G1-3"
+      ],
+      "distinct": [
+        "KS-3",
+        "SDF-G1-1",
+        "SDF-G1-3",
+        "SDF-G2-4",
+        "SDF-G4-1",
+        "SDF-G5-1",
+        "SDF-G5-2",
+        "SDF-G5-3",
+        "SDF-G7-1",
+        "SDF-G7-2"
+      ]
+    },
+    "confirm": {
+      "total": 22,
+      "cited": 20,
+      "by_property": {
+        "Group": {
+          "n": 5,
+          "cited": 5,
+          "ids": [
+            "KS-3",
+            "SDF-G2-1",
+            "SDF-G5-1",
+            "SDF-G5-2",
+            "SDF-G9-3"
+          ]
+        },
+        "Clickable": {
+          "n": 3,
+          "cited": 3,
+          "ids": [
+            "SDF-G6-1",
+            "SDF-G6-2",
+            "SDF-G8-1"
+          ]
+        },
+        "Spacing": {
+          "n": 4,
+          "cited": 4,
+          "ids": [
+            "SDF-G2-4",
+            "SDF-G7-2"
+          ]
+        },
+        "Label": {
+          "n": 2,
+          "cited": 2,
+          "ids": [
+            "SDF-G4-1",
+            "SDF-G4-2"
+          ]
+        },
+        "Text": {
+          "n": 2,
+          "cited": 2,
+          "ids": [
+            "SDF-G1-2"
+          ]
+        },
+        "Color": {
+          "n": 4,
+          "cited": 4,
+          "ids": [
+            "KS-1",
+            "SDF-G1-3"
+          ]
+        },
+        "Icon": {
+          "n": 2,
+          "cited": 0,
+          "ids": []
+        }
+      },
+      "ids": [
+        "KS-3",
+        "SDF-G5-1",
+        "SDF-G5-2",
+        "SDF-G9-3",
+        "SDF-G2-1",
+        "SDF-G6-1",
+        "SDF-G6-2",
+        "SDF-G8-1",
+        "SDF-G2-4",
+        "SDF-G7-2",
+        "SDF-G2-4",
+        "SDF-G2-4",
+        "SDF-G4-1",
+        "SDF-G4-2",
+        "SDF-G1-2",
+        "SDF-G1-2",
+        "SDF-G1-3",
+        "SDF-G1-3",
+        "SDF-G1-3",
+        "KS-1"
+      ],
+      "distinct": [
+        "KS-1",
+        "KS-3",
+        "SDF-G1-2",
+        "SDF-G1-3",
+        "SDF-G2-1",
+        "SDF-G2-4",
+        "SDF-G4-1",
+        "SDF-G4-2",
+        "SDF-G5-1",
+        "SDF-G5-2",
+        "SDF-G6-1",
+        "SDF-G6-2",
+        "SDF-G7-2",
+        "SDF-G8-1",
+        "SDF-G9-3"
+      ]
+    },
+    "password": {
+      "total": 26,
+      "cited": 25,
+      "by_property": {
+        "Group": {
+          "n": 3,
+          "cited": 3,
+          "ids": [
+            "KS-3",
+            "SDF-G5-1",
+            "SDF-G5-2"
+          ]
+        },
+        "Clickable": {
+          "n": 4,
+          "cited": 4,
+          "ids": [
+            "SDF-G5-4",
+            "SDF-G6-1",
+            "SDF-G6-2",
+            "SDF-G7-1"
+          ]
+        },
+        "Spacing": {
+          "n": 3,
+          "cited": 3,
+          "ids": [
+            "SDF-G2-4",
+            "SDF-G7-2"
+          ]
+        },
+        "Label": {
+          "n": 11,
+          "cited": 11,
+          "ids": [
+            "SDF-G4-2"
+          ]
+        },
+        "Text": {
+          "n": 2,
+          "cited": 2,
+          "ids": [
+            "SDF-G1-2"
+          ]
+        },
+        "Color": {
+          "n": 2,
+          "cited": 2,
+          "ids": [
+            "SDF-G1-3",
+            "SDF-G8-3"
+          ]
+        },
+        "Icon": {
+          "n": 1,
+          "cited": 0,
+          "ids": []
+        }
+      },
+      "ids": [
+        "KS-3",
+        "SDF-G5-1",
+        "SDF-G5-2",
+        "SDF-G5-4",
+        "SDF-G6-1",
+        "SDF-G6-2",
+        "SDF-G7-1",
+        "SDF-G2-4",
+        "SDF-G2-4",
+        "SDF-G7-2",
+        "SDF-G4-2",
+        "SDF-G4-2",
+        "SDF-G4-2",
+        "SDF-G4-2",
+        "SDF-G4-2",
+        "SDF-G4-2",
+        "SDF-G4-2",
+        "SDF-G4-2",
+        "SDF-G4-2",
+        "SDF-G4-2",
+        "SDF-G4-2",
+        "SDF-G1-2",
+        "SDF-G1-2",
+        "SDF-G1-3",
+        "SDF-G8-3"
+      ],
+      "distinct": [
+        "KS-3",
+        "SDF-G1-2",
+        "SDF-G1-3",
+        "SDF-G2-4",
+        "SDF-G4-2",
+        "SDF-G5-1",
+        "SDF-G5-2",
+        "SDF-G5-4",
+        "SDF-G6-1",
+        "SDF-G6-2",
+        "SDF-G7-1",
+        "SDF-G7-2",
+        "SDF-G8-3"
+      ]
+    },
+    "done": {
+      "total": 19,
+      "cited": 18,
+      "by_property": {
+        "Group": {
+          "n": 2,
+          "cited": 2,
+          "ids": [
+            "SDF-G10-3",
+            "SDF-G2-1"
+          ]
+        },
+        "Clickable": {
+          "n": 2,
+          "cited": 2,
+          "ids": [
+            "SDF-G7-1"
+          ]
+        },
+        "Spacing": {
+          "n": 4,
+          "cited": 4,
+          "ids": [
+            "SDF-G2-4",
+            "SDF-G7-2"
+          ]
+        },
+        "Label": {
+          "n": 4,
+          "cited": 4,
+          "ids": [
+            "SDF-G4-1",
+            "SDF-G4-2"
+          ]
+        },
+        "Text": {
+          "n": 2,
+          "cited": 2,
+          "ids": [
+            "SDF-G1-1",
+            "SDF-G1-2"
+          ]
+        },
+        "Color": {
+          "n": 4,
+          "cited": 4,
+          "ids": [
+            "SDF-G1-3",
+            "SDF-G8-3"
+          ]
+        },
+        "Icon": {
+          "n": 1,
+          "cited": 0,
+          "ids": []
+        }
+      },
+      "ids": [
+        "SDF-G2-1",
+        "SDF-G10-3",
+        "SDF-G7-1",
+        "SDF-G7-1",
+        "SDF-G2-4",
+        "SDF-G2-4",
+        "SDF-G7-2",
+        "SDF-G7-2",
+        "SDF-G4-1",
+        "SDF-G4-1",
+        "SDF-G4-2",
+        "SDF-G4-1",
+        "SDF-G1-2",
+        "SDF-G1-1",
+        "SDF-G1-3",
+        "SDF-G1-3",
+        "SDF-G1-3",
+        "SDF-G8-3"
+      ],
+      "distinct": [
+        "SDF-G1-1",
+        "SDF-G1-2",
+        "SDF-G1-3",
+        "SDF-G10-3",
+        "SDF-G2-1",
+        "SDF-G2-4",
+        "SDF-G4-1",
+        "SDF-G4-2",
+        "SDF-G7-1",
+        "SDF-G7-2",
+        "SDF-G8-3"
+      ]
+    }
+  },
+  "distinct": [
+    "KS-1",
+    "KS-3",
+    "KS-5",
+    "SDF-G1-1",
+    "SDF-G1-2",
+    "SDF-G1-3",
+    "SDF-G1-4",
+    "SDF-G10-3",
+    "SDF-G2-1",
+    "SDF-G2-2",
+    "SDF-G2-3",
+    "SDF-G2-4",
+    "SDF-G3-1",
+    "SDF-G3-4",
+    "SDF-G4-1",
+    "SDF-G4-2",
+    "SDF-G5-1",
+    "SDF-G5-2",
+    "SDF-G5-3",
+    "SDF-G5-4",
+    "SDF-G6-1",
+    "SDF-G6-2",
+    "SDF-G7-1",
+    "SDF-G7-2",
+    "SDF-G8-1",
+    "SDF-G8-3",
+    "SDF-G9-3"
+  ],
+  "unused": [
+    "KS-2",
+    "KS-4",
+    "SDF-G10-1",
+    "SDF-G10-2",
+    "SDF-G10-4",
+    "SDF-G3-2",
+    "SDF-G3-3",
+    "SDF-G3-5",
+    "SDF-G4-3",
+    "SDF-G4-4",
+    "SDF-G4-5",
+    "SDF-G6-3",
+    "SDF-G6-4",
+    "SDF-G7-3",
+    "SDF-G7-4",
+    "SDF-G8-2",
+    "SDF-G9-1",
+    "SDF-G9-2",
+    "SDF-G9-4"
+  ],
+  "total": 173,
+  "cited": 150,
+  "counts": {
+    "SDF-G2-1": 6,
+    "SDF-G2-2": 2,
+    "SDF-G3-1": 3,
+    "SDF-G3-4": 1,
+    "SDF-G7-1": 9,
+    "SDF-G2-4": 19,
+    "SDF-G7-2": 11,
+    "SDF-G4-2": 16,
+    "SDF-G4-1": 11,
+    "SDF-G1-2": 10,
+    "KS-3": 5,
+    "SDF-G2-3": 2,
+    "SDF-G1-1": 11,
+    "KS-5": 1,
+    "SDF-G1-3": 19,
+    "SDF-G5-1": 4,
+    "SDF-G5-2": 5,
+    "SDF-G6-1": 3,
+    "SDF-G8-1": 2,
+    "SDF-G1-4": 1,
+    "SDF-G5-3": 1,
+    "SDF-G9-3": 1,
+    "SDF-G6-2": 2,
+    "KS-1": 1,
+    "SDF-G5-4": 1,
+    "SDF-G8-3": 2,
+    "SDF-G10-3": 1
+  }
+}

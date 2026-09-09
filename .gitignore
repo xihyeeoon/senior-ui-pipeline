@@ -1,0 +1,31 @@
+# Paths below are anchored with a leading slash on purpose. An unanchored
+# "logs/" also matches results/logs/, which is exactly the evidence we mean
+# to keep.
+
+# Secrets ---------------------------------------------------------------
+/.envs
+
+# Environment -----------------------------------------------------------
+/.venv/
+__pycache__/
+*.pyc
+
+# Upstream clone, kept as its own git checkout so it can still be pulled.
+# Nothing here is ours; see docs/README.md for the fixes layered on top.
+/vendor/designrepair/
+
+# Run artefacts ---------------------------------------------------------
+# Everything under these is regenerable. The evidence worth keeping is
+# copied into results/, which IS tracked.
+/outputs/
+/logs/
+
+# Build products of the page renderers (sources are build.js + the example)
+/inputs/page/app.js
+/inputs/page/index.html
+/inputs/page/_src.tsx
+
+# OS --------------------------------------------------------------------
+Thumbs.db
+desktop.ini
+.DS_Store

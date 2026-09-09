@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>이체 화면 수리 비교</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --line:#272c36; --fg:#e6e8ee; --dim:#98a0b0;
+    --accent:#7aa2ff; --good:#57c98a; --warn:#e0b341; --bad:#e5484d;
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:13px/1.55 ui-sans-serif,system-ui,"Segoe UI","Malgun Gothic",sans-serif}
+  header{position:sticky;top:0;z-index:20;background:var(--panel);
+         border-bottom:1px solid var(--line);padding:10px 16px}
+  .titlerow{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap;margin-bottom:9px}
+  h1{font-size:14px;margin:0;font-weight:600}
+  h1 span{color:var(--dim);font-weight:400;margin-left:8px}
+  .live a{color:var(--accent);text-decoration:none;font-size:12px;margin-left:12px}
+  .live a:hover{text-decoration:underline}
+  nav{display:flex;gap:6px;flex-wrap:wrap}
+  button{background:#222733;color:var(--fg);border:1px solid var(--line);
+         border-radius:6px;padding:5px 11px;font:inherit;font-size:12px;cursor:pointer}
+  button:hover{border-color:#3a4152}
+  button[aria-pressed="true"]{background:var(--accent);color:#0b0d12;
+                              border-color:var(--accent);font-weight:600}
+  button .dot{display:inline-block;width:6px;height:6px;border-radius:50%;
+              margin-left:6px;vertical-align:1px}
+  main{padding:16px;display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+  .pane{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+        overflow:hidden;flex:0 0 auto}
+  .cap{padding:8px 12px;border-bottom:1px solid var(--line);font-size:12px;
+       display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .cap b{font-size:13px}
+  .cap .meta{color:var(--dim);font-family:ui-monospace,Consolas,monospace;font-size:11px}
+  iframe{border:0;display:block;width:390px;height:844px;background:#fff}
+  .notes{flex:1 1 320px;min-width:300px;background:var(--panel);
+         border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .notes h2{font-size:13px;margin:0 0 10px;color:var(--accent)}
+  .notes ul{margin:0;padding-left:18px}
+  .notes li{margin:7px 0;color:var(--dim)}
+  .notes li b{color:var(--fg)}
+  .tagline{display:inline-block;font-size:10px;padding:1px 7px;border-radius:99px;
+           margin-right:6px;vertical-align:1px}
+  .t-bad{background:rgba(229,72,77,.15);color:var(--bad);border:1px solid rgba(229,72,77,.4)}
+  .t-warn{background:rgba(224,179,65,.15);color:var(--warn);border:1px solid rgba(224,179,65,.4)}
+  .t-good{background:rgba(87,201,138,.15);color:var(--good);border:1px solid rgba(87,201,138,.4)}
+  code{background:#222733;padding:1px 5px;border-radius:4px;color:#cbd3e3;
+       font-family:ui-monospace,Consolas,monospace;font-size:11px}
+  .foot{margin:0 16px 40px;color:var(--dim);font-size:12px;max-width:900px}
+</style>
+</head>
+<body>
+<header>
+  <div class="titlerow">
+    <h1>이체 화면 수리 비교<span>original_transfer.html · senior_kb.csv (46행)</span></h1>
+    <div class="live">
+      실제 앱:
+      <a href="../../inputs/original_transfer.html" target="_blank">원본 열기</a>
+      <a href="../../outputs/repaired_transfer.html" target="_blank">수리본 열기</a>
+    </div>
+  </div>
+  <nav id="nav"></nav>
+</header>
+
+<main>
+  <section class="pane">
+    <div class="cap"><b>Before</b><span class="meta" id="cap-before"></span></div>
+    <iframe id="fr-before"></iframe>
+  </section>
+  <section class="pane">
+    <div class="cap"><b>After</b><span class="meta" id="cap-after"></span></div>
+    <iframe id="fr-after"></iframe>
+  </section>
+  <section class="notes">
+    <h2 id="note-title"></h2>
+    <ul id="note-body"></ul>
+  </section>
+</main>
+
+<p class="foot">
+  두 패널은 재조립 결과의 <b>정적 스냅샷</b>입니다. password 화면만은 실제 앱과 다릅니다 —
+  <code>buildPwPad()</code> 가 실행 시 키패드를 다시 그려 수리된 마크업(<code>Shuffle</code>,
+  <code>삭제</code>)을 덮어쓰기 때문에, 위 After 패널에 보이는 회귀는 실제로는 나타나지 않습니다.
+  상단의 "수리본 열기"로 실제 동작을 확인하실 수 있습니다.
+</p>
+
+<script>
+var SCREENS = [
+  {id:"home", label:"home", flag:"warn", title:"메인 — 카드 8개 중 1개만 제거",
+   notes:[
+     ["good","<b>이체 → 송금</b> 으로 라벨 순화, 터치 타깃 8×15 → 12×20px"],
+     ["good","탭바 5개 → 3개, 상단 아이콘 4개 → 1개로 정리"],
+     ["bad","<b>카드는 8개 → 7개.</b> 땡겨요 하나만 제거되고 Pick E 체크카드 · 8월 소비 · 올영 상품권 · 마이신한포인트 · 추천서비스 · 신한금융그룹은 전부 잔존"],
+     ["warn","저대비 텍스트 24 → 19개"]
+   ]},
+  {id:"recipient", label:"recipient", flag:"bad", title:"받는 사람 — 가장 심하게 깨진 화면",
+   notes:[
+     ["bad","네비바에 <b>“Back to Home”, “User Profile”, “Close”</b> 영어 레이블이 붙어 52px 고정 높이를 넘겨 서로 겹침. 한글 사용 규칙(SDF-G4-2)을 같은 KB의 아이콘 레이블 규칙이 위반"],
+     ["bad","<b>☆ 에도 “선택됨” 라벨</b> — 미선택 5행이 사실과 반대로 표시됨"],
+     ["bad","그 라벨이 <code>.st</code> 회색을 상속해 <b>1.44:1</b> — example1의 색 미지정 span 문제 재현"],
+     ["bad","“계좌번호 직접 입력” 라벨이 3줄로 접히며 입력창 침범"],
+     ["warn","Clickable · Label 추출이 <b>0</b> — 인물 7행이 <code>&lt;div data-action&gt;</code> 라 추출기가 인식 못 함"]
+   ]},
+  {id:"bank", label:"bank", flag:"warn", title:"은행 선택 — 37개 타일",
+   notes:[
+     ["good","탭 글자 15 → 18px, 타일 이니셜 12 → 14px"],
+     ["good","<code>data-bank</code> 37개 전부 보존"],
+     ["warn","이 화면의 어두운 상태바(<code>#4A4A4A</code>)가 <b>8화면 전체로 번짐</b> — 공유 CSS를 통한 누수"],
+     ["warn","Clickable · Label 추출이 <b>0</b> — 타일이 <code>&lt;div&gt;</code>"]
+   ]},
+  {id:"account", label:"account", flag:"bad", title:"계좌번호 입력 — 규칙 7개가 버튼 하나에 몰림",
+   notes:[
+     ["bad","<b><code>onclick=\"alert('다음 단계로 이동합니다');\"</code> 주입</b> — 탭할 때마다 경고창"],
+     ["bad","<b>비활성 버튼이 파란색으로</b> — 원본은 <code>.btn-next</code> 회색 / <code>.btn-next.on</code> 파랑 구조인데 대비 규칙(SDF-G1-3)이 기본 상태를 칠해 상태 구분 소멸"],
+     ["warn","<code>font-family</code> 를 Arial/Helvetica 로 바꿔 <b>한글 폰트 스택 제거</b> (전역 영향)"],
+     ["warn","G4-1 · G4-2 가 동일 수정 중복 제안, G5-2 는 <code>&lt;!-- Add a tooltip --&gt;</code> 주석이 수정안"],
+     ["good","저대비 텍스트 2 → 0개"]
+   ]},
+  {id:"amount", label:"amount", flag:"good", title:"금액 입력 — 용어 순화가 가장 잘 된 화면",
+   notes:[
+     ["good","<b>+1만 → 1만원 추가</b>, <b>전액 → 모두 보내기</b>. 기호와 축약 제거"],
+     ["good","빠른 금액 버튼 100×50px 지정, 저대비 4 → 2개"],
+     ["bad","<b>“출금가능금액” 은 그대로.</b> Label 4규칙이 전부 실행됐는데 바로 옆 “+1만”은 고치고 이건 건드리지 않음"],
+     ["bad","“다음” 버튼이 <b>금액 입력 전인데 파란색</b> (account 의 전역 변경 영향)"]
+   ]},
+  {id:"confirm", label:"confirm", flag:"bad", title:"최종 확인 — 틀린 금액을 고지",
+   notes:[
+     ["bad","<b><code>onclick=\"alert('1원이 전송됩니다.');\"</code></b> — 금액이 하드코딩. 10,000원을 보내도 “1원이 전송됩니다” 로 표시됨"],
+     ["bad","<b>“수수료 무료” 중복</b> — <code>.fee</code> 에 있는데 버튼 라벨에 또 붙음 (example1 h2 중복과 같은 패턴)"],
+     ["warn","네비바에 영어 레이블 “Back to Amount”, “Close” 가 겹침"],
+     ["good","금액 표시는 스크립트가 정상 갱신 (10,000원 확인)"]
+   ]},
+  {id:"password", label:"password", flag:"warn", title:"비밀번호 — 수리가 런타임에 덮어써짐",
+   notes:[
+     ["bad","<b><code>data-action=\"back\"</code> 인 ← 버튼 추가</b> — 스크립트에 <code>back</code> 분기가 없어 <b>눌러도 아무 일도 안 하는 죽은 버튼</b>"],
+     ["bad","<b>재배열 → “Shuffle”</b> — 한글을 영어로. SDF-G4-2 위반"],
+     ["bad","<code>⌫ → 삭제</code> 가 흰 글자 on <code>#f0f0f0</code> = <b>1.14:1</b>"],
+     ["warn","단, 위 세 가지 중 라벨 변경은 <b>실제 앱에서 보이지 않음</b> — <code>buildPwPad()</code> 가 키패드를 다시 그림"],
+     ["good","<code>pw</code> 버튼 10개, <code>pw-del</code>, <code>pw-shuffle</code>, 점 4개 전부 보존"]
+   ]},
+  {id:"done", label:"done", flag:"good", title:"완료 — 변화 적음",
+   notes:[
+     ["good","저대비 텍스트 0 → 0 유지"],
+     ["good","<code>data-action=\"finish\"</code> 보존, 금액 표시 정상"],
+     ["warn","<code>html,body{font-size}</code> 를 <code>18px</code> 로 제안 — 다른 화면들의 <code>100%</code> 와 충돌"]
+   ]}
+];
+
+var COLOR = {good:"#57c98a", warn:"#e0b341", bad:"#e5484d"};
+var nav = document.getElementById("nav");
+var current = "home";
+
+nav.innerHTML = SCREENS.map(function(s){
+  return '<button data-id="' + s.id + '">' + s.label +
+         '<span class="dot" style="background:' + COLOR[s.flag] + '"></span></button>';
+}).join("");
+
+function select(id){
+  current = id;
+  var s = SCREENS.filter(function(x){ return x.id === id; })[0];
+  document.getElementById("fr-before").src = "../../outputs/screens/" + id + ".html";
+  document.getElementById("fr-after").src  = "../../outputs/screens_after/" + id + ".html";
+  document.getElementById("cap-before").textContent = "outputs/screens/" + id + ".html";
+  document.getElementById("cap-after").textContent  = "outputs/screens_after/" + id + ".html";
+  document.getElementById("note-title").textContent = s.title;
+  document.getElementById("note-body").innerHTML = s.notes.map(function(n){
+    var label = {good:"개선", warn:"주의", bad:"문제"}[n[0]];
+    return '<li><span class="tagline t-' + n[0] + '">' + label + '</span>' + n[1] + '</li>';
+  }).join("");
+  Array.prototype.forEach.call(nav.querySelectorAll("button"), function(b){
+    b.setAttribute("aria-pressed", b.dataset.id === id);
+  });
+}
+Array.prototype.forEach.call(nav.querySelectorAll("button"), function(b){
+  b.onclick = function(){ select(b.dataset.id); };
+});
+addEventListener("keydown", function(e){
+  var i = SCREENS.map(function(s){ return s.id; }).indexOf(current);
+  if (e.key === "ArrowRight") select(SCREENS[(i + 1) % SCREENS.length].id);
+  if (e.key === "ArrowLeft")  select(SCREENS[(i + SCREENS.length - 1) % SCREENS.length].id);
+});
+select("home");
+</script>
+</body>
+</html>

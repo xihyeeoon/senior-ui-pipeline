@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>모바일 뱅킹 - 이체</title>
+<style>
+ body{font-family:system-ui,sans-serif;margin:0;background:#fff;color:#222}
+ .wrap{max-width:390px;margin:0 auto;padding:12px}
+ h1{font-size:15px;color:#666}
+ .row{display:flex;justify-content:space-between;padding:6px 0;font-size:12px;color:#888}
+ .amt{font-size:13px;color:#111}
+ button{font-size:12px;padding:4px 8px;margin:2px;border:1px solid #ddd;background:#f7f7f7;border-radius:4px}
+ .primary{background:#3b82f6;color:#cfe0fb;border:none;padding:6px 10px}
+ label{font-size:11px;color:#999}
+ input{font-size:12px;padding:3px;width:120px}
+ a{font-size:11px;color:#9aa;}
+</style></head><body>
+<div class="wrap">
+  <h1>지로 납부 / 이체</h1>
+  <div class="row"><span>수취인</span><span class="amt">홍길동</span></div>
+  <div class="row"><span>출금계좌</span><span class="amt">123-456-789</span></div>
+  <label for="amt">이체 금액</label>
+  <input id="amt" type="text" value="150000">
+  <div>
+    <button>지로 조회</button>
+    <button>수취인 조회</button>
+    <button class="primary">이체 실행</button>
+  </div>
+  <div><a href="#">거래내역</a> · <a href="#">한도변경</a></div>
+  <img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="">
+</div>
+</body></html>
