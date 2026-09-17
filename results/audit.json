@@ -2,6 +2,14 @@
   "passed": false,
   "fatal": [
     {
+      "check": "A",
+      "screen": "account",
+      "detail": "data-action removed from this screen: back-recipient",
+      "lost": [
+        "back-recipient"
+      ]
+    },
+    {
       "check": "B",
       "screen": null,
       "detail": "alert() injected that the original never had: '1원이 전송됩니다.'",
@@ -22,26 +30,8 @@
     {
       "check": "B",
       "screen": null,
-      "detail": "alert() injected that the original never had: '다음 단계로 이동합니다'",
-      "injected": "다음 단계로 이동합니다",
-      "numbers": []
-    },
-    {
-      "check": "B",
-      "screen": null,
       "detail": "onclick attribute added that the original did not have: button|alert('1원이 전송됩니다.');",
       "handler": "button|alert('1원이 전송됩니다.');"
-    },
-    {
-      "check": "B",
-      "screen": null,
-      "detail": "onclick attribute added that the original did not have: button|alert('다음 단계로 이동합니다');",
-      "handler": "button|alert('다음 단계로 이동합니다');"
-    },
-    {
-      "check": "B",
-      "screen": "account",
-      "detail": "blocking alert during the task: '다음 단계로 이동합니다'"
     },
     {
       "check": "B",
@@ -67,44 +57,79 @@
     {
       "check": "D",
       "screen": "recipient",
-      "detail": "new text 'Back to Home' takes its colour purely by inheritance (rgb(26, 26, 26)) - nothing sets a colour for it",
-      "cls": "sr-only",
+      "detail": "new text 'Back' takes its colour purely by inheritance (rgb(26, 26, 26)) - nothing sets a colour for it",
+      "cls": "text",
       "tag": "span"
     },
     {
       "check": "D",
       "screen": "recipient",
-      "detail": "new text 'User Profile' takes its colour purely by inheritance (rgb(26, 26, 26)) - nothing sets a colour for it",
-      "cls": "sr-only",
+      "detail": "new text 'Profile' takes its colour purely by inheritance (rgb(26, 26, 26)) - nothing sets a colour for it",
+      "cls": "text",
       "tag": "span"
     },
     {
       "check": "D",
       "screen": "recipient",
       "detail": "new text 'Close' takes its colour purely by inheritance (rgb(26, 26, 26)) - nothing sets a colour for it",
+      "cls": "text",
+      "tag": "span"
+    },
+    {
+      "check": "D",
+      "screen": "recipient",
+      "detail": "new text '즐겨찾기 추가됨' takes its colour purely by inheritance (rgb(26, 26, 26)) - nothing sets a colour for it",
+      "cls": "sr-only",
+      "tag": "span"
+    },
+    {
+      "check": "D",
+      "screen": "recipient",
+      "detail": "new text '즐겨찾기 추가됨' takes its colour purely by inheritance (rgb(26, 26, 26)) - nothing sets a colour for it",
+      "cls": "sr-only",
+      "tag": "span"
+    },
+    {
+      "check": "D",
+      "screen": "recipient",
+      "detail": "new text '즐겨찾기 추가됨' takes its colour purely by inheritance (rgb(26, 26, 26)) - nothing sets a colour for it",
+      "cls": "sr-only",
+      "tag": "span"
+    },
+    {
+      "check": "D",
+      "screen": "recipient",
+      "detail": "new text '즐겨찾기 추가됨' takes its colour purely by inheritance (rgb(26, 26, 26)) - nothing sets a colour for it",
+      "cls": "sr-only",
+      "tag": "span"
+    },
+    {
+      "check": "D",
+      "screen": "recipient",
+      "detail": "new text '즐겨찾기 추가됨' takes its colour purely by inheritance (rgb(26, 26, 26)) - nothing sets a colour for it",
+      "cls": "sr-only",
+      "tag": "span"
+    },
+    {
+      "check": "D",
+      "screen": "recipient",
+      "detail": "new text '즐겨찾기 추가됨' takes its colour purely by inheritance (rgb(26, 26, 26)) - nothing sets a colour for it",
       "cls": "sr-only",
       "tag": "span"
     },
     {
       "check": "D",
       "screen": "account",
-      "detail": "new text 'Back to Bank' takes its colour purely by inheritance (rgb(17, 17, 17)) - nothing sets a colour for it",
-      "cls": "sr-only",
-      "tag": "span"
+      "detail": "new text 'Step 1 of 3' takes its colour purely by inheritance (rgb(26, 26, 26)) - nothing sets a colour for it",
+      "cls": "progress-bar",
+      "tag": "div"
     },
     {
       "check": "D",
       "screen": "account",
-      "detail": "new text 'Close' takes its colour purely by inheritance (rgb(17, 17, 17)) - nothing sets a colour for it",
+      "detail": "new text 'Open Bank Selection' takes its colour purely by inheritance (rgb(26, 26, 26)) - nothing sets a colour for it",
       "cls": "sr-only",
       "tag": "span"
-    },
-    {
-      "check": "D",
-      "screen": "account",
-      "detail": "new text '계좌번호 입력' takes its colour purely by inheritance (rgb(26, 26, 26)) - nothing sets a colour for it",
-      "cls": "visually-hidden",
-      "tag": "label"
     },
     {
       "check": "D",
@@ -156,70 +181,56 @@
       "tag": "span"
     },
     {
-      "check": "D",
-      "screen": "recipient",
-      "detail": "already low-contrast element (.st, 1.44:1) gained readable text: '☆' -> '☆ 선택됨' - the count is unchanged, so this passes the before/after comparison",
-      "cls": "st",
-      "ratio": 1.44,
-      "need": 4.5,
-      "color": "rgb(211, 215, 221)",
-      "bg": "rgb(255, 255, 255)"
-    },
-    {
       "check": "E",
-      "screen": "account",
-      "detail": "'1:40' and 'Back to Bank' overlap by 57%"
-    },
-    {
-      "check": "E",
-      "screen": "account",
-      "detail": "content spills 34px out of a 32px box (.ico): '‹Back to Bank'"
-    },
-    {
-      "check": "E",
-      "screen": "amount",
-      "detail": "content spills 17px out of a 32px box (.ico): '‹Back to Account'"
-    },
-    {
-      "check": "E",
-      "screen": "confirm",
-      "detail": "content spills 17px out of a 32px box (.ico): '‹Back to Amount'"
+      "screen": "home",
+      "detail": "'가입 즉시 1만원 올영 상품권' and '⌂' overlap by 52%"
     },
     {
       "check": "E",
       "screen": "home",
-      "detail": "'내게 필요한 보험, 보장분석으로 확인하기' now wraps onto 2 lines (.t2) - it did not before",
+      "detail": "'가입 즉시 1만원 올영 상품권' and '홈' overlap by 44%"
+    },
+    {
+      "check": "E",
+      "screen": "home",
+      "detail": "'가입 즉시 1만원 올영 상품권' and 'Ⓦ' overlap by 52%"
+    },
+    {
+      "check": "E",
+      "screen": "home",
+      "detail": "'가입 즉시 1만원 올영 상품권' and '금융' overlap by 50%"
+    },
+    {
+      "check": "E",
+      "screen": "home",
+      "detail": "'가입 즉시 1만원 올영 상품권' and '🎁' overlap by 52%"
+    },
+    {
+      "check": "E",
+      "screen": "home",
+      "detail": "'가입 즉시 1만원 올영 상품권' and '혜택' overlap by 47%"
+    },
+    {
+      "check": "E",
+      "screen": "amount",
+      "detail": "content spills 13px out of a 32px box (.ico): '‹Back to Account'"
+    },
+    {
+      "check": "E",
+      "screen": "confirm",
+      "detail": "content spills 13px out of a 32px box (.ico): '‹Back to Amount'"
+    },
+    {
+      "check": "E",
+      "screen": "recipient",
+      "detail": "'Profile' now wraps onto 2 lines (.text) - it did not before",
       "lines": 2
     },
     {
       "check": "E",
       "screen": "recipient",
-      "detail": "'Back to Home' now wraps onto 2 lines (.sr-only) - it did not before",
+      "detail": "'Close' now wraps onto 2 lines (.text) - it did not before",
       "lines": 2
-    },
-    {
-      "check": "E",
-      "screen": "recipient",
-      "detail": "'다건이체' now wraps onto 2 lines (.mid) - it did not before",
-      "lines": 2
-    },
-    {
-      "check": "E",
-      "screen": "recipient",
-      "detail": "'User Profile' now wraps onto 2 lines (.sr-only) - it did not before",
-      "lines": 2
-    },
-    {
-      "check": "E",
-      "screen": "recipient",
-      "detail": "'Close' now wraps onto 2 lines (.sr-only) - it did not before",
-      "lines": 2
-    },
-    {
-      "check": "E",
-      "screen": "recipient",
-      "detail": "'계좌번호 직접 입력' now wraps onto 3 lines (.ph) - it did not before",
-      "lines": 3
     },
     {
       "check": "E",
@@ -230,26 +241,20 @@
     {
       "check": "E",
       "screen": "recipient",
-      "detail": "'★ 선택됨' now wraps onto 2 lines (.st on) - it did not before",
-      "lines": 2
-    },
-    {
-      "check": "E",
-      "screen": "recipient",
-      "detail": "'카카오뱅크 3333000000000' now wraps onto 2 lines (.ac) - it did not before",
-      "lines": 2
-    },
-    {
-      "check": "E",
-      "screen": "recipient",
-      "detail": "'★ 선택됨' now wraps onto 2 lines (.st on) - it did not before",
+      "detail": "'즐겨찾기 추가됨' now wraps onto 2 lines (.sr-only) - it did not before",
       "lines": 2
     },
     {
       "check": "E",
       "screen": "account",
-      "detail": "'Back to Bank' now wraps onto 3 lines (.sr-only) - it did not before",
-      "lines": 3
+      "detail": "'은행 또는 증권사 선택' now wraps onto 2 lines (.ph) - it did not before",
+      "lines": 2
+    },
+    {
+      "check": "E",
+      "screen": "account",
+      "detail": "'Open Bank Selection' now wraps onto 2 lines (.sr-only) - it did not before",
+      "lines": 2
     },
     {
       "check": "E",
@@ -266,26 +271,25 @@
     {
       "check": "F",
       "screen": "recipient",
-      "detail": "English text not present in the original: Back, Close, Home, Profile, User, to",
+      "detail": "English text not present in the original: Back, Close, Profile, of",
       "words": [
         "Back",
         "Close",
-        "Home",
         "Profile",
-        "User",
-        "to"
+        "of"
       ],
       "source": "runtime"
     },
     {
       "check": "F",
       "screen": "account",
-      "detail": "English text not present in the original: Back, Bank, Close, to",
+      "detail": "English text not present in the original: Bank, Open, Selection, Step, of",
       "words": [
-        "Back",
         "Bank",
-        "Close",
-        "to"
+        "Open",
+        "Selection",
+        "Step",
+        "of"
       ],
       "source": "runtime"
     },
@@ -363,22 +367,29 @@
     {
       "check": "H",
       "screen": "recipient",
-      "detail": "class 'sr-only' is used 3x but no stylesheet defines it - it has no effect (e.g. 'Back to Home')",
-      "cls": "sr-only",
+      "detail": "class 'text' is used 3x but no stylesheet defines it - it has no effect (e.g. 'Back')",
+      "cls": "text",
       "count": 3
     },
     {
       "check": "H",
-      "screen": "account",
-      "detail": "class 'sr-only' is used 2x but no stylesheet defines it - it has no effect (e.g. 'Back to Bank')",
+      "screen": "recipient",
+      "detail": "class 'sr-only' is used 6x but no stylesheet defines it - it has no effect (e.g. '즐겨찾기 추가됨')",
       "cls": "sr-only",
-      "count": 2
+      "count": 6
     },
     {
       "check": "H",
       "screen": "account",
-      "detail": "class 'visually-hidden' is used 1x but no stylesheet defines it - it has no effect (e.g. '계좌번호 입력')",
-      "cls": "visually-hidden",
+      "detail": "class 'progress-bar' is used 1x but no stylesheet defines it - it has no effect (e.g. 'Step 1 of 3')",
+      "cls": "progress-bar",
+      "count": 1
+    },
+    {
+      "check": "H",
+      "screen": "account",
+      "detail": "class 'sr-only' is used 1x but no stylesheet defines it - it has no effect (e.g. 'Open Bank Selection')",
+      "cls": "sr-only",
       "count": 1
     },
     {
@@ -397,25 +408,52 @@
     }
   ],
   "metrics": {
+    "flow": "original",
+    "derived_from_original": true,
+    "screens_in_flow": [
+      "home",
+      "recipient",
+      "account",
+      "bank",
+      "amount",
+      "confirm",
+      "password",
+      "done"
+    ],
+    "screens_comparable_to_original": [
+      "home",
+      "recipient",
+      "account",
+      "bank",
+      "amount",
+      "confirm",
+      "password",
+      "done"
+    ],
     "screens_expected": 8,
     "screens_reached": 8,
     "done_amount": "10,000",
     "data-screen_original": 8,
     "data-screen_repaired": 8,
-    "data-action_original": 22,
-    "data-action_repaired": 23,
+    "data-action_original": 23,
+    "data-action_repaired": 24,
     "id_original": 15,
-    "id_repaired": 16,
-    "injected_dialog_calls": 2,
-    "onclick_added": 2,
-    "dialogs_during_task": 2,
-    "handled_actions": 21,
+    "id_repaired": 15,
+    "per_screen_attr_loss": {
+      "account": {
+        "data-action": [
+          "back-recipient"
+        ]
+      }
+    },
+    "injected_dialog_calls": 1,
+    "onclick_added": 1,
+    "dialogs_during_task": 1,
+    "handled_actions": 24,
     "dead_controls_new": 1,
-    "dead_controls_pre_existing": [
-      "type-account"
-    ],
-    "low_contrast_before": 65,
-    "low_contrast_after": 54,
+    "dead_controls_pre_existing": [],
+    "low_contrast_before": 66,
+    "low_contrast_after": 56,
     "low_contrast_by_screen": {
       "home": {
         "before": 24,
@@ -425,13 +463,13 @@
         "before": 8,
         "after": 8
       },
+      "account": {
+        "before": 3,
+        "after": 2
+      },
       "bank": {
         "before": 22,
         "after": 20
-      },
-      "account": {
-        "before": 2,
-        "after": 0
       },
       "amount": {
         "before": 4,
@@ -450,21 +488,23 @@
         "after": 0
       }
     },
-    "new_inherited_colour": 13,
-    "low_contrast_gained_text": 5,
-    "overlaps_new": 1,
-    "overflows_new": 3,
+    "new_inherited_colour": 18,
+    "low_contrast_gained_text": 0,
+    "overlaps_new": 6,
+    "overflows_new": 2,
     "screens_much_taller": 0,
-    "newly_wrapped_text": 13,
+    "newly_wrapped_text": 8,
     "new_english_words": [
       "Account",
       "Amount",
       "Back",
       "Bank",
       "Close",
-      "Home",
+      "Open",
       "Profile",
-      "User",
+      "Selection",
+      "Step",
+      "of",
       "to"
     ],
     "new_english_words_markup_only": [
@@ -473,13 +513,16 @@
     "state_pairs_checked": 3,
     "state_pairs_collapsed": 1,
     "undefined_classes_new": [
+      "progress-bar",
       "sr-only",
       "svc-group",
-      "visually-hidden"
-    ]
+      "text"
+    ],
+    "checks_stood_down": []
   },
   "inputs": {
     "original": "http://localhost:3003/inputs/original_transfer.html",
-    "repaired": "http://localhost:3003/outputs/repaired_transfer.html"
+    "repaired": "http://localhost:3003/outputs/repaired_transfer.html",
+    "flow": "tools/flows/original.json"
   }
 }

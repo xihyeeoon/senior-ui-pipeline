@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>재구성 화면 · 송금</title>
+<style>
+  :root{
+    --blue:#1257C7; --blue-deep:#0B49AE; --ink:#151515; --sub:#4A5058;
+    --line:#D8DDE4; --bg:#F4F6F9; --card:#FFFFFF; --ok:#0F7A3D; --warn:#B23B2E;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:#DFE3EA;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    color:var(--ink); display:flex; justify-content:center;
+  }
+  #phone{width:390px; height:844px; background:#fff; position:relative; overflow:hidden;
+    box-shadow:0 0 0 1px #cfd4dd;}
+  .screen{position:absolute; inset:0; display:none; flex-direction:column; background:#fff;}
+  .screen.on{display:flex;}
+
+  /* ---------- 공통 머리 ---------- */
+  .statusbar{height:40px; flex:0 0 40px; display:flex; align-items:center;
+    justify-content:space-between; padding:0 20px; font-size:14px; font-weight:600; color:var(--sub);}
+  .topbar{flex:0 0 auto; padding:2px 14px 10px;}
+  .backbtn{display:inline-flex; align-items:center; gap:7px; background:#EDF1F7; color:var(--ink);
+    border:1px solid var(--line); border-radius:12px; padding:12px 18px;
+    font-size:18px; font-weight:700; font-family:inherit;}
+  .crumb{padding:0 22px 8px; font-size:16px; color:var(--sub); line-height:1.45;}
+  .crumb b{color:var(--ink);}
+  .body{flex:1 1 auto; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:10px;}
+  .q{font-size:29px; font-weight:800; line-height:1.3; padding:6px 22px 18px;}
+  .q.sm{font-size:25px;}
+
+  /* ---------- 공통 버튼 ---------- */
+  .primary{display:block; width:calc(100% - 32px); margin:12px 16px 16px; background:var(--blue);
+    color:#fff; border:0; border-radius:14px; padding:22px; font-size:22px; font-weight:800;
+    font-family:inherit;}
+  .primary:disabled{background:#E4E8EE; color:#8C939C;}
+  .secondary{display:block; width:calc(100% - 32px); margin:0 16px 14px; background:#fff;
+    color:var(--ink); border:2px solid var(--line); border-radius:14px; padding:20px;
+    font-size:20px; font-weight:700; font-family:inherit;}
+  .hint{padding:0 22px 12px; font-size:16px; color:var(--sub);}
+
+  /* ---------- 1 시작 ---------- */
+  .greet{padding:10px 22px 4px; font-size:22px; font-weight:700;}
+  .balance{margin:6px 16px 22px; background:var(--bg); border-radius:16px; padding:20px 22px;}
+  .balance .lbl{font-size:16px; color:var(--sub);}
+  .balance .amt{font-size:32px; font-weight:800; margin-top:6px;}
+
+  /* ---------- 2 받는 사람 ---------- */
+  .person{display:flex; align-items:center; gap:14px; margin:0 16px 10px; padding:18px 16px;
+    border:2px solid var(--line); border-radius:14px; background:#fff; width:calc(100% - 32px);
+    font-family:inherit; text-align:left;}
+  .person .av{width:48px; height:48px; border-radius:50%; flex:0 0 48px; display:flex;
+    align-items:center; justify-content:center; font-size:19px; font-weight:800; color:#fff;}
+  .person .nm{font-size:22px; font-weight:800;}
+  .person .ac{font-size:16px; color:var(--sub); margin-top:3px;}
+
+  /* ---------- 3 계좌번호 ---------- */
+  .accbox{margin:0 16px 10px; border:3px solid var(--blue); border-radius:14px; padding:18px 18px;}
+  .accbox .val{font-size:30px; font-weight:800; letter-spacing:1px; min-height:38px;}
+  .accbox .val:empty::before{content:attr(data-empty); color:#9AA1AA; font-weight:600; font-size:20px;
+    letter-spacing:0;}
+  .count{padding:0 22px 10px; font-size:17px; color:var(--sub);}
+  .keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:2px; background:#fff;
+    padding:0 10px;}
+  .keypad button{background:#fff; border:0; height:64px; font-size:29px; font-weight:700;
+    font-family:inherit; color:var(--ink);}
+  .keypad button.word{font-size:20px; font-weight:700; color:var(--sub);}
+  .keypad button:disabled{visibility:hidden;}
+
+  /* ---------- 4 은행 ---------- */
+  .guess{margin:0 16px 18px; background:var(--bg); border-radius:16px; padding:26px 22px;
+    text-align:center;}
+  .guess .bi{width:64px; height:64px; border-radius:50%; margin:0 auto 12px; display:flex;
+    align-items:center; justify-content:center; font-size:26px; font-weight:800; color:#111;
+    background:#FEE500;}
+  .guess .bn{font-size:30px; font-weight:800;}
+  .banklist{padding:0 16px;}
+  .bankrow{display:flex; align-items:center; gap:14px; width:100%; margin-bottom:10px;
+    padding:18px 16px; border:2px solid var(--line); border-radius:14px; background:#fff;
+    font-size:21px; font-weight:700; font-family:inherit; text-align:left;}
+  .bankrow .bi{width:40px; height:40px; border-radius:50%; flex:0 0 40px; display:flex;
+    align-items:center; justify-content:center; font-size:15px; font-weight:800; color:#fff;}
+  .search{margin:0 16px 14px;}
+  .search input{width:100%; border:3px solid var(--blue); border-radius:14px; padding:18px;
+    font-size:21px; font-family:inherit; outline:0;}
+
+  /* ---------- 5 받는 분 확인 ---------- */
+  .bigname{text-align:center; padding:28px 20px 6px;}
+  .bigname .av{width:88px; height:88px; border-radius:50%; margin:0 auto 18px; display:flex;
+    align-items:center; justify-content:center; font-size:34px; font-weight:800; color:#111;
+    background:#FEE500;}
+  .bigname .nm{font-size:42px; font-weight:800;}
+  .bigname .ac{font-size:20px; color:var(--sub); margin-top:14px; line-height:1.5;}
+
+  /* ---------- 6 금액 ---------- */
+  .amtwrap{text-align:center; padding:8px 20px 2px;}
+  .amtnum{font-size:44px; font-weight:800; color:#9AA1AA;}
+  .amtnum.filled{color:var(--ink);}
+  .amtkor{font-size:24px; font-weight:700; color:var(--blue); min-height:32px; margin-top:6px;}
+  .avail{text-align:center; font-size:16px; color:var(--sub); padding:4px 20px 10px;}
+  .quick{display:grid; grid-template-columns:repeat(4,1fr); gap:7px; padding:0 14px 12px;}
+  .quick button{background:#EDF1F7; border:2px solid var(--line); border-radius:12px; padding:14px 4px;
+    font-size:17px; font-weight:800; font-family:inherit; color:var(--ink); white-space:nowrap;}
+
+  /* ---------- 7 확인 ---------- */
+  .rv{margin:0 16px 12px; border:2px solid var(--line); border-radius:16px; padding:18px 18px;
+    display:flex; align-items:flex-start; justify-content:space-between; gap:12px;}
+  .rv .k{font-size:16px; color:var(--sub);}
+  .rv .v{font-size:23px; font-weight:800; margin-top:5px; line-height:1.4;}
+  .rv .v small{display:block; font-size:16px; font-weight:600; color:var(--sub); margin-top:3px;}
+  .rv .fix{flex:0 0 auto; background:#EDF1F7; border:1px solid var(--line); border-radius:10px;
+    padding:12px 15px; font-size:16px; font-weight:700; font-family:inherit; color:var(--blue);}
+  .fee{text-align:center; font-size:17px; color:var(--ok); font-weight:700; padding:4px 20px 8px;}
+
+  /* ---------- 8 본인 확인 ---------- */
+  .dots{display:flex; gap:18px; justify-content:center; padding:24px 0 10px;}
+  .dots i{width:22px; height:22px; border-radius:50%; border:3px solid var(--line); display:block;}
+  .dots i.fill{background:var(--blue); border-color:var(--blue);}
+  .bio{font-size:70px; text-align:center; padding:26px 0 6px;}
+
+  /* ---------- 9 완료 ---------- */
+  .okwrap{text-align:center; padding:56px 24px 0;}
+  .okc{width:96px; height:96px; border-radius:50%; background:var(--ok); color:#fff; font-size:52px;
+    display:flex; align-items:center; justify-content:center; margin:0 auto 22px;}
+  .okwrap .t{font-size:34px; font-weight:800;}
+  .okwrap .s{font-size:22px; margin-top:16px; line-height:1.55;}
+  .okwrap .s b{font-weight:800;}
+  .okwrap .rest{font-size:19px; color:var(--sub); margin-top:16px;}
+</style>
+</head>
+<body>
+<div id="phone">
+
+<!-- ================= 1. 시작 ================= -->
+<section class="screen on" data-screen="start">
+  <div class="statusbar"><span>1:39</span><span>5G</span></div>
+  <div class="body">
+    <div class="greet">김시현 님</div>
+    <div class="balance">
+      <div class="lbl">내 통장</div>
+      <div class="amt"><span id="st-balance">100,000</span>원</div>
+    </div>
+    <button class="primary" data-action="go-who">돈 보내기</button>
+    <button class="secondary" data-action="noop">쓴 내역 보기</button>
+  </div>
+</section>
+
+<!-- ================= 2. 받는 사람 ================= -->
+<section class="screen" data-screen="who">
+  <div class="statusbar"><span>1:39</span><span>5G</span></div>
+  <div class="topbar"><button class="backbtn" data-action="back-start">← 이전</button></div>
+  <div class="q">누구에게<br>보낼까요?</div>
+  <div class="body">
+    <button class="person" data-action="pick-person" data-name="김시현" data-bank="카카오뱅크" data-acc="3333000000000">
+      <span class="av" style="background:#FEE500;color:#111">김</span>
+      <span><span class="nm">김시현</span><span class="ac">카카오뱅크 ····0000</span></span>
+    </button>
+    <button class="person" data-action="pick-person" data-name="안성진" data-bank="신한" data-acc="110000000000">
+      <span class="av" style="background:#1B4EE8">안</span>
+      <span><span class="nm">안성진</span><span class="ac">신한 ····0000</span></span>
+    </button>
+    <button class="person" data-action="pick-person" data-name="박정순" data-bank="농협" data-acc="1110000000000">
+      <span class="av" style="background:#0A4E9B">박</span>
+      <span><span class="nm">박정순</span><span class="ac">농협 ····0000</span></span>
+    </button>
+    <button class="person" data-action="pick-person" data-name="박숙자" data-bank="신한" data-acc="110000000001">
+      <span class="av" style="background:#1B4EE8">박</span>
+      <span><span class="nm">박숙자</span><span class="ac">신한 ····0001</span></span>
+    </button>
+    <button class="person" data-action="pick-person" data-name="김명희" data-bank="신한" data-acc="110000000002">
+      <span class="av" style="background:#1B4EE8">김</span>
+      <span><span class="nm">김명희</span><span class="ac">신한 ····0002</span></span>
+    </button>
+    <button class="secondary" data-action="go-accno">처음 보내는 곳</button>
+  </div>
+</section>
+
+<!-- ================= 3. 계좌번호 ================= -->
+<section class="screen" data-screen="accno">
+  <div class="statusbar"><span>1:40</span><span>5G</span></div>
+  <div class="topbar"><button class="backbtn" data-action="back-who">← 이전</button></div>
+  <div class="q sm">계좌번호를<br>눌러주세요</div>
+  <div class="body">
+    <div class="accbox">
+      <div class="val" id="acc-display" data-empty="숫자만 누르세요"></div>
+    </div>
+    <div class="count" id="acc-count">아직 누르지 않았습니다</div>
+  </div>
+  <div class="keypad">
+    <button data-action="acc-num" data-v="1">1</button><button data-action="acc-num" data-v="2">2</button><button data-action="acc-num" data-v="3">3</button>
+    <button data-action="acc-num" data-v="4">4</button><button data-action="acc-num" data-v="5">5</button><button data-action="acc-num" data-v="6">6</button>
+    <button data-action="acc-num" data-v="7">7</button><button data-action="acc-num" data-v="8">8</button><button data-action="acc-num" data-v="9">9</button>
+    <button disabled></button><button data-action="acc-num" data-v="0">0</button><button class="word" data-action="acc-del">지우기</button>
+  </div>
+  <button class="primary" id="acc-next" data-action="accno-next" disabled>다음</button>
+</section>
+
+<!-- ================= 4. 은행 확인 ================= -->
+<section class="screen" data-screen="bank">
+  <div class="statusbar"><span>1:40</span><span>5G</span></div>
+  <div class="topbar"><button class="backbtn" data-action="back-accno">← 이전</button></div>
+  <div id="bank-guess-wrap">
+    <div class="q sm">이 은행이<br>맞나요?</div>
+    <div class="body">
+      <div class="guess">
+        <div class="bi" id="bank-guess-icon">카</div>
+        <div class="bn" id="bank-guess">카카오뱅크</div>
+      </div>
+      <div class="hint">입력하신 번호는 카카오뱅크에서 쓰는 번호입니다.</div>
+    </div>
+    <button class="primary" data-action="bank-yes">네, 맞아요</button>
+    <button class="secondary" data-action="bank-other">다른 은행이에요</button>
+  </div>
+  <div id="bank-list-wrap" style="display:none">
+    <div class="q sm">어느<br>은행인가요?</div>
+    <div class="search"><input id="bank-search" placeholder="은행 이름을 쓰세요" autocomplete="off"></div>
+    <div class="body"><div class="banklist" id="bank-list"></div></div>
+  </div>
+</section>
+
+<!-- ================= 5. 받는 분 확인 ================= -->
+<section class="screen" data-screen="whoconfirm">
+  <div class="statusbar"><span>1:40</span><span>5G</span></div>
+  <div class="topbar"><button class="backbtn" data-action="back-bank">← 이전</button></div>
+  <div class="q sm">이 분이<br>맞나요?</div>
+  <div class="body">
+    <div class="bigname">
+      <div class="av">김</div>
+      <div class="nm" id="wc-name">김시현</div>
+      <div class="ac" id="wc-acc">카카오뱅크<br>3333 0000 0000 0</div>
+    </div>
+  </div>
+  <button class="primary" data-action="who-yes">네, 맞아요</button>
+  <button class="secondary" data-action="who-no">아니요, 다시 누를게요</button>
+</section>
+
+<!-- ================= 6. 금액 ================= -->
+<section class="screen" data-screen="amount">
+  <div class="statusbar"><span>1:40</span><span>5G</span></div>
+  <div class="topbar"><button class="backbtn" data-action="back-from-amount">← 이전</button></div>
+  <div class="crumb"><b id="am-who">김시현</b> 님께 <b>얼마를</b> 보낼까요?</div>
+  <div class="body">
+    <div class="amtwrap">
+      <div class="amtnum" id="amt-display">0원</div>
+      <div class="amtkor" id="amt-korean"></div>
+    </div>
+    <div class="avail">보낼 수 있는 돈 <b>100,000</b>원 (십만 원)</div>
+    <div class="quick">
+      <button data-action="amt-set" data-v="10000">1만원</button>
+      <button data-action="amt-set" data-v="30000">3만원</button>
+      <button data-action="amt-set" data-v="50000">5만원</button>
+      <button data-action="amt-set" data-v="100000">10만원</button>
+    </div>
+  </div>
+  <div class="keypad">
+    <button data-action="amt-num" data-v="1">1</button><button data-action="amt-num" data-v="2">2</button><button data-action="amt-num" data-v="3">3</button>
+    <button data-action="amt-num" data-v="4">4</button><button data-action="amt-num" data-v="5">5</button><button data-action="amt-num" data-v="6">6</button>
+    <button data-action="amt-num" data-v="7">7</button><button data-action="amt-num" data-v="8">8</button><button data-action="amt-num" data-v="9">9</button>
+    <button disabled></button><button data-action="amt-num" data-v="0">0</button><button class="word" data-action="amt-del">지우기</button>
+  </div>
+  <button class="primary" id="amt-next" data-action="amount-next" disabled>다음</button>
+</section>
+
+<!-- ================= 7. 보내기 전 확인 ================= -->
+<section class="screen" data-screen="review">
+  <div class="statusbar"><span>1:40</span><span>5G</span></div>
+  <div class="topbar"><button class="backbtn" data-action="back-amount">← 이전</button></div>
+  <div class="q sm">이대로<br>보낼까요?</div>
+  <div class="body">
+    <div class="rv">
+      <div><div class="k">받는 분</div>
+        <div class="v" id="rv-who">김시현<small id="rv-acc">카카오뱅크 3333000000000</small></div></div>
+      <button class="fix" data-action="edit-who">고치기</button>
+    </div>
+    <div class="rv">
+      <div><div class="k">보내는 돈</div>
+        <div class="v" id="rv-amt">10,000원<small id="rv-amt-kor">만 원</small></div></div>
+      <button class="fix" data-action="edit-amount">고치기</button>
+    </div>
+    <div class="rv">
+      <div><div class="k">보내고 나면</div>
+        <div class="v" id="rv-rest">90,000원<small>내 통장에 남습니다</small></div></div>
+    </div>
+    <div class="fee">수수료 없음</div>
+  </div>
+  <button class="primary" data-action="send">보내기</button>
+</section>
+
+<!-- ================= 8. 본인 확인 ================= -->
+<section class="screen" data-screen="auth">
+  <div class="statusbar"><span>1:41</span><span>5G</span></div>
+  <div class="topbar"><button class="backbtn" data-action="back-review">← 이전</button></div>
+  <div id="auth-pick">
+    <div class="q sm">본인이<br>맞는지 확인합니다</div>
+    <div class="body">
+      <div class="bio">👍</div>
+      <div class="hint">지문을 대면 바로 보내집니다.</div>
+    </div>
+    <button class="primary" data-action="bio">지문으로 확인</button>
+    <button class="secondary" data-action="use-pw">비밀번호로 확인</button>
+  </div>
+  <div id="auth-pw" style="display:none">
+    <div class="q sm">비밀번호<br>네 자리</div>
+    <div class="dots" id="pw-dots"><i></i><i></i><i></i><i></i></div>
+    <div class="body"></div>
+    <div class="keypad" id="pwpad">
+      <button data-action="pw" data-v="1">1</button><button data-action="pw" data-v="2">2</button><button data-action="pw" data-v="3">3</button>
+      <button data-action="pw" data-v="4">4</button><button data-action="pw" data-v="5">5</button><button data-action="pw" data-v="6">6</button>
+      <button data-action="pw" data-v="7">7</button><button data-action="pw" data-v="8">8</button><button data-action="pw" data-v="9">9</button>
+      <button disabled></button><button data-action="pw" data-v="0">0</button><button class="word" data-action="pw-del">지우기</button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 9. 완료 ================= -->
+<section class="screen" data-screen="done">
+  <div class="statusbar"><span>1:41</span><span>5G</span></div>
+  <div class="topbar"><button class="backbtn" data-action="back-start">← 처음으로</button></div>
+  <div class="body">
+    <div class="okwrap">
+      <div class="okc">✓</div>
+      <div class="t">보냈습니다</div>
+      <div class="s"><b id="dn-name">김시현</b> 님께<br><b id="dn-amt">10,000</b>원 (<span id="dn-kor">만 원</span>)</div>
+      <div class="rest">내 통장에 <b id="dn-rest">90,000</b>원 남았습니다</div>
+    </div>
+  </div>
+  <button class="primary" data-action="finish">처음으로</button>
+</section>
+
+</div>
+
+<script>
+/* ============ 기록 장치 ============ */
+const LOG = [];
+window.__log = LOG;
+window.__task = { startedAt: null, screen: 'start' };
+function log(type, data){
+  LOG.push(Object.assign({ t: Date.now(), screen: window.__task.screen, type }, data||{}));
+}
+window.__startTask = function(){ LOG.length = 0; window.__task.startedAt = Date.now(); log('task_start'); };
+window.__dump = function(){ return JSON.parse(JSON.stringify(LOG)); };
+
+/* ============ 화면 전환 ============ */
+function show(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.dataset.screen===name));
+  window.__task.screen = name;
+  log('screen_enter', { to: name });
+  window.scrollTo(0,0);
+  const b = document.querySelector('.screen.on .body'); if(b) b.scrollTop = 0;
+}
+window.__screen = ()=>window.__task.screen;
+
+/* ============ 상태 ============ */
+const BALANCE = 100000;
+const S = { name:'', bank:'', acc:'', amount:'', pw:'', saved:false };
+
+/* 계좌번호 앞자리로 은행을 좁힌다 */
+const PREFIX = { '3333':'카카오뱅크', '1000':'토스뱅크', '1111':'케이뱅크', '110':'신한', '111':'농협' };
+function guessBank(acc){
+  for (const p of Object.keys(PREFIX).sort((a,b)=>b.length-a.length)) {
+    if (acc.startsWith(p)) return PREFIX[p];
+  }
+  return null;
+}
+
+const BANKS = ['신한','국민','카카오뱅크','농협','우리','하나','기업','토스뱅크'];
+const COLORS = {'신한':'#1B4EE8','국민':'#6B5B00','카카오뱅크':'#FEE500','농협':'#0A4E9B',
+  '우리':'#1257C7','하나':'#0F7A6B','기업':'#1257C7','토스뱅크':'#3B7BF6'};
+
+/* ============ 표시 ============ */
+function groupAcc(a){ return a.replace(/(.{4})/g, '$1 ').trim(); }
+function comma(n){ return Number(n||0).toLocaleString(); }
+
+/* 숫자를 한글로 읽어준다 - 0 개수 착오를 막기 위한 장치 */
+function koreanAmount(n){
+  n = Number(n)||0;
+  if(!n) return '';
+  const digit=['','일','이','삼','사','오','육','칠','팔','구'];
+  const small=['','십','백','천'];
+  const big=['','만','억'];
+  let out='', g=0;
+  while(n>0){
+    const chunk=n%10000;
+    if(chunk){
+      let s='';
+      if(!(chunk===1 && g>0)){
+        const d=String(chunk).split('').reverse();
+        for(let i=d.length-1;i>=0;i--){
+          const v=+d[i];
+          if(!v) continue;
+          s += (v===1 && i>0 ? '' : digit[v]) + small[i];
+        }
+      }
+      out = s + big[g] + ' ' + out;
+    }
+    n=Math.floor(n/10000); g++;
+  }
+  return out.trim() + ' 원';
+}
+
+function renderAcc(){
+  document.getElementById('acc-display').textContent = groupAcc(S.acc);
+  document.getElementById('acc-count').textContent =
+    S.acc.length ? S.acc.length + '자리 눌렀습니다' : '아직 누르지 않았습니다';
+  document.getElementById('acc-next').disabled = S.acc.length < 10;
+}
+function renderAmount(){
+  const d=document.getElementById('amt-display'), k=document.getElementById('amt-korean');
+  const n=Number(S.amount)||0;
+  d.textContent = comma(n)+'원';
+  d.classList.toggle('filled', n>0);
+  k.textContent = koreanAmount(n);
+  document.getElementById('amt-next').disabled = !(n>0 && n<=BALANCE);
+}
+function renderDots(){
+  document.querySelectorAll('#pw-dots i').forEach((el,i)=>{
+    el.className = i < S.pw.length ? 'fill' : '';
+  });
+}
+function fillBankList(filter){
+  const el=document.getElementById('bank-list');
+  const list=BANKS.filter(n=>!filter || n.indexOf(filter)>-1);
+  el.innerHTML = list.map(n=>
+    '<button class="bankrow" data-action="pick-bank" data-bank="'+n+'">'+
+    '<span class="bi" style="background:'+COLORS[n]+';color:'+(n==='카카오뱅크'?'#111':'#fff')+'">'+n[0]+'</span>'+
+    '<span>'+n+'</span></button>').join('');
+}
+function goWhoConfirm(){
+  document.getElementById('wc-name').textContent = S.name || '이 계좌';
+  document.getElementById('wc-acc').innerHTML = S.bank + '<br>' + groupAcc(S.acc);
+  show('whoconfirm');
+}
+function goAmount(){
+  document.getElementById('am-who').textContent = S.name || S.bank;
+  renderAmount();
+  show('amount');
+}
+function fillReview(){
+  document.getElementById('rv-who').childNodes[0].nodeValue = S.name || S.bank;
+  document.getElementById('rv-acc').textContent = S.bank + ' ' + S.acc;
+  const n=Number(S.amount)||0;
+  document.getElementById('rv-amt').childNodes[0].nodeValue = comma(n)+'원';
+  document.getElementById('rv-amt-kor').textContent = koreanAmount(n);
+  document.getElementById('rv-rest').childNodes[0].nodeValue = comma(BALANCE-n)+'원';
+}
+function finishSend(){
+  const n=Number(S.amount)||0;
+  document.getElementById('dn-name').textContent = S.name || S.bank;
+  document.getElementById('dn-amt').textContent = comma(n);
+  document.getElementById('dn-kor').textContent = koreanAmount(n).replace(/ 원$/,'');
+  document.getElementById('dn-rest').textContent = comma(BALANCE-n);
+  log('submit', { bank:S.bank, account:S.acc, amount:n });
+  show('done');
+}
+
+/* ============ 동작 ============ */
+document.getElementById('phone').addEventListener('click', function(e){
+  const el = e.target.closest('[data-action]'); if(!el) return;
+  const a = el.dataset.action;
+
+  if(a==='noop') return;
+
+  else if(a==='go-who') show('who');
+  else if(a==='back-start') show('start');
+
+  else if(a==='pick-person'){
+    S.name=el.dataset.name; S.bank=el.dataset.bank; S.acc=el.dataset.acc; S.saved=true;
+    log('pick_person', { name:S.name, bank:S.bank });
+    goAmount();
+  }
+  else if(a==='go-accno'){ S.saved=false; S.acc=''; S.name=''; renderAcc(); show('accno'); }
+  else if(a==='back-who') show('who');
+
+  else if(a==='acc-num'){ if(S.acc.length<16){ S.acc+=el.dataset.v; renderAcc(); } }
+  else if(a==='acc-del'){ S.acc=S.acc.slice(0,-1); renderAcc(); }
+  else if(a==='accno-next'){
+    if(S.acc.length<10) return;
+    const g=guessBank(S.acc);
+    if(g){
+      S.bank=g;
+      document.getElementById('bank-guess').textContent=g;
+      document.getElementById('bank-guess-icon').textContent=g[0];
+      document.getElementById('bank-guess-wrap').style.display='';
+      document.getElementById('bank-list-wrap').style.display='none';
+    } else {
+      S.bank='';
+      document.getElementById('bank-guess-wrap').style.display='none';
+      document.getElementById('bank-list-wrap').style.display='';
+      fillBankList('');
+    }
+    log('account_entered', { account:S.acc, guess:g });
+    show('bank');
+  }
+  else if(a==='back-accno') show('accno');
+
+  else if(a==='bank-yes'){ S.name='김시현'; goWhoConfirm(); }
+  else if(a==='bank-other'){
+    document.getElementById('bank-guess-wrap').style.display='none';
+    document.getElementById('bank-list-wrap').style.display='';
+    fillBankList('');
+  }
+  else if(a==='pick-bank'){
+    S.bank=el.dataset.bank; S.name='김시현';
+    log('pick_bank', { bank:S.bank });
+    goWhoConfirm();
+  }
+  else if(a==='back-bank') show('bank');
+
+  else if(a==='who-yes') goAmount();
+  else if(a==='who-no') show('accno');
+
+  else if(a==='amt-set'){ S.amount=el.dataset.v; renderAmount(); }
+  else if(a==='amt-num'){ if(S.amount.length<9){ S.amount=(S.amount+el.dataset.v).replace(/^0+/,''); renderAmount(); } }
+  else if(a==='amt-del'){ S.amount=S.amount.slice(0,-1); renderAmount(); }
+  else if(a==='back-from-amount'){ S.saved ? show('who') : show('whoconfirm'); }
+  else if(a==='amount-next'){
+    const n=Number(S.amount)||0;
+    if(!(n>0 && n<=BALANCE)) return;
+    fillReview(); show('review');
+  }
+
+  else if(a==='edit-who'){ S.saved ? show('who') : show('accno'); }
+  else if(a==='edit-amount') goAmount();
+  else if(a==='back-amount') goAmount();
+  else if(a==='send'){
+    S.pw=''; renderDots();
+    document.getElementById('auth-pick').style.display='';
+    document.getElementById('auth-pw').style.display='none';
+    show('auth');
+  }
+  else if(a==='back-review'){ fillReview(); show('review'); }
+
+  else if(a==='bio') finishSend();
+  else if(a==='use-pw'){
+    document.getElementById('auth-pick').style.display='none';
+    document.getElementById('auth-pw').style.display='';
+  }
+  else if(a==='pw'){
+    if(S.pw.length<4){ S.pw+=el.dataset.v; renderDots(); }
+    if(S.pw.length===4) setTimeout(finishSend, 240);
+  }
+  else if(a==='pw-del'){ S.pw=S.pw.slice(0,-1); renderDots(); }
+
+  else if(a==='finish'){ log('task_end'); show('start'); }
+});
+
+document.getElementById('bank-search').addEventListener('input', function(){
+  fillBankList(this.value.trim());
+});
+
+/* 초기화 */
+document.getElementById('st-balance').textContent = comma(BALANCE);
+fillBankList('');
+renderAcc();
+renderAmount();
+log('screen_enter', { to:'start' });
+</script>
+</body>
+</html>

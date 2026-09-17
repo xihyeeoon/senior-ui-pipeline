@@ -109,6 +109,17 @@
   /* ---------- 4. 계좌번호 (임시) ---------- */
   .tempnote{margin:0 20px 14px; background:#FFF6E5; border:1px solid #FFE0A3; border-radius:10px;
     padding:10px 12px; font-size:12px; color:#8A6100; line-height:1.5;}
+  /* ---------- 4. 계좌번호 입력 ---------- */
+  .accfield{margin:0 20px 14px; border:2px solid var(--blue); border-radius:12px; padding:11px 15px;}
+  .accfield .lab{font-size:13px; color:var(--blue); margin-bottom:3px;}
+  .accfield .val{font-size:21px; font-weight:600; min-height:28px; color:var(--ink);}
+  .accfield .val:empty::before{content:attr(data-empty); color:#B4B9C1; font-weight:400;}
+  .bankpick{margin:0 20px; border:1px solid #E3E6EC; border-radius:12px; padding:17px 15px;
+    display:flex; align-items:center; justify-content:space-between;}
+  .bankpick .ph{font-size:19px; color:#8A8F98;}
+  .bankpick .ph.set{color:var(--ink); font-weight:600;}
+  .bankpick .chev{font-size:19px; color:#8A8F98;}
+  .keypad button.blank{background:#fff;}
   .field{margin:0 20px; border-bottom:2px solid var(--blue); padding-bottom:10px;}
   .field input{width:100%; border:0; outline:0; font-size:22px; font-weight:600; font-family:inherit;
     letter-spacing:.5px;}
@@ -259,7 +270,7 @@
   </div>
   <div class="body">
     <div class="h1">누구에게 보낼까요?</div>
-    <div class="inputline" data-action="go-bank">
+    <div class="inputline" data-action="go-account">
       <span class="ph">계좌번호 직접 입력</span><span style="font-size:19px">▣</span>
     </div>
     <div class="filterrow"><span class="lbl">자주쓰는 계좌 <span class="tag">편집</span></span><span class="pill">2개 ⌄</span></div>
@@ -303,13 +314,23 @@
 
 <!-- ================= 4. 계좌번호 입력 (임시) ================= -->
 <section class="screen" data-screen="account">
-  <div class="statusbar"><span>1:40</span><span class="right">5G 66</span></div>
-  <div class="navbar"><span class="ico" data-action="back-bank">‹</span><span></span><span class="ico" data-action="back-home">✕</span></div>
+  <div class="statusbar"><span>3:33</span><span class="right">5G 56</span></div>
+  <div class="navbar"><span class="ico" data-action="back-recipient">‹</span><span></span><span class="ico" data-action="back-home">✕</span></div>
   <div class="body">
-    <div class="h1">계좌번호를 입력하세요</div>
-    <div class="tempnote">※ 이 화면은 실제 캡처가 없어 임시로 만든 것입니다. 실제 화면을 캡처하면 교체하세요.</div>
-    <div style="padding:0 20px 10px;font-size:14px;color:#8A8F98" id="picked-bank">카카오뱅크</div>
-    <div class="field"><input id="acc-input" inputmode="numeric" placeholder="계좌번호 입력" data-action="type-account"></div>
+    <div class="h1">누구에게 보낼까요?</div>
+    <div class="accfield">
+      <div class="lab">계좌번호</div>
+      <div id="acc-input" class="val" data-empty="- 없이 숫자만 입력"></div>
+    </div>
+    <div class="bankpick" data-action="open-bank">
+      <span id="picked-bank" class="ph">은행 또는 증권사 선택</span><span class="chev">⌄</span>
+    </div>
+  </div>
+  <div class="keypad">
+    <button data-action="acc-num" data-v="1">1</button><button data-action="acc-num" data-v="2">2</button><button data-action="acc-num" data-v="3">3</button>
+    <button data-action="acc-num" data-v="4">4</button><button data-action="acc-num" data-v="5">5</button><button data-action="acc-num" data-v="6">6</button>
+    <button data-action="acc-num" data-v="7">7</button><button data-action="acc-num" data-v="8">8</button><button data-action="acc-num" data-v="9">9</button>
+    <button class="blank" disabled></button><button data-action="acc-num" data-v="0">0</button><button data-action="acc-del">⌫</button>
   </div>
   <button class="btn-next" id="acc-next" data-action="account-next">다음</button>
 </section>
@@ -419,7 +440,14 @@ function show(name){
 window.__screen = ()=>window.__task.screen;
 
 /* ============ 상태 ============ */
-const S = { bank:'카카오뱅크', account:'', amount:'', pw:'' };
+const S = { bank:'카카오뱅크', bankPicked:false, account:'', amount:'', pw:'' };
+
+/* ============ 계좌번호 표시 ============ */
+function renderAccount(){
+  document.getElementById('acc-input').textContent = S.account;
+  document.getElementById('acc-next')
+    .classList.toggle('on', S.account.length>0 && S.bankPicked);
+}
 
 /* ============ 은행 목록 ============ */
 const BANKS = ['신한','제주','국민','기업','농협','산업','수협','신협','우리','하나','한국씨티','카카오뱅크',
@@ -473,8 +501,10 @@ document.getElementById('phone').addEventListener('click', function(e){
 
   if(a==='go-recipient') show('recipient');
   else if(a==='back-home') show('home');
-  else if(a==='go-bank') show('bank');
-  else if(a==='back-recipient') show('recipient');
+  else if(a==='go-account') show('account');
+  else if(a==='open-bank') show('bank');
+  /* the bank sheet is a modal over the account screen, so ✕ returns there */
+  else if(a==='back-recipient') show('account');
   else if(a==='tab-bank'){
     document.getElementById('tab-bank').classList.add('act');
     document.getElementById('tab-sec').classList.remove('act');
@@ -489,18 +519,24 @@ document.getElementById('phone').addEventListener('click', function(e){
   }
   else if(a==='pick-bank'){
     S.bank = el.dataset.bank;
-    document.getElementById('picked-bank').textContent = S.bank;
+    S.bankPicked = true;
+    const pb = document.getElementById('picked-bank');
+    pb.textContent = S.bank;
+    pb.classList.add('set');
     log('pick_bank', { bank: S.bank });
+    renderAccount();
     show('account');
   }
   else if(a==='back-bank') show('bank');
+  else if(a==='acc-num'){
+    if(S.account.length<16){ S.account += el.dataset.v; renderAccount(); }
+  }
+  else if(a==='acc-del'){ S.account = S.account.slice(0,-1); renderAccount(); }
   else if(a==='account-next'){
-    const v = document.getElementById('acc-input').value.trim();
-    if(!v) return;
-    S.account = v;
-    document.getElementById('amt-acc').textContent = v;
-    document.getElementById('cf-acc').textContent = v;
-    log('account_entered', { account: v });
+    if(!S.account || !S.bankPicked) return;
+    document.getElementById('amt-acc').textContent = S.account;
+    document.getElementById('cf-acc').textContent = S.account;
+    log('account_entered', { account: S.account, bank: S.bank });
     show('amount');
   }
   else if(a==='back-account') show('account');
@@ -532,10 +568,7 @@ document.getElementById('phone').addEventListener('click', function(e){
   else if(a==='finish'){ log('task_end'); show('home'); }
 });
 
-/* 계좌번호 입력 시 다음 버튼 활성화 */
-document.getElementById('acc-input').addEventListener('input', function(){
-  document.getElementById('acc-next').classList.toggle('on', this.value.trim().length>0);
-});
+renderAccount();
 
 buildPwPad();
 log('screen_enter', { to:'home' });

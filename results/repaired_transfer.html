@@ -7,8 +7,8 @@
 <style>
   :root{--blue:#1B64DA; --blue-deep:#0046FF; --ink:#1A1A1A; --sub:#8A8F98; --line:#EDEFF3; --bg:#F2F4F8; --card:#FFFFFF; --chip:#F5F6F9;}
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  html,body{margin:0; padding:0; background:#FFFFFF; font-size:16px;}
-  body{font-family:"Arial", "Helvetica", sans-serif; color:var(--ink); display:flex; justify-content:center; font-size:1rem; line-height:1.5;}
+  html,body{margin:0; padding:0; background:var(--bg); font-size:16px;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif; color:var(--ink); display:flex; justify-content:center;}
   #phone{width:390px; height:844px; background:#fff; position:relative; overflow:hidden; box-shadow:0 0 0 1px #cfd4dd;}
   .screen{position:absolute; inset:0; display:none; flex-direction:column; background:#fff; max-width:600px; margin:auto;}
   .screen.on{display:flex;}
@@ -17,7 +17,7 @@
   .navbar{height:52px; flex:0 0 52px; display:flex; align-items:center; justify-content:space-between; padding:0 24px;}
   .navbar .ico{font-size:22px; color:#111; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border:1px solid #111; border-radius:50%;}
   .navbar .mid{font-size:15px; color:var(--blue); font-weight:600;}
-  .body{flex:1 1 auto; overflow-y:auto; -webkit-overflow-scrolling:touch; background:#FFFFFF; padding:0 30px;}
+  .body{flex:1 1 auto; overflow-y:auto; -webkit-overflow-scrolling:touch; background:#FFFFFF;}
   .home{background:var(--bg);}
   .homehead{display:flex; align-items:center; justify-content:space-between; padding:12px 24px 18px; background:var(--bg);}
   .homehead .name{font-size:19px; font-weight:700; display:flex; align-items:center; gap:7px;}
@@ -47,10 +47,10 @@
   .tabbar div.act{color:var(--blue); font-weight:700;}
   .tabbar .ti{font-size:18px;}
   .footlinks{display:flex; justify-content:space-around; padding:16px 0 22px; font-size:13px; color:#5A6069;}
-  .h1{font-size:25px; font-weight:700; padding:6px 0 18px;}
+  .h1{font-size:25px; font-weight:700; padding:6px 20px 18px;}
   .inputline{margin:0 20px; border-bottom:1px solid #DDE1E7; padding-bottom:11px; display:flex; align-items:center; justify-content:space-between;}
   .inputline .ph{font-size:17px; color:#B4B9C1;}
-  .filterrow{display:flex; align-items:center; justify-content:space-between; padding:20px 20px;}
+  .filterrow{display:flex; align-items:center; justify-content:space-between; padding:14px 20px;}
   .filterrow .lbl{font-size:15px; font-weight:600; display:flex; align-items:center; gap:7px;}
   .tag{background:#EFF1F5; border-radius:6px; padding:3px 7px; font-size:11px; color:#6B7280; font-weight:500;}
   .pill{border:1px solid #E1E4EA; border-radius:16px; padding:6px 13px; font-size:13px; color:#4B5158;}
@@ -72,7 +72,16 @@
   .bk{background:#F4F6FA; border-radius:12px; height:88px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; font-size:12px; font-weight:600;}
   .bk .bi{width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; color:#fff; font-weight:800;}
   .tempnote{margin:0 20px 14px; background:#FFF6E5; border:1px solid #FFE0A3; border-radius:10px; padding:10px 12px; font-size:12px; color:#8A6100; line-height:1.5;}
-  .field{margin:0 30px; border-bottom:2px solid var(--blue); padding-bottom:10px;}
+  .accfield{margin:0 20px 14px; border:2px solid var(--blue); border-radius:12px; padding:11px 15px;}
+  .accfield .lab{font-size:13px; color:var(--blue); margin-bottom:3px;}
+  .accfield .val{font-size:21px; font-weight:600; min-height:28px; color:var(--ink);}
+  .accfield .val:empty::before{content:attr(data-empty); color:#B4B9C1; font-weight:400;}
+  .bankpick{margin:0 20px; border:1px solid #E3E6EC; border-radius:12px; padding:17px 15px; display:flex; align-items:center; justify-content:space-between;}
+  .bankpick .ph{font-size:19px; color:#8A8F98;}
+  .bankpick .ph.set{color:var(--ink); font-weight:600;}
+  .bankpick .chev{font-size:19px; color:#8A8F98;}
+  .keypad button.blank{background:#fff;}
+  .field{margin:0 20px; border-bottom:2px solid var(--blue); padding-bottom:10px;}
   .field input{width:100%; border:0; outline:0; font-size:22px; font-weight:600; font-family:inherit; letter-spacing:.5px;}
   .field input::placeholder{color:#C7CBD2; font-weight:400;}
   .amthead{padding:6px 20px 0; font-size:16px; line-height:1.5; color:#4B5158;}
@@ -85,7 +94,7 @@
   .quick button{flex:1; background:#0046FF; border:0; border-radius:20px; padding:11px 0; font-size:14px; font-family:inherit; color:#fff;}
   .keypad{display:grid; grid-template-columns:repeat(3,1fr);}
   .keypad button{background:#fff; border:0; height:66px; font-size:25px; font-family:inherit; color:#111;}
-  .btn-next{margin:20px 30px; background:var(--blue-deep); color:#fff; border:0; border-radius:12px; padding:17px; font-size:17px; font-weight:700; font-family:inherit; box-shadow:0 4px 6px rgba(0, 0, 0, 0.1);}
+  .btn-next{margin:20px 16px 28px; background:#0046FF; color:#fff; border:0; border-radius:12px; padding:17px; font-size:17px; font-weight:700; font-family:inherit;}
   .btn-next.on{background:var(--blue-deep); color:#fff;}
   .center{text-align:center; padding-top:60px;}
   .bigav{width:62px; height:62px; border-radius:50%; background:#0046FF; margin:0 auto 22px; display:flex; align-items:center; justify-content:center; font-size:27px; font-weight:900; color:#FFFFFF;}
@@ -197,31 +206,30 @@
 <section class="screen"  data-screen="recipient">
   <div class="statusbar"><span>1:39</span><span class="right">5G 66</span></div>
   <div class="navbar">
-    <span class="ico" data-action="back-home">‹</span><span class="sr-only">Back to Home</span>
+    <span class="ico" data-action="back-home">‹</span><span class="text">Back</span>
     <span class="mid">다건이체</span>
-    <span style="display:flex;gap:20px"><span class="ico">👤</span><span class="sr-only">User Profile</span><span class="ico" data-action="back-home">✕</span><span class="sr-only">Close</span></span>
+    <span style="display:flex;gap:20px"><span class="ico">👤</span><span class="text">Profile</span><span class="ico" data-action="back-home">✕</span><span class="text">Close</span></span>
   </div>
   <div class="body">
     <div class="h1">누구에게 보낼까요?</div>
-    <div class="inputline" data-action="go-bank">
-      <label for="account-input" class="ph">계좌번호 직접 입력</label>
-      <input type="text" id="account-input" placeholder="계좌번호 입력" style="font-size:17px;">
+    <div class="inputline" data-action="go-account">
+      <span class="ph">계좌번호 직접 입력</span><span style="font-size:19px">▣</span>
     </div>
     <div class="filterrow"><span class="lbl">자주쓰는 계좌 <span class="tag">편집</span></span><span class="pill">2개 ⌄</span></div>
+    <div class="filterrow"><span class="lbl">내 계좌</span><span class="pill">14개 ⌄</span></div>
+
     <div class="person"><div class="av" style="background:#FEE500;color:#000">B</div>
-      <div><div class="nm">김시현</div><div class="ac">카카오뱅크 3333000000000</div></div><span class="st on">★ 선택됨</span></div>
-    <div class="person"><div class="av" style="background:#FEE500;color:#000">B</div>
-      <div><div class="nm">김시현</div><div class="ac">카카오뱅크 3333000000000</div></div><span class="st on">★ 선택됨</span></div>
+      <div><div class="nm">김시현</div><div class="ac">카카오뱅크 3333000000000</div></div><span class="st on">★</span><span class="sr-only">즐겨찾기 추가됨</span></div>
     <div class="person"><div class="av" style="background:#1B4EE8">S</div>
-      <div><div class="nm">안성진</div><div class="ac">신한 110-000-000000</div></div><span class="st">☆ 선택됨</span></div>
+      <div><div class="nm">안성진</div><div class="ac">신한 110-000-000000</div></div><span class="st">☆</span><span class="sr-only">즐겨찾기 추가됨</span></div>
     <div class="person"><div class="av" style="background:#0A4E9B">N</div>
-      <div><div class="nm">박정순</div><div class="ac">농협 1110000000000</div></div><span class="st">☆ 선택됨</span></div>
+      <div><div class="nm">박정순</div><div class="ac">농협 1110000000000</div></div><span class="st">☆</span><span class="sr-only">즐겨찾기 추가됨</span></div>
     <div class="person"><div class="av" style="background:#1B4EE8">S</div>
-      <div><div class="nm">박숙자</div><div class="ac">신한 110-000-000000</div></div><span class="st">☆ 선택됨</span></div>
+      <div><div class="nm">박숙자</div><div class="ac">신한 110-000-000000</div></div><span class="st">☆</span><span class="sr-only">즐겨찾기 추가됨</span></div>
     <div class="person"><div class="av" style="background:#3B7BF6">T</div>
-      <div><div class="nm">김시현</div><div class="ac">토스증권 14400000000</div></div><span class="st">☆ 선택됨</span></div>
+      <div><div class="nm">김시현</div><div class="ac">토스증권 14400000000</div></div><span class="st">☆</span><span class="sr-only">즐겨찾기 추가됨</span></div>
     <div class="person"><div class="av" style="background:#1B4EE8">S</div>
-      <div><div class="nm">김명희</div><div class="ac">신한 110-000-000000</div></div><span class="st">☆ 선택됨</span></div>
+      <div><div class="nm">김명희</div><div class="ac">신한 110-000-000000</div></div><span class="st">☆</span><span class="sr-only">즐겨찾기 추가됨</span></div>
     <div style="height:30px"></div>
   </div>
 </section>
@@ -448,17 +456,26 @@
 
 <!-- ============ account ============ -->
 <section class="screen"  data-screen="account">
-  <div class="statusbar"><span>1:40</span><span class="right">5G 66</span></div>
-  <div class="navbar"><span class="ico" data-action="back-bank">‹<span class="sr-only">Back to Bank</span></span><span></span><span class="ico" data-action="back-home">✕<span class="sr-only">Close</span></span></div>
+  <div class="statusbar"><span>3:33</span><span class="right">5G 56</span></div>
+  <div class="navbar"><span class="ico" data-action="back-home">닫기</span></div>
   <div class="body">
-    <div class="h1">계좌번호를 입력하세요</div>
-    <div style="padding:0 20px 10px;font-size:14px;color:#000000" id="picked-bank">카카오뱅크</div>
-    <div class="field">
-      <label for="acc-input" class="visually-hidden">계좌번호 입력</label>
-      <input id="acc-input" inputmode="numeric" placeholder="계좌번호 입력" data-action="type-account">
+    <div class="h1">누구에게 보낼까요?</div>
+    <div class="progress-bar">Step 1 of 3</div>
+    <div class="accfield">
+      <div class="lab">계좌번호</div>
+      <div id="acc-input" class="val" data-empty="- 없이 숫자만 입력"></div>
+    </div>
+    <div class="bankpick" data-action="open-bank">
+      <span id="picked-bank" class="ph">은행 또는 증권사 선택</span><span class="chev">⌄</span><span class="sr-only">Open Bank Selection</span>
     </div>
   </div>
-  <button class="btn-next" id="acc-next" data-action="account-next" onclick="alert('다음 단계로 이동합니다');">다음 단계로 이동</button>
+  <div class="keypad" style="grid-gap: 10px;">
+    <button data-action="acc-num" data-v="1">1</button><button data-action="acc-num" data-v="2">2</button><button data-action="acc-num" data-v="3">3</button>
+    <button data-action="acc-num" data-v="4">4</button><button data-action="acc-num" data-v="5">5</button><button data-action="acc-num" data-v="6">6</button>
+    <button data-action="acc-num" data-v="7">7</button><button data-action="acc-num" data-v="8">8</button><button data-action="acc-num" data-v="9">9</button>
+    <button data-action="acc-del">삭제</button><button data-action="acc-num" data-v="0">0</button><button class="blank" disabled="" style="visibility: hidden;"></button>
+  </div>
+  <button class="btn-next" id="acc-next" data-action="account-next" aria-label="다음 단계로 이동">다음 단계로 이동</button>
 </section>
 
 <!-- ============ amount ============ -->
@@ -580,7 +597,14 @@ function show(name){
 window.__screen = ()=>window.__task.screen;
 
 /* ============ 상태 ============ */
-const S = { bank:'카카오뱅크', account:'', amount:'', pw:'' };
+const S = { bank:'카카오뱅크', bankPicked:false, account:'', amount:'', pw:'' };
+
+/* ============ 계좌번호 표시 ============ */
+function renderAccount(){
+  document.getElementById('acc-input').textContent = S.account;
+  document.getElementById('acc-next')
+    .classList.toggle('on', S.account.length>0 && S.bankPicked);
+}
 
 /* ============ 은행 목록 ============ */
 const BANKS = ['신한','제주','국민','기업','농협','산업','수협','신협','우리','하나','한국씨티','카카오뱅크',
@@ -634,8 +658,10 @@ document.getElementById('phone').addEventListener('click', function(e){
 
   if(a==='go-recipient') show('recipient');
   else if(a==='back-home') show('home');
-  else if(a==='go-bank') show('bank');
-  else if(a==='back-recipient') show('recipient');
+  else if(a==='go-account') show('account');
+  else if(a==='open-bank') show('bank');
+  /* the bank sheet is a modal over the account screen, so ✕ returns there */
+  else if(a==='back-recipient') show('account');
   else if(a==='tab-bank'){
     document.getElementById('tab-bank').classList.add('act');
     document.getElementById('tab-sec').classList.remove('act');
@@ -650,18 +676,24 @@ document.getElementById('phone').addEventListener('click', function(e){
   }
   else if(a==='pick-bank'){
     S.bank = el.dataset.bank;
-    document.getElementById('picked-bank').textContent = S.bank;
+    S.bankPicked = true;
+    const pb = document.getElementById('picked-bank');
+    pb.textContent = S.bank;
+    pb.classList.add('set');
     log('pick_bank', { bank: S.bank });
+    renderAccount();
     show('account');
   }
   else if(a==='back-bank') show('bank');
+  else if(a==='acc-num'){
+    if(S.account.length<16){ S.account += el.dataset.v; renderAccount(); }
+  }
+  else if(a==='acc-del'){ S.account = S.account.slice(0,-1); renderAccount(); }
   else if(a==='account-next'){
-    const v = document.getElementById('acc-input').value.trim();
-    if(!v) return;
-    S.account = v;
-    document.getElementById('amt-acc').textContent = v;
-    document.getElementById('cf-acc').textContent = v;
-    log('account_entered', { account: v });
+    if(!S.account || !S.bankPicked) return;
+    document.getElementById('amt-acc').textContent = S.account;
+    document.getElementById('cf-acc').textContent = S.account;
+    log('account_entered', { account: S.account, bank: S.bank });
     show('amount');
   }
   else if(a==='back-account') show('account');
@@ -693,10 +725,7 @@ document.getElementById('phone').addEventListener('click', function(e){
   else if(a==='finish'){ log('task_end'); show('home'); }
 });
 
-/* 계좌번호 입력 시 다음 버튼 활성화 */
-document.getElementById('acc-input').addEventListener('input', function(){
-  document.getElementById('acc-next').classList.toggle('on', this.value.trim().length>0);
-});
+renderAccount();
 
 buildPwPad();
 log('screen_enter', { to:'home' });

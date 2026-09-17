@@ -29,12 +29,17 @@ FILES = [
     ("outputs/runtime_before.json", "runtime_before.json"),
     ("outputs/runtime_after.json", "runtime_after.json"),
     ("outputs/repaired_transfer.html", "repaired_transfer.html"),
+    # The restructured build is hand-written, not generated: outputs/ is
+    # ignored, so without this copy it lives nowhere git can restore it.
+    ("outputs/restructured_transfer.html", "restructured_transfer.html"),
+    ("outputs/audit_restructured.json", "audit_restructured.json"),
 ]
 
 # whole directories worth keeping, and what to take from them
 TREES = [
     ("logs/transfer", "logs/transfer", (".log",)),
     ("outputs/shots", "shots", (".png",)),
+    ("outputs/shots/restructured", "shots/restructured", (".png",)),
     # The example1 A/B run - the evidence that the senior KB produces traceable
     # rule ids where the upstream KB produced none. Same problem as the transfer
     # logs: reproducing it costs API spend, and nothing else records it.

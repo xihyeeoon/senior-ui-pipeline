@@ -25,8 +25,9 @@ SHOTS = os.path.join(ROOT, "outputs", "shots")
 STEPS = [
     ("home", None),
     ("recipient", "[data-action='go-recipient']"),
-    ("bank", "[data-action='go-bank']"),
-    ("account", "[data-action='pick-bank'][data-bank='카카오뱅크']"),
+    ("account", "[data-action='go-account']"),
+    # the bank sheet is a modal opened from the account screen
+    ("bank", "[data-action='open-bank']"),
     ("amount", "__account"),
     ("confirm", "__amount"),
     ("password", "[data-action='send']"),
@@ -45,7 +46,12 @@ async def main():
 
         for name, how in STEPS:
             if how == "__account":
-                await page.fill("#acc-input", "3333000000000")
+                # pick the bank in the sheet, which returns to the account
+                # screen, then tap the 13 digits on the app's own keypad
+                await page.click("[data-action='pick-bank'][data-bank='카카오뱅크']")
+                await asyncio.sleep(0.3)
+                for d in "3333000000000":
+                    await page.click("[data-action='acc-num'][data-v='%s']" % d)
                 await page.click("#acc-next")
             elif how == "__amount":
                 for d in "10000":

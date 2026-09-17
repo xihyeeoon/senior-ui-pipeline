@@ -1,0 +1,36 @@
+{
+  "name": "restructured",
+  "note": "LLM-restructured design, 9 screens. Not a repair of the original document, so the per-screen structural comparison is skipped - see derived_from_original. This drives the long path (a first-time account) so every screen is exercised; the saved-recipient path is 5 taps shorter and skips accno/bank/whoconfirm.",
+  "derived_from_original": false,
+  "required_ids": ["phone", "acc-display", "acc-count", "acc-next", "bank-guess",
+                   "bank-search", "bank-list", "wc-name", "wc-acc", "am-who",
+                   "amt-display", "amt-korean", "amt-next", "rv-who", "rv-acc",
+                   "rv-amt", "rv-rest", "pw-dots", "pwpad", "dn-amt", "dn-name"],
+  "steps": [
+    {"screen": "start"},
+    {"screen": "who", "click": "[data-action='go-who']"},
+    {"screen": "accno", "click": "[data-action='go-accno']"},
+    {"screen": "bank", "do": [
+      {"type": "{ACCOUNT}", "key": "[data-action='acc-num'][data-v='%s']"},
+      {"click": "#acc-next"}
+    ]},
+    {"screen": "whoconfirm", "click": "[data-action='bank-yes']"},
+    {"screen": "amount", "click": "[data-action='who-yes']"},
+    {"screen": "review", "do": [
+      {"type": "{AMOUNT}", "key": "[data-action='amt-num'][data-v='%s']"},
+      {"click": "#amt-next"}
+    ]},
+    {"screen": "auth", "click": "[data-action='send']"},
+    {"screen": "done", "do": [
+      {"click": "[data-action='use-pw']"},
+      {"wait": 0.2},
+      {"repeat": 4, "click": "#pwpad [data-action='pw']", "wait": 0.15}
+    ]}
+  ],
+  "expect": {
+    "whoconfirm": [["#wc-name", "{NAME}"]],
+    "review": [["#rv-acc", "{ACCOUNT}"], ["#rv-amt", "{AMOUNT_SHOWN}"]],
+    "done": [["#dn-amt", "{AMOUNT_SHOWN}"], ["#dn-name", "{NAME}"]]
+  },
+  "done_amount": "#dn-amt"
+}

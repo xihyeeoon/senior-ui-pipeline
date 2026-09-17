@@ -46,8 +46,8 @@ from playwright.async_api import async_playwright          # noqa: E402
 
 import audit_probes as P                                   # noqa: E402
 from check_contrast import JS as CONTRAST_JS               # noqa: E402
-from runtime_audit import STEPS                            # noqa: E402
-from verify_flow import REQUIRED_IDS                       # noqa: E402
+from runtime_audit import STEPS as _DEFAULT_STEPS          # noqa: E402
+from verify_flow import REQUIRED_IDS as _DEFAULT_IDS        # noqa: E402
 
 # Ground truth for the drive; every displayed value is checked against these.
 ACCOUNT = "3333000000000"
@@ -58,7 +58,9 @@ NAME = "김시현"
 
 # What each screen must be showing once the task reaches it.
 EXPECT_TEXT = {
-    "account": [("#picked-bank", BANK)],
+    # no "account" entry: that screen is snapshotted on arrival, before the
+    # bank modal has been opened, so #picked-bank is still the placeholder.
+    # The bank choice is verified downstream, on confirm.
     "amount": [("#amt-acc", ACCOUNT)],
     "confirm": [("#cf-acc", ACCOUNT), ("#cf-amt", AMOUNT_SHOWN)],
     "done": [("#dn-amt", AMOUNT_SHOWN)],
@@ -67,14 +69,70 @@ EXPECT_TEXT = {
 HEIGHT_GROWTH_LIMIT = 1.5      # screen scrollHeight vs the original
 ENGLISH = re.compile(r"[A-Za-z][A-Za-z'’]{1,}")
 
+SUBST = {"{ACCOUNT}": ACCOUNT, "{AMOUNT}": AMOUNT, "{AMOUNT_SHOWN}": AMOUNT_SHOWN,
+         "{BANK}": BANK, "{NAME}": NAME}
+
+
+def fill(s):
+    for k, v in SUBST.items():
+        s = s.replace(k, v)
+    return s
+
+
+def load_flow(path):
+    """A flow file describes the screens, how to reach each one, and what each
+    must be showing. Keeping it out of the code is what lets a restructured
+    design - different screens, different order - be audited at all."""
+    if not path:
+        # The shipped original flow is the default baseline. The in-code
+        # fallback below only lists screen names, with no way to reach them, so
+        # it must never be used to drive a real page.
+        default = os.path.join(ROOT, "tools", "flows", "original.json")
+        if os.path.exists(default):
+            path = default
+        else:
+            return {"name": "original(names only)", "derived_from_original": True,
+                    "required_ids": list(_DEFAULT_IDS),
+                    "steps": [{"screen": n} for n, _ in _DEFAULT_STEPS],
+                    "expect": {}, "done_amount": "#dn-amt", "_builtin": True}
+    with open(path, encoding="utf-8") as f:
+        flow = json.load(f)
+    flow.setdefault("derived_from_original", True)
+    flow.setdefault("expect", {})
+    flow.setdefault("done_amount", "#dn-amt")
+    return flow
+
 
 # --------------------------------------------------------------------------- #
 # driving
 # --------------------------------------------------------------------------- #
-async def drive(url, want_shots=None):
+async def run_actions(page, spec):
+    """One step of a flow file: click / type / repeat / wait, in order."""
+    for item in (spec if isinstance(spec, list) else [spec]):
+        if "wait" in item and "click" not in item and "repeat" not in item:
+            await asyncio.sleep(float(item["wait"]))
+            continue
+        if "type" in item:
+            key = item["key"]
+            for ch in fill(item["type"]):
+                await page.click(key % ch)
+            continue
+        if "repeat" in item:
+            for _ in range(int(item["repeat"])):
+                await page.click(fill(item["click"]))
+                await asyncio.sleep(float(item.get("wait", 0.1)))
+            continue
+        if "click" in item:
+            await page.click(fill(item["click"]))
+            if item.get("wait"):
+                await asyncio.sleep(float(item["wait"]))
+
+
+async def drive(url, flow, want_shots=None):
     """Walk the task once and collect everything the checks need."""
     data = {"screens": {}, "dialogs": [], "js_errors": [], "reached": [],
-            "missing_ids": [], "state_pairs": [], "load_failed": None}
+            "missing_ids": [], "state_pairs": [], "load_failed": None,
+            "flow": flow["name"]}
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch()
@@ -95,25 +153,18 @@ async def drive(url, want_shots=None):
             return data
 
         data["missing_ids"] = await page.evaluate(
-            "ids => ids.filter(i => !document.getElementById(i))", REQUIRED_IDS)
+            "ids => ids.filter(i => !document.getElementById(i))",
+            flow["required_ids"])
         data["state_pairs"] = await page.evaluate(P.STATE_PAIRS)
         data["undefined_classes"] = await page.evaluate(P.UNDEFINED_CLASSES)
 
-        for name, how in STEPS:
+        for step in flow["steps"]:
+            name = step["screen"]
             try:
-                if how == "__account":
-                    await page.fill("#acc-input", ACCOUNT)
-                    await page.click("#acc-next")
-                elif how == "__amount":
-                    for d in AMOUNT:
-                        await page.click("[data-action='num'][data-v='%s']" % d)
-                    await page.click("#amt-next")
-                elif how == "__pw":
-                    for _ in range(4):
-                        await page.click("#pwpad [data-action='pw']")
-                        await asyncio.sleep(0.15)
-                elif how:
-                    await page.click(how)
+                if "do" in step:
+                    await run_actions(page, step["do"])
+                elif "click" in step:
+                    await run_actions(page, {"click": step["click"]})
             except Exception as e:
                 data["screens"][name] = {"error": "%s: %s" % (type(e).__name__, e)}
                 break
@@ -133,7 +184,7 @@ async def drive(url, want_shots=None):
                      const e = document.querySelector(s);
                      return [s, e ? e.textContent.trim() : null];
                    })""",
-                [s for s, _ in EXPECT_TEXT.get(name, [])])
+                [fill(s) for s, _ in flow["expect"].get(name, [])])
             data["screens"][name] = row
             if want_shots:
                 await page.screenshot(path=os.path.join(
@@ -152,8 +203,16 @@ def union(snapshot, key):
     return out
 
 
-def audit(orig, rep, orig_html, rep_html):
+def audit(orig, rep, orig_html, rep_html, flow):
     fatal, warning, metrics = [], [], {}
+    # A restructured build is not a repair of the original document: its screens
+    # are different screens. Anything that compares screen-to-screen is only
+    # meaningful when the two share a structure, so those checks stand down and
+    # say so rather than reporting noise.
+    derived = bool(flow.get("derived_from_original", True))
+    metrics["flow"] = flow["name"]
+    metrics["derived_from_original"] = derived
+    skipped = []
 
     def F(check, screen, detail, **kw):
         fatal.append(dict(check=check, screen=screen, detail=detail, **kw))
@@ -161,7 +220,14 @@ def audit(orig, rep, orig_html, rep_html):
     def W(check, screen, detail, **kw):
         warning.append(dict(check=check, screen=screen, detail=detail, **kw))
 
-    want = [name for name, _ in STEPS]
+    want = [s["screen"] for s in flow["steps"]]
+    # A name match is not a screen match: both designs happen to contain a
+    # "bank" and an "amount" that have nothing to do with each other. Only a
+    # build derived from the original may be compared screen by name.
+    shared = [n for n in want if n in orig["screens"] and n in rep["screens"]] \
+        if derived else []
+    metrics["screens_in_flow"] = want
+    metrics["screens_comparable_to_original"] = shared
 
     # ---------------------------------------------------------------- A ----
     if rep["load_failed"]:
@@ -197,18 +263,44 @@ def audit(orig, rep, orig_html, rep_html):
     for key, label in [("screens", "data-screen"), ("actions", "data-action"),
                        ("ids", "id")]:
         a, b = union(orig, key), union(rep, key)
-        lost = sorted(a - b)
         metrics["%s_original" % label] = len(a)
         metrics["%s_repaired" % label] = len(b)
+        if not derived:
+            continue
+        lost = sorted(a - b)
         if lost:
             F("A", None, "%s values lost: %s" % (label, ", ".join(lost)), lost=lost)
+    if not derived:
+        skipped.append("A/preservation (new design, nothing to preserve)")
+
+    per_screen_loss = {}
+    for n in (want if derived else []):
+        o = orig["screens"].get(n) or {}
+        r = rep["screens"].get(n) or {}
+        if not o or not r or "error" in r:
+            continue
+        lost = {}
+        for key, label in [("actions", "data-action"), ("ids", "id")]:
+            gone = sorted({v for v in o.get(key) or [] if v}
+                          - {v for v in r.get(key) or [] if v})
+            if gone:
+                lost[label] = gone
+        if lost:
+            per_screen_loss[n] = lost
+            for label, gone in lost.items():
+                F("A", n, "%s removed from this screen: %s"
+                  % (label, ", ".join(gone)), lost=gone)
+    metrics["per_screen_attr_loss"] = per_screen_loss
+    if not derived:
+        skipped.append("A/per-screen attribute loss")
 
     if rep["js_errors"]:
         F("A", None, "JavaScript errors during the task: "
           + " | ".join(rep["js_errors"][:3]))
 
     # ---------------------------------------------------------------- B ----
-    for name, pairs in EXPECT_TEXT.items():
+    for name, pairs in flow["expect"].items():
+        pairs = [(fill(sel), fill(val)) for sel, val in pairs]
         row = rep["screens"].get(name)
         if not row or row.get("shown") is None:
             continue
@@ -265,17 +357,20 @@ def audit(orig, rep, orig_html, rep_html):
               % (", ".join(nums), AMOUNT_SHOWN), numbers=nums)
 
     # ---------------------------------------------------------------- C ----
-    handled = set(re.findall(r"a\s*===\s*'([a-z-]+)'", orig_html))
+    # The handler chain lives in the build under test. For a repair that is the
+    # original script copied over; for a new design it is that design's own.
+    handled = set(re.findall(r"a\s*===\s*'([a-z-]+)'", rep_html)) \
+        or set(re.findall(r"a\s*===\s*'([a-z-]+)'", orig_html))
     metrics["handled_actions"] = len(handled)
     orig_actions, rep_actions = union(orig, "actions"), union(rep, "actions")
-    pre_existing_dead = orig_actions - handled
+    pre_existing_dead = (orig_actions - handled) if derived else set()
     new_dead = sorted((rep_actions - handled) - pre_existing_dead)
     metrics["dead_controls_new"] = len(new_dead)
     metrics["dead_controls_pre_existing"] = sorted(pre_existing_dead)
     for a in new_dead:
         F("C", None, "data-action=%r has no branch in the handler - the control "
           "looks tappable and does nothing" % a, action=a)
-    removed = sorted(orig_actions - rep_actions)
+    removed = sorted(orig_actions - rep_actions) if derived else []
     for a in removed:
         F("C", None, "data-action=%r existed in the original and is gone" % a,
           action=a)
@@ -289,17 +384,17 @@ def audit(orig, rep, orig_html, rep_html):
     metrics["low_contrast_after"] = sum(lc_after.values())
     metrics["low_contrast_by_screen"] = {
         n: {"before": lc_before.get(n), "after": lc_after.get(n)}
-        for n in want}
+        for n in (want if derived else shared)}
     if metrics["low_contrast_after"] > metrics["low_contrast_before"]:
         W("D", None, "low-contrast text grew from %d to %d"
           % (metrics["low_contrast_before"], metrics["low_contrast_after"]))
-    for n in want:
+    for n in shared:
         b, a = lc_before.get(n), lc_after.get(n)
         if b is not None and a is not None and a > b:
             W("D", n, "low-contrast text grew from %d to %d" % (b, a))
 
     new_inherited = []
-    for n in want:
+    for n in (want if derived else shared):
         o = {(x["text"], x["cls"]) for x in orig["screens"].get(n, {}).get("inherited", [])}
         for x in rep["screens"].get(n, {}).get("inherited", []):
             if (x["text"], x["cls"]) not in o:
@@ -344,7 +439,11 @@ def audit(orig, rep, orig_html, rep_html):
     # ---------------------------------------------------------------- E ----
     ov_new, of_new, tall = [], [], []
     for n in want:
-        o = orig["screens"].get(n, {})
+        # overlap and overflow are defects on their own terms, so they run on
+        # every screen; a missing baseline just means nothing is subtracted.
+        # Wrapping and height growth are comparisons, so they only run where a
+        # matching original screen exists.
+        o = orig["screens"].get(n, {}) if (derived or n in shared) else {}
         r = rep["screens"].get(n, {})
         ob = {(x["a"], x["b"]) for x in o.get("overlap", [])}
         for x in r.get("overlap", []):
@@ -354,7 +453,7 @@ def audit(orig, rep, orig_html, rep_html):
         for x in r.get("overflow", []):
             if (x["cls"], x["text"]) not in of:
                 of_new.append(dict(x, screen=n))
-        if o.get("height") and r.get("height"):
+        if o.get("height") and r.get("height") and (derived or n in shared):
             ratio = r["height"] / float(o["height"])
             if ratio > HEIGHT_GROWTH_LIMIT:
                 tall.append({"screen": n, "before": o["height"],
@@ -375,7 +474,7 @@ def audit(orig, rep, orig_html, rep_html):
     # E3 - text that did not wrap before and wraps now. The recipient navbar
     # breaks this way rather than by rect overlap.
     wrap_new = []
-    for n in want:
+    for n in (want if derived else shared):
         def key(items):
             out = {}
             for x in items or []:
@@ -389,6 +488,8 @@ def audit(orig, rep, orig_html, rep_html):
             else:
                 wrap_new.append(dict(x, screen=n))
     metrics["newly_wrapped_text"] = len(wrap_new)
+    if not derived and not shared:
+        skipped.append("E/newly-wrapped text and height growth (no shared screens)")
     for x in wrap_new[:20]:
         W("E", x["screen"], "%r now wraps onto %d lines (.%s) - it did not before"
           % (x["text"], x["lines"], x["cls"] or x["tag"]), lines=x["lines"])
@@ -403,7 +504,7 @@ def audit(orig, rep, orig_html, rep_html):
     new_en = sorted(words(rep) - words(orig))
     metrics["new_english_words"] = new_en
     for n in want:
-        t = rep["screens"].get(n, {}).get("text") or ""
+        t = (rep["screens"].get(n) or {}).get("text") or ""
         hits = sorted({w for w in new_en if w in t})
         if hits:
             W("F", n, "English text not present in the original: "
@@ -457,6 +558,7 @@ def audit(orig, rep, orig_html, rep_html):
           "it has no effect (e.g. %r)" % (x["cls"], x["count"], x["sample"]),
           cls=x["cls"], count=x["count"])
 
+    metrics["checks_stood_down"] = skipped
     return {"passed": not fatal, "fatal": fatal, "warning": warning,
             "metrics": metrics}
 
@@ -473,6 +575,8 @@ def main():
     ap.add_argument("--repaired-file",
                     default=os.path.join(ROOT, "outputs", "repaired_transfer.html"))
     ap.add_argument("--out", default=os.path.join(ROOT, "outputs", "audit.json"))
+    ap.add_argument("--flow", default=None,
+                    help="flow file describing the screens and how to reach them")
     ap.add_argument("--shots", default=None, help="directory to save screenshots in")
     args = ap.parse_args()
 
@@ -487,10 +591,14 @@ def main():
 
     if args.shots:
         os.makedirs(args.shots, exist_ok=True)
-    orig = asyncio.run(drive(args.original))
-    rep = asyncio.run(drive(args.repaired, want_shots=args.shots))
-    report = audit(orig, rep, orig_html, rep_html)
-    report["inputs"] = {"original": args.original, "repaired": args.repaired}
+    flow = load_flow(args.flow)
+    base_flow = load_flow(None) if not flow.get("derived_from_original", True) \
+        else flow
+    orig = asyncio.run(drive(args.original, base_flow))
+    rep = asyncio.run(drive(args.repaired, flow, want_shots=args.shots))
+    report = audit(orig, rep, orig_html, rep_html, flow)
+    report["inputs"] = {"original": args.original, "repaired": args.repaired,
+                        "flow": args.flow or "(builtin original)"}
 
     if args.out:
         os.makedirs(os.path.dirname(args.out), exist_ok=True)

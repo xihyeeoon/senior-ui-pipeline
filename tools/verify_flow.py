@@ -87,14 +87,18 @@ async def main():
             return ok
 
         await step("tap 이체", lambda: page.click("[data-action='go-recipient']"), "recipient")
-        await step("tap 계좌번호 직접 입력", lambda: page.click("[data-action='go-bank']"), "bank")
+        await step("tap 계좌번호 직접 입력",
+                   lambda: page.click("[data-action='go-account']"), "account")
+        await step("open 은행 선택",
+                   lambda: page.click("[data-action='open-bank']"), "bank")
         await step("pick 카카오뱅크",
                    lambda: page.click("[data-action='pick-bank'][data-bank='카카오뱅크']"), "account")
 
         async def type_account():
-            await page.fill("#acc-input", "3333000000000")
+            for d in "3333000000000":
+                await page.click("[data-action='acc-num'][data-v='%s']" % d)
             await page.click("#acc-next")
-        await step("type 계좌번호 + 다음", type_account, "amount")
+        await step("계좌번호 13자리 + 다음", type_account, "amount")
 
         async def enter_amount():
             for d in "10000":
