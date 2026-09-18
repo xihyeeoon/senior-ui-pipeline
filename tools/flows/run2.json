@@ -1,0 +1,34 @@
+{
+  "name": "run2",
+  "note": "LLM-restructured design, second run: 7 screens. Differs from run 1 (restructured.json) in two merges - the bank step lives inside the account screen as a strip under the number, and the payee check lives at the top of the amount screen instead of being its own yes/no screen. Same long path (first-time account) so every screen is exercised; the saved-recipient path skips account.",
+  "derived_from_original": false,
+  "required_ids": ["phone", "acc-display", "acc-count", "acc-next", "bank-guess",
+                   "bank-search", "bank-list", "am-name", "am-acc",
+                   "amt-display", "amt-korean", "amt-next", "rv-who", "rv-acc",
+                   "rv-amt", "rv-rest", "pw-dots", "pwpad", "dn-amt", "dn-name"],
+  "steps": [
+    {"screen": "start"},
+    {"screen": "who", "click": "[data-action='go-who']"},
+    {"screen": "account", "click": "[data-action='go-account']"},
+    {"screen": "amount", "do": [
+      {"type": "{ACCOUNT}", "key": "[data-action='acc-num'][data-v='%s']"},
+      {"click": "#acc-next"}
+    ]},
+    {"screen": "review", "do": [
+      {"type": "{AMOUNT}", "key": "[data-action='amt-num'][data-v='%s']"},
+      {"click": "#amt-next"}
+    ]},
+    {"screen": "auth", "click": "[data-action='send']"},
+    {"screen": "done", "do": [
+      {"click": "[data-action='use-pw']"},
+      {"wait": 0.2},
+      {"repeat": 4, "click": "#pwpad [data-action='pw']", "wait": 0.15}
+    ]}
+  ],
+  "expect": {
+    "amount": [["#am-name", "{NAME}"], ["#am-acc", "{BANK}"]],
+    "review": [["#rv-acc", "{ACCOUNT}"], ["#rv-amt", "{AMOUNT_SHOWN}"]],
+    "done": [["#dn-amt", "{AMOUNT_SHOWN}"], ["#dn-name", "{NAME}"]]
+  },
+  "done_amount": "#dn-amt"
+}

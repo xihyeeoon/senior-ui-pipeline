@@ -1,0 +1,59 @@
+{
+  "passed": true,
+  "fatal": [],
+  "warning": [],
+  "metrics": {
+    "flow": "run2",
+    "derived_from_original": false,
+    "screens_in_flow": [
+      "start",
+      "who",
+      "account",
+      "amount",
+      "review",
+      "auth",
+      "done"
+    ],
+    "screens_comparable_to_original": [],
+    "screens_expected": 7,
+    "screens_reached": 7,
+    "done_amount": "10,000",
+    "data-screen_original": 8,
+    "data-screen_repaired": 7,
+    "data-action_original": 23,
+    "data-action_repaired": 27,
+    "id_original": 15,
+    "id_repaired": 32,
+    "per_screen_attr_loss": {},
+    "injected_dialog_calls": 0,
+    "onclick_added": 0,
+    "dialogs_during_task": 0,
+    "handled_actions": 27,
+    "dead_controls_new": 0,
+    "dead_controls_pre_existing": [],
+    "low_contrast_before": 66,
+    "low_contrast_after": 3,
+    "low_contrast_by_screen": {},
+    "new_inherited_colour": 0,
+    "low_contrast_gained_text": 0,
+    "overlaps_new": 0,
+    "overflows_new": 0,
+    "screens_much_taller": 0,
+    "newly_wrapped_text": 0,
+    "new_english_words": [],
+    "new_english_words_markup_only": [],
+    "state_pairs_checked": 1,
+    "state_pairs_collapsed": 0,
+    "undefined_classes_new": [],
+    "checks_stood_down": [
+      "A/preservation (new design, nothing to preserve)",
+      "A/per-screen attribute loss",
+      "E/newly-wrapped text and height growth (no shared screens)"
+    ]
+  },
+  "inputs": {
+    "original": "http://localhost:3003/inputs/original_transfer.html",
+    "repaired": "http://localhost:3003/outputs/restructured_run2.html",
+    "flow": "tools/flows/run2.json"
+  }
+}

@@ -33,6 +33,11 @@ FILES = [
     # ignored, so without this copy it lives nowhere git can restore it.
     ("outputs/restructured_transfer.html", "restructured_transfer.html"),
     ("outputs/audit_restructured.json", "audit_restructured.json"),
+    # Runs 2 and 3 of the same restructuring brief; see docs/restructure-runs.md
+    ("outputs/restructured_run2.html", "restructured_run2.html"),
+    ("outputs/audit_run2.json", "audit_run2.json"),
+    ("outputs/restructured_run3.html", "restructured_run3.html"),
+    ("outputs/audit_run3.json", "audit_run3.json"),
 ]
 
 # whole directories worth keeping, and what to take from them
@@ -40,6 +45,8 @@ TREES = [
     ("logs/transfer", "logs/transfer", (".log",)),
     ("outputs/shots", "shots", (".png",)),
     ("outputs/shots/restructured", "shots/restructured", (".png",)),
+    ("outputs/shots/run2", "shots/run2", (".png",)),
+    ("outputs/shots/run3", "shots/run3", (".png",)),
     # The example1 A/B run - the evidence that the senior KB produces traceable
     # rule ids where the upstream KB produced none. Same problem as the transfer
     # logs: reproducing it costs API spend, and nothing else records it.
