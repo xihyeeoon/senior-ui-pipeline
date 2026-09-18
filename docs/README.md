@@ -80,6 +80,17 @@ of two rendering failures: example1's `bg-primary`/`text-primary` and the
 transfer run's `sr-only`. A class no stylesheet defines does nothing, so a label
 meant to be hidden shows up and a colour meant to be applied never lands.
 
+The JSON is for machines. `tools/audit_report.py` turns any number of those
+files into one side-by-side Markdown table (overview, per-check A–H, the
+metrics behind each check, what was stood down, and with `--details` every
+finding):
+
+```powershell
+.\.venv\Scripts\python.exe tools\audit_report.py 규칙기반=results\audit.json `
+   Run1=results\audit_restructured.json Run2=results\audit_run2.json Run3=results\audit_run3.json `
+   --details --out results\audit-report.md
+```
+
 It reuses `tools/verify_flow.py` (required ids), `tools/check_contrast.py` (the
 WCAG probe) and `tools/runtime_audit.py` (the flow definition); those three still
 work standalone. The in-page JS lives in `tools/audit_probes.py`.
