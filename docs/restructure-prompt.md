@@ -1,0 +1,126 @@
+# 재구성 프롬프트 템플릿
+
+`tools/run_restructure.py` 가 이 파일을 읽어 LLM 에 보낸다. `<!-- PROMPT -->` 와
+`<!-- /PROMPT -->` 사이만 프롬프트이고, 그 밖은 사람용 메모다.
+
+**출처 메모.** Run 1 (`outputs/restructured_transfer.html`) 은 대화에서 직접 지시해 만들었고
+그 문장은 저장소에 남아 있지 않다. 아래 본문은 `restructure-runs.md` 에 인용된 브리프
+("고령자가 이체 과업을 끝낼 수 있게 화면을 다시 설계하라"), `restructure-changelog.md` 의
+"규칙을 주지 않고 과업 수행의 어려움만 보고 설계" 원칙, 그리고 Run 1 이 실제로 지킨 기술
+계약(검사기 `tools/audit.py` 가 요구하는 것)으로 복원한 것이다. 원래 쓰던 문장이 있으면 본문
+1·2 절을 그것으로 바꾸면 된다. 3·4 절이 자동화를 위해 새로 붙인 두 가지다.
+
+치환 자리: `{{ORIGINAL_HTML}}` (원본 파일 전체), `{{RETRY_BLOCK}}` (재시도일 때만 채워짐,
+첫 시도는 빈 문자열).
+
+<!-- PROMPT -->
+## 1. 과제
+
+아래는 은행 앱의 이체 화면 시제품이다 (HTML 한 파일, 8화면). 60대 이상 고령 사용자가
+**이체 과업 — 받는 사람 정하기, 계좌번호와 은행 넣기, 금액 넣기, 확인, 본인 확인, 완료 —
+을 혼자서 끝낼 수 있도록** 이 화면들을 다시 설계하라.
+
+- 규칙 목록은 주지 않는다. 각 화면에서 고령 사용자가 어디서 멈추고, 무엇을 잘못 누르고,
+  무엇을 못 읽을지를 보고 설계하라.
+- 화면을 몇 개로 나눌지, 어떤 순서로 둘지는 자유다. 원본 구조를 지킬 필요 없다.
+- 시제품이므로 서버는 없다. 은행 추정, 예금주 조회 같은 것은 파일 안의 표로 흉내 낸다.
+- 화면의 모든 글은 한국어로 쓴다. 영어 단어를 새로 넣지 않는다.
+
+## 2. 지켜야 할 기술 계약 (검사기가 이 형식으로 화면을 몰고 다닌다)
+
+- 파일 하나. 외부 자원 없음. `<html lang="ko">`.
+- `<div id="phone">` 안에 화면들. 폭 390px, 높이 844px.
+- 화면 하나는 `<section class="screen" data-screen="이름">`. 보이는 화면에만 `on` 클래스.
+  화면 이름은 영문 소문자.
+- 모든 조작은 `data-action="이름"` 속성으로 표시하고, `#phone` 에 붙인 **하나의** 클릭
+  처리기 안에서 `const a = el.dataset.action;` 뒤 `if(a==='이름'){…} else if(a==='이름'){…}`
+  형식으로 분기한다. 처리되지 않는 `data-action` 을 남기지 마라. `onclick` 속성, `alert()`,
+  `confirm()`, `prompt()` 는 쓰지 마라.
+- 숫자판은 버튼마다 `data-action` 과 `data-v="숫자"` 를 둔다.
+- 전역에 `window.__screen()` (현재 화면 이름 반환), `window.__log` (배열), `window.__startTask()`,
+  `window.__dump()` 를 둔다. 화면이 바뀔 때마다 `__log` 에 `{type:'screen_enter', to:이름}` 을 넣는다.
+- 완료 화면에는 보낸 금액을 담는 `id="dn-amt"` 요소가 있어야 하고, 그 텍스트는 `10,000` 처럼
+  천 단위 쉼표 숫자여야 한다.
+- 시제품 데이터: 잔액 100,000원. 계좌번호 `3333000000000` 은 카카오뱅크 김시현 계좌로 조회된다.
+  검사기는 이 계좌로 10,000원을 보내는 과업을 수행한다.
+- 텍스트 대비는 흰 배경에서 4.5:1 이상. 글자 색을 상속에만 맡기지 말고 규칙으로 지정하라.
+- 마크업에서 쓰는 클래스는 모두 `<style>` 안에 정의하라.
+
+## 3. 흐름 명세도 함께 출력하라
+
+검사기는 화면을 어떻게 지나가는지 모른다. 네가 만든 설계를 검사기가 처음부터 끝까지 몰고
+갈 수 있도록 **흐름 명세 JSON** 을 HTML 과 함께 출력하라. 형식은 다음과 같다.
+
+```json
+{
+  "name": "auto",
+  "note": "한 줄 설명",
+  "derived_from_original": false,
+  "required_ids": ["phone", "dn-amt", "..."],
+  "steps": [
+    {"screen": "start"},
+    {"screen": "who", "click": "[data-action='go-who']"},
+    {"screen": "amount", "do": [
+      {"type": "{ACCOUNT}", "key": "[data-action='acc-num'][data-v='%s']"},
+      {"click": "#acc-next"}
+    ]},
+    {"screen": "done", "do": [
+      {"repeat": 4, "click": "#pwpad [data-action='pw']", "wait": 0.15}
+    ]}
+  ],
+  "expect": {
+    "done": [["#dn-amt", "{AMOUNT_SHOWN}"]]
+  },
+  "done_amount": "#dn-amt"
+}
+```
+
+규칙:
+- `steps` 는 검사기가 지나가는 순서. 각 항목의 `screen` 은 그 단계를 수행한 **뒤에 도착해
+  있어야 할** 화면 이름(`data-screen` 값)이다. 첫 항목은 시작 화면이고 동작이 없다.
+- 한 단계의 동작은 `click` 하나이거나 `do` 배열이다. `do` 의 항목은 `{"click": 선택자}`,
+  `{"type": 문자열, "key": 선택자틀}` (문자열의 글자마다 `%s` 자리에 넣어 클릭),
+  `{"repeat": n, "click": 선택자, "wait": 초}`, `{"wait": 초}` 중 하나.
+- 치환 문자열: `{ACCOUNT}` = 3333000000000, `{AMOUNT}` = 10000, `{AMOUNT_SHOWN}` = 10,000,
+  `{BANK}` = 카카오뱅크, `{NAME}` = 김시현.
+- 모든 화면을 최소 한 번 지나가야 한다 (처음 보내는 계좌를 직접 입력하는 가장 긴 경로).
+- `required_ids` 는 네 HTML 에 실제로 있는 id 만 적는다. `phone` 과 `dn-amt` 는 반드시 포함.
+- `expect` 의 `done` 에는 반드시 `["#dn-amt", "{AMOUNT_SHOWN}"]` 이 있어야 한다.
+- `derived_from_original` 은 `false`.
+- 선택자는 네 HTML 에 있는 것만 쓴다. 검사기는 없는 선택자에서 멈춘다.
+
+## 4. 출력 형식
+
+답은 코드 블록 두 개만으로 구성한다. 설명 문장을 앞뒤에 붙이지 마라.
+
+1. ```` ```html ```` 블록 — 파일 전체
+2. ```` ```json ```` 블록 — 흐름 명세
+
+{{RETRY_BLOCK}}
+
+## 원본
+
+```html
+{{ORIGINAL_HTML}}
+```
+<!-- /PROMPT -->
+
+## 재시도 블록의 모양
+
+`{{RETRY_BLOCK}}` 은 이전 시도가 검사에 떨어졌을 때만 채워진다. 스크립트가 만드는 내용:
+
+```
+## 이전 시도의 실패
+
+직전 출력은 검사에서 다음 fatal 에 걸렸다. 아래 목록을 모두 고쳐서 HTML 과 흐름 명세를
+다시 전체로 출력하라. 설계를 처음부터 새로 하지 말고 직전 출력을 고쳐라.
+
+- [A] screen=bank: never reached (task stopped after 3 of 9 screens)
+- [C] data-action='bank-yes' has no branch in the handler - ...
+
+### 직전 흐름 명세
+```json … ```
+
+### 직전 HTML
+```html … ```
+```
