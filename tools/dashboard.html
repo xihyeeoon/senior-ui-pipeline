@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>파이프라인</title>
+<style>
+  :root{
+    --bg:#0F1216; --panel:#171B21; --panel2:#1E242C; --line:#2A323C;
+    --ink:#E8ECF1; --sub:#98A2B0; --dim:#6B7684;
+    --ok:#3DD68C; --bad:#FF6B6B; --warn:#FFB84D; --none:#4A5563;
+    --accent:#5B9DFF;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0; padding:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",
+      "Segoe UI",sans-serif; font-size:15px; line-height:1.55;}
+  a{color:var(--accent); text-decoration:none;}
+  a:hover{text-decoration:underline;}
+
+  header{padding:22px 28px 16px; border-bottom:1px solid var(--line);
+    display:flex; align-items:baseline; gap:16px; flex-wrap:wrap;}
+  header h1{font-size:19px; margin:0; font-weight:700; letter-spacing:-.01em;}
+  header .q{font-size:14px; color:var(--sub); flex:1 1 320px;}
+  header .when{font-size:12px; color:var(--dim); font-variant-numeric:tabular-nums;}
+  button.reload{background:var(--panel2); color:var(--ink); border:1px solid var(--line);
+    border-radius:8px; padding:7px 13px; font-size:13px; font-family:inherit;}
+  button.reload:hover{border-color:var(--accent);}
+
+  .wrap{display:grid; grid-template-columns:minmax(360px, 460px) 1fr; gap:0;
+    height:calc(100vh - 62px);}
+  @media (max-width: 900px){ .wrap{grid-template-columns:1fr; height:auto;} }
+
+  /* ---------- 왼쪽: 파이프라인 지도 ---------- */
+  .map{overflow-y:auto; padding:20px 20px 60px; border-right:1px solid var(--line);}
+  .stage{margin-bottom:6px;}
+  .stage-head{display:flex; align-items:center; gap:9px; padding:9px 4px 7px;}
+  .stage-head .dot{width:7px; height:7px; border-radius:50%; background:var(--dim); flex:0 0 7px;}
+  .stage-head h2{font-size:13px; margin:0; font-weight:700; letter-spacing:.02em;
+    text-transform:uppercase; color:var(--sub);}
+  .stage-note{font-size:13px; color:var(--dim); padding:0 4px 9px; line-height:1.5;}
+  .stage-tool{font-size:11.5px; color:var(--dim); padding:0 4px 10px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace; word-break:break-all;}
+
+  .node{width:100%; text-align:left; background:var(--panel); border:1px solid var(--line);
+    border-radius:11px; padding:13px 15px; margin-bottom:8px; cursor:pointer;
+    font-family:inherit; font-size:15px; color:var(--ink); display:block;
+    transition:border-color .12s, background .12s;}
+  .node:hover{border-color:#3A4552; background:var(--panel2);}
+  .node.sel{border-color:var(--accent); background:var(--panel2);}
+  .node .top{display:flex; align-items:center; gap:9px; margin-bottom:3px;}
+  .node .nm{font-weight:700; font-size:15px;}
+  .node .badge{font-size:11px; padding:2px 7px; border-radius:20px; font-weight:700;
+    letter-spacing:.02em; white-space:nowrap;}
+  .b-ok{background:rgba(61,214,140,.14); color:var(--ok);}
+  .b-bad{background:rgba(255,107,107,.14); color:var(--bad);}
+  .b-warn{background:rgba(255,184,77,.14); color:var(--warn);}
+  .b-none{background:rgba(107,118,132,.16); color:var(--dim);}
+  .node .meta{font-size:12px; color:var(--dim); font-variant-numeric:tabular-nums;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace; word-break:break-all;}
+  .node .flag{font-size:12px; color:var(--warn); margin-top:5px;}
+
+  .arrow{text-align:center; color:var(--line); font-size:15px; line-height:1; padding:1px 0 5px;}
+
+  /* ---------- 오른쪽: 상세 ---------- */
+  .detail{overflow-y:auto; padding:22px 26px 70px;}
+  .empty{color:var(--dim); padding:60px 20px; text-align:center; font-size:15px;}
+  .d-head{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:6px;}
+  .d-head h2{font-size:21px; margin:0;}
+  .d-desc{color:var(--sub); margin:0 0 16px; max-width:70ch;}
+  .path{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px;
+    color:var(--dim); background:var(--panel); border:1px solid var(--line);
+    border-radius:7px; padding:6px 10px; display:inline-block; margin-bottom:16px;
+    word-break:break-all;}
+
+  .tabs{display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:18px;
+    flex-wrap:wrap;}
+  .tabs button{background:transparent; border:0; border-bottom:2px solid transparent;
+    color:var(--sub); padding:9px 13px; font-size:14px; font-family:inherit; cursor:pointer;
+    font-weight:600;}
+  .tabs button.on{color:var(--ink); border-bottom-color:var(--accent);}
+  .tabs button:hover{color:var(--ink);}
+  .pane{display:none;} .pane.on{display:block;}
+
+  table{border-collapse:collapse; width:100%; font-size:13.5px; margin-bottom:18px;}
+  th,td{text-align:left; padding:8px 11px; border-bottom:1px solid var(--line);
+    vertical-align:top;}
+  th{color:var(--sub); font-weight:700; font-size:12px; text-transform:uppercase;
+    letter-spacing:.03em; white-space:nowrap;}
+  td.num{font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap;}
+  tr:last-child td{border-bottom:0;}
+  .cell-ok{color:var(--ok);} .cell-bad{color:var(--bad);} .cell-warn{color:var(--warn);}
+  .cell-dim{color:var(--dim);}
+
+  .stat-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;}
+  .stat{background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:11px 15px; min-width:118px;}
+  .stat .k{font-size:11.5px; color:var(--dim); text-transform:uppercase; letter-spacing:.03em;}
+  .stat .v{font-size:21px; font-weight:700; font-variant-numeric:tabular-nums; margin-top:2px;}
+
+  .finding{border-left:3px solid var(--line); padding:7px 0 7px 12px; margin-bottom:9px;}
+  .finding.f{border-left-color:var(--bad);}
+  .finding.w{border-left-color:var(--warn);}
+  .finding .hd{font-size:12px; color:var(--dim); margin-bottom:2px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
+  .finding .tx{font-size:13.5px; line-height:1.5;}
+
+  .frames{display:flex; gap:14px; flex-wrap:wrap; align-items:flex-start;}
+  .frame-box{background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:11px;}
+  .frame-box .cap{font-size:12px; color:var(--sub); margin-bottom:8px; display:flex;
+    justify-content:space-between; gap:10px; align-items:center;}
+  .frame-box iframe{border:0; width:390px; height:720px; background:#fff;
+    border-radius:8px; display:block;}
+  select{background:var(--panel2); color:var(--ink); border:1px solid var(--line);
+    border-radius:7px; padding:5px 9px; font-size:12.5px; font-family:inherit;}
+
+  .note{background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--accent);
+    border-radius:8px; padding:12px 15px; font-size:13.5px; color:var(--sub);
+    margin-bottom:18px; line-height:1.6;}
+  .note b{color:var(--ink);}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px;
+    background:var(--panel2); padding:1.5px 5px; border-radius:4px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>파이프라인</h1>
+  <div class="q">원본 이체 화면 하나가 두 갈래로 갈라져 무엇이 되었는지, 검사기가 무엇을 보았는지.</div>
+  <span class="when" id="when"></span>
+  <button class="reload" id="reload">새로고침</button>
+</header>
+
+<div class="wrap">
+  <div class="map" id="map"></div>
+  <div class="detail" id="detail"></div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let STATE = null, SELECTED = null, TAB = 'overview';
+
+/* 상태를 읽어 지도를 그린다 */
+async function load(){
+  const r = await fetch('/api/state', {cache:'no-store'});
+  STATE = await r.json();
+  $('#when').textContent = '읽은 시각 ' + STATE.generated.replace('T',' ');
+  drawMap();
+  if (SELECTED) select(SELECTED, true); else drawSummary();
+}
+
+/* 처음 열었을 때 보이는 화면: 지금 이 프로젝트가 어디까지 왔는지 */
+function drawSummary(){
+  const s = STATE.summary, se = STATE.sessions;
+  let h = '<div class="d-head"><h2>지금 상태</h2></div>' +
+    '<p class="d-desc">원본 이체 화면 하나를 두 가지 방법으로 고쳐 같은 검사기에 넣었습니다. ' +
+    '왼쪽 지도에서 아무 산출물이나 누르면 그 입출력과 검사 결과가 열립니다.</p>' +
+    '<div class="stat-row">' +
+      stat('프로토타입', s.prototypes, '') +
+      stat('검사함', s.audited, '') +
+      stat('통과', s.passing, s.passing ? 'cell-ok' : '') +
+      stat('실패', s.failing.length, s.failing.length ? 'cell-bad' : 'cell-ok') +
+      stat('피험자', se.participants, '') +
+    '</div>';
+
+  h += '<table><thead><tr><th>갈래</th><th>무엇을 넣어</th><th>무엇이 나왔나</th>' +
+       '<th>검사</th></tr></thead><tbody>' +
+    row('규칙 기반 수리', '원본 + 규칙 46개', '수리본 (8화면, 구조 그대로)', 'repaired') +
+    row('LLM 재구성', '원본만 (규칙 없이)', '재구성본 3개 (9·7·8화면)', 'run1') +
+    '</tbody></table>';
+
+  if (s.failing.length)
+    h += '<div class="note"><b>검사를 통과하지 못한 것</b><br>' +
+      s.failing.map(f => f.name + ' — fatal ' + f.fatal + '건').join('<br>') + '</div>';
+  if (s.stale.length)
+    h += '<div class="note"><b>입력보다 오래된 산출물</b><br>' + s.stale.join(', ') +
+      '<br>입력이 바뀌었으니 다시 만들어야 할 수 있습니다.</div>';
+  if (s.audit_stale.length)
+    h += '<div class="note"><b>검사 결과가 낡음</b><br>' + s.audit_stale.join(', ') +
+      '<br>빌드를 고친 뒤 다시 검사하지 않았습니다.</div>';
+
+  h += '<div class="note"><b>지금까지 알아낸 것</b><br>' +
+    '규칙 기반은 화면 <i>안</i>을 고치고 구조는 못 바꿉니다 (fatal 7건). ' +
+    'LLM 재구성은 구조를 바꾸고 검사를 통과했지만, 3회 반복하면 화면 수가 9·7·8로 갈라지는데도 ' +
+    '<b>검사기는 셋을 구분하지 못합니다</b> — 전부 fatal 0 / warning 0. ' +
+    '그래서 실제 고령 사용자에게 물어보는 실험이 남아 있습니다.</div>';
+
+  h += '<div class="note">실험 진행은 <code>tools/session.html</code> 을 폰에서, ' +
+       '집계는 <code>python tools/session_report.py</code> 로 봅니다.' +
+       (se.files ? ' 지금 세션 파일 ' + se.files + '개.' : ' 아직 세션이 없습니다.') + '</div>';
+
+  $('#detail').innerHTML = h;
+}
+
+function row(branch, input, output, key){
+  const a = find(key);
+  let verdict = '<span class="cell-dim">–</span>';
+  if (a && a.audit && a.audit.exists && a.audit.error === undefined)
+    verdict = a.audit.passed
+      ? '<span class="cell-ok">통과</span>'
+      : '<span class="cell-bad">fatal ' + a.audit.fatal + '</span>';
+  return '<tr><td><b>' + branch + '</b></td><td>' + input + '</td><td>' + output +
+         '</td><td>' + verdict + '</td></tr>';
+}
+
+function allArtefacts(){
+  return STATE.stages.flatMap(s => s.artefacts.map(a => ({...a, stage:s})));
+}
+function find(key){ return allArtefacts().find(a => a.key === key); }
+
+function statusOf(a){
+  if (!a.file.exists) return {cls:'b-none', label:'없음'};
+  if (a.audit && a.audit.exists && a.audit.error === undefined){
+    if (a.audit.passed) return {cls:'b-ok', label:'검사 통과'};
+    return {cls:'b-bad', label:'fatal ' + a.audit.fatal};
+  }
+  if (a.audit && !a.audit.exists) return {cls:'b-warn', label:'검사 안 함'};
+  return {cls:'b-none', label:'있음'};
+}
+
+function drawMap(){
+  const m = $('#map'); m.innerHTML = '';
+  const home = document.createElement('button');
+  home.className = 'node' + (SELECTED === null ? ' sel' : '');
+  home.style.marginBottom = '14px';
+  home.innerHTML = '<div class="top"><span class="nm">전체 보기</span></div>' +
+                   '<div class="meta">지금 상태 한눈에</div>';
+  home.onclick = () => { SELECTED = null; drawMap(); drawSummary(); };
+  m.appendChild(home);
+  STATE.stages.forEach((s, si) => {
+    const st = document.createElement('div'); st.className = 'stage';
+    st.innerHTML = '<div class="stage-head"><span class="dot"></span><h2>' + s.name + '</h2></div>' +
+      (s.note ? '<div class="stage-note">' + s.note + '</div>' : '') +
+      (s.tool ? '<div class="stage-tool">' + s.tool + '</div>' : '');
+    s.artefacts.forEach(a => {
+      const stat = statusOf(a);
+      const b = document.createElement('button');
+      b.className = 'node' + (SELECTED === a.key ? ' sel' : '');
+      b.onclick = () => select(a.key);
+      let meta = a.file.exists
+        ? (a.file.is_dir ? (a.file.count + '개 · ' + a.file.when)
+                         : (Math.round(a.file.size/1024) + 'KB · ' + a.file.when))
+        : (a.file.empty_dir ? a.path + ' (비어 있음)' : a.path);
+      b.innerHTML =
+        '<div class="top"><span class="nm">' + a.name + '</span>' +
+        '<span class="badge ' + stat.cls + '">' + stat.label + '</span></div>' +
+        '<div class="meta">' + meta + '</div>' +
+        (a.stale_against && a.stale_against.length
+          ? '<div class="flag">입력이 더 최신입니다 — 다시 만들어야 할 수 있습니다</div>' : '') +
+        (a.audit_stale ? '<div class="flag">검사 결과가 이 파일보다 오래됐습니다</div>' : '');
+      st.appendChild(b);
+    });
+    m.appendChild(st);
+    if (si < STATE.stages.length - 1) {
+      const ar = document.createElement('div'); ar.className = 'arrow'; ar.textContent = '↓';
+      m.appendChild(ar);
+    }
+  });
+}
+
+/* ---------- 상세 ---------- */
+function select(key, keepTab){
+  SELECTED = key;
+  if (!keepTab) TAB = 'overview';
+  drawMap();
+  const a = find(key);
+  if (!a) return;
+  const d = $('#detail');
+  const hasAudit = a.audit && a.audit.exists && a.audit.error === undefined;
+  const isProto = a.kind === 'prototype';
+
+  const tabs = [['overview','개요']];
+  if (hasAudit) tabs.push(['findings','검사 상세']);
+  if (isProto) tabs.push(['preview','화면 보기']);
+  if (a.kind === 'sessions') tabs.push(['sessions','세션']);
+
+  d.innerHTML =
+    '<div class="d-head"><h2>' + a.name + '</h2>' +
+      (a.screens ? '<span class="cell-dim">' + a.screens + '화면</span>' : '') + '</div>' +
+    (a.desc ? '<p class="d-desc">' + a.desc + '</p>' : '') +
+    '<div class="path">' + a.path + (a.file.exists ? '' : '  (없음)') + '</div>' +
+    '<div class="tabs">' + tabs.map(([id,label]) =>
+        '<button data-tab="' + id + '" class="' + (TAB===id?'on':'') + '">' + label + '</button>'
+      ).join('') + '</div>' +
+    '<div class="pane' + (TAB==='overview'?' on':'') + '" id="pane-overview">' + paneOverview(a) + '</div>' +
+    (hasAudit ? '<div class="pane' + (TAB==='findings'?' on':'') + '" id="pane-findings">' + paneFindings(a) + '</div>' : '') +
+    (isProto ? '<div class="pane' + (TAB==='preview'?' on':'') + '" id="pane-preview">' + panePreview(a) + '</div>' : '') +
+    (a.kind === 'sessions' ? '<div class="pane' + (TAB==='sessions'?' on':'') + '" id="pane-sessions">' + paneSessions() + '</div>' : '');
+
+  d.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+    TAB = b.dataset.tab; select(key, true);
+    if (TAB === 'preview') mountFrames(a);
+  });
+  if (TAB === 'preview') mountFrames(a);
+  d.scrollTop = 0;
+}
+
+function paneOverview(a){
+  if (!a.file.exists)
+    return '<div class="note">이 산출물이 아직 없습니다. 위 단계의 도구를 돌리면 생깁니다.</div>';
+  let h = '';
+  const au = a.audit;
+  if (au && au.exists && au.error === undefined){
+    h += '<div class="stat-row">' +
+      stat('검사', au.passed ? '통과' : '실패', au.passed ? 'cell-ok' : 'cell-bad') +
+      stat('fatal', au.fatal, au.fatal ? 'cell-bad' : 'cell-ok') +
+      stat('warning', au.warning, au.warning ? 'cell-warn' : 'cell-ok') +
+      (au.screens_reached != null
+        ? stat('화면 도달', au.screens_reached + '/' + au.screens_expected, '') : '') +
+      (au.low_contrast_after != null
+        ? stat('저대비 텍스트', au.low_contrast_before + ' → ' + au.low_contrast_after, '') : '') +
+      '</div>';
+
+    h += '<table><thead><tr><th>검사</th><th>내용</th><th class="num">fatal</th>' +
+         '<th class="num">warning</th></tr></thead><tbody>';
+    Object.entries(STATE.check_names).forEach(([c, name]) => {
+      const v = au.by_check[c] || {fatal:0, warning:0};
+      const down = (au.stood_down || []).some(s => s.startsWith(c + '/'));
+      h += '<tr><td><b>' + c + '</b></td><td>' + name +
+           (down ? ' <span class="cell-dim">· 일부 생략</span>' : '') + '</td>' +
+           '<td class="num ' + (v.fatal?'cell-bad':'cell-dim') + '">' + (v.fatal||'·') + '</td>' +
+           '<td class="num ' + (v.warning?'cell-warn':'cell-dim') + '">' + (v.warning||'·') + '</td></tr>';
+    });
+    h += '</tbody></table>';
+
+    if ((au.stood_down || []).length){
+      h += '<div class="note"><b>생략된 검사</b><br>' + au.stood_down.join('<br>') +
+           '<br><br>재구성본은 원본과 화면이 달라, 화면을 하나씩 맞대어 보는 검사는 뜻이 없습니다. ' +
+           '검사기가 조용히 넘기지 않고 무엇을 안 봤는지 남깁니다.</div>';
+    }
+    h += '<div class="path">검사 결과: ' + au.path + ' · ' + au.when +
+         (au.flow ? ' · 흐름 ' + au.flow : '') + '</div>';
+  } else if (a.audit && !a.audit.exists){
+    h += '<div class="note">아직 검사하지 않았습니다. <code>' +
+         'python tools/audit.py' + (a.flow ? ' --flow ' + a.flow : '') + '</code></div>';
+  }
+  if (a.references && a.references.length)
+    h += '<div class="note">이 산출물은 <b>' + a.references.join(', ') +
+         '</b>을(를) 보고 새로 설계한 것입니다. 원본이 바뀌어도 자동으로 따라 바뀌지 않습니다.</div>';
+  if (a.derived_from && a.derived_from.length)
+    h += '<div class="note">이 산출물은 <b>' + a.derived_from.join(', ') +
+         '</b>에서 도구가 만들어 냅니다. 입력이 바뀌면 다시 만들어야 합니다.</div>';
+  return h;
+}
+
+function stat(k, v, cls){
+  return '<div class="stat"><div class="k">' + k + '</div>' +
+         '<div class="v ' + (cls||'') + '">' + v + '</div></div>';
+}
+
+function paneFindings(a){
+  const au = a.audit;
+  let h = '';
+  if (!au.fatal && !au.warning) return '<div class="note">발견된 것이 없습니다.</div>';
+  if (au.fatal){
+    h += '<h3 style="font-size:15px">fatal ' + au.fatal + '건</h3>';
+    au.fatal_items.forEach(x => {
+      h += '<div class="finding f"><div class="hd">[' + (x.check||'?') + ']' +
+           (x.screen ? ' ' + x.screen : '') + '</div><div class="tx">' + esc(x.detail) + '</div></div>';
+    });
+    if (au.fatal > au.fatal_items.length)
+      h += '<div class="cell-dim">… 외 ' + (au.fatal - au.fatal_items.length) + '건</div>';
+  }
+  if (au.warning){
+    h += '<h3 style="font-size:15px; margin-top:22px">warning ' + au.warning + '건</h3>';
+    au.warning_items.forEach(x => {
+      h += '<div class="finding w"><div class="hd">[' + (x.check||'?') + ']' +
+           (x.screen ? ' ' + x.screen : '') + '</div><div class="tx">' + esc(x.detail) + '</div></div>';
+    });
+    if (au.warning > au.warning_items.length)
+      h += '<div class="cell-dim">… 외 ' + (au.warning - au.warning_items.length) + '건</div>';
+  }
+  return h;
+}
+
+/* 화면 보기 - 언제나 원본을 왼쪽에 두어 무엇이 달라졌는지 바로 보이게 한다 */
+function panePreview(a){
+  const protos = allArtefacts().filter(x => x.kind === 'prototype' && x.file.exists);
+  const opts = protos.map(x =>
+    '<option value="' + x.key + '"' + (x.key==='original'?' selected':'') + '>' + x.name + '</option>').join('');
+  return '<div class="note">두 화면은 따로 움직입니다. 같은 지점까지 각각 눌러 가며 비교하세요.</div>' +
+    '<div class="frames">' +
+      '<div class="frame-box"><div class="cap"><select id="left-pick">' + opts + '</select>' +
+        '<a id="left-open" target="_blank">새 창</a></div>' +
+        '<iframe id="fr-left"></iframe></div>' +
+      '<div class="frame-box"><div class="cap"><b>' + a.name + '</b>' +
+        '<a href="/' + a.path + '" target="_blank">새 창</a></div>' +
+        '<iframe id="fr-right"></iframe></div>' +
+    '</div>';
+}
+
+function mountFrames(a){
+  const left = document.getElementById('fr-left'), right = document.getElementById('fr-right');
+  if (!left || !right) return;
+  right.src = '/' + a.path;
+  const pick = document.getElementById('left-pick');
+  const set = () => {
+    const x = find(pick.value);
+    left.src = '/' + x.path;
+    document.getElementById('left-open').href = '/' + x.path;
+  };
+  pick.onchange = set; set();
+}
+
+function paneSessions(){
+  const s = STATE.sessions;
+  if (!s.files)
+    return '<div class="note">아직 세션이 없습니다. <code>python tools/session_server.py</code> 로 ' +
+           '실험을 진행하면 여기에 쌓입니다.</div>';
+  return '<div class="stat-row">' +
+    stat('피험자', s.participants, '') + stat('세션 파일', s.files, '') +
+    Object.entries(s.by_condition).map(([k,v]) => stat(k, v, '')).join('') + '</div>' +
+    '<div class="note">집계는 <code>python tools/session_report.py</code> 로 봅니다.</div>';
+}
+
+function esc(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+$('#reload').onclick = load;
+load();
+</script>
+</body>
+</html>

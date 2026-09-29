@@ -99,9 +99,20 @@ Known gaps, both real: it cannot tell that `☆` labelled "선택됨" is factual
 inverted (that needs a declared class↔label mapping), and it has no
 duplicate-text check, so `confirm`'s doubled "수수료 무료" passes.
 
+## Dashboard
+
+`시작.bat` (or `python tools/session_server.py`) serves the project and opens
+**`tools/dashboard.html`**: the pipeline on one page - what went in, what came
+out of each branch, what the auditor said, and whether anything is out of date.
+Click any artefact to see its audit findings or run it side by side with the
+original. The state it draws comes from `tools/pipeline_state.py`, which
+declares the pipeline rather than guessing it, so a stage that was never run
+shows as missing instead of vanishing. That module also works standalone:
+`python tools/pipeline_state.py --text`.
+
 ## Viewers
 
-Served from the project root:
+Older, single-purpose views, served from the project root:
 
 - `tools/viewers/transfer_compare.html` — the 8 screens before/after, side by side, with per-screen findings.
 - `tools/viewers/kb_compare.html` — example1 under the base KB vs the senior KB.

@@ -32,6 +32,9 @@ import sys
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, "tools"))
+
+import pipeline_state                                       # noqa: E402
 
 # The two builds under comparison. `url` is what the phone loads in the frame.
 CONDITIONS = [
@@ -90,6 +93,13 @@ def make_handler(sessions_dir, tasks):
         def do_GET(self):
             if self.path.split("?")[0] == "/api/config":
                 return self._json(200, {"conditions": CONDITIONS, "tasks": tasks})
+            if self.path.split("?")[0] == "/api/state":
+                # 대시보드가 읽는 것. 매번 새로 훑으므로 파일을 고치고
+                # 새로고침만 하면 바로 반영된다.
+                try:
+                    return self._json(200, pipeline_state.state())
+                except Exception as e:
+                    return self._json(500, {"error": "%s: %s" % (type(e).__name__, e)})
             if self.path.split("?")[0] == "/api/sessions":
                 files = sorted(os.listdir(sessions_dir)) if os.path.isdir(sessions_dir) else []
                 return self._json(200, {"files": [f for f in files if f.endswith(".json")]})
@@ -146,9 +156,13 @@ def main():
     print("=" * 62)
     print(" 실험 진행 서버")
     print("=" * 62)
-    print(" 폰에서 열 주소 (PC 와 같은 Wi-Fi 여야 합니다):")
+    print(" 폰에서 열 주소 — 실험 진행 (PC 와 같은 Wi-Fi 여야 합니다):")
     print()
     print("     http://%s:%d/tools/session.html" % (ip, args.port))
+    print()
+    print(" PC 브라우저에서 열 주소 — 파이프라인 대시보드:")
+    print()
+    print("     http://localhost:%d/tools/dashboard.html" % args.port)
     print()
     print(" 조건 : " + " / ".join(c["label"] for c in CONDITIONS))
     print(" 과업 : " + " / ".join(t["name"] for t in tasks))
