@@ -83,12 +83,12 @@ senior_kb.csv)과 LLM 직접 재구성을 같은 검사기로 비교했다.
 
 ## 30초 상태 확인
 
-**`시작.bat` 을 더블클릭하면** 대시보드가 열립니다. 무엇이 있고 무엇이 통과했는지
-한 화면에 나옵니다. 터미널로 보려면:
+**`시작.bat` 을 더블클릭하면** 확인 화면이 열립니다 (빌드 목록·화면 비교·검사 결과·변경 추적).
+터미널로 보려면:
 
 ```powershell
 cd C:\Users\xihye\senior-ui-pipeline
-.\.venv\Scripts\python.exe tools\pipeline_state.py --text
+.\.venv\Scripts\python.exe tools\build_index.py --print
 ```
 
 옛 방식:

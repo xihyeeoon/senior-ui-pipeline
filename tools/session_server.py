@@ -34,7 +34,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
 
-import pipeline_state                                       # noqa: E402
+import build_index                                          # noqa: E402
 
 # The two builds under comparison. `url` is what the phone loads in the frame.
 CONDITIONS = [
@@ -57,6 +57,17 @@ TASKS = [
     {"name": "짧은 과업 · 저장된 사람",
      "instruction": "김시현 씨에게 1만 원을 보내 주세요."},
 ]
+
+
+def reindex():
+    """outputs/index.json 을 다시 만든다. 뷰어의 '다시 읽기' 가 부른다."""
+    idx = build_index.build()
+    out = os.path.join(ROOT, "outputs", "index.json")
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    with io.open(out, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(idx, f, ensure_ascii=False, indent=1)
+    return {"ok": True, "builds": len(idx["builds"]), "changes": len(idx["changes"]),
+            "generated": idx["generated"]}
 
 
 def local_ip():
@@ -93,11 +104,9 @@ def make_handler(sessions_dir, tasks):
         def do_GET(self):
             if self.path.split("?")[0] == "/api/config":
                 return self._json(200, {"conditions": CONDITIONS, "tasks": tasks})
-            if self.path.split("?")[0] == "/api/state":
-                # 대시보드가 읽는 것. 매번 새로 훑으므로 파일을 고치고
-                # 새로고침만 하면 바로 반영된다.
+            if self.path.split("?")[0] == "/api/reindex":
                 try:
-                    return self._json(200, pipeline_state.state())
+                    return self._json(200, reindex())
                 except Exception as e:
                     return self._json(500, {"error": "%s: %s" % (type(e).__name__, e)})
             if self.path.split("?")[0] == "/api/sessions":
@@ -150,6 +159,11 @@ def main():
         tasks = json.load(io.open(args.task_file, encoding="utf-8"))
 
     os.makedirs(args.sessions, exist_ok=True)
+    try:
+        r = reindex()
+        print(" 인덱스: 빌드 %d개 · 변경 %d건" % (r["builds"], r["changes"]))
+    except Exception as e:
+        print(" 인덱스를 만들지 못했습니다: %s" % e)
     ip = local_ip()
     handler = make_handler(args.sessions, tasks)
 
@@ -160,9 +174,9 @@ def main():
     print()
     print("     http://%s:%d/tools/session.html" % (ip, args.port))
     print()
-    print(" PC 브라우저에서 열 주소 — 파이프라인 대시보드:")
+    print(" PC 브라우저에서 열 주소 — 파이프라인 확인:")
     print()
-    print("     http://localhost:%d/tools/dashboard.html" % args.port)
+    print("     http://localhost:%d/tools/viewers/dashboard.html" % args.port)
     print()
     print(" 조건 : " + " / ".join(c["label"] for c in CONDITIONS))
     print(" 과업 : " + " / ".join(t["name"] for t in tasks))

@@ -99,24 +99,45 @@ Known gaps, both real: it cannot tell that `☆` labelled "선택됨" is factual
 inverted (that needs a declared class↔label mapping), and it has no
 duplicate-text check, so `confirm`'s doubled "수수료 무료" passes.
 
-## Dashboard
+## The viewer
 
 `시작.bat` (or `python tools/session_server.py`) serves the project and opens
-**`tools/dashboard.html`**: the pipeline on one page - what went in, what came
-out of each branch, what the auditor said, and whether anything is out of date.
-Click any artefact to see its audit findings or run it side by side with the
-original. The state it draws comes from `tools/pipeline_state.py`, which
-declares the pipeline rather than guessing it, so a stage that was never run
-shows as missing instead of vanishing. That module also works standalone:
-`python tools/pipeline_state.py --text`.
+**`tools/viewers/dashboard.html`** - four pages for checking where things stand
+while working:
 
-## Viewers
+| | |
+|---|---|
+| 대시보드 | one row per build: passed, fatal, warning, screens, low-contrast before→after, flow |
+| 화면 비교 | 2-4 builds side by side at 390px, each with its own screen picker. Screen names differ between designs (original `account` vs Run 1 `accno`+`bank`), so nothing is auto-synced. A screenshot mode swaps the iframes for the png in `outputs/shots`, which needs no server and shows the state as captured. |
+| 검사 결과 | audits side by side, folded per check A-H. Findings link to that screen's screenshot; stood-down checks say why; the metric table is folded away because a count is not a grade. |
+| 변경 추적 | the changelog's changes with rule filters, and all 46 KB rules split by whether a table actually cites them |
 
-Older, single-purpose views, served from the project root:
+It reads one file, `outputs/index.json`, written by **`tools/build_index.py`**.
+Builds are discovered, not listed: each audit JSON records the URL of the build
+it drove and the flow it used, so a new build with its own audit appears without
+editing anything. Screenshots are matched by flow name, then build id, then the
+older flat `before_`/`after_` convention.
 
-- `tools/viewers/transfer_compare.html` — the 8 screens before/after, side by side, with per-screen findings.
-- `tools/viewers/kb_compare.html` — example1 under the base KB vs the senior KB.
-- `outputs/compare/kb-compare.html` — the same comparison as one self-contained file (no server, no CDN). Rebuild with `node tools\compare\build.js`, then the tailwind CLI step and `tools\compare\make_standalone.py` (order is in that file's docstring).
+```powershell
+.\.venv\Scripts\python.exe toolsuild_index.py --print
+```
+
+The "다시 읽기" button asks the server to rebuild the index first, so editing a
+file and pressing it is enough. `builds[].attempts` is reserved for the
+generate-audit-regenerate loop and is empty until that lands.
+
+Two numbers the viewer deliberately keeps apart: the changelog's tables cite
+**26** of the 46 rules, while the document claims **33** are met. The extra 7 are
+the author's own judgement with no table behind them, which the document itself
+flags as optimistic.
+
+## Older viewers
+
+- `tools/viewers/kb_compare.html` — example1 under the base KB vs the senior KB. A different experiment; left alone.
+- `outputs/compare/kb-compare.html` — the same comparison as one self-contained file (no server, no CDN). Rebuild with `node tools\compareuild.js`, then the tailwind CLI step and `tools\compare\make_standalone.py`.
+
+`tools/viewers/transfer_compare.html`, `tools/dashboard.html` and
+`tools/pipeline_state.py` were removed: the four pages above cover what they did.
 
 ## Fixes layered on top of upstream
 

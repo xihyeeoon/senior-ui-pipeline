@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>파이프라인 확인</title>
+<!--
+  내부 확인용. 발표용이 아니다.
+
+  데이터는 outputs/index.json 하나뿐이고 tools/build_index.py 가 만든다.
+  새 빌드는 자기 audit JSON 만 있으면 여기 자동으로 나타난다 - 이 파일에
+  목록을 적을 일은 없다.
+
+    python tools/build_index.py
+    python tools/session_server.py       (또는 시작.bat)
+    http://localhost:3003/tools/viewers/dashboard.html
+
+  inputs/ 의 실제 앱 캡처는 인덱싱하지 않는다. 실명이 보이기 때문이다.
+-->
+<link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+
+<header>
+  <span class="brand">파이프라인 확인</span>
+  <nav>
+    <button data-page="home" class="on">대시보드</button>
+    <button data-page="compare">화면 비교</button>
+    <button data-page="audit">검사 결과</button>
+    <button data-page="changes">변경 추적</button>
+  </nav>
+  <span class="right">
+    <span class="mono" id="when"></span>
+    <button id="reload">다시 읽기</button>
+  </span>
+</header>
+
+<div class="page on" id="home"></div>
+<div class="page" id="compare"></div>
+<div class="page" id="audit"></div>
+<div class="page" id="changes"></div>
+
+<div class="shotpane" id="shotpane"></div>
+
+<script src="dashboard.js"></script>
+</body>
+</html>
