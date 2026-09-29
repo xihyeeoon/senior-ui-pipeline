@@ -523,6 +523,6 @@
   "inputs": {
     "original": "http://localhost:3003/inputs/original_transfer.html",
     "repaired": "http://localhost:3003/outputs/repaired_transfer.html",
-    "flow": "tools/flows/original.json"
+    "flow": "(builtin original)"
   }
 }

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>실험 진행</title>
+<style>
+  :root{ --blue:#1257C7; --ink:#151515; --sub:#4A5058; --line:#D8DDE4; --bg:#F4F6F9;
+         --ok:#0F7A3D; --warn:#B23B2E; }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; height:100%; overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    color:var(--ink); background:#fff;}
+
+  /* 과업 중에는 시제품만 전체 화면을 쓴다. 진행 UI 가 높이를 먹으면
+     하단 버튼이 다시 잘리기 때문이다. */
+  #stage{position:fixed; inset:0; border:0; width:100%; height:100%; display:none; background:#fff;}
+  #stage.on{display:block;}
+
+  .panel{position:fixed; inset:0; overflow-y:auto; padding:22px 20px 40px; display:none;}
+  .panel.on{display:block;}
+  h1{font-size:23px; margin:6px 0 18px;}
+  .row{margin-bottom:16px;}
+  label{display:block; font-size:15px; color:var(--sub); margin-bottom:6px;}
+  input, select{width:100%; font-size:20px; font-family:inherit; padding:14px;
+    border:2px solid var(--line); border-radius:12px; outline:0;}
+  input:focus, select:focus{border-color:var(--blue);}
+  button{font-family:inherit;}
+  .go{width:100%; background:var(--blue); color:#fff; border:0; border-radius:14px;
+    padding:20px; font-size:20px; font-weight:800; margin-top:8px;}
+  .go:disabled{background:#E4E8EE; color:#8C939C;}
+  .ghost{width:100%; background:#fff; color:var(--ink); border:2px solid var(--line);
+    border-radius:14px; padding:16px; font-size:17px; font-weight:700; margin-top:10px;}
+  .card{background:var(--bg); border-radius:14px; padding:16px 18px; margin-bottom:16px;
+    font-size:16px; line-height:1.6;}
+  .card b{font-size:19px;}
+  .task{background:#FFF8E1; border:2px solid #F0C36D; border-radius:14px; padding:18px;
+    font-size:21px; font-weight:700; line-height:1.55; margin-bottom:18px;}
+  .muted{font-size:14px; color:var(--sub); line-height:1.6;}
+  .err{color:var(--warn); font-size:15px; margin-top:10px; min-height:20px;}
+  .done-big{font-size:26px; font-weight:800; margin:10px 0 6px;}
+  .stat{display:flex; justify-content:space-between; padding:9px 0;
+    border-bottom:1px solid var(--line); font-size:16px;}
+  .stat b{font-weight:800;}
+
+  /* 과업 중 실험자용 비상구. 피험자가 실수로 못 누르도록 오른쪽 위 구석을
+     3초 길게 눌러야 열린다. */
+  #escape{position:fixed; top:0; right:0; width:56px; height:56px; z-index:10;
+    background:transparent; border:0; display:none;}
+  #escape.on{display:block;}
+  #abort{position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:20; display:none;
+    align-items:center; justify-content:center; padding:24px;}
+  #abort.on{display:flex;}
+  .sheet{background:#fff; border-radius:18px; padding:22px; width:100%; max-width:340px;}
+  .sheet h2{font-size:20px; margin:0 0 14px;}
+</style>
+</head>
+<body>
+
+<!-- ========== 1. 세션 설정 (실험자) ========== -->
+<div class="panel on" id="p-setup">
+  <h1>실험 진행</h1>
+  <div class="row">
+    <label>피험자 번호</label>
+    <input id="pid" inputmode="numeric" placeholder="예: 1" autocomplete="off">
+  </div>
+  <div class="row">
+    <label>과업</label>
+    <select id="task"></select>
+  </div>
+  <div class="card" id="order-note">번호를 넣으면 조건 순서를 정해 드립니다.</div>
+  <button class="go" id="start-session" disabled>세션 시작</button>
+  <div class="err" id="setup-err"></div>
+  <div class="muted" style="margin-top:20px">
+    조건 순서는 번호에 따라 자동으로 엇갈립니다 (홀수는 원본 먼저, 짝수는 재구성본 먼저).
+    같은 번호로 다시 시작하면 이전 기록을 덮어씁니다.
+  </div>
+</div>
+
+<!-- ========== 2. 과업 안내 (피험자에게 읽어 줌) ========== -->
+<div class="panel" id="p-brief">
+  <h1 id="brief-title">첫 번째 과업</h1>
+  <div class="card">
+    <b id="brief-cond">원본</b><br>
+    <span class="muted">피험자 <span id="brief-pid">1</span> · <span id="brief-step">1/2</span></span>
+  </div>
+  <div class="task" id="brief-task"></div>
+  <div class="muted">
+    피험자에게 위 내용을 읽어 주신 뒤 [시작]을 누르세요.
+    누르는 순간부터 시간이 기록됩니다.
+  </div>
+  <button class="go" id="start-task">시작</button>
+</div>
+
+<!-- ========== 3. 과업 수행 (시제품 전체 화면) ========== -->
+<iframe id="stage" title="시제품"></iframe>
+<button id="escape" aria-label="실험자 메뉴"></button>
+<div id="abort">
+  <div class="sheet">
+    <h2>과업을 끝낼까요?</h2>
+    <button class="go" id="abort-yes" style="background:var(--warn)">중단하고 기록</button>
+    <button class="ghost" id="abort-no">계속하기</button>
+  </div>
+</div>
+
+<!-- ========== 4. 과업 종료 ========== -->
+<div class="panel" id="p-done">
+  <div class="done-big" id="done-head">과업이 끝났습니다</div>
+  <div class="muted" id="done-sub"></div>
+  <div style="margin:18px 0">
+    <div class="stat"><span>걸린 시간</span><b id="s-time">–</b></div>
+    <div class="stat"><span>누른 횟수</span><b id="s-taps">–</b></div>
+    <div class="stat"><span>빗나간 탭</span><b id="s-miss">–</b></div>
+    <div class="stat"><span>되돌아가기</span><b id="s-back">–</b></div>
+    <div class="stat"><span>지우기</span><b id="s-del">–</b></div>
+    <div class="stat"><span>완료 여부</span><b id="s-ok">–</b></div>
+  </div>
+  <div class="err" id="save-state"></div>
+  <button class="go" id="next-step">다음</button>
+</div>
+
+<!-- ========== 5. 세션 종료 ========== -->
+<div class="panel" id="p-end">
+  <div class="done-big">세션이 끝났습니다</div>
+  <div class="card" id="end-summary"></div>
+  <button class="go" id="new-session">다음 피험자</button>
+</div>
+
+<script>
+/* ====================================================================
+   진행 장치. 시제품은 iframe 안에서 전체 화면으로 돌고, 이 바깥 문서가
+   같은 출처의 iframe 안 window.__log 를 읽어 과업 완료를 감지하고
+   서버로 보낸다. 시제품 파일은 손대지 않는다.
+   ==================================================================== */
+const $ = s => document.querySelector(s);
+let CONF = null;          // 서버에서 받은 설정 (조건/과업 정의)
+let S = null;             // 지금 세션 상태
+
+function panel(id){
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === id));
+  $('#stage').classList.toggle('on', id === null);
+  $('#escape').classList.toggle('on', id === null);
+}
+
+/* ---------- 설정 읽기 ---------- */
+fetch('/api/config').then(r => r.json()).then(c => {
+  CONF = c;
+  $('#task').innerHTML = c.tasks.map((t, i) =>
+    '<option value="' + i + '">' + t.name + '</option>').join('');
+  updateOrder();
+}).catch(e => { $('#setup-err').textContent = '설정을 읽지 못했습니다: ' + e; });
+
+/* ---------- 조건 순서 (번호로 엇갈리게) ---------- */
+function orderFor(pid){
+  const a = CONF.conditions;
+  return (pid % 2 === 1) ? [a[0], a[1]] : [a[1], a[0]];
+}
+function updateOrder(){
+  const pid = parseInt($('#pid').value, 10);
+  const ok = Number.isInteger(pid) && pid > 0 && CONF;
+  $('#start-session').disabled = !ok;
+  $('#order-note').textContent = ok
+    ? '피험자 ' + pid + ' : ' + orderFor(pid).map(c => c.label).join(' → ') + ' 순서로 진행합니다.'
+    : '번호를 넣으면 조건 순서를 정해 드립니다.';
+}
+$('#pid').addEventListener('input', updateOrder);
+
+/* ---------- 세션 시작 ---------- */
+$('#start-session').addEventListener('click', () => {
+  const pid = parseInt($('#pid').value, 10);
+  S = { pid: pid, taskIndex: +$('#task').value, order: orderFor(pid), step: 0, results: [] };
+  showBrief();
+});
+
+function showBrief(){
+  const cond = S.order[S.step], task = CONF.tasks[S.taskIndex];
+  $('#brief-title').textContent = S.step === 0 ? '첫 번째 과업' : '두 번째 과업';
+  $('#brief-cond').textContent = cond.label;
+  $('#brief-pid').textContent = S.pid;
+  $('#brief-step').textContent = (S.step + 1) + '/' + S.order.length;
+  $('#brief-task').textContent = task.instruction;
+  panel('p-brief');
+}
+
+/* ---------- 과업 수행 ---------- */
+let poll = null, startedAt = 0;
+
+$('#start-task').addEventListener('click', () => {
+  const cond = S.order[S.step];
+  const f = $('#stage');
+  f.src = cond.url;
+  panel(null);
+  f.onload = () => {
+    const w = f.contentWindow;
+    try { w.__startTask(); } catch (e) {}
+    startedAt = Date.now();
+    poll = setInterval(() => checkDone(w), 400);
+  };
+});
+
+/* 시제품은 송금이 끝나면 log 에 submit 을 남긴다. 그것을 완료 신호로 쓴다. */
+function checkDone(w){
+  let log;
+  try { log = w.__dump(); } catch (e) { return; }
+  if (log.some(e => e.type === 'submit')) finish(log, true);
+}
+
+function finish(log, completed){
+  if (poll) { clearInterval(poll); poll = null; }
+  const cond = S.order[S.step];
+  const elapsed = Date.now() - startedAt;
+  const m = metrics(log, elapsed, completed);
+  S.results.push({ condition: cond.key, metrics: m });
+
+  $('#done-head').textContent = completed ? '과업을 마쳤습니다' : '과업을 중단했습니다';
+  $('#done-sub').textContent = cond.label + ' · 피험자 ' + S.pid;
+  $('#s-time').textContent = (m.seconds).toFixed(1) + '초';
+  $('#s-taps').textContent = m.taps + '회';
+  $('#s-miss').textContent = m.misses + '회';
+  $('#s-back').textContent = m.backs + '회';
+  $('#s-del').textContent = m.deletes + '회';
+  $('#s-ok').textContent = completed ? '완료' : '중단';
+  $('#next-step').textContent = (S.step + 1 < S.order.length) ? '다음 과업으로' : '세션 마치기';
+  panel('p-done');
+
+  $('#save-state').textContent = '저장 중…';
+  fetch('/api/session', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      participant: S.pid, condition: cond.key, condition_label: cond.label,
+      order_index: S.step, task: CONF.tasks[S.taskIndex].name,
+      instruction: CONF.tasks[S.taskIndex].instruction,
+      completed: completed, started_at: startedAt, elapsed_ms: elapsed,
+      screen_size: [window.innerWidth, window.innerHeight],
+      user_agent: navigator.userAgent, metrics: m, log: log
+    })
+  }).then(r => r.json())
+    .then(r => { $('#save-state').textContent = '저장됨: ' + r.file; })
+    .catch(e => { $('#save-state').textContent = '저장 실패 — ' + e +
+                  ' (화면을 닫지 말고 실험자에게 알리세요)'; });
+}
+
+/* ---------- 지표 ---------- */
+function metrics(log, elapsed, completed){
+  const taps = log.filter(e => e.type === 'tap');
+  const enters = log.filter(e => e.type === 'screen_enter');
+  const dwell = {};
+  for (let i = 0; i < enters.length; i++){
+    const to = enters[i].to;
+    const end = (i + 1 < enters.length) ? enters[i+1].t : (log.length ? log[log.length-1].t : enters[i].t);
+    dwell[to] = (dwell[to] || 0) + (end - enters[i].t);
+  }
+  const act = e => e.action || '';
+  return {
+    seconds: elapsed / 1000,
+    completed: completed,
+    taps: taps.length,
+    misses: taps.filter(e => !e.valid).length,
+    backs: taps.filter(e => /^back/.test(act(e))).length,
+    deletes: taps.filter(e => /del$/.test(act(e))).length,
+    screens_visited: enters.length,
+    unique_screens: new Set(enters.map(e => e.to)).size,
+    dwell_ms: dwell
+  };
+}
+
+/* ---------- 다음 단계 ---------- */
+$('#next-step').addEventListener('click', () => {
+  S.step += 1;
+  if (S.step < S.order.length) { showBrief(); }
+  else {
+    $('#end-summary').innerHTML = S.results.map(r =>
+      '<b>' + r.condition + '</b> · ' + r.metrics.seconds.toFixed(1) + '초 · ' +
+      r.metrics.taps + '탭 · 빗나감 ' + r.metrics.misses +
+      (r.metrics.completed ? '' : ' · <span style="color:#B23B2E">중단</span>')).join('<br>');
+    panel('p-end');
+  }
+});
+$('#new-session').addEventListener('click', () => {
+  S = null; $('#pid').value = ''; updateOrder(); panel('p-setup');
+});
+
+/* ---------- 실험자 비상구 (오른쪽 위 구석 3초) ---------- */
+let holdTimer = null;
+const esc = $('#escape');
+['touchstart','mousedown'].forEach(ev => esc.addEventListener(ev, e => {
+  e.preventDefault();
+  holdTimer = setTimeout(() => $('#abort').classList.add('on'), 3000);
+}));
+['touchend','touchcancel','mouseup','mouseleave'].forEach(ev => esc.addEventListener(ev, () => {
+  if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+}));
+$('#abort-no').addEventListener('click', () => $('#abort').classList.remove('on'));
+$('#abort-yes').addEventListener('click', () => {
+  $('#abort').classList.remove('on');
+  let log = [];
+  try { log = $('#stage').contentWindow.__dump(); } catch (e) {}
+  finish(log, false);
+});
+</script>
+</body>
+</html>

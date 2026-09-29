@@ -15,7 +15,8 @@
     font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
     color:var(--ink); display:flex; justify-content:center;
   }
-  #phone{width:390px; height:844px; background:#fff; position:relative; overflow:hidden;
+  #phone{width:min(390px, 100vw); height:844px; /* 폰에서는 아래 규칙이 덮는다 */
+    background:#fff; position:relative; overflow:hidden;
     box-shadow:0 0 0 1px #cfd4dd;}
   .screen{position:absolute; inset:0; display:none; flex-direction:column; background:#fff;}
   .screen.on{display:flex;}
@@ -133,6 +134,17 @@
   .okwrap .s{font-size:22px; margin-top:16px; line-height:1.55;}
   .okwrap .s b{font-weight:800;}
   .okwrap .rest{font-size:19px; color:var(--sub); margin-top:16px;}
+
+/* ---- 실기기 대응 (2026-09-29) ----------------------------------------
+   폰 브라우저는 주소창이 높이를 먹어 가용 높이가 700px 안팎이다. 프레임을
+   844px 로 고정하면 숫자판의 0/지우기와 하단 [다음] 이 화면 밖으로 나가
+   피험자가 누를 수 없다. 좁은 화면에서만 뷰포트에 맞춘다 - 데스크톱과
+   tools/audit.py(390x844)는 위 규칙 그대로 쓴다.
+   dvh 는 주소창이 접히고 펴지는 것까지 따라간다. */
+@media (max-width: 480px) {
+  html, body { height: 100%; overflow: hidden; }
+  #phone { width: 100vw; height: 100vh; height: 100dvh; box-shadow: none; }
+}
 </style>
 </head>
 <body>
@@ -332,6 +344,24 @@ function log(type, data){
 }
 window.__startTask = function(){ LOG.length = 0; window.__task.startedAt = Date.now(); log('task_start'); };
 window.__dump = function(){ return JSON.parse(JSON.stringify(LOG)); };
+
+/* ---- 탭 기록 (실험 측정 장치, 2026-09-29) ---------------------------
+   조작 대상이 아닌 곳을 누른 것(valid:false)은 "어디를 눌러야 할지 몰랐다"는
+   뜻이라 고령 사용자 연구의 핵심 지표다. 타깃 크기(tw/th)는 손떨림으로 빗나간
+   경우를 크기 탓과 구분하는 데 쓴다. capture 단계에서 잡아야 화면이 바뀌기
+   전의 좌표가 남는다. */
+document.getElementById('phone').addEventListener('click', function(e){
+  const hit = e.target.closest('[data-action]');
+  const r = hit ? hit.getBoundingClientRect() : null;
+  log('tap', {
+    x: Math.round(e.clientX), y: Math.round(e.clientY),
+    valid: !!hit,
+    action: hit ? hit.dataset.action : null,
+    text: (e.target.textContent||'').trim().slice(0,24),
+    tw: r ? Math.round(r.width) : null,
+    th: r ? Math.round(r.height) : null
+  });
+}, true);
 
 /* ============ 화면 전환 ============ */
 function show(name){
