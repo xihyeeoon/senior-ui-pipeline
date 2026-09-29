@@ -119,6 +119,48 @@
     border-radius:8px; padding:12px 15px; font-size:13.5px; color:var(--sub);
     margin-bottom:18px; line-height:1.6;}
   .note b{color:var(--ink);}
+  .key-note{border-left-color:var(--warn); background:rgba(255,184,77,.06);}
+  .b-neutral{background:rgba(152,162,176,.16); color:var(--sub);}
+
+  h3.sec{font-size:13px; text-transform:uppercase; letter-spacing:.03em; color:var(--sub);
+    margin:28px 0 12px; font-weight:700;}
+
+  .qa-list{display:flex; flex-direction:column; gap:9px; margin-bottom:8px;}
+  .qa{background:var(--panel); border:1px solid var(--line); border-radius:11px;
+    padding:13px 16px;}
+  .qa.key{border-color:rgba(255,184,77,.35); background:rgba(255,184,77,.05);}
+  .qa.open{border-style:dashed;}
+  .qa-q{font-size:13px; color:var(--sub); display:flex; gap:9px; align-items:baseline;}
+  .qa-mark{font-size:10.5px; padding:1px 7px; border-radius:20px; font-weight:700;
+    background:rgba(152,162,176,.16); color:var(--sub); margin-left:auto; white-space:nowrap;}
+  .qa.key .qa-mark{background:rgba(255,184,77,.16); color:var(--warn);}
+  .qa.open .qa-mark{background:rgba(91,157,255,.14); color:var(--accent);}
+  .qa-a{font-size:17px; font-weight:700; margin:5px 0 4px; line-height:1.4;}
+  .qa.key .qa-a{color:var(--warn);}
+  .qa-d{font-size:13px; color:var(--sub); line-height:1.6;}
+
+  table.cmp td.runcol, table.cmp th.runcol{background:rgba(91,157,255,.045);}
+  table.cmp tr.same td.runcol{background:rgba(255,184,77,.10); font-weight:700;}
+  table.cmp tr.grp td{padding-top:16px; padding-bottom:6px; border-bottom:1px solid var(--line);
+    font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--dim);
+    font-weight:700;}
+  table.cmp tr.grp:first-child td{padding-top:4px;}
+  .grp-tag{font-size:10.5px; padding:1px 7px; border-radius:20px; margin-left:8px;
+    text-transform:none; letter-spacing:0; font-weight:700;}
+  .g-same{background:rgba(255,184,77,.16); color:var(--warn);}
+  .g-diff{background:rgba(91,157,255,.14); color:var(--accent);}
+  .hand{font-size:11px; color:var(--dim); background:var(--panel2); padding:1px 6px;
+    border-radius:4px; margin-left:5px; font-weight:400;}
+
+  .prog{margin-bottom:16px;}
+  .prog-bar{height:8px; background:var(--panel2); border-radius:20px; overflow:hidden;
+    margin-bottom:7px;}
+  .prog-bar span{display:block; height:100%; background:var(--accent); border-radius:20px;}
+  .prog-tx{font-size:13.5px; color:var(--sub);}
+  .prog-tx b{color:var(--ink); font-size:16px;}
+
+  .upkeep{font-size:13px; color:var(--sub); line-height:1.9;}
+  .upkeep b{color:var(--ink);}
   code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px;
     background:var(--panel2); padding:1.5px 5px; border-radius:4px;}
 </style>
@@ -150,58 +192,85 @@ async function load(){
   if (SELECTED) select(SELECTED, true); else drawSummary();
 }
 
-/* 처음 열었을 때 보이는 화면: 지금 이 프로젝트가 어디까지 왔는지 */
+/* 처음 열었을 때 보이는 화면.
+   파일이 몇 개인지는 아무도 묻지 않았다. 이 연구가 묻는 것과 지금까지의 답,
+   그리고 그 답을 뒷받침하는 값을 나란히 놓는다. */
 function drawSummary(){
-  const s = STATE.summary, se = STATE.sessions;
-  let h = '<div class="d-head"><h2>지금 상태</h2></div>' +
-    '<p class="d-desc">원본 이체 화면 하나를 두 가지 방법으로 고쳐 같은 검사기에 넣었습니다. ' +
-    '왼쪽 지도에서 아무 산출물이나 누르면 그 입출력과 검사 결과가 열립니다.</p>' +
-    '<div class="stat-row">' +
-      stat('프로토타입', s.prototypes, '') +
-      stat('검사함', s.audited, '') +
-      stat('통과', s.passing, s.passing ? 'cell-ok' : '') +
-      stat('실패', s.failing.length, s.failing.length ? 'cell-bad' : 'cell-ok') +
-      stat('피험자', se.participants, '') +
-    '</div>';
+  const R = STATE.research, U = STATE.upkeep;
+  let h = '<div class="d-head"><h2>이 연구가 묻는 것</h2></div>' +
+    '<p class="d-desc">고령자용 이체 화면을 자동으로 고칠 수 있는가. ' +
+    '규칙 기반과 LLM 재구성을 같은 검사기에 넣어 비교했습니다.</p>';
 
-  h += '<table><thead><tr><th>갈래</th><th>무엇을 넣어</th><th>무엇이 나왔나</th>' +
-       '<th>검사</th></tr></thead><tbody>' +
-    row('규칙 기반 수리', '원본 + 규칙 46개', '수리본 (8화면, 구조 그대로)', 'repaired') +
-    row('LLM 재구성', '원본만 (규칙 없이)', '재구성본 3개 (9·7·8화면)', 'run1') +
-    '</tbody></table>';
+  // 1. 질문과 답
+  h += '<div class="qa-list">';
+  R.questions.forEach((q, i) => {
+    const cls = q.status === 'key' ? 'qa key' : (q.status === 'open' ? 'qa open' : 'qa');
+    const mark = q.status === 'key' ? '핵심' : (q.status === 'open' ? '진행 중' : '답함');
+    h += '<div class="' + cls + '">' +
+      '<div class="qa-q">' + (i+1) + '. ' + q.q +
+        '<span class="qa-mark">' + mark + '</span></div>' +
+      '<div class="qa-a">' + q.a + '</div>' +
+      '<div class="qa-d">' + q.detail +
+        (q.see ? ' <a href="#" class="see" data-see="' + q.see + '">근거 보기 →</a>' : '') +
+      '</div></div>';
+  });
+  h += '</div>';
 
-  if (s.failing.length)
-    h += '<div class="note"><b>검사를 통과하지 못한 것</b><br>' +
-      s.failing.map(f => f.name + ' — fatal ' + f.fatal + '건').join('<br>') + '</div>';
-  if (s.stale.length)
-    h += '<div class="note"><b>입력보다 오래된 산출물</b><br>' + s.stale.join(', ') +
-      '<br>입력이 바뀌었으니 다시 만들어야 할 수 있습니다.</div>';
-  if (s.audit_stale.length)
-    h += '<div class="note"><b>검사 결과가 낡음</b><br>' + s.audit_stale.join(', ') +
-      '<br>빌드를 고친 뒤 다시 검사하지 않았습니다.</div>';
+  // 2. 나란히 비교 - 검사기가 보는 값과 못 보는 값을 갈라 놓는다.
+  //    이 경계가 이 프로젝트의 발견 그 자체다.
+  h += '<h3 class="sec">나란히 놓고 보면</h3>';
+  h += '<table class="cmp"><thead><tr><th>지표</th>' +
+    R.compare_cols.map(c => '<th class="num' + (c.key.startsWith('run') ? ' runcol' : '') +
+      '">' + c.label + '</th>').join('') + '</tr></thead><tbody>';
+  let lastGroup = null;
+  R.compare_rows.forEach(row => {
+    if (row.group !== lastGroup){
+      lastGroup = row.group;
+      const same = row.group === 'seen';
+      h += '<tr class="grp"><td colspan="' + (R.compare_cols.length + 1) + '">' +
+        R.group_labels[row.group] +
+        '<span class="grp-tag ' + (same ? 'g-same' : 'g-diff') + '">재구성 셋이 ' +
+        (same ? '모두 같음' : '서로 다름') + '</span></td></tr>';
+    }
+    const same = R.runs_identical_on.includes(row.key);
+    h += '<tr' + (same ? ' class="same"' : '') + '><td>' + row.label +
+      (row.from === 'by_hand' ? ' <span class="hand">손으로 셈</span>' : '') + '</td>' +
+      R.compare_cols.map(c => {
+        const v = c.values[row.key];
+        return '<td class="num' + (c.key.startsWith('run') ? ' runcol' : '') + '">' +
+          (v === undefined || v === null ? '<span class="cell-dim">·</span>' : v) + '</td>';
+      }).join('') + '</tr>';
+  });
+  h += '</tbody></table>';
+  if (R.runs_identical_on.length && R.runs_differ_on.length)
+    h += '<div class="note key-note">위아래가 이 프로젝트의 발견입니다. ' +
+      '재구성 세 개는 <b>화면 수도 탭 수도 확인 횟수도 다른데</b>, ' +
+      '<b>검사기가 보는 값은 완전히 같습니다</b>. 검사기는 설계 차이에 눈을 감고 있고, ' +
+      '그래서 사람에게 물어보는 실험이 남았습니다.</div>';
 
-  h += '<div class="note"><b>지금까지 알아낸 것</b><br>' +
-    '규칙 기반은 화면 <i>안</i>을 고치고 구조는 못 바꿉니다 (fatal 7건). ' +
-    'LLM 재구성은 구조를 바꾸고 검사를 통과했지만, 3회 반복하면 화면 수가 9·7·8로 갈라지는데도 ' +
-    '<b>검사기는 셋을 구분하지 못합니다</b> — 전부 fatal 0 / warning 0. ' +
-    '그래서 실제 고령 사용자에게 물어보는 실험이 남아 있습니다.</div>';
+  // 3. 남은 일
+  const st = R.study;
+  const pct = Math.min(100, Math.round(st.participants / 8 * 100));
+  h += '<h3 class="sec">남은 일 — 고령자 실험</h3>' +
+    '<div class="prog"><div class="prog-bar"><span style="width:' + pct + '%"></span></div>' +
+    '<div class="prog-tx"><b>' + st.participants + '</b> / ' + st.target + '명 · 세션 ' +
+    st.sessions + '건 · 목표 ' + st.deadline + '</div></div>' +
+    '<div class="note">원본과 Run 1 을 실제 고령 사용자에게. 진행은 폰에서 ' +
+    '<code>tools/session.html</code>, 집계는 <code>python tools/session_report.py</code>.</div>';
 
-  h += '<div class="note">실험 진행은 <code>tools/session.html</code> 을 폰에서, ' +
-       '집계는 <code>python tools/session_report.py</code> 로 봅니다.' +
-       (se.files ? ' 지금 세션 파일 ' + se.files + '개.' : ' 아직 세션이 없습니다.') + '</div>';
+  // 4. 작업 위생 - 정말 손봐야 하는 것만, 조용히
+  const items = [];
+  if (U.stale.length) items.push('입력이 바뀐 뒤 다시 만들지 않음: <b>' + U.stale.join(', ') + '</b>');
+  if (U.audit_stale.length) items.push('빌드를 고친 뒤 다시 검사하지 않음: <b>' + U.audit_stale.join(', ') + '</b>');
+  if (U.unaudited.length) items.push('아직 검사하지 않음: <b>' + U.unaudited.join(', ') + '</b>');
+  if (items.length)
+    h += '<h3 class="sec">손봐야 할 것</h3><div class="upkeep">' +
+         items.map(x => '<div>' + x + '</div>').join('') + '</div>';
 
   $('#detail').innerHTML = h;
-}
-
-function row(branch, input, output, key){
-  const a = find(key);
-  let verdict = '<span class="cell-dim">–</span>';
-  if (a && a.audit && a.audit.exists && a.audit.error === undefined)
-    verdict = a.audit.passed
-      ? '<span class="cell-ok">통과</span>'
-      : '<span class="cell-bad">fatal ' + a.audit.fatal + '</span>';
-  return '<tr><td><b>' + branch + '</b></td><td>' + input + '</td><td>' + output +
-         '</td><td>' + verdict + '</td></tr>';
+  $('#detail').querySelectorAll('a.see').forEach(a => a.onclick = e => {
+    e.preventDefault(); select(a.dataset.see);
+  });
 }
 
 function allArtefacts(){
@@ -209,11 +278,14 @@ function allArtefacts(){
 }
 function find(key){ return allArtefacts().find(a => a.key === key); }
 
+/* 검사 결과는 성적표가 아니라 관측값이다. 규칙 기반의 fatal 7 은 고쳐야 할
+   버그가 아니라 "규칙만으로는 여기까지"라는 이 연구의 발견이므로, 위험색으로
+   칠하지 않는다. 색은 정말 손봐야 하는 것(낡음·미검사)에만 쓴다. */
 function statusOf(a){
   if (!a.file.exists) return {cls:'b-none', label:'없음'};
   if (a.audit && a.audit.exists && a.audit.error === undefined){
-    if (a.audit.passed) return {cls:'b-ok', label:'검사 통과'};
-    return {cls:'b-bad', label:'fatal ' + a.audit.fatal};
+    if (a.audit.passed) return {cls:'b-ok', label:'fatal 0'};
+    return {cls:'b-neutral', label:'fatal ' + a.audit.fatal};
   }
   if (a.audit && !a.audit.exists) return {cls:'b-warn', label:'검사 안 함'};
   return {cls:'b-none', label:'있음'};

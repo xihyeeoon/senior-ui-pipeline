@@ -102,6 +102,70 @@ STAGES = [
     },
 ]
 
+
+# --------------------------------------------------------------------------- #
+# 이 연구가 묻는 것과, 지금까지의 답
+# --------------------------------------------------------------------------- #
+# 대시보드 첫 화면은 파일 개수가 아니라 이것을 보여준다. 파일이 몇 개인지는
+# 아무도 묻지 않았고, 아래 다섯 줄이 이 저장소가 존재하는 이유다.
+#
+# `evidence` 는 그 답을 뒷받침하는 값을 실제 audit 결과에서 끌어올 키다.
+# `by_hand` 로 표시된 것은 측정 도구가 없어 손으로 센 값이며, 출처를 밝힌다.
+QUESTIONS = [
+    {"q": "규칙 기반으로 고령자 화면을 고칠 수 있는가",
+     "a": "화면 안은 고치지만 구조는 못 바꾼다",
+     "status": "answered",
+     "detail": "저대비 텍스트는 66→56 으로 줄었지만 화면 수·구조는 그대로이고, "
+               "죽은 컨트롤과 원본에 없던 alert() 가 생겼다.",
+     "see": "repaired"},
+    {"q": "LLM 재구성은 되는가",
+     "a": "된다 — 구조를 바꾸고 검사도 통과했다",
+     "status": "answered",
+     "detail": "세 번 모두 fatal 0. 저대비 텍스트는 66→3.",
+     "see": "run1"},
+    {"q": "같은 프롬프트로 세 번 돌리면 같은 설계가 나오는가",
+     "a": "아니다 — 9·7·8 화면으로 갈라진다",
+     "status": "answered",
+     "detail": "어디서 화면을 자를지가 매번 다르다. 돈이 나가기 전 명시적 확인이 "
+               "3·1·3 회, 긴 경로 탭 수가 30·28·30 회. (손으로 셈 — docs/restructure-runs.md)",
+     "see": "run2"},
+    {"q": "검사기가 그 설계 차이를 잡아내는가",
+     "a": "못 잡는다 — 셋이 완전히 같게 나온다",
+     "status": "key",
+     "detail": "화면 수가 다르고 확인 지점이 다른데도 fatal 0 / warning 0 으로 동일하다. "
+               "갈라지는 것은 전부 검사기 밖의 지표다. 이것이 이 프로젝트의 핵심 발견이고, "
+               "고령자 실험을 하는 이유다.",
+     "see": "run3"},
+    {"q": "그래서 실제 고령 사용자에게는 어떤가",
+     "a": "아직 모른다",
+     "status": "open",
+     "detail": "원본과 Run 1 을 놓고 실험 중. 검사기가 못 보는 것을 사람이 보는지가 남은 질문이다.",
+     "see": "sessions"},
+]
+
+# 나란히 놓고 봐야 하는 값들. Run 1·2·3 의 열이 똑같다는 것이 눈에 보여야 한다.
+COMPARE_ROWS = [
+    {"key": "low_contrast", "label": "저대비 텍스트", "from": "audit", "group": "seen"},
+    {"key": "fatal", "label": "fatal", "from": "audit", "group": "seen"},
+    {"key": "warning", "label": "warning", "from": "audit", "group": "seen"},
+    {"key": "screens", "label": "화면 수", "from": "declared", "group": "unseen"},
+    {"key": "taps", "label": "긴 경로 탭 수", "from": "by_hand", "group": "unseen"},
+    {"key": "confirms", "label": "돈 나가기 전 확인", "from": "by_hand", "group": "unseen"},
+]
+
+GROUP_LABELS = {
+    "seen": "검사기가 보는 값",
+    "unseen": "검사기가 보지 않는 값",
+}
+
+# 측정 도구가 없어 손으로 센 값. docs/restructure-runs.md 의 표에서 옮겼다.
+# 자동으로 재지 못하므로 빌드를 고치면 여기도 고쳐야 한다.
+BY_HAND = {
+    "run1": {"taps": 30, "confirms": 3},
+    "run2": {"taps": 28, "confirms": 1},
+    "run3": {"taps": 30, "confirms": 3},
+}
+
 CHECK_NAMES = {
     "A": "과업 완료·구조 보존", "B": "표시 정확성", "C": "죽은 컨트롤", "D": "대비",
     "E": "레이아웃", "F": "언어", "G": "상태 구분", "H": "미정의 클래스",
@@ -221,23 +285,74 @@ def state():
     out["sessions"] = {"files": len(files), "participants": len(pids),
                        "by_condition": conds}
 
-    # 첫 화면용 요약. 이 프로젝트가 지금까지 알아낸 것을 숫자로 줄인 것.
-    protos = [a for st in out["stages"] for a in st["artefacts"]
-              if a.get("kind") == "prototype" and a["file"]["exists"]]
-    audited = [a for a in protos if a.get("audit") and a["audit"].get("exists")
-               and "error" not in a["audit"]]
-    out["summary"] = {
-        "prototypes": len(protos),
-        "audited": len(audited),
-        "passing": len([a for a in audited if a["audit"]["passed"]]),
-        "failing": [{"name": a["name"], "fatal": a["audit"]["fatal"]}
-                    for a in audited if not a["audit"]["passed"]],
-        "unaudited": [a["name"] for a in protos
-                      if not (a.get("audit") and a["audit"].get("exists"))],
+    # 첫 화면용. 파일 통계가 아니라 연구의 진행 상태를 낸다.
+    idx = {a["key"]: a for st in out["stages"] for a in st["artefacts"]}
+
+    def audit_of(key):
+        a = idx.get(key) or {}
+        au = a.get("audit")
+        return au if (au and au.get("exists") and "error" not in au) else None
+
+    # 나란히 비교할 열: 원본, 규칙기반, 재구성 3개
+    cols = []
+    for key, label in [("original", "원본"), ("repaired", "규칙 기반"),
+                       ("run1", "Run 1"), ("run2", "Run 2"), ("run3", "Run 3")]:
+        a = idx.get(key)
+        if not a or not a["file"]["exists"]:
+            continue
+        au = audit_of(key)
+        vals = {"screens": a.get("screens")}
+        if key == "original":
+            # 원본은 검사 대상이 아니라 기준선이다. 저대비 수치는 다른 빌드의
+            # audit 이 기록한 "before" 값에서 가져온다.
+            any_audit = next((audit_of(k) for k in ("repaired", "run1", "run2", "run3")
+                              if audit_of(k)), None)
+            vals["low_contrast"] = any_audit.get("low_contrast_before") if any_audit else None
+            vals["fatal"] = None
+            vals["warning"] = None
+        elif au:
+            vals["low_contrast"] = au.get("low_contrast_after")
+            vals["fatal"] = au["fatal"]
+            vals["warning"] = au["warning"]
+        vals.update(BY_HAND.get(key, {}))
+        cols.append({"key": key, "label": label, "values": vals})
+
+    # 재구성 세 열이 실제로 같은지 확인한다. 같다는 것이 핵심 발견이므로
+    # 문장으로 주장하지 않고 값에서 확인한 뒤 표시한다.
+    runs = [c for c in cols if c["key"] in ("run1", "run2", "run3")]
+    identical = []
+    for row in COMPARE_ROWS:
+        vs = [c["values"].get(row["key"]) for c in runs]
+        if len(runs) > 1 and all(v is not None for v in vs) and len(set(vs)) == 1:
+            identical.append(row["key"])
+
+    differing = []
+    for row in COMPARE_ROWS:
+        vs = [c["values"].get(row["key"]) for c in runs]
+        if len(runs) > 1 and all(v is not None for v in vs) and len(set(vs)) > 1:
+            differing.append(row["key"])
+
+    out["research"] = {
+        "questions": QUESTIONS,
+        "group_labels": GROUP_LABELS,
+        "runs_differ_on": differing,
+        "compare_rows": COMPARE_ROWS,
+        "compare_cols": cols,
+        "runs_identical_on": identical,
+        "study": {"participants": len(pids), "target": "8~12",
+                  "sessions": len(files), "deadline": "10/16"},
+    }
+
+    # 작업 위생 - 진짜 손봐야 하는 것만. 검사 실패는 여기 넣지 않는다.
+    # 규칙 기반의 fatal 7 은 고칠 버그가 아니라 이 연구의 결과이기 때문이다.
+    out["upkeep"] = {
         "stale": [a["name"] for st in out["stages"] for a in st["artefacts"]
                   if a.get("stale_against")],
         "audit_stale": [a["name"] for st in out["stages"] for a in st["artefacts"]
                         if a.get("audit_stale")],
+        "unaudited": [a["name"] for st in out["stages"] for a in st["artefacts"]
+                      if a.get("kind") == "prototype" and a["file"]["exists"]
+                      and a.get("audit") and not a["audit"].get("exists")],
     }
     return out
 
