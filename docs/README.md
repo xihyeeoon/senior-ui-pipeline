@@ -64,6 +64,26 @@ Playwright-only checks, no API key needed: `tools\probe_stream_b.py`,
 8-screen task and diffs them. It prints machine-readable JSON and exits 0 only
 when nothing fatal fired, so it can gate a regenerate-on-failure loop.
 
+### Flow files: two ways to enter text
+
+A flow's `type` action works with either input style, and the selector says
+which.
+
+```json
+{"type": "{ACCOUNT}", "key": "[data-action='acc-num'][data-v='%s']"}   // 숫자판
+{"type": "{ACCOUNT}", "key": "#acc-input"}                             // 입력 칸
+```
+
+A `%s` means there is one button per digit, and the auditor clicks them in turn.
+No `%s` means the selector addresses a field, and the auditor calls `fill()`
+once. A design with a real `<input>` should use the second form.
+
+Models often write the first form while building the second -
+`"input[data-action='x'][data-v='%s']"` - because the example they read showed a
+keypad. Dropping the `%s` attribute from that selector leaves a real element; if
+it is an `<input>` or `<textarea>`, the auditor fills it and records what it did
+in `metrics.flow_notes`. It does not silently accept the mismatch.
+
 | | Check | Severity |
 |---|---|---|
 | A | 8 screens reached, amount round-trips, `data-action`/`id`/`data-screen` preserved | fatal |
@@ -138,9 +158,11 @@ modifying it.
 | `styled` | A~H | everything |
 
 ```powershell
-.\.venv\Scripts\python.exe toolsudit_stage.py --flow toolslowsestructured.json `
+.\.venv\Scripts\python.exe toolsudit_stage.py --flow toolslows
+estructured.json `
    --repaired http://localhost:3003/outputs/restructured_transfer.html `
-   --repaired-file outputsestructured_transfer.html --stage wireframe
+   --repaired-file outputs
+estructured_transfer.html --stage wireframe
 ```
 
 The stage can also live in the flow file as `"stage": "wireframe"`; the flag

@@ -106,15 +106,54 @@ def load_flow(path):
 # --------------------------------------------------------------------------- #
 # driving
 # --------------------------------------------------------------------------- #
-async def run_actions(page, spec):
-    """One step of a flow file: click / type / repeat / wait, in order."""
+# A `%s`-bearing attribute selector, e.g. the [data-v='%s'] in
+# "[data-action='acc-num'][data-v='%s']". Dropping it leaves the selector that
+# addresses the field itself.
+PER_CHAR_ATTR = re.compile(r"\[[^\]]*%s[^\]]*\]")
+
+TAG_OF = """sel => { const e = document.querySelector(sel);
+                     return e ? e.tagName.toLowerCase() : null; }"""
+
+
+async def run_actions(page, spec, notes=None):
+    """One step of a flow file: click / type / repeat / wait, in order.
+
+    `type` covers both ways a design can take text:
+
+      keypad   "[data-action='acc-num'][data-v='%s']"  - one click per character
+      field    "#acc-input"                            - one fill()
+
+    The selector says which: a `%s` means there is a button per digit. A design
+    that uses a real <input> has no such buttons, so it writes the field's own
+    selector instead.
+
+    Models often write both at once - "input[data-action='x'][data-v='%s']" -
+    having read the keypad example but built a field. The element is an input,
+    there are no per-digit buttons, and driving it as a keypad stalls on a
+    selector that matches nothing. So when the `%s` selector points at an
+    input/textarea once the `%s` attribute is dropped, fill it and record that
+    in `notes`; the report surfaces it rather than silently accepting it.
+    """
     for item in (spec if isinstance(spec, list) else [spec]):
         if "wait" in item and "click" not in item and "repeat" not in item:
             await asyncio.sleep(float(item["wait"]))
             continue
         if "type" in item:
-            key = item["key"]
-            for ch in fill(item["type"]):
+            key, value = item["key"], fill(item["type"])
+            if "%s" not in key:
+                await page.fill(key, value)
+                continue
+            base = PER_CHAR_ATTR.sub("", key)
+            tag = await page.evaluate(TAG_OF, base) if base != key else None
+            if tag in ("input", "textarea"):
+                await page.fill(base, value)
+                if notes is not None:
+                    notes.append(
+                        "flow: type key %r has %%s but addresses an <%s>; filled "
+                        "%r via %r instead of clicking per character"
+                        % (key, tag, value, base))
+                continue
+            for ch in value:
                 await page.click(key % ch)
             continue
         if "repeat" in item:
@@ -132,7 +171,7 @@ async def drive(url, flow, want_shots=None):
     """Walk the task once and collect everything the checks need."""
     data = {"screens": {}, "dialogs": [], "js_errors": [], "reached": [],
             "missing_ids": [], "state_pairs": [], "load_failed": None,
-            "flow": flow["name"]}
+            "notes": [], "flow": flow["name"]}
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch()
@@ -162,9 +201,9 @@ async def drive(url, flow, want_shots=None):
             name = step["screen"]
             try:
                 if "do" in step:
-                    await run_actions(page, step["do"])
+                    await run_actions(page, step["do"], data["notes"])
                 elif "click" in step:
-                    await run_actions(page, {"click": step["click"]})
+                    await run_actions(page, {"click": step["click"]}, data["notes"])
             except Exception as e:
                 data["screens"][name] = {"error": "%s: %s" % (type(e).__name__, e)}
                 break
@@ -558,6 +597,7 @@ def audit(orig, rep, orig_html, rep_html, flow):
           "it has no effect (e.g. %r)" % (x["cls"], x["count"], x["sample"]),
           cls=x["cls"], count=x["count"])
 
+    metrics["flow_notes"] = rep.get("notes") or []
     metrics["checks_stood_down"] = skipped
     return {"passed": not fatal, "fatal": fatal, "warning": warning,
             "metrics": metrics}

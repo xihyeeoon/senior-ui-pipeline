@@ -47,6 +47,7 @@
     "state_pairs_checked": 1,
     "state_pairs_collapsed": 0,
     "undefined_classes_new": [],
+    "flow_notes": [],
     "checks_stood_down": [
       "A/preservation (new design, nothing to preserve)",
       "A/per-screen attribute loss",

@@ -518,6 +518,7 @@
       "svc-group",
       "text"
     ],
+    "flow_notes": [],
     "checks_stood_down": []
   },
   "inputs": {
