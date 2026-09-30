@@ -64,6 +64,22 @@ Playwright-only checks, no API key needed: `tools\probe_stream_b.py`,
 8-screen task and diffs them. It prints machine-readable JSON and exits 0 only
 when nothing fatal fired, so it can gate a regenerate-on-failure loop.
 
+### Counting fatals across runs
+
+A task that stops early fails every screen after the stop, so a raw fatal count
+rewards builds that get further and punishes ones that stall at screen two -
+which makes the number useless for comparing runs. The report therefore splits
+them:
+
+| field | meaning |
+|---|---|
+| `fatal_root` | independent failures |
+| `fatal_derived` | "never reached", caused by the stop recorded in `stopped_at` |
+| `fatal_duplicates_removed` | same (check, screen, detail) seen more than once, because the flow revisits a screen |
+
+Compare `fatal_root` between runs; `fatal_total` is the sum as before. Derived
+findings carry `derived_from` naming the screen that stopped the task.
+
 ### Flow files: two ways to enter text
 
 A flow's `type` action works with either input style, and the selector says

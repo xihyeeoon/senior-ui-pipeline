@@ -518,6 +518,11 @@
       "svc-group",
       "text"
     ],
+    "fatal_duplicates_removed": 0,
+    "fatal_total": 7,
+    "fatal_derived": 0,
+    "fatal_root": 7,
+    "stopped_at": null,
     "flow_notes": [],
     "checks_stood_down": []
   },

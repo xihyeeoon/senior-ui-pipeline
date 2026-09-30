@@ -297,7 +297,12 @@ def run_audit(orig_snapshot, orig_html, html_path, flow_path, url, shots, stage)
 # --------------------------------------------------------------------------- #
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--attempts", type=int, default=3)
+    ap.add_argument("--attempts", type=int, default=3,
+                    help="두 예산의 기본값")
+    ap.add_argument("--format-attempts", type=int, default=None,
+                    help="흐름 명세 형식 오류에 쓸 재시도 횟수 (기본: --attempts)")
+    ap.add_argument("--audit-attempts", type=int, default=None,
+                    help="검사 fatal 에 쓸 재시도 횟수 (기본: --attempts)")
     ap.add_argument("--model", default=None)
     ap.add_argument("--max-tokens", type=int, default=16000,
                     help="completion cap; the HTML alone is ~12k tokens")
@@ -337,7 +342,8 @@ def main():
         % (run_dir, model, args.attempts, args.stage, args.mock))
     server = None
     summary = {"run_dir": run_dir, "model": model, "mock": args.mock,
-               "stage": args.stage, "attempts": [], "passed": False, "final": None}
+               "stage": args.stage, "attempts": [], "passed": False, "final": None,
+               "budget": {}}
     try:
         server = ensure_server(log)
         base_flow = A.load_flow(None)
@@ -345,8 +351,17 @@ def main():
         orig_snapshot = asyncio.run(A.drive(ORIGINAL_URL, base_flow))
 
         prev = {"report": None, "html": None, "flow_text": None}
-        for n in range(1, args.attempts + 1):
-            log("---- attempt %d/%d" % (n, args.attempts))
+        # 예산을 둘로 나눈다. 형식 오류(흐름 명세가 규격에 안 맞음)와 검사 fatal
+        # (설계가 과제를 통과 못 함)은 다른 종류의 실패이고, 한쪽이 예산을 다 쓰면
+        # 다른 쪽은 재시도를 한 번도 못 받는 일이 생긴다 - Run 2 가 그랬다.
+        fmt_budget = args.format_attempts if args.format_attempts is not None else args.attempts
+        aud_budget = args.audit_attempts if args.audit_attempts is not None else args.attempts
+        fmt_used = aud_used = 0
+        n = 0
+        while True:
+            n += 1
+            log("---- attempt %d (형식 %d/%d · 검사 %d/%d)"
+                % (n, fmt_used, fmt_budget, aud_used, aud_budget))
             block = retry_block(prev["report"], prev["html"], prev["flow_text"]) \
                 if prev["report"] else ""
             prompt = build_prompt(template, original_html, block)
@@ -390,6 +405,10 @@ def main():
                           ensure_ascii=False, indent=2)
                 summary["attempts"].append(entry)
                 prev = {"report": report, "html": prev["html"], "flow_text": prev["flow_text"]}
+                fmt_used += 1
+                if fmt_used >= fmt_budget:
+                    log("형식 재시도 예산 소진 (%d회)" % fmt_used)
+                    break
                 continue
 
             html_path, flow_path = p + ".html", p + ".flow.json"
@@ -403,6 +422,7 @@ def main():
                 report = {"passed": False, "warning": [], "metrics": {"flow": "auto", "not_audited": True},
                           "fatal": [{"check": "FLOW", "screen": None, "detail": d} for d in problems]}
                 entry.update(stage="flow", passed=False, fatal=len(problems))
+                fmt_used += 1
             else:
                 rel = os.path.relpath(html_path, ROOT).replace(os.sep, "/")
                 url = "http://localhost:%d/%s" % (PORT, rel)
@@ -418,6 +438,8 @@ def main():
                 entry.update(stage="audit", passed=bool(report.get("passed")),
                              fatal=len(report.get("fatal", [])),
                              warning=len(report.get("warning", [])))
+                if not report.get("passed"):
+                    aud_used += 1
                 m = report.get("metrics", {})
                 log("audit: passed=%s fatal=%d warning=%d screens=%s/%s"
                     % (report.get("passed"), len(report.get("fatal", [])),
@@ -437,8 +459,19 @@ def main():
                 log("PASSED on attempt %d" % n)
                 break
             prev = {"report": report, "html": html, "flow_text": flow_text}
-        else:
-            log("no attempt passed")
+            if fmt_used >= fmt_budget and aud_used >= aud_budget:
+                log("양쪽 예산 모두 소진 — 형식 %d회 / 검사 %d회" % (fmt_used, aud_used))
+                break
+            if entry.get("stage") == "flow" and fmt_used >= fmt_budget:
+                log("형식 재시도 예산 소진 (%d회) — 검사까지 가지 못했다" % fmt_used)
+                break
+            if entry.get("stage") == "audit" and aud_used >= aud_budget:
+                log("검사 재시도 예산 소진 (%d회)" % aud_used)
+                break
+        if not summary["passed"]:
+            log("통과 없음 — 형식 재시도 %d회 / 검사 재시도 %d회" % (fmt_used, aud_used))
+        summary["budget"] = {"format_used": fmt_used, "format_budget": fmt_budget,
+                             "audit_used": aud_used, "audit_budget": aud_budget}
     finally:
         if server:
             server.terminate()

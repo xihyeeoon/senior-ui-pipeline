@@ -276,13 +276,24 @@ def audit(orig, rep, orig_html, rep_html, flow):
 
     metrics["screens_expected"] = len(want)
     metrics["screens_reached"] = len(rep["reached"])
+    # 과제가 한 번 멈추면 그 뒤의 모든 화면이 "도달 못 함" 으로 걸린다. 그것들은
+    # 독립된 결함이 아니라 한 원인의 결과다. 나누지 않으면 일찍 멈춘 실행일수록
+    # fatal 이 부풀려져 run 끼리 숫자를 비교할 수 없다.
+    stopped_at = None
     for i, name in enumerate(want):
         row = rep["screens"].get(name)
         if row is None:
-            F("A", name, "never reached (task stopped after %d of %d screens)"
-              % (len(rep["reached"]), len(want)))
+            if stopped_at:
+                F("A", name, "never reached - consequence of stopping at %r"
+                  % stopped_at, derived_from=stopped_at)
+            else:
+                F("A", name, "never reached (task stopped after %d of %d screens)"
+                  % (len(rep["reached"]), len(want)))
+                stopped_at = name
         elif "error" in row:
             F("A", name, "navigation failed: " + row["error"])
+            if not stopped_at:
+                stopped_at = name
         elif row["landed_on"] != name:
             F("A", name, "landed on %r instead" % row["landed_on"])
 
@@ -597,6 +608,23 @@ def audit(orig, rep, orig_html, rep_html, flow):
           "it has no effect (e.g. %r)" % (x["cls"], x["count"], x["sample"]),
           cls=x["cls"], count=x["count"])
 
+    # 흐름이 같은 화면을 여러 번 지나가면 같은 실패가 그 횟수만큼 기록된다.
+    # 결함은 하나인데 숫자만 커지므로, 같은 (검사·화면·내용) 은 한 번만 센다.
+    seen, deduped, dups = set(), [], 0
+    for f in fatal:
+        k = (f.get("check"), f.get("screen"), f.get("detail"))
+        if k in seen:
+            dups += 1
+            continue
+        seen.add(k)
+        deduped.append(f)
+    fatal[:] = deduped
+    metrics["fatal_duplicates_removed"] = dups
+
+    metrics["fatal_total"] = len(fatal)
+    metrics["fatal_derived"] = len([f for f in fatal if f.get("derived_from")])
+    metrics["fatal_root"] = metrics["fatal_total"] - metrics["fatal_derived"]
+    metrics["stopped_at"] = stopped_at
     metrics["flow_notes"] = rep.get("notes") or []
     metrics["checks_stood_down"] = skipped
     return {"passed": not fatal, "fatal": fatal, "warning": warning,

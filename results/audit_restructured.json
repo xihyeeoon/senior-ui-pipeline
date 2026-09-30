@@ -47,6 +47,11 @@
     "state_pairs_checked": 1,
     "state_pairs_collapsed": 0,
     "undefined_classes_new": [],
+    "fatal_duplicates_removed": 0,
+    "fatal_total": 0,
+    "fatal_derived": 0,
+    "fatal_root": 0,
+    "stopped_at": null,
     "flow_notes": [],
     "checks_stood_down": [
       "A/preservation (new design, nothing to preserve)",
