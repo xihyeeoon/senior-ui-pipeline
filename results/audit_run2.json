@@ -50,6 +50,7 @@
     "fatal_derived": 0,
     "fatal_root": 0,
     "stopped_at": null,
+    "js_error_details": [],
     "flow_notes": [],
     "checks_stood_down": [
       "A/preservation (new design, nothing to preserve)",

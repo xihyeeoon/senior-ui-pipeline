@@ -121,21 +121,123 @@ def one_line(s):
     return re.sub(r"\s*\n\s*", " / ", str(s)).strip()
 
 
+# Playwright 의 실패 로그는 1,100자쯤 되지만 쓸모 있는 것은 셋뿐이다:
+# 어느 선택자를 기다렸는지, 그것이 어떤 요소로 풀렸는지, 왜 실패했는지.
+WAITING_FOR = re.compile(r'waiting for locator\("([^"]+)"\)')
+RESOLVED_TO = re.compile(r"locator resolved to (<[^>]+>)")
+WHY = [(re.compile(r"element is not visible"), "화면에 보이지 않음"),
+       (re.compile(r"element is not enabled"), "disabled 라 누를 수 없음"),
+       (re.compile(r"element is not stable"), "움직이는 중"),
+       (re.compile(r"resolved to \d+ elements"), "선택자가 여러 요소에 걸림")]
+# stack 의 끝에 붙는 파일:줄:칸
+STACK_LINE = re.compile(r":(\d+):\d+\)?\s*$", re.M)
+
+
+def brief_failure(detail):
+    """긴 Playwright 로그를 한 줄로. 남길 것은 선택자·요소·이유뿐이다."""
+    sel = WAITING_FOR.search(detail)
+    el = RESOLVED_TO.search(detail)
+    why = next((msg for pat, msg in WHY if pat.search(detail)), None)
+    if not sel and not el:
+        return one_line(detail)[:200]
+    bits = []
+    if sel:
+        bits.append(sel.group(1))
+        if not el:
+            why = why or "그런 요소가 없음"
+    if el:
+        bits.append(el.group(1))
+        if "disabled" in el.group(1):
+            why = "disabled 가 풀리지 않음" + (" (%s)" % why if why else "")
+    if why:
+        bits.append(why)
+    return "  ".join(bits)
+
+
+def js_cause(report, prev_html):
+    """JS 오류가 있으면 (설명 줄들) 을 만든다. 없으면 None.
+
+    메시지만으로는 어디를 고칠지 알 수 없으므로 stack 에서 줄 번호를 뽑아
+    그 줄의 코드를 함께 보여 준다."""
+    details = (report.get("metrics") or {}).get("js_error_details") or []
+    if not details:
+        return None
+    counts, first = {}, {}
+    for d in details:
+        key = "%s: %s" % (d.get("name") or "Error", d.get("message") or "")
+        counts[key] = counts.get(key, 0) + 1
+        first.setdefault(key, d)
+
+    src = (prev_html or "").splitlines()
+    out = []
+    for key, n in counts.items():
+        out.append("  %s  (%d회)" % (key, n))
+        stack = first[key].get("stack") or ""
+        m = STACK_LINE.search(stack)
+        if m and src:
+            ln = int(m.group(1))
+            lo, hi = max(1, ln - 1), min(len(src), ln + 1)
+            out.append("  발생 위치 — %d번째 줄 근처:" % ln)
+            for i in range(lo, hi + 1):
+                mark = ">" if i == ln else " "
+                out.append("    %s %4d | %s" % (mark, i, src[i - 1].rstrip()[:100]))
+    return out
+
+
 def retry_block(report, prev_html, prev_flow_text):
-    """The slot the template leaves for a retry: every fatal, then the previous
-    output so the model repairs it instead of starting over."""
-    lines = []
-    for f in report.get("fatal", []):
-        where = ("screen=%s: " % f["screen"]) if f.get("screen") else ""
-        lines.append("- [%s] %s%s" % (f.get("check") or "?", where, one_line(f.get("detail", ""))))
-    if not lines:
-        lines.append("- (fatal 목록이 비어 있지만 통과하지 못했다)")
-    parts = [
-        "## 이전 시도의 실패", "",
-        "직전 출력은 검사에서 다음 fatal 에 걸렸다. 아래 목록을 모두 고쳐서 HTML 과 흐름 명세를",
-        "다시 전체로 출력하라. 설계를 처음부터 새로 하지 말고 직전 출력을 고쳐라.", "",
-        *lines, "",
-    ]
+    """The slot the template leaves for a retry.
+
+    Listing every fatal buries the one that matters. A task that stops early
+    fails every screen after it, a flow that revisits a screen records the same
+    failure twice, and a JavaScript error takes the handler down so that
+    *everything else is a symptom of it*. Handing the model nine items, with the
+    real cause ninth and three copies of an 1,100-character Playwright log above
+    it, is how the last run went - and it changed nothing across the retry.
+
+    So: the cause first, the stall point next, and the consequences in one line
+    that says not to fix them.
+    """
+    fatals = report.get("fatal") or []
+    derived = [f for f in fatals if f.get("derived_from")]
+    root = [f for f in fatals if not f.get("derived_from")]
+    js = [f for f in root if "JavaScript errors" in (f.get("detail") or "")]
+    other = [f for f in root if f not in js]
+
+    parts = ["## 이전 시도의 실패", ""]
+    cause = js_cause(report, prev_html)
+
+    if cause:
+        # 규칙 1: JS 오류가 있으면 그것이 유일한 원인이다.
+        parts += ["[원인]",
+                  "JavaScript 오류가 클릭 처리기를 중단시켰다. 이것만 고치면 된다.",
+                  *cause,
+                  "  → 선언하지 않은 이름을 쓴 것으로 보인다. 그 이름을 정의하거나 "
+                  "쓰는 쪽을 고쳐라.", ""]
+        if other:
+            parts += ["[막힌 지점]"]
+            for f in other:
+                where = (f.get("screen") + ": ") if f.get("screen") else ""
+                parts.append("  " + where + brief_failure(f.get("detail", "")))
+            parts.append("")
+    else:
+        # 규칙 4: JS 오류가 없으면 근본 fatal 만 나열한다.
+        if other:
+            parts += ["[고칠 것]"]
+            for f in other:
+                where = (f.get("screen") + ": ") if f.get("screen") else ""
+                parts.append("  " + where + brief_failure(f.get("detail", "")))
+            parts.append("")
+        elif not derived:
+            parts += ["(fatal 목록이 비어 있지만 통과하지 못했다)", ""]
+
+    # 규칙 3: 파생은 한 줄로 묶는다.
+    if derived:
+        names = " · ".join(f.get("screen") or "?" for f in derived)
+        head = "[아래는 위 원인의 결과다. 따로 고치지 마라]" if (cause or other) \
+            else "[도달하지 못한 화면]"
+        parts += [head, "  %s — 도달 못 함" % names, ""]
+
+    parts += ["직전 출력을 고쳐라. 설계를 처음부터 새로 하지 마라.", ""]
     if prev_flow_text:
         parts += ["### 직전 흐름 명세", "", "```json", prev_flow_text.strip(), "```", ""]
     if prev_html:

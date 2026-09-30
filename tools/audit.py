@@ -171,12 +171,21 @@ async def drive(url, flow, want_shots=None):
     """Walk the task once and collect everything the checks need."""
     data = {"screens": {}, "dialogs": [], "js_errors": [], "reached": [],
             "missing_ids": [], "state_pairs": [], "load_failed": None,
-            "notes": [], "flow": flow["name"]}
+            "notes": [], "js_error_details": [], "flow": flow["name"]}
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch()
         page = await browser.new_page(viewport={"width": 390, "height": 844})
-        page.on("pageerror", lambda e: data["js_errors"].append(str(e)))
+        def _on_pageerror(e):
+            # 메시지만 남기면 "S is not defined" 뿐이라 어디를 고칠지 알 수 없다.
+            # stack 에 파일과 줄 번호가 들어 있으므로 함께 보관한다.
+            data["js_errors"].append(str(e))
+            data["js_error_details"].append({
+                "name": getattr(e, "name", None),
+                "message": str(e),
+                "stack": getattr(e, "stack", None),
+            })
+        page.on("pageerror", _on_pageerror)
 
         async def on_dialog(d):
             data["dialogs"].append({"screen": data["reached"][-1] if data["reached"]
@@ -625,6 +634,7 @@ def audit(orig, rep, orig_html, rep_html, flow):
     metrics["fatal_derived"] = len([f for f in fatal if f.get("derived_from")])
     metrics["fatal_root"] = metrics["fatal_total"] - metrics["fatal_derived"]
     metrics["stopped_at"] = stopped_at
+    metrics["js_error_details"] = rep.get("js_error_details") or []
     metrics["flow_notes"] = rep.get("notes") or []
     metrics["checks_stood_down"] = skipped
     return {"passed": not fatal, "fatal": fatal, "warning": warning,
