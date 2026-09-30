@@ -99,30 +99,54 @@ Known gaps, both real: it cannot tell that `☆` labelled "선택됨" is factual
 inverted (that needs a declared class↔label mapping), and it has no
 duplicate-text check, so `confirm`'s doubled "수수료 무료" passes.
 
-## Three layers, kept apart
+## The pipeline, and what sits outside it
 
-Showing the rule-based repair as a pipeline stage caused real confusion, so the
-viewer now states which is which:
+```
+캡처 → LLM 재구성 → 검사기 → (스타일 이식) → 실험
+```
+
+The tool's output is a **wireframe-level structural proposal**; a designer fills
+in the visual detail afterwards. That shapes everything below, including how the
+auditing works.
 
 | | |
 |---|---|
-| **파이프라인** | 캡처 → LLM 직접 재구성 → 검사기 → Flutter. Neither DesignRepair nor `senior_kb.csv` is in it. |
-| **실험 조건** | 원본 vs 재구성본, two conditions. The rule-based build is not one: at fatal 7 a participant can get stuck mid-task. |
-| **비교 증거** | The rule-based result is kept for comparison. What it supports is narrower than earlier notes claimed - see `docs/comparison-validity.md`. |
+| **파이프라인** | the chain above. Neither DesignRepair nor `senior_kb.csv` is in it. |
+| **실험 조건** | 원본 vs 재구성본, two conditions, on real elderly participants. |
+| **보관 자료** | DesignRepair results and `kb/senior_kb.csv`. Kept, not used. `vendor/designrepair/` stays too. |
 
-**The two branches did not get the same conditions.** The rule-based run was fed
-one screen at a time with the transition script withheld, and audited with
-structural preservation enforced; the LLM restructuring got the whole file and no
-such check. So "rules cannot change structure" is a statement about the setup, not
-a finding. `docs/comparison-validity.md` lays out what the comparison does and
-does not support.
+**DesignRepair was dropped from the research on 2026-09-30.** It repairs the
+visual quality of a finished screen, which is a different job from proposing a
+structure, and the two branches could not be given the same input unit: feeding
+DesignRepair the whole file needs 39,276 tokens against a 30,000 TPM account
+limit. A fair comparison is therefore not available, so the two results are not
+compared. `docs/comparison-validity.md` records how that was established and is
+closed.
 
-Which layer a build belongs to is not declared anywhere - it comes from what the
-audit already recorded. `derived_from_original: true` means the build repairs the
-original document (the rule-based branch, so: comparison); false means it was
-designed anew (pipeline output). A new build lands in the right group by itself.
-The study conditions are read from `tools/session_server.py` rather than written
-down twice.
+`kb/senior_kb.csv` stays for **사후 대조** - checking after the fact which rules a
+design happens to satisfy. It is not fed to anything in the pipeline.
+
+## Two audit stages
+
+Because the tool now emits a wireframe first and a styled build later, the
+checks split in two. `tools/audit_stage.py` wraps `tools/audit.py` without
+modifying it.
+
+| stage | checks | why |
+|---|---|---|
+| `wireframe` | A 과제 완주 · B 표시 정확성 · C 죽은 컨트롤 · F 언어 | contrast, layout, state colour and undefined classes are about detail nobody has filled in yet |
+| `styled` | A~H | everything |
+
+```powershell
+.\.venv\Scripts\python.exe toolsudit_stage.py --flow toolslowsestructured.json `
+   --repaired http://localhost:3003/outputs/restructured_transfer.html `
+   --repaired-file outputsestructured_transfer.html --stage wireframe
+```
+
+The stage can also live in the flow file as `"stage": "wireframe"`; the flag
+wins. A flow with neither runs everything, so existing flows behave as before.
+Dropped checks are recorded in `checks_stood_down` with the reason, the same
+place `audit.py` already notes what it stood down.
 
 ## The viewer
 

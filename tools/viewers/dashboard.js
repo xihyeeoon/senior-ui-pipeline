@@ -29,10 +29,10 @@ function drawHome(){
     const lc = (m.low_contrast_before != null && m.low_contrast_after != null)
       ? m.low_contrast_before + ' → ' + m.low_contrast_after : '·';
     const badges =
-      (b.layer === 'comparison' ? '<span class="tag t-cmp">비교 기준</span>' : '') +
+      (b.layer === 'archive' ? '<span class="tag t-cmp">보관 자료</span>' : '') +
       (b.layer === 'input' ? '<span class="tag t-dim">입력</span>' : '') +
       (b.in_study ? '<span class="tag t-acc">실험 조건</span>' : '');
-    return '<tr class="click' + (b.layer === 'comparison' ? ' cmp' : '') +
+    return '<tr class="click' + (b.layer === 'archive' ? ' cmp' : '') +
       '" data-goto="' + b.id + '">' +
       '<td><b>' + esc(b.name) + '</b> ' + badges +
         (b.layer_note ? '<div class="sub">' + esc(b.layer_note) + '</div>' : '') +
@@ -51,7 +51,7 @@ function drawHome(){
   }
 
   const pipe = (IX.builds || []).filter(b => b.layer === 'pipeline');
-  const cmp  = (IX.builds || []).filter(b => b.layer === 'comparison');
+  const cmp  = (IX.builds || []).filter(b => b.layer === 'archive');
 
   if (base) rows.push(row(base));
   if (pipe.length){
@@ -59,7 +59,7 @@ function drawHome(){
     pipe.forEach(b => rows.push(row(b)));
   }
   if (cmp.length){
-    rows.push('<tr class="sect-row"><td colspan="8">비교 기준 — 파이프라인 단계가 아닙니다</td></tr>');
+    rows.push('<tr class="sect-row"><td colspan="8">보관 자료 — 파이프라인에 쓰지 않습니다</td></tr>');
     cmp.forEach(b => rows.push(row(b)));
   }
 
