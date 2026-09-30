@@ -99,6 +99,24 @@ Known gaps, both real: it cannot tell that `☆` labelled "선택됨" is factual
 inverted (that needs a declared class↔label mapping), and it has no
 duplicate-text check, so `confirm`'s doubled "수수료 무료" passes.
 
+## Three layers, kept apart
+
+Showing the rule-based repair as a pipeline stage caused real confusion, so the
+viewer now states which is which:
+
+| | |
+|---|---|
+| **파이프라인** | 캡처 → LLM 직접 재구성 → 검사기 → Flutter. Neither DesignRepair nor `senior_kb.csv` is in it. |
+| **실험 조건** | 원본 vs 재구성본, two conditions. The rule-based build is not one: at fatal 7 a participant can get stuck mid-task. |
+| **비교 증거** | The rule-based result is kept as the control for "rules cannot change structure". |
+
+Which layer a build belongs to is not declared anywhere - it comes from what the
+audit already recorded. `derived_from_original: true` means the build repairs the
+original document (the rule-based branch, so: comparison); false means it was
+designed anew (pipeline output). A new build lands in the right group by itself.
+The study conditions are read from `tools/session_server.py` rather than written
+down twice.
+
 ## The viewer
 
 `시작.bat` (or `python tools/session_server.py`) serves the project and opens

@@ -23,43 +23,56 @@ function buildById(id){ return allBuilds().find(b => b.id === id); }
 function drawHome(){
   const rows = [];
   const base = IX.baseline;
-  if (base){
-    rows.push('<tr class="click" data-goto="' + base.id + '">' +
-      '<td><b>' + esc(base.name) + '</b> <span class="tag t-dim">기준</span></td>' +
-      '<td class="c-dim">–</td><td class="num c-dim">·</td><td class="num c-dim">·</td>' +
-      '<td class="num">' + base.screens.length + '</td>' +
-      '<td class="num c-dim">·</td>' +
-      '<td class="mono">' + esc((base.flow || {}).name || '') + '</td>' +
-      '<td class="mono">' + esc(base.when || '') + '</td></tr>');
-  }
-  (IX.builds || []).forEach(b => {
-    const a = b.audit, m = a.metrics || {};
+
+  function row(b){
+    const a = b.audit, m = (a && a.metrics) || {};
     const lc = (m.low_contrast_before != null && m.low_contrast_after != null)
       ? m.low_contrast_before + ' → ' + m.low_contrast_after : '·';
-    rows.push('<tr class="click" data-goto="' + b.id + '">' +
-      '<td><b>' + esc(b.name) + '</b></td>' +
-      '<td>' + (a.passed ? '<span class="tag t-ok">통과</span>'
-                         : '<span class="tag t-fatal">미통과</span>') + '</td>' +
-      '<td class="num ' + (a.fatal ? 'c-fatal' : 'c-dim') + '">' + (a.fatal || '·') + '</td>' +
-      '<td class="num ' + (a.warning ? 'c-warn' : 'c-dim') + '">' + (a.warning || '·') + '</td>' +
+    const badges =
+      (b.layer === 'comparison' ? '<span class="tag t-cmp">비교 기준</span>' : '') +
+      (b.layer === 'input' ? '<span class="tag t-dim">입력</span>' : '') +
+      (b.in_study ? '<span class="tag t-acc">실험 조건</span>' : '');
+    return '<tr class="click' + (b.layer === 'comparison' ? ' cmp' : '') +
+      '" data-goto="' + b.id + '">' +
+      '<td><b>' + esc(b.name) + '</b> ' + badges +
+        (b.layer_note ? '<div class="sub">' + esc(b.layer_note) + '</div>' : '') + '</td>' +
+      '<td>' + (!a ? '<span class="c-dim">–</span>'
+                   : (a.passed ? '<span class="tag t-ok">통과</span>'
+                               : '<span class="tag t-fatal">미통과</span>')) + '</td>' +
+      '<td class="num ' + (a && a.fatal ? 'c-fatal' : 'c-dim') + '">' +
+        (a ? (a.fatal || '·') : '·') + '</td>' +
+      '<td class="num ' + (a && a.warning ? 'c-warn' : 'c-dim') + '">' +
+        (a ? (a.warning || '·') : '·') + '</td>' +
       '<td class="num">' + b.screens.length + '</td>' +
       '<td class="num">' + lc + '</td>' +
       '<td class="mono">' + esc((b.flow || {}).name || '') + '</td>' +
-      '<td class="mono">' + esc(b.when || '') + '</td></tr>');
-  });
+      '<td class="mono">' + esc(b.when || '') + '</td></tr>';
+  }
+
+  const pipe = (IX.builds || []).filter(b => b.layer === 'pipeline');
+  const cmp  = (IX.builds || []).filter(b => b.layer === 'comparison');
+
+  if (base) rows.push(row(base));
+  if (pipe.length){
+    rows.push('<tr class="sect-row"><td colspan="8">파이프라인 산출물 — LLM 직접 재구성</td></tr>');
+    pipe.forEach(b => rows.push(row(b)));
+  }
+  if (cmp.length){
+    rows.push('<tr class="sect-row"><td colspan="8">비교 기준 — 파이프라인 단계가 아닙니다</td></tr>');
+    cmp.forEach(b => rows.push(row(b)));
+  }
 
   $('#home').innerHTML =
+    pipelineStrip() +
     '<h2>빌드</h2>' +
-    '<p class="hint">행을 누르면 그 빌드의 검사 결과로 갑니다. ' +
-    'fatal 이 있다는 것은 고장났다는 뜻이 아니라 검사기가 그 항목을 붙잡았다는 뜻입니다 — ' +
-    '규칙 기반의 7건은 이 연구의 관측 결과입니다.</p>' +
+    '<p class="hint">행을 누르면 그 빌드의 검사 결과로 갑니다.</p>' +
     '<table><thead><tr><th>이름</th><th>통과</th><th class="num">fatal</th>' +
     '<th class="num">warning</th><th class="num">화면</th><th class="num">저대비(원본→빌드)</th>' +
     '<th>흐름</th><th>수정</th></tr></thead><tbody>' + rows.join('') + '</tbody></table>' +
     attemptsSlot() +
     '<h2 style="margin-top:24px">스크린샷</h2>' +
     '<p class="hint">' + Object.keys(IX.shot_dirs || {}).length + '개 폴더에 흩어져 있던 것을 ' +
-    '빌드별로 묶었습니다. 화면 비교 탭에서 스크린샷 모드로 보면 서버 없이도 열립니다.</p>' +
+    '빌드별로 묶었습니다. 화면 비교 탭의 스크린샷 모드에서 볼 수 있습니다.</p>' +
     '<table><thead><tr><th>빌드</th><th class="num">화면</th><th class="num">스크린샷</th>' +
     '<th>출처 폴더</th></tr></thead><tbody>' +
     allBuilds().map(b => {
@@ -72,10 +85,23 @@ function drawHome(){
     }).join('') + '</tbody></table>';
 
   $$('#home tr.click').forEach(tr => tr.onclick = () => {
-    go('audit'); $('#audit-pick-' + tr.dataset.goto) &&
-      ($('#audit-pick-' + tr.dataset.goto).checked = true);
-    drawAudit();
+    AUD.picks = [tr.dataset.goto];
+    go('audit');
   });
+}
+
+/* 파이프라인이 무엇인지 화면 맨 위에 그린다. 규칙 기반이 여기 없다는 것이
+   이 띠의 요점이다. */
+function pipelineStrip(){
+  const steps = (IX.pipeline || []).map((s, i) =>
+    '<div class="pstep' + (s.artifact ? '' : ' future') + '">' +
+      '<div class="pn">' + esc(s.name) + '</div>' +
+      '<div class="pd">' + esc(s.note) + '</div>' +
+    '</div>' + (i < IX.pipeline.length - 1 ? '<div class="parrow">→</div>' : '')).join('');
+  const conds = (IX.study_conditions || []).map(c => esc(c.label)).join(' vs ');
+  return '<div class="pipe">' + steps + '</div>' +
+    '<div class="banner">' + esc(IX.banner || '') +
+    (conds ? ' <span class="c-dim">· 실험 조건: ' + conds + '</span>' : '') + '</div>';
 }
 
 /* 자동 루프가 시도 이력을 채울 자리. 지금은 비어 있다는 사실만 알린다. */
@@ -318,7 +344,7 @@ function showShot(path, cap){
 /* ------------------------------------------------------------------ */
 /* 4. 변경 추적                                                         */
 /* ------------------------------------------------------------------ */
-let CHG = { rule: '', only: '' };
+let CHG = { rule: '', only: 'uncovered' };   // 기본은 '규칙으로 설명 안 되는 것'
 
 function drawChanges(){
   const changes = IX.changes || [], rules = IX.rules || [];
@@ -347,9 +373,10 @@ function drawChanges(){
 
   $('#changes').innerHTML =
     '<h2>변경 추적</h2>' +
-    '<p class="hint">docs/restructure-changelog.md 의 표를 그대로 읽은 것입니다. ' +
-    '규칙 ID 는 사후에 붙인 것이라 "어떤 규칙이 이 변경을 만들었다"가 아니라 ' +
-    '"결과적으로 이 규칙에 해당한다"는 뜻입니다.</p>' +
+    '<div class="banner warn">' + esc(IX.kb_note || '') + '</div>' +
+    '<p class="hint">이 화면이 묻는 것은 <b>규칙으로 설명되지 않는 변경이 무엇인가</b>입니다. ' +
+    '화면을 나누고 더한 변경들이며, KB 46개가 다루지 못하는 영역입니다. ' +
+    '기본으로 그것만 보여 줍니다 — 전체를 보려면 아래 칩을 끄세요.</p>' +
     '<div class="bar">' +
       '<select id="chg-rule">' + ruleOpts + '</select>' +
       '<span class="chip' + (CHG.only === 'uncovered' ? ' on' : '') + '" id="chg-unc">' +

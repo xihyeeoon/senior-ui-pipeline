@@ -125,3 +125,20 @@ td.rules{white-space:nowrap;}
 .attempts{margin-top:10px;font-size:12.5px;color:var(--dim);}
 .att-row{display:flex;gap:9px;padding:4px 0;align-items:center;}
 .att-dot{width:7px;height:7px;border-radius:50%;background:var(--line);flex:0 0 7px;}
+
+/* ---------- 파이프라인 띠 + 층 구분 ---------- */
+.pipe{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.pstep{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  padding:9px 13px;min-width:120px;}
+.pstep.future{border-style:dashed;opacity:.65;}
+.pstep .pn{font-weight:700;font-size:13px;}
+.pstep .pd{font-size:11.5px;color:var(--dim);margin-top:2px;line-height:1.4;}
+.parrow{display:flex;align-items:center;color:var(--dim);font-size:15px;}
+.banner{background:rgba(91,157,255,.08);border:1px solid rgba(91,157,255,.28);
+  border-left:3px solid var(--accent);border-radius:7px;padding:9px 13px;
+  font-size:13px;color:var(--ink);margin-bottom:16px;}
+.banner.warn{background:rgba(255,184,77,.07);border-color:rgba(255,184,77,.3);
+  border-left-color:var(--warn);}
+.t-cmp{background:rgba(154,164,178,.18);color:var(--sub);}
+td .sub{font-size:11.5px;color:var(--dim);margin-top:2px;font-weight:400;}
+tr.cmp td{background:rgba(154,164,178,.04);}

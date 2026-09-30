@@ -51,6 +51,38 @@ NAMES = {
 ORDER = ["repaired_transfer", "restructured_transfer", "restructured_run2",
          "restructured_run3", "restructured_auto"]
 
+
+# --------------------------------------------------------------------------- #
+# 세 개의 층
+# --------------------------------------------------------------------------- #
+# 규칙 기반 수리를 파이프라인 단계처럼 보여 준 적이 있는데, 그것이 혼란의
+# 원인이었다. 셋은 다른 것이다.
+#
+#   파이프라인   캡처 → LLM 직접 재구성 → 검사기 → Flutter
+#                DesignRepair 도 senior_kb.csv 도 여기 쓰이지 않는다.
+#   실험 조건    원본 vs 재구성본 둘. 규칙 기반은 넣지 않는다 (fatal 7건이라
+#                과업이 중간에 막힐 수 있다).
+#   비교 증거    규칙 기반 결과를 보관한다. "규칙으로는 구조를 못 바꾼다"의 대조군.
+#
+# 빌드가 어느 층인지는 선언하지 않고 audit 이 적어 둔 값에서 가른다:
+# derived_from_original 이 참이면 원본을 고친 것(= 규칙 기반 계열, 비교 기준),
+# 거짓이면 새로 설계한 것(= 파이프라인 산출물). 새 빌드는 자동으로 후자가 된다.
+PIPELINE = [
+    {"id": "capture", "name": "캡처", "note": "신한 SOL 화면을 8화면 시제품으로",
+     "artifact": "inputs/original_transfer.html"},
+    {"id": "restructure", "name": "LLM 직접 재구성", "note": "규칙 없이 과업의 어려움만 보고 다시 설계",
+     "artifact": "outputs/restructured_*.html"},
+    {"id": "audit", "name": "검사기", "note": "같은 과업으로 몰아 A~H",
+     "artifact": "tools/audit.py"},
+    {"id": "flutter", "name": "Flutter", "note": "별도 저장소 (senior-ui-dummy-app)",
+     "artifact": None},
+]
+
+BANNER = ("규칙 기반 빌드는 비교 기준입니다. "
+          "현재 파이프라인은 LLM 직접 재구성만 사용합니다.")
+
+KB_NOTE = ("senior_kb.csv 대조는 사후 확인입니다. 생성에 규칙을 사용하지 않았습니다.")
+
 CHECK_NAMES = {
     "A": "과업 완료·구조 보존", "B": "표시 정확성", "C": "죽은 컨트롤", "D": "대비",
     "E": "레이아웃", "F": "언어", "G": "상태 구분", "H": "미정의 클래스",
@@ -231,9 +263,14 @@ def collect_builds():
             os.path.splitext(os.path.basename(flow_rel))[0] if flow_rel else None)
 
         stem = os.path.splitext(os.path.basename(build_rel))[0]
+        derived = bool((d.get("metrics") or {}).get("derived_from_original"))
         found[build_rel] = {
             "id": stem,
             "name": NAMES.get(stem, stem),
+            # 원본을 고친 것은 비교 기준, 새로 설계한 것은 파이프라인 산출물
+            "layer": "comparison" if derived else "pipeline",
+            "layer_note": ("규칙 기반 수리 결과. 파이프라인 단계가 아니라 대조군입니다."
+                           if derived else None),
             "html": build_rel,
             "when": when(mtime(os.path.join(ROOT, build_rel))),
             "audit": audit_digest(d, path),
@@ -252,12 +289,24 @@ def collect_builds():
     return builds, dirs
 
 
+def study_conditions():
+    """실험에 실제로 쓰는 두 조건. tools/session_server.py 가 정의하므로
+    거기서 읽는다 - 두 곳에 적으면 언젠가 어긋난다."""
+    try:
+        import session_server
+        return [{"key": c["key"], "label": c["label"],
+                 "build": c["url"].lstrip("/")} for c in session_server.CONDITIONS]
+    except Exception:
+        return []
+
+
 def collect_baseline(dirs):
     path = os.path.join(ROOT, "inputs", "original_transfer.html")
     if not os.path.exists(path):
         return None
     return {
         "id": "original_transfer", "name": NAMES["original_transfer"],
+        "layer": "input", "layer_note": "모든 갈래가 여기서 출발합니다.",
         "html": rel(path), "when": when(mtime(path)),
         "screens": screens_of(path),
         "shots": match_shots(dirs, None, "original_transfer", want_prefix="before"),
@@ -426,9 +475,18 @@ def build():
     changes = parse_changelog()
     claims = parse_claims()
     rules = parse_kb(changes, claims)
+    conds = study_conditions()
+    in_study = {c["build"] for c in conds}
+    for b in ([baseline] if baseline else []) + builds:
+        b["in_study"] = b["html"] in in_study
+
     return {
         "generated": datetime.datetime.now().isoformat(timespec="seconds"),
         "check_names": CHECK_NAMES,
+        "pipeline": PIPELINE,
+        "banner": BANNER,
+        "kb_note": KB_NOTE,
+        "study_conditions": conds,
         "baseline": baseline,
         "builds": builds,
         "changes": changes,
