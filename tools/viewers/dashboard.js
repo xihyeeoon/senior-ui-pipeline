@@ -35,7 +35,8 @@ function drawHome(){
     return '<tr class="click' + (b.layer === 'comparison' ? ' cmp' : '') +
       '" data-goto="' + b.id + '">' +
       '<td><b>' + esc(b.name) + '</b> ' + badges +
-        (b.layer_note ? '<div class="sub">' + esc(b.layer_note) + '</div>' : '') + '</td>' +
+        (b.layer_note ? '<div class="sub">' + esc(b.layer_note) + '</div>' : '') +
+        altLine(b) + '</td>' +
       '<td>' + (!a ? '<span class="c-dim">–</span>'
                    : (a.passed ? '<span class="tag t-ok">통과</span>'
                                : '<span class="tag t-fatal">미통과</span>')) + '</td>' +
@@ -90,6 +91,19 @@ function drawHome(){
   });
 }
 
+/* 같은 빌드를 다른 조건으로 검사한 것이 있으면 나란히 적는다. 조건을 바꾸면
+   숫자가 얼마나 달라지는지가 이 프로젝트에서 가장 오해하기 쉬운 부분이다. */
+function altLine(b){
+  const alts = b.other_audits || [];
+  if (!alts.length) return '';
+  const a = b.audit;
+  const parts = [(a.metrics && a.metrics.flow ? a.metrics.flow : '주') +
+    ' → fatal ' + a.fatal + ' / warning ' + a.warning];
+  alts.forEach(x => parts.push((x.flow || '대체') +
+    ' → fatal ' + x.fatal + ' / warning ' + x.warning));
+  return '<div class="sub alt">조건에 따라 달라짐: ' + esc(parts.join('  ·  ')) + '</div>';
+}
+
 /* 파이프라인이 무엇인지 화면 맨 위에 그린다. 규칙 기반이 여기 없다는 것이
    이 띠의 요점이다. */
 function pipelineStrip(){
@@ -101,7 +115,9 @@ function pipelineStrip(){
   const conds = (IX.study_conditions || []).map(c => esc(c.label)).join(' vs ');
   return '<div class="pipe">' + steps + '</div>' +
     '<div class="banner">' + esc(IX.banner || '') +
-    (conds ? ' <span class="c-dim">· 실험 조건: ' + conds + '</span>' : '') + '</div>';
+    (conds ? ' <span class="c-dim">· 실험 조건: ' + conds + '</span>' : '') + '</div>' +
+    (IX.caveat ? '<div class="banner warn">' + esc(IX.caveat) +
+      ' <a href="/docs/comparison-validity.md" target="_blank">근거 문서</a></div>' : '');
 }
 
 /* 자동 루프가 시도 이력을 채울 자리. 지금은 비어 있다는 사실만 알린다. */

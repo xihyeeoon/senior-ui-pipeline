@@ -62,7 +62,9 @@ ORDER = ["repaired_transfer", "restructured_transfer", "restructured_run2",
 #                DesignRepair 도 senior_kb.csv 도 여기 쓰이지 않는다.
 #   실험 조건    원본 vs 재구성본 둘. 규칙 기반은 넣지 않는다 (fatal 7건이라
 #                과업이 중간에 막힐 수 있다).
-#   비교 증거    규칙 기반 결과를 보관한다. "규칙으로는 구조를 못 바꾼다"의 대조군.
+#   비교 증거    규칙 기반 결과를 보관한다. 다만 두 갈래는 같은 조건을 받지 않았다 -
+#                규칙 기반은 화면을 하나씩 받았고 구조 보존 검사를 받았다.
+#                무엇을 주장할 수 있는지는 docs/comparison-validity.md.
 #
 # 빌드가 어느 층인지는 선언하지 않고 audit 이 적어 둔 값에서 가른다:
 # derived_from_original 이 참이면 원본을 고친 것(= 규칙 기반 계열, 비교 기준),
@@ -80,6 +82,13 @@ PIPELINE = [
 
 BANNER = ("규칙 기반 빌드는 비교 기준입니다. "
           "현재 파이프라인은 LLM 직접 재구성만 사용합니다.")
+
+# 두 갈래가 같은 조건을 받지 않았다는 사실은 결과를 읽을 때마다 필요하므로
+# 뷰어에 싣는다. 근거는 docs/comparison-validity.md.
+CAVEAT = ("규칙 기반과 재구성본은 같은 조건이 아닙니다 — "
+          "규칙 기반은 화면을 하나씩 받았고(전환 스크립트 제외) 구조 보존 검사를 "
+          "받았습니다. 재구성본은 파일 전체를 받았고 그 검사를 면제받았습니다. "
+          "둘의 우열을 이 수치로 말할 수 없습니다.")
 
 KB_NOTE = ("senior_kb.csv 대조는 사후 확인입니다. 생성에 규칙을 사용하지 않았습니다.")
 
@@ -239,18 +248,37 @@ def collect_builds():
         if not build_rel or not os.path.exists(os.path.join(ROOT, build_rel)):
             continue      # audit of a build that no longer exists (old layout)
 
-        # audit.py writes both --out and a stdout copy; prefer the real one,
-        # then the most recent.
+        # audit.py writes both --out and a stdout copy; the stdout one is a
+        # duplicate and never interesting.
+        if "_stdout" in name:
+            dup = True
+        else:
+            dup = False
+
         prev = found.get(build_rel)
-        is_stdout = "_stdout" in name
-        if prev:
-            prev_stdout = "_stdout" in prev["audit"]["path"]
-            if prev_stdout and not is_stdout:
-                pass                      # replace
-            elif is_stdout and not prev_stdout:
-                continue
-            elif (mtime(path) or 0) <= (prev["audit"]["mtime"] or 0):
-                continue
+        if prev and dup:
+            continue
+        if prev and not dup:
+            # 같은 빌드를 다른 흐름으로 검사한 것이면 둘 다 남긴다. 조건을 바꾸면
+            # 결과가 어떻게 달라지는지가 이 프로젝트에서 가장 알고 싶은 것이다.
+            prev_flow = (prev["audit"].get("metrics") or {}).get("flow")
+            this_flow = (d.get("metrics") or {}).get("flow")
+            if prev_flow != this_flow:
+                newer = (mtime(path) or 0) > (prev["audit"]["mtime"] or 0)
+                if newer:
+                    prev.setdefault("other_audits", []).insert(
+                        0, dict(prev["audit"], flow=prev_flow))
+                    alts = prev.pop("other_audits")
+                else:
+                    prev.setdefault("other_audits", []).append(
+                        dict(audit_digest(d, path), flow=this_flow))
+                    continue
+            else:
+                alts = prev.get("other_audits", [])
+                if (mtime(path) or 0) <= (prev["audit"]["mtime"] or 0):
+                    continue
+        else:
+            alts = []
 
         flow_raw = (d.get("inputs") or {}).get("flow") or ""
         flow_rel = None
@@ -269,7 +297,9 @@ def collect_builds():
             "name": NAMES.get(stem, stem),
             # 원본을 고친 것은 비교 기준, 새로 설계한 것은 파이프라인 산출물
             "layer": "comparison" if derived else "pipeline",
-            "layer_note": ("규칙 기반 수리 결과. 파이프라인 단계가 아니라 대조군입니다."
+            "layer_note": ("규칙 기반 수리 결과. 파이프라인 단계가 아닙니다. "
+                           "화면을 하나씩 받고 구조 보존 검사를 받은 조건이라, "
+                           "재구성본과 같은 조건의 비교가 아닙니다."
                            if derived else None),
             "html": build_rel,
             "when": when(mtime(os.path.join(ROOT, build_rel))),
@@ -280,6 +310,8 @@ def collect_builds():
             "screens": screens_of(os.path.join(ROOT, build_rel)),
             "shots": match_shots(dirs, flow_name, stem,
                                  want_prefix="after" if stem == "repaired_transfer" else None),
+            # 같은 빌드를 다른 조건으로 검사한 것들
+            "other_audits": alts,
             # 자동 루프가 쌓을 시도 이력이 들어올 자리. 지금은 늘 비어 있다.
             "attempts": [],
         }
@@ -485,6 +517,7 @@ def build():
         "check_names": CHECK_NAMES,
         "pipeline": PIPELINE,
         "banner": BANNER,
+        "caveat": CAVEAT,
         "kb_note": KB_NOTE,
         "study_conditions": conds,
         "baseline": baseline,

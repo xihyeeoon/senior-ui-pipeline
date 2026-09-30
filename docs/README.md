@@ -108,7 +108,14 @@ viewer now states which is which:
 |---|---|
 | **파이프라인** | 캡처 → LLM 직접 재구성 → 검사기 → Flutter. Neither DesignRepair nor `senior_kb.csv` is in it. |
 | **실험 조건** | 원본 vs 재구성본, two conditions. The rule-based build is not one: at fatal 7 a participant can get stuck mid-task. |
-| **비교 증거** | The rule-based result is kept as the control for "rules cannot change structure". |
+| **비교 증거** | The rule-based result is kept for comparison. What it supports is narrower than earlier notes claimed - see `docs/comparison-validity.md`. |
+
+**The two branches did not get the same conditions.** The rule-based run was fed
+one screen at a time with the transition script withheld, and audited with
+structural preservation enforced; the LLM restructuring got the whole file and no
+such check. So "rules cannot change structure" is a statement about the setup, not
+a finding. `docs/comparison-validity.md` lays out what the comparison does and
+does not support.
 
 Which layer a build belongs to is not declared anywhere - it comes from what the
 audit already recorded. `derived_from_original: true` means the build repairs the
