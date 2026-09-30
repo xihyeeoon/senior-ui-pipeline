@@ -50,6 +50,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
 
 import audit as A                                            # noqa: E402
+import audit_stage as S                                      # noqa: E402
 
 PORT = 3003
 PROMPT_FILE = os.path.join(ROOT, "docs", "restructure-prompt.md")
@@ -279,12 +280,17 @@ def failure_report(kind, detail):
 # --------------------------------------------------------------------------- #
 # audit (tools/audit.py, called as a library)
 # --------------------------------------------------------------------------- #
-def run_audit(orig_snapshot, orig_html, html_path, flow_path, url, shots):
+def run_audit(orig_snapshot, orig_html, html_path, flow_path, url, shots, stage):
+    """audit.py 로 검사한 뒤 단계 밖 검사를 걷어낸다. 와이어프레임 단계에서는
+    대비·레이아웃·상태 색·미정의 클래스를 보지 않는다 - 아직 채우지 않은
+    디테일이기 때문이다. 걸러낸 이유는 checks_stood_down 에 남는다."""
     flow = A.load_flow(flow_path)
     rep_html = io.open(html_path, encoding="utf-8").read()
     rep = asyncio.run(A.drive(url, flow, want_shots=shots))
     report = A.audit(orig_snapshot, rep, orig_html, rep_html, flow)
-    report["inputs"] = {"original": ORIGINAL_URL, "repaired": url, "flow": flow_path}
+    report = S.apply_stage(report, stage)
+    report["inputs"] = {"original": ORIGINAL_URL, "repaired": url, "flow": flow_path,
+                        "stage": stage}
     return report
 
 
@@ -298,6 +304,8 @@ def main():
     ap.add_argument("--mock", choices=["pass", "fail"], default=None,
                     help="skip the API and replay Run 1 (fail: with a broken flow)")
     ap.add_argument("--original", default=ORIGINAL_FILE)
+    ap.add_argument("--stage", choices=sorted(S.STAGES), default="styled",
+                    help="검사 단계. wireframe 은 A·B·C·F 만 본다")
     args = ap.parse_args()
 
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -325,10 +333,11 @@ def main():
         print("cannot start: %s" % e, file=sys.stderr)
         return 2
 
-    log("run: %s | model=%s | attempts=%d | mock=%s" % (run_dir, model, args.attempts, args.mock))
+    log("run: %s | model=%s | attempts=%d | stage=%s | mock=%s"
+        % (run_dir, model, args.attempts, args.stage, args.mock))
     server = None
-    summary = {"run_dir": run_dir, "model": model, "mock": args.mock, "attempts": [],
-               "passed": False, "final": None}
+    summary = {"run_dir": run_dir, "model": model, "mock": args.mock,
+               "stage": args.stage, "attempts": [], "passed": False, "final": None}
     try:
         server = ensure_server(log)
         base_flow = A.load_flow(None)
@@ -400,7 +409,8 @@ def main():
                 shots = os.path.join(run_dir, "shots", "attempt_%d" % n)
                 os.makedirs(shots, exist_ok=True)
                 try:
-                    report = run_audit(orig_snapshot, original_html, html_path, flow_path, url, shots)
+                    report = run_audit(orig_snapshot, original_html, html_path,
+                                       flow_path, url, shots, args.stage)
                 except Exception as e:                       # a flow audit.py cannot drive
                     log("audit: crashed: %s: %s" % (type(e).__name__, e))
                     report = failure_report("AUDIT", "검사기가 흐름 명세를 실행하지 못했다: %s: %s"
