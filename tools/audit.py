@@ -167,6 +167,44 @@ async def run_actions(page, spec, notes=None):
                 await asyncio.sleep(float(item["wait"]))
 
 
+SELECTOR_IN_ERROR = re.compile(r'waiting for locator\("([^"]+)"\)')
+
+WHERE_IS = """sel => {
+  let el = null;
+  try { el = document.querySelector(sel); } catch (e) { return null; }
+  const on = document.querySelector('.screen.on');
+  const current = on ? on.dataset.screen : null;
+  if (!el) return {found: false, current: current};
+  const sec = el.closest('[data-screen]');
+  return {found: true, owner: sec ? sec.dataset.screen : null, current: current};
+}"""
+
+
+async def where_is(page, error_text):
+    """실패한 선택자가 어느 화면 안에 있는지 알아낸다.
+
+    "보이지 않음" 만으로는 요소를 고쳐야 하는지 화면 전환을 고쳐야 하는지 알 수
+    없다. 요소가 다른 화면 안에 멀쩡히 있다면 문제는 요소가 아니라 거기까지
+    가지 못한 것이다."""
+    m = SELECTOR_IN_ERROR.search(error_text or "")
+    if not m:
+        return None
+    try:
+        info = await page.evaluate(WHERE_IS, m.group(1))
+    except Exception:
+        return None
+    if not info:
+        return None
+    sel = m.group(1)
+    if not info.get("found"):
+        return "%s 는 문서 어디에도 없다 (지금 화면: %s)" % (sel, info.get("current"))
+    owner, current = info.get("owner"), info.get("current")
+    if owner and current and owner != current:
+        return ("%s 는 %r 화면에 있는데 지금 켜진 화면은 %r 이다. "
+                "요소가 아니라 화면 전환을 확인하라." % (sel, owner, current))
+    return None
+
+
 async def drive(url, flow, want_shots=None):
     """Walk the task once and collect everything the checks need."""
     data = {"screens": {}, "dialogs": [], "js_errors": [], "reached": [],
@@ -214,7 +252,11 @@ async def drive(url, flow, want_shots=None):
                 elif "click" in step:
                     await run_actions(page, {"click": step["click"]}, data["notes"])
             except Exception as e:
-                data["screens"][name] = {"error": "%s: %s" % (type(e).__name__, e)}
+                msg = "%s: %s" % (type(e).__name__, e)
+                hint = await where_is(page, msg)
+                if hint:
+                    msg += " || " + hint
+                data["screens"][name] = {"error": msg}
                 break
             await asyncio.sleep(0.45)
 

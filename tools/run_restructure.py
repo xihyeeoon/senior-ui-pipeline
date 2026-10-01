@@ -134,7 +134,11 @@ STACK_LINE = re.compile(r":(\d+):\d+\)?\s*$", re.M)
 
 
 def brief_failure(detail):
-    """긴 Playwright 로그를 한 줄로. 남길 것은 선택자·요소·이유뿐이다."""
+    """긴 Playwright 로그를 한 줄로. 남길 것은 선택자·요소·이유뿐이다.
+
+    audit 이 " || " 뒤에 붙인 힌트(요소가 어느 화면에 있는지)가 있으면 그것이
+    가장 중요한 정보다. 로그를 줄이면서 그 한 줄을 버리면 안 된다."""
+    detail, _, hint = detail.partition(" || ")
     sel = WAITING_FOR.search(detail)
     el = RESOLVED_TO.search(detail)
     why = next((msg for pat, msg in WHY if pat.search(detail)), None)
@@ -151,7 +155,10 @@ def brief_failure(detail):
             why = "disabled 가 풀리지 않음" + (" (%s)" % why if why else "")
     if why:
         bits.append(why)
-    return "  ".join(bits)
+    out = "  ".join(bits)
+    if hint:
+        out += "\n      → " + hint.strip()
+    return out
 
 
 def js_cause(report, prev_html):
@@ -364,6 +371,34 @@ def validate_flow(flow, html):
                             % (i, st["screen"], ", ".join(sorted(screens))))
         if i > 0 and "click" not in st and "do" not in st:
             problems.append("steps[%d] (%s) 에 click 도 do 도 없다" % (i, st["screen"]))
+
+    # 화면을 넘기는 것은 클릭뿐이다. 타이핑으로 끝나는 단계는 다음 화면에 도달할
+    # 수단이 없고, 검사기는 아직 켜지지 않은 화면 안의 요소를 찾다 멈춘다. 이것은
+    # 브라우저를 띄우지 않고도 흐름 명세만 보면 알 수 있다.
+    def has_click(item):
+        return isinstance(item, dict) and "click" in item
+
+    for i, st in enumerate(steps[:-1]):          # 마지막 화면은 넘어갈 곳이 없다
+        if not isinstance(st, dict) or "screen" not in st:
+            continue
+        nxt = steps[i + 1].get("screen") if isinstance(steps[i + 1], dict) else "?"
+        here = st["screen"]
+        if "do" not in st:
+            continue                              # click 하나짜리 단계는 문제없다
+        do = st["do"] if isinstance(st["do"], list) else [st["do"]]
+        if not do:
+            continue
+        if not any(has_click(x) for x in do):
+            problems.append(
+                "흐름 명세: %r 의 do 에 클릭이 하나도 없다. 타이핑과 대기만으로는 "
+                "화면이 바뀌지 않으므로 %r 로 갈 수 없다. %s 에서 %s 로 넘어가는 "
+                "클릭 단계를 추가하라." % (here, nxt, here, nxt))
+        elif not has_click(do[-1]):
+            kind = "type" if "type" in do[-1] else list(do[-1])[0] if do[-1] else "?"
+            problems.append(
+                "흐름 명세: %r 의 마지막 동작이 %s 이다. 타이핑은 화면을 넘기지 "
+                "않으므로 %r 로 갈 수 없다. %s 에서 %s 로 넘어가는 클릭 단계를 "
+                "추가하라." % (here, kind, nxt, here, nxt))
     ids = set(re.findall(r'\bid="([^"]+)"', html))
     req = flow.get("required_ids")
     if not isinstance(req, list):
