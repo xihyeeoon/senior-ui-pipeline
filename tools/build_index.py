@@ -41,38 +41,28 @@ SHOTS = os.path.join(OUTPUTS, "shots")
 # Nicer labels for builds we happen to know. Anything missing falls back to the
 # file name, so a new build still appears.
 NAMES = {
-    "repaired_transfer": "규칙 기반 수리본",
     "restructured_transfer": "재구성 Run 1",
     "restructured_run2": "재구성 Run 2",
     "restructured_run3": "재구성 Run 3",
     "restructured_auto": "자동 생성본",
     "original_transfer": "원본",
-    "comp_original_transfer": "DesignRepair 전체파일 (A스트림만, 중단됨)",
 }
-ORDER = ["repaired_transfer", "restructured_transfer", "restructured_run2",
+ORDER = ["restructured_transfer", "restructured_run2",
          "restructured_run3", "restructured_auto"]
 
 
 # --------------------------------------------------------------------------- #
-# 세 개의 층
+# 두 개의 층
 # --------------------------------------------------------------------------- #
-# 규칙 기반 수리를 파이프라인 단계처럼 보여 준 적이 있는데, 그것이 혼란의
-# 원인이었다. 셋은 다른 것이다.
-#
 #   파이프라인   캡처 → LLM 재구성 → 검사기 → (스타일 이식) → 실험
-#                DesignRepair 도 senior_kb.csv 도 여기 쓰이지 않는다.
+#                senior_kb.csv 는 여기 쓰이지 않는다. 재구성본의 변경을 규칙
+#                id 에 대응시키는 사후 대조에만 쓴다.
 #   실험 조건    원본 vs 재구성본 둘.
-#   보관 자료    DesignRepair 결과와 senior_kb.csv. 파이프라인에 쓰지 않는다.
-#                두 갈래에 같은 입력 단위를 줄 수 없어(TPM 한도) 공정한 비교가
-#                성립하지 않으므로, 두 결과를 직접 비교하지 않는다.
-#                경위는 docs/comparison-validity.md.
 #
-# 빌드가 어느 층인지는 파일 이름으로 가른다. 한때 audit 의
-# derived_from_original 을 썼으나 그것은 검사 조건이지 빌드의 성격이 아니다 -
-# 같은 빌드를 다른 조건으로 재검사하자 판별이 뒤집혔다.
-# DesignRepair 갈래는 2026-09-30 에 닫혔으므로 이 목록은 더 늘지 않는다.
-# 새로 만들어지는 것은 전부 파이프라인 산출물이다.
-ARCHIVE_PREFIXES = ("repaired_", "comp_", "property_")
+# 규칙 기반 수리본은 2026-09-30 에 연구에서 빠졌고 파일도 지웠다. 그 시기의
+# 산출물이 outputs/ 에 남아 있어도 색인에 넣지 않는다 - 빌드가 어느 것인지는
+# 파일 이름으로 가른다.
+SKIP_PREFIXES = ("repaired_", "comp_", "property_")
 
 PIPELINE = [
     {"id": "capture", "name": "캡처", "note": "신한 SOL 화면을 8화면 시제품으로",
@@ -88,12 +78,6 @@ PIPELINE = [
 ]
 
 BANNER = "현재 파이프라인은 LLM 직접 재구성만 사용합니다."
-
-# 두 갈래가 같은 조건을 받지 않았다는 사실은 결과를 읽을 때마다 필요하므로
-# 뷰어에 싣는다. 근거는 docs/comparison-validity.md.
-CAVEAT = ("DesignRepair 결과는 보관 자료입니다. 같은 입력 단위를 줄 수 없어"
-          "(전체 파일은 API 한도 초과) 공정한 비교가 성립하지 않으므로, "
-          "재구성본과 직접 비교하지 않습니다.")
 
 KB_NOTE = ("senior_kb.csv 대조는 사후 확인입니다. 생성에 규칙을 사용하지 않았습니다.")
 
@@ -176,9 +160,9 @@ def match_shots(dirs, flow_name, build_id, want_prefix=None):
     """Screenshots for one build, keyed by screen name.
 
     Directories are matched by flow name (outputs/shots/run2 for the run2 flow),
-    then by build id. The flat files in outputs/shots are the older
-    runtime_audit output: before_* is the original, after_* the rule-based
-    repair. Nothing is hardcoded per build beyond that naming convention.
+    then by build id. The flat before_*.png files in outputs/shots are the
+    original's screens. Nothing is hardcoded per build beyond that naming
+    convention.
     """
     candidates = []
     for d in dirs:
@@ -187,7 +171,7 @@ def match_shots(dirs, flow_name, build_id, want_prefix=None):
             candidates.append(d)
         elif leaf == build_id:
             candidates.append(d)
-    # audit.py's default --shots directory, used by the rule-based run
+    # audit.py's default --shots directory
     if not candidates and flow_name == "original":
         candidates = [d for d in dirs if d.rsplit("/", 1)[-1] == "audit"]
 
@@ -253,6 +237,8 @@ def collect_builds():
         build_rel = url_to_rel((d.get("inputs") or {}).get("repaired"))
         if not build_rel or not os.path.exists(os.path.join(ROOT, build_rel)):
             continue      # audit of a build that no longer exists (old layout)
+        if os.path.basename(build_rel).startswith(SKIP_PREFIXES):
+            continue      # 규칙 기반 시기의 산출물
 
         # audit.py writes both --out and a stdout copy; the stdout one is a
         # duplicate and never interesting.
@@ -297,15 +283,11 @@ def collect_builds():
             os.path.splitext(os.path.basename(flow_rel))[0] if flow_rel else None)
 
         stem = os.path.splitext(os.path.basename(build_rel))[0]
-        archived = stem.startswith(ARCHIVE_PREFIXES)
         found[build_rel] = {
             "id": stem,
             "name": NAMES.get(stem, stem),
-            # 원본을 고친 것은 비교 기준, 새로 설계한 것은 파이프라인 산출물
-            "layer": "archive" if archived else "pipeline",
-            "layer_note": ("DesignRepair 결과. 보관 자료이며 파이프라인에 쓰지 "
-                           "않습니다. 재구성본과 조건이 달라 직접 비교하지 않습니다."
-                           if archived else None),
+            "layer": "pipeline",
+            "layer_note": None,
             "html": build_rel,
             "when": when(mtime(os.path.join(ROOT, build_rel))),
             "audit": audit_digest(d, path),
@@ -313,8 +295,7 @@ def collect_builds():
                      "steps": (read_json(os.path.join(ROOT, flow_rel)) or {}).get("steps")
                               if flow_rel else None},
             "screens": screens_of(os.path.join(ROOT, build_rel)),
-            "shots": match_shots(dirs, flow_name, stem,
-                                 want_prefix="after" if stem == "repaired_transfer" else None),
+            "shots": match_shots(dirs, flow_name, stem),
             # 같은 빌드를 다른 조건으로 검사한 것들
             "other_audits": alts,
             # 자동 루프가 쌓을 시도 이력이 들어올 자리. 지금은 늘 비어 있다.
@@ -522,7 +503,6 @@ def build():
         "check_names": CHECK_NAMES,
         "pipeline": PIPELINE,
         "banner": BANNER,
-        "caveat": CAVEAT,
         "kb_note": KB_NOTE,
         "study_conditions": conds,
         "baseline": baseline,

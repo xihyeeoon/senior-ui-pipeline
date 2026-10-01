@@ -1,5 +1,7 @@
 # kb/ — 보관 자료
 
+DesignRepair 용으로 만들었고, 지금은 재구성본 사후 대조에만 쓴다. 생성에는 쓰지 않는다.
+
 `senior_kb.csv` 는 고령자 관련 설계 규칙 46개다 (`relation` 열에 규칙 id:
 SDF-* 41개, KS-* 5개).
 
@@ -9,6 +11,7 @@ SDF-* 41개, KS-* 5개).
 
 DesignRepair 에 이것을 물려 돌린 결과가 `outputs/repaired_transfer.html` 이고,
 그 갈래는 2026-09-30 에 연구에서 뺐다. 경위는 `docs/comparison-validity.md`.
+(삭제됨, 히스토리 참고)
 파일을 지우지 않는 이유는 사후 대조와 기록 때문이다.
 
 대조 결과는 뷰어의 **변경 추적** 탭에서 본다. 표가 실제로 인용하는 규칙과

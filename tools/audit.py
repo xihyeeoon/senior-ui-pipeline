@@ -21,9 +21,9 @@ Checks
   I  choice preservation  fatal   values the original offered must still exist
                                   somewhere in the build
 
-Reuses tools/verify_flow.py (required ids), tools/check_contrast.py (the WCAG
-probe) and tools/runtime_audit.py (the flow definition) rather than restating
-them; those three keep working standalone.
+The screens, how to reach them and what each must show live in a flow file
+under tools/flows/ (see load_flow); the in-page JavaScript probes live in
+tools/audit_probes.py.
 
 Usage:
   python tools/audit.py \
@@ -47,9 +47,6 @@ sys.path.insert(0, os.path.join(ROOT, "tools"))
 from playwright.async_api import async_playwright          # noqa: E402
 
 import audit_probes as P                                   # noqa: E402
-from check_contrast import JS as CONTRAST_JS               # noqa: E402
-from runtime_audit import STEPS as _DEFAULT_STEPS          # noqa: E402
-from verify_flow import REQUIRED_IDS as _DEFAULT_IDS        # noqa: E402
 
 # Ground truth for the drive; every displayed value is checked against these.
 ACCOUNT = "3333000000000"
@@ -76,17 +73,11 @@ def load_flow(path):
     must be showing. Keeping it out of the code is what lets a restructured
     design - different screens, different order - be audited at all."""
     if not path:
-        # The shipped original flow is the default baseline. The in-code
-        # fallback below only lists screen names, with no way to reach them, so
-        # it must never be used to drive a real page.
-        default = os.path.join(ROOT, "tools", "flows", "original.json")
-        if os.path.exists(default):
-            path = default
-        else:
-            return {"name": "original(names only)", "derived_from_original": True,
-                    "required_ids": list(_DEFAULT_IDS),
-                    "steps": [{"screen": n} for n, _ in _DEFAULT_STEPS],
-                    "expect": {}, "done_amount": "#dn-amt", "_builtin": True}
+        # The shipped original flow is the default baseline. There is no in-code
+        # fallback: a flow that cannot drive a page is worse than no flow.
+        path = os.path.join(ROOT, "tools", "flows", "original.json")
+        if not os.path.exists(path):
+            raise SystemExit("audit: the default flow is missing: %s" % path)
     with open(path, encoding="utf-8") as f:
         flow = json.load(f)
     flow.setdefault("derived_from_original", True)
@@ -257,7 +248,7 @@ async def drive(url, flow, want_shots=None):
             row = {"landed_on": at}
             row.update(await page.evaluate(P.INVENTORY))
             row["choices"] = await page.evaluate(P.CHOICE_GROUPS)
-            row["contrast"] = await page.evaluate(CONTRAST_JS)
+            row["contrast"] = await page.evaluate(P.CONTRAST)
             row["inherited"] = await page.evaluate(P.INHERITED_COLOUR)
             row["overlap"] = await page.evaluate(P.OVERLAP)
             row["overflow"] = await page.evaluate(P.OVERFLOW)

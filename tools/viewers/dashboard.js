@@ -29,11 +29,9 @@ function drawHome(){
     const lc = (m.low_contrast_before != null && m.low_contrast_after != null)
       ? m.low_contrast_before + ' → ' + m.low_contrast_after : '·';
     const badges =
-      (b.layer === 'archive' ? '<span class="tag t-cmp">보관 자료</span>' : '') +
       (b.layer === 'input' ? '<span class="tag t-dim">입력</span>' : '') +
       (b.in_study ? '<span class="tag t-acc">실험 조건</span>' : '');
-    return '<tr class="click' + (b.layer === 'archive' ? ' cmp' : '') +
-      '" data-goto="' + b.id + '">' +
+    return '<tr class="click" data-goto="' + b.id + '">' +
       '<td><b>' + esc(b.name) + '</b> ' + badges +
         (b.layer_note ? '<div class="sub">' + esc(b.layer_note) + '</div>' : '') +
         altLine(b) + '</td>' +
@@ -51,16 +49,11 @@ function drawHome(){
   }
 
   const pipe = (IX.builds || []).filter(b => b.layer === 'pipeline');
-  const cmp  = (IX.builds || []).filter(b => b.layer === 'archive');
 
   if (base) rows.push(row(base));
   if (pipe.length){
     rows.push('<tr class="sect-row"><td colspan="8">파이프라인 산출물 — LLM 직접 재구성</td></tr>');
     pipe.forEach(b => rows.push(row(b)));
-  }
-  if (cmp.length){
-    rows.push('<tr class="sect-row"><td colspan="8">보관 자료 — 파이프라인에 쓰지 않습니다</td></tr>');
-    cmp.forEach(b => rows.push(row(b)));
   }
 
   $('#home').innerHTML =
@@ -104,8 +97,7 @@ function altLine(b){
   return '<div class="sub alt">조건에 따라 달라짐: ' + esc(parts.join('  ·  ')) + '</div>';
 }
 
-/* 파이프라인이 무엇인지 화면 맨 위에 그린다. 규칙 기반이 여기 없다는 것이
-   이 띠의 요점이다. */
+/* 파이프라인이 무엇인지 화면 맨 위에 그린다. */
 function pipelineStrip(){
   const steps = (IX.pipeline || []).map((s, i) =>
     '<div class="pstep' + (s.artifact ? '' : ' future') + '">' +
@@ -115,9 +107,7 @@ function pipelineStrip(){
   const conds = (IX.study_conditions || []).map(c => esc(c.label)).join(' vs ');
   return '<div class="pipe">' + steps + '</div>' +
     '<div class="banner">' + esc(IX.banner || '') +
-    (conds ? ' <span class="c-dim">· 실험 조건: ' + conds + '</span>' : '') + '</div>' +
-    (IX.caveat ? '<div class="banner warn">' + esc(IX.caveat) +
-      ' <a href="/docs/comparison-validity.md" target="_blank">근거 문서</a></div>' : '');
+    (conds ? ' <span class="c-dim">· 실험 조건: ' + conds + '</span>' : '') + '</div>';
 }
 
 /* 자동 루프가 시도 이력을 채울 자리. 지금은 비어 있다는 사실만 알린다. */

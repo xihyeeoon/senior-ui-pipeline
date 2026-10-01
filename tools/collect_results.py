@@ -1,15 +1,9 @@
 r"""Copy the evidence worth keeping out of the ignored trees into results/.
 
-outputs/ and logs/ are git-ignored because they are large and mostly
-regenerable. Two things in them are not cheaply regenerable:
-
-  * logs/transfer/*.log - the only record of what the property stream actually
-    suggested. The pipeline never writes its suggestion JSON to disk, so
-    collect_citations.py reconstructs it from these prompts. Re-running costs
-    roughly 40 minutes and a round of API spend.
-  * the repaired build and its audit - what a later run has to be compared to.
-
-This copies those into results/, which is tracked.
+outputs/ is git-ignored because it is large and mostly regenerable. The
+restructured builds are not: they come out of an LLM run, so re-making them
+costs API spend and never reproduces byte for byte. This copies them, their
+audit JSON and their screenshots into results/, which is tracked.
 
 Usage: python tools/collect_results.py
 """
@@ -21,16 +15,8 @@ RESULTS = os.path.join(ROOT, "results")
 
 # (source relative to ROOT, destination relative to results/)
 FILES = [
-    ("outputs/audit.json", "audit.json"),
-    ("outputs/audit_selftest.json", "audit_selftest.json"),
-    ("outputs/citations.json", "citations.json"),
-    ("outputs/reassembly_report.json", "reassembly_report.json"),
-    ("outputs/screen_extraction.json", "screen_extraction.json"),
-    ("outputs/runtime_before.json", "runtime_before.json"),
-    ("outputs/runtime_after.json", "runtime_after.json"),
-    ("outputs/repaired_transfer.html", "repaired_transfer.html"),
-    # The restructured build is hand-written, not generated: outputs/ is
-    # ignored, so without this copy it lives nowhere git can restore it.
+    # The restructured build is LLM-written: outputs/ is ignored, so without
+    # this copy it lives nowhere git can restore it.
     ("outputs/restructured_transfer.html", "restructured_transfer.html"),
     ("outputs/audit_restructured.json", "audit_restructured.json"),
     # Runs 2 and 3 of the same restructuring brief; see docs/restructure-runs.md
@@ -42,29 +28,10 @@ FILES = [
 
 # whole directories worth keeping, and what to take from them
 TREES = [
-    ("logs/transfer", "logs/transfer", (".log",)),
-    ("outputs/shots", "shots", (".png",)),
     ("outputs/shots/restructured", "shots/restructured", (".png",)),
     ("outputs/shots/run2", "shots/run2", (".png",)),
     ("outputs/shots/run3", "shots/run3", (".png",)),
-    # The example1 A/B run - the evidence that the senior KB produces traceable
-    # rule ids where the upstream KB produced none. Same problem as the transfer
-    # logs: reproducing it costs API spend, and nothing else records it.
-    ("outputs/example1_base", "example1/base", (".tsx", ".log")),
-    ("outputs/example1_seniorkb", "example1/seniorkb", (".tsx", ".log")),
 ]
-
-# Run logs for that same A/B pair. outputs/example1_senior and runB_senior.log
-# are deliberately left out: they came from a KB file that no longer exists
-# (kb/system_design_knowledge_base_senior.csv), so they compare nothing.
-RUN_LOGS = [
-    ("logs/runA_base.log", "example1/runA_base.log"),
-    ("logs/runC_seniorkb.log", "example1/runC_seniorkb.log"),
-]
-
-# per-screen pipeline logs: the guideline counts that property.log records
-SCREENS = ["home", "recipient", "bank", "account", "amount",
-           "confirm", "password", "done"]
 
 
 def copy(src, dst):
@@ -92,20 +59,6 @@ def main():
                 continue
             copy(os.path.join(s, name),
                  os.path.join(RESULTS, dest.replace("/", os.sep), name))
-            kept += 1
-
-    for rel, dest in RUN_LOGS:
-        s = os.path.join(ROOT, rel.replace("/", os.sep))
-        if os.path.exists(s):
-            copy(s, os.path.join(RESULTS, dest.replace("/", os.sep)))
-            kept += 1
-        else:
-            missing.append(rel)
-
-    for name in SCREENS:
-        s = os.path.join(ROOT, "outputs", name, "property.log")
-        if os.path.exists(s):
-            copy(s, os.path.join(RESULTS, "property_logs", name + ".log"))
             kept += 1
 
     print("copied %d files into results/" % kept)
