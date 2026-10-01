@@ -146,6 +146,55 @@ def test_brief_failure_matches_baseline():
 
 
 # --------------------------------------------------------------------- #
+# 프롬프트 조립 (choices_block / build_prompt)
+# --------------------------------------------------------------------- #
+def orig_snapshot():
+    """[1] 이 저장한 원본 drive 결과. choices_block 의 입력이다."""
+    return load("original_vs_original", "snapshots.json")["orig"]
+
+
+def original_html():
+    return io.open(os.path.join(ROOT, C.ORIGINAL_REL), encoding="utf-8").read()
+
+
+def test_choices_block_matches_baseline():
+    want = load_text("prompt", "choices_block.txt")
+    got = _api.choices_block(orig_snapshot(), original_html())
+    assert got == want
+
+
+def test_first_prompt_matches_baseline():
+    """첫 시도의 프롬프트 전문. 템플릿 · 원본 HTML · 빈 재시도 슬롯 · 선택지
+    블록이 모두 제자리에 들어갔는지를 한 번에 못박는다."""
+    want = load_text("prompt", "attempt_1.txt")
+    choices = _api.choices_block(orig_snapshot(), original_html())
+    got = _api.build_prompt(_api.load_template(), original_html(), "", choices)
+    assert got == want
+
+
+def test_retry_prompt_matches_baseline():
+    """재시도 프롬프트 전문. retry_block 기준값 하나를 슬롯에 넣은 것이다."""
+    case = C.PROMPT_RETRY_CASE
+    want = load_text("prompt", "retry_%s.txt" % case)
+    retry = load_text("retry_block", "%s.txt" % case)
+    choices = _api.choices_block(orig_snapshot(), original_html())
+    got = _api.build_prompt(_api.load_template(), original_html(), retry, choices)
+    assert got == want
+
+
+def test_prompt_slots_are_all_filled():
+    """계약: 템플릿의 세 슬롯이 하나도 남지 않아야 한다. 슬롯 이름이 바뀌면
+    build_prompt 는 조용히 아무것도 치환하지 않으므로 전문 비교만으로는
+    "기준값도 같이 다시 뽑으면" 통과해 버린다."""
+    template = _api.load_template()
+    for slot in ("{{ORIGINAL_HTML}}", "{{RETRY_BLOCK}}", "{{CHOICES}}"):
+        assert slot in template, "템플릿에 %s 슬롯이 없습니다" % slot
+    got = load_text("prompt", "attempt_1.txt")
+    for slot in ("{{ORIGINAL_HTML}}", "{{RETRY_BLOCK}}", "{{CHOICES}}"):
+        assert slot not in got
+
+
+# --------------------------------------------------------------------- #
 # parse_reply / mock_reply
 # --------------------------------------------------------------------- #
 @pytest.mark.parametrize("mode", ["pass", "fail"])

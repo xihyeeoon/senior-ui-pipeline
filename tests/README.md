@@ -6,7 +6,7 @@
 ## 쓰는 법
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest                # 빠름, 브라우저 없음 (25건, 0.2초)
+.\.venv\Scripts\python.exe -m pytest                # 빠름, 브라우저 없음 (29건, 0.2초)
 .\.venv\Scripts\python.exe -m pytest -m browser     # 실제로 다시 걷는다 (18건, 2분 15초)
 ```
 
@@ -62,6 +62,11 @@
   다 밟히지 않는 세 갈래(파생 fatal · `stack` 이 붙은 JS 오류 · Playwright 로그
   형식의 detail)를 한자리에 넣은 것이다.
 - `brief_failure.txt` — 1,100자짜리 Playwright 로그를 한 줄로 접은 결과
+- `prompt/choices_block.txt` — 원본이 가진 선택지 요약 (검사 I 가 세는 바로 그 집합)
+- `prompt/attempt_1.txt` — 첫 시도의 프롬프트 **전문**
+  (`build_prompt(load_template(), 원본 HTML, "", choices)`)
+- `prompt/retry_run1.txt` — 재시도 프롬프트 전문. `retry_block/run1.txt` 를 슬롯에
+  넣은 것이다 (`capture_baseline.PROMPT_RETRY_CASE`)
 - `parse_reply.json` — `mock_reply` 의 답을 `parse_reply` 로 되읽은 결과
   (HTML 은 28KB 라 해시만 남긴다)
 - `mock_pass.json` / `mock_fail.json` — `--mock pass --attempts 1` 과
@@ -103,6 +108,19 @@ findings 를 넣는 자리보다 앞이라서 그렇다. 이것은 정리 전부
 | `screens.*.choices.pw` | 숫자판 버튼 값을 DOM 순서로 모은다. 선택지 수집은 문서 전체를 보기 때문에 모든 화면 행에 들어간다 |
 | `screens.password.text` | 화면 텍스트에 숫자판 순서가 그대로 들어간다 (`… 2 5 9 0 7 8 3 6 1 재배열 4 ⌫`) |
 | `screens.password.wrapped` | 줄바꿈 수집 항목의 `text` 와 순서가 숫자 버튼이다 |
+
+### 숫자판 순서는 `choices_block` 출력에 영향을 주지 않는다
+
+프롬프트 기준값을 추가하면서 따로 확인했다. 원본을 두 번 `drive()` 해서
+`choices.pw` 의 DOM 순서가 실제로 달라지는 것을 확인한 뒤(`['4','7','1',…]` →
+`['7','4','8',…]`) 같은 스냅샷으로 `choices_block()` 을 부른 결과를 비교했다 —
+**두 출력이 바이트까지 같았다.**
+
+이유는 `choices_block` 이 값을 `set` 에 모아 **개수만** 쓰기 때문이다. 섞이는 것은
+순서뿐이고 집합은 늘 `{0..9}` 라서 `pw — 10개 (nums 10)` 라는 한 줄은 변하지 않는다.
+값 자체나 순서를 프롬프트에 적는 자리가 생기면 이 성질이 깨지므로, 그때 다시
+측정해야 한다. 그래서 `prompt/` 기준값은 브라우저 없이 저장된 스냅샷만으로 비교한다
+(`tests/ignore.py` 에 넣을 것이 없다).
 
 `choices` 전체가 아니라 `choices.pw` 만 뺀 것은 일부러다. `choices` 를 통째로
 빼면 검사 I 가 보는 `pick-bank` 67개 선택지 집합까지 비교에서 사라진다 — 그것은

@@ -41,6 +41,10 @@ brief_failure = _run_restructure.brief_failure
 mock_reply = _run_restructure.mock_reply
 listening = _run_restructure.listening
 PORT = _run_restructure.PORT
+# 프롬프트 조립 - 템플릿 읽기 / 선택지 블록 / 슬롯 채우기
+load_template = _run_restructure.load_template
+choices_block = _run_restructure.choices_block
+build_prompt = _run_restructure.build_prompt
 
 # ---- tools/session_report.py (집계 함수) -------------------------------- #
 sr_load = _session_report.load

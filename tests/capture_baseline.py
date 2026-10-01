@@ -9,9 +9,10 @@ tools/ 는 한 줄도 건드리지 않는다. 전부 tests/_api.py 를 거쳐 �
   [1] audit.py main() 과 같은 순서로 4가지 경우
       원본 vs 원본 / Run1 / Run2 / Run3
   [2] retry_block (실제 리포트 3개 + 합성 리포트 1개) + brief_failure
-  [3] parse_reply / mock_reply
-  [4] mock 실행 (--mock pass, --mock fail)
-  [5] 가짜 세션 4건으로 session_report
+  [3] 재구성 프롬프트 조립 (choices_block + 첫 시도 / 재시도 프롬프트 전문)
+  [4] parse_reply / mock_reply
+  [5] mock 실행 (--mock pass, --mock fail)
+  [6] 가짜 세션 4건으로 session_report
 
 빌드는 results/ 를 쓴다. outputs/ 는 .gitignore 에 있어 PC 마다 내용이 달라서
 기준값의 입력으로 쓸 수 없다.
@@ -241,7 +242,39 @@ def capture_retry_block(out, reports):
 
 
 # --------------------------------------------------------------------- #
-# [3] parse_reply / mock_reply
+# [3] 재구성 프롬프트 조립
+# --------------------------------------------------------------------- #
+# 재시도 프롬프트에 넣을 retry_block. 셋 중 하나만 고정하면 된다 - retry_block
+# 자체는 [2] 에서 세 실행 + 합성까지 이미 고정했고, 여기서 보는 것은 그 블록이
+# 템플릿의 슬롯에 들어간 뒤의 프롬프트 전문이다.
+PROMPT_RETRY_CASE = "run1"
+
+
+def capture_prompt(out):
+    """choices_block 과 프롬프트 전문을 고정한다.
+
+    원본 스냅샷은 [1] 이 방금 저장한 것을 다시 읽는다. 브라우저를 또 띄우지
+    않으므로 입력이 고정되고, 따라서 출력도 고정되어야 한다 - 비밀번호 숫자판이
+    섞여도 choices_block 은 값을 세기만 하므로 결과가 흔들리지 않는다
+    (tests/README.md)."""
+    orig_html = read(os.path.join(ROOT, ORIGINAL_REL))
+    snaps = json.load(io.open(os.path.join(out, "original_vs_original",
+                                           "snapshots.json"), encoding="utf-8"))
+    choices = _api.choices_block(snaps["orig"], orig_html)
+    template = _api.load_template()
+    retry = read(os.path.join(out, "retry_block", "%s.txt" % PROMPT_RETRY_CASE))
+
+    d = os.path.join(out, "prompt")
+    dump_text(os.path.join(d, "choices_block.txt"), choices)
+    dump_text(os.path.join(d, "attempt_1.txt"),
+              _api.build_prompt(template, orig_html, "", choices))
+    dump_text(os.path.join(d, "retry_%s.txt" % PROMPT_RETRY_CASE),
+              _api.build_prompt(template, orig_html, retry, choices))
+    say("  prompt: choices_block, 첫 시도, 재시도(%s)" % PROMPT_RETRY_CASE)
+
+
+# --------------------------------------------------------------------- #
+# [4] parse_reply / mock_reply
 # --------------------------------------------------------------------- #
 def capture_parse_reply(out):
     """mock_reply 가 만든 답을 parse_reply 로 되읽는다. HTML 은 28KB 라 해시만
@@ -263,7 +296,7 @@ def capture_parse_reply(out):
 
 
 # --------------------------------------------------------------------- #
-# [4] mock 실행
+# [5] mock 실행
 # --------------------------------------------------------------------- #
 def strip_volatile(summary):
     """실행마다 바뀌는 값을 지운다: run_dir, 경로 속 타임스탬프, seconds."""
@@ -330,7 +363,7 @@ def capture_mock(out):
 
 
 # --------------------------------------------------------------------- #
-# [5] 가짜 세션 + session_report
+# [6] 가짜 세션 + session_report
 # --------------------------------------------------------------------- #
 # tools/session.html 이 /api/session 으로 보내는 그 형식이다 (participant /
 # condition / condition_label / order_index / task / instruction / completed /
@@ -559,20 +592,22 @@ def main():
     server = start_server()
     copied = False
     try:
-        say("[1/5] audit.py main() 과 같은 순서로 4가지 경우")
+        say("[1/6] audit.py main() 과 같은 순서로 4가지 경우")
         reports = capture_cases(out)
-        say("[2/5] retry_block")
+        say("[2/6] retry_block")
         capture_retry_block(out, reports)
-        say("[3/5] parse_reply / mock_reply")
+        say("[3/6] 재구성 프롬프트 조립")
+        capture_prompt(out)
+        say("[4/6] parse_reply / mock_reply")
         capture_parse_reply(out)
-        say("[4/5] mock 실행")
+        say("[5/6] mock 실행")
         copied = capture_mock(out)
     finally:
         server.terminate()
         server.wait()
         say("서버: 종료 (pid %d)" % server.pid)
 
-    say("[5/5] session_report")
+    say("[6/6] session_report")
     write_fixtures(os.path.abspath(args.fixtures))
     capture_session_report(out, os.path.abspath(args.fixtures))
 
