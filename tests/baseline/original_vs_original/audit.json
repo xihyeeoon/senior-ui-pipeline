@@ -1,0 +1,109 @@
+{
+  "passed": true,
+  "fatal": [],
+  "warning": [],
+  "metrics": {
+    "flow": "original",
+    "derived_from_original": true,
+    "screens_in_flow": [
+      "home",
+      "recipient",
+      "account",
+      "bank",
+      "amount",
+      "confirm",
+      "password",
+      "done"
+    ],
+    "screens_comparable_to_original": [
+      "home",
+      "recipient",
+      "account",
+      "bank",
+      "amount",
+      "confirm",
+      "password",
+      "done"
+    ],
+    "screens_expected": 8,
+    "screens_reached": 8,
+    "done_screen": "done",
+    "done_amount": "10,000",
+    "data-screen_original": 8,
+    "data-screen_repaired": 8,
+    "data-action_original": 23,
+    "data-action_repaired": 23,
+    "id_original": 15,
+    "id_repaired": 15,
+    "per_screen_attr_loss": {},
+    "injected_dialog_calls": 0,
+    "onclick_added": 0,
+    "dialogs_during_task": 0,
+    "handled_actions": 24,
+    "dead_controls_new": 0,
+    "dead_controls_pre_existing": [],
+    "low_contrast_before": 66,
+    "low_contrast_after": 66,
+    "low_contrast_by_screen": {
+      "home": {
+        "before": 24,
+        "after": 24
+      },
+      "recipient": {
+        "before": 8,
+        "after": 8
+      },
+      "account": {
+        "before": 3,
+        "after": 3
+      },
+      "bank": {
+        "before": 22,
+        "after": 22
+      },
+      "amount": {
+        "before": 4,
+        "after": 4
+      },
+      "confirm": {
+        "before": 5,
+        "after": 5
+      },
+      "password": {
+        "before": 0,
+        "after": 0
+      },
+      "done": {
+        "before": 0,
+        "after": 0
+      }
+    },
+    "new_inherited_colour": 0,
+    "low_contrast_gained_text": 0,
+    "overlaps_new": 0,
+    "overflows_new": 0,
+    "screens_much_taller": 0,
+    "newly_wrapped_text": 0,
+    "new_english_words": [],
+    "new_english_words_markup_only": [],
+    "state_pairs_checked": 3,
+    "state_pairs_collapsed": 0,
+    "undefined_classes_new": [],
+    "fatal_duplicates_removed": 0,
+    "fatal_total": 0,
+    "fatal_derived": 0,
+    "fatal_root": 0,
+    "stopped_at": null,
+    "js_error_details": [],
+    "flow_notes": [],
+    "choice_groups_original": {
+      "pick-bank": 67,
+      "acc-num": 10,
+      "quick": 4,
+      "num": 11,
+      "pw": 10
+    },
+    "choice_values_missing": {},
+    "checks_stood_down": []
+  }
+}

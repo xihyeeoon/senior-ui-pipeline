@@ -1,0 +1,5 @@
+﻿participant,condition,order_index,task,completed,seconds,taps,misses,backs,deletes,screens_visited,unique_screens,file
+1,original,0,긴 과업 · 처음 보내는 계좌,1,92.4,13,1,1,1,10,8,P01_1_original.json
+1,restructured,1,긴 과업 · 처음 보내는 계좌,1,61.3,9,0,0,0,8,8,P01_2_restructured.json
+2,restructured,0,긴 과업 · 처음 보내는 계좌,1,78.9,11,1,0,1,8,8,P02_1_restructured.json
+2,original,1,긴 과업 · 처음 보내는 계좌,0,184.5,10,4,1,1,6,4,P02_2_original.json

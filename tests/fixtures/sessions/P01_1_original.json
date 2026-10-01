@@ -1,0 +1,262 @@
+{
+  "participant": 1,
+  "condition": "original",
+  "condition_label": "원본 (신한 SOL 재현)",
+  "order_index": 0,
+  "task": "긴 과업 · 처음 보내는 계좌",
+  "instruction": "김시현 씨에게 1만 원을 보내 주세요. 계좌번호는 3333-0000-0000-0 이고, 카카오뱅크입니다. 저장된 목록에 있더라도 계좌번호를 직접 넣어서 보내 주세요.",
+  "completed": true,
+  "started_at": 1759003600000,
+  "elapsed_ms": 92400,
+  "screen_size": [
+    390,
+    844
+  ],
+  "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+  "metrics": {
+    "seconds": 92.4,
+    "completed": true,
+    "taps": 13,
+    "misses": 1,
+    "backs": 1,
+    "deletes": 1,
+    "screens_visited": 10,
+    "unique_screens": 8,
+    "dwell_ms": {
+      "home": 4320,
+      "recipient": 10020,
+      "account": 9520,
+      "bank": 12720,
+      "amount": 21140,
+      "confirm": 14640,
+      "password": 6920,
+      "done": 0
+    }
+  },
+  "log": [
+    {
+      "t": 1759003600000,
+      "screen": "home",
+      "type": "screen_enter",
+      "to": "home"
+    },
+    {
+      "t": 1759003604200,
+      "screen": "home",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "go-recipient",
+      "text": "go-recipient",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759003604320,
+      "screen": "recipient",
+      "type": "screen_enter",
+      "to": "recipient"
+    },
+    {
+      "t": 1759003610420,
+      "screen": "recipient",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": false,
+      "action": null,
+      "text": "",
+      "tw": null,
+      "th": null
+    },
+    {
+      "t": 1759003614220,
+      "screen": "recipient",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "go-account",
+      "text": "go-account",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759003614340,
+      "screen": "account",
+      "type": "screen_enter",
+      "to": "account"
+    },
+    {
+      "t": 1759003623740,
+      "screen": "account",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "open-bank",
+      "text": "open-bank",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759003623860,
+      "screen": "bank",
+      "type": "screen_enter",
+      "to": "bank"
+    },
+    {
+      "t": 1759003636460,
+      "screen": "bank",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "pick-bank",
+      "text": "pick-bank",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759003636580,
+      "screen": "amount",
+      "type": "screen_enter",
+      "to": "amount"
+    },
+    {
+      "t": 1759003641780,
+      "screen": "amount",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "acc-num",
+      "text": "acc-num",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759003644180,
+      "screen": "amount",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "acc-del",
+      "text": "acc-del",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759003646080,
+      "screen": "amount",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "acc-num",
+      "text": "acc-num",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759003653380,
+      "screen": "amount",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "amt-next",
+      "text": "amt-next",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759003653500,
+      "screen": "confirm",
+      "type": "screen_enter",
+      "to": "confirm"
+    },
+    {
+      "t": 1759003662300,
+      "screen": "confirm",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "back-amount",
+      "text": "back-amount",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759003662420,
+      "screen": "amount",
+      "type": "screen_enter",
+      "to": "amount"
+    },
+    {
+      "t": 1759003666520,
+      "screen": "amount",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "amt-next",
+      "text": "amt-next",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759003666640,
+      "screen": "confirm",
+      "type": "screen_enter",
+      "to": "confirm"
+    },
+    {
+      "t": 1759003672240,
+      "screen": "confirm",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "send",
+      "text": "send",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759003672360,
+      "screen": "password",
+      "type": "screen_enter",
+      "to": "password"
+    },
+    {
+      "t": 1759003678760,
+      "screen": "password",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "pw",
+      "text": "pw",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759003679160,
+      "screen": "password",
+      "type": "submit",
+      "bank": "카카오뱅크",
+      "account": "3333000000000",
+      "amount": 10000
+    },
+    {
+      "t": 1759003679280,
+      "screen": "done",
+      "type": "screen_enter",
+      "to": "done"
+    }
+  ]
+}

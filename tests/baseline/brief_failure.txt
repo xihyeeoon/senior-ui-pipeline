@@ -1,0 +1,2 @@
+[data-action='go-amount']  <button disabled data-action="go-amount">  disabled 가 풀리지 않음 (disabled 라 누를 수 없음)
+      → [data-action='go-amount'] 는 'review' 화면에 있는데 지금 켜진 화면은 'amount' 이다. 요소가 아니라 화면 전환을 확인하라.

@@ -1,0 +1,5905 @@
+{
+  "orig": {
+    "screens": {
+      "home": {
+        "landed_on": "home",
+        "actions": [
+          "go-recipient"
+        ],
+        "ids": [],
+        "screens": [
+          "home",
+          "recipient",
+          "bank",
+          "account",
+          "amount",
+          "confirm",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "1:39\n5G 66\nC\n김시현님\n☺\n▤\n♤\n⌕\n자산\n›\nS\n[금융거래한도계좌2]신한 주거래 우대통장\n(저축예금)\n100,000원\n이체\n김시현님의 SOL멤버십 등급은 클래식 입니다\nPick E 체크캐릭터형(하리보)\n8월 이용 금액 100,000원\n앱카드 가입\n땡겨요\n›\n🛵 8월 최대할인! 브랜드데이 확인하기\n쿠폰바로받기\n이벤트\n쿠폰\n포인트\n8월 소비 100,000원 ↻\n›\n전월 오늘 대비 +100,000원 증가\n오늘 쓴 돈\n1,000원\nPick E 체크 외 1개\n100,000원\n가입 즉시 1만원 올영 상품권\n지금 받으러 가기 ›\n마이신한포인트\n180P\n모으기\n추천서비스\n›\n🅦\n급여클럽+\n급여이체 우대 혜택\n⚾\nSOL야구\n야구팬 즐길거리 모음\n🎟\n쿠폰 사고팔기\n기프티콘 사고파는 장터\n더보기 ⌄\n신한금융그룹\n💳\n신한카드\n나에게 맞는 카드 찾기\n📈\n신한투자증권\n지금 뜨는 주식 보러가기\n🛡\n신한라이프\n내게 필요한 보험, 보장분석으로 확인하기\n쉬운홈\n홈화면 설정\n금액 숨기기\n⌂\n홈\nⓌ\n금융\n⌂\n상품\n🎁\n혜택\n📈\n주식",
+        "height": 844,
+        "choices": {
+          "pick-bank": [
+            "신한",
+            "제주",
+            "국민",
+            "기업",
+            "농협",
+            "산업",
+            "수협",
+            "신협",
+            "우리",
+            "하나",
+            "한국씨티",
+            "카카오뱅크",
+            "케이뱅크",
+            "토스뱅크",
+            "경남",
+            "광주",
+            "아이엠뱅크(대구)",
+            "부산",
+            "전북",
+            "회원수협",
+            "새마을",
+            "우체국",
+            "저축은행",
+            "지역농.축협",
+            "도이치",
+            "중국",
+            "중국건설",
+            "중국공상",
+            "BNP파리바",
+            "BOA",
+            "HSBC",
+            "JP모간",
+            "SC",
+            "산림조합",
+            "국세",
+            "지방세",
+            "국고금",
+            "관세",
+            "신한투자증권",
+            "교보증권",
+            "다올투자증권",
+            "대신증권",
+            "메리츠증권",
+            "미래에셋증권",
+            "부국증권",
+            "삼성증권",
+            "상상인증권",
+            "신영증권",
+            "에스케이증권",
+            "유안타증권",
+            "유진투자증권",
+            "LS증권",
+            "카카오페이증권",
+            "케이프투자증권",
+            "키움증권",
+            "토스증권",
+            "우리투자증권",
+            "하나증권",
+            "아이엠증권",
+            "한국투자증권",
+            "한화투자증권",
+            "현대차증권",
+            "BNK투자증권",
+            "DB증권",
+            "IBK투자증권",
+            "KB증권",
+            "NH투자증권"
+          ],
+          "acc-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "quick": [
+            "10000",
+            "50000",
+            "100000",
+            "all"
+          ],
+          "num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "00",
+            "0"
+          ],
+          "pw": [
+            "4",
+            "5",
+            "1",
+            "3",
+            "0",
+            "8",
+            "2",
+            "6",
+            "9",
+            "7"
+          ]
+        },
+        "contrast": [
+          {
+            "text": "C",
+            "tag": "span",
+            "cls": "dot",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(255, 122, 0)",
+            "fontSize": 12,
+            "ratio": 2.61,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "arr",
+            "color": "rgb(185, 190, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 17,
+            "ratio": 1.87,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "arr",
+            "color": "rgb(185, 190, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 17,
+            "ratio": 1.87,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "arr",
+            "color": "rgb(185, 190, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 17,
+            "ratio": 1.87,
+            "need": 4.5
+          },
+          {
+            "text": "+100,000원 증가",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(229, 72, 77)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 13,
+            "ratio": 3.91,
+            "need": 4.5
+          },
+          {
+            "text": "오늘 쓴 돈",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 12,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "Pick E 체크 외 1개",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(138, 143, 152)",
+            "bg": "rgb(245, 246, 249)",
+            "fontSize": 12,
+            "ratio": 3.01,
+            "need": 4.5
+          },
+          {
+            "text": "마이신한포인트",
+            "tag": "div",
+            "cls": "p1",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(242, 244, 248)",
+            "fontSize": 12,
+            "ratio": 1.1,
+            "need": 4.5
+          },
+          {
+            "text": "180P",
+            "tag": "div",
+            "cls": "p2",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(242, 244, 248)",
+            "fontSize": 20,
+            "ratio": 1.1,
+            "need": 3
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "arr",
+            "color": "rgb(185, 190, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 17,
+            "ratio": 1.87,
+            "need": 4.5
+          },
+          {
+            "text": "급여이체 우대 혜택",
+            "tag": "div",
+            "cls": "t2",
+            "color": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 12,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "야구팬 즐길거리 모음",
+            "tag": "div",
+            "cls": "t2",
+            "color": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 12,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "기프티콘 사고파는 장터",
+            "tag": "div",
+            "cls": "t2",
+            "color": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 12,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "나에게 맞는 카드 찾기",
+            "tag": "div",
+            "cls": "t2",
+            "color": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 12,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "지금 뜨는 주식 보러가기",
+            "tag": "div",
+            "cls": "t2",
+            "color": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 12,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "내게 필요한 보험, 보장분석으로 확인하기",
+            "tag": "div",
+            "cls": "t2",
+            "color": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 12,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "금융",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 11,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "Ⓦ",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 18,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "상품",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 11,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "⌂",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 18,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "혜택",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 11,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "🎁",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 18,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "주식",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 11,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "📈",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 18,
+            "ratio": 2.64,
+            "need": 4.5
+          }
+        ],
+        "inherited": [
+          {
+            "text": "1:39",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "5G 66",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "김시현님",
+            "tag": "div",
+            "cls": "name",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "☺",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(51, 51, 51)"
+          },
+          {
+            "text": "▤",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(51, 51, 51)"
+          },
+          {
+            "text": "♤",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(51, 51, 51)"
+          },
+          {
+            "text": "⌕",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(51, 51, 51)"
+          },
+          {
+            "text": "자산",
+            "tag": "h3",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "100,000원",
+            "tag": "div",
+            "cls": "acctamt",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "Pick E 체크캐릭터형(하리보)",
+            "tag": "h3",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "땡겨요",
+            "tag": "h3",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "🛵 8월 최대할인! 브랜드데이 확인하기",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "이벤트",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(90, 96, 105)"
+          },
+          {
+            "text": "쿠폰",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(90, 96, 105)"
+          },
+          {
+            "text": "포인트",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(90, 96, 105)"
+          },
+          {
+            "text": "8월 소비 100,000원 ↻",
+            "tag": "h3",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "1,000원",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "100,000원",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "가입 즉시 1만원 올영 상품권",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "마이신한포인트",
+            "tag": "div",
+            "cls": "p1",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "180P",
+            "tag": "div",
+            "cls": "p2",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "추천서비스",
+            "tag": "h3",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "🅦",
+            "tag": "div",
+            "cls": "sq",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "급여클럽+",
+            "tag": "div",
+            "cls": "t1",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "⚾",
+            "tag": "div",
+            "cls": "sq",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "SOL야구",
+            "tag": "div",
+            "cls": "t1",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "🎟",
+            "tag": "div",
+            "cls": "sq",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "쿠폰 사고팔기",
+            "tag": "div",
+            "cls": "t1",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신한금융그룹",
+            "tag": "h3",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "💳",
+            "tag": "div",
+            "cls": "sq",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신한카드",
+            "tag": "div",
+            "cls": "t1",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "📈",
+            "tag": "div",
+            "cls": "sq",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신한투자증권",
+            "tag": "div",
+            "cls": "t1",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "🛡",
+            "tag": "div",
+            "cls": "sq",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신한라이프",
+            "tag": "div",
+            "cls": "t1",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "쉬운홈",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(90, 96, 105)"
+          },
+          {
+            "text": "홈화면 설정",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(90, 96, 105)"
+          },
+          {
+            "text": "금액 숨기기",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(90, 96, 105)"
+          },
+          {
+            "text": "⌂",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(27, 100, 218)"
+          },
+          {
+            "text": "Ⓦ",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)"
+          },
+          {
+            "text": "⌂",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)"
+          },
+          {
+            "text": "🎁",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)"
+          },
+          {
+            "text": "📈",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)"
+          }
+        ],
+        "overlap": [
+          {
+            "a": "1,000원",
+            "b": "⌂홈",
+            "overlap_pct": 26
+          },
+          {
+            "a": "1,000원",
+            "b": "⌂",
+            "overlap_pct": 96
+          },
+          {
+            "a": "1,000원",
+            "b": "Ⓦ금융",
+            "overlap_pct": 43
+          },
+          {
+            "a": "1,000원",
+            "b": "Ⓦ",
+            "overlap_pct": 100
+          },
+          {
+            "a": "1,000원",
+            "b": "⌂상품",
+            "overlap_pct": 43
+          },
+          {
+            "a": "1,000원",
+            "b": "⌂",
+            "overlap_pct": 96
+          },
+          {
+            "a": "1,000원",
+            "b": "🎁혜택",
+            "overlap_pct": 43
+          },
+          {
+            "a": "1,000원",
+            "b": "🎁",
+            "overlap_pct": 98
+          },
+          {
+            "a": "1,000원",
+            "b": "📈주식",
+            "overlap_pct": 26
+          },
+          {
+            "a": "1,000원",
+            "b": "📈",
+            "overlap_pct": 84
+          }
+        ],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "C",
+            "tag": "span",
+            "cls": "dot",
+            "lines": 2
+          },
+          {
+            "text": "S",
+            "tag": "div",
+            "cls": "logo",
+            "lines": 2
+          },
+          {
+            "text": "[금융거래한도계좌2]신한 주거래 우대통장 (저축예금)",
+            "tag": "div",
+            "cls": "acctname",
+            "lines": 3
+          },
+          {
+            "text": "이체",
+            "tag": "button",
+            "cls": "btn-sm",
+            "lines": 2
+          },
+          {
+            "text": "김시현님의 SOL멤버십 등급은 클래식 입니다",
+            "tag": "div",
+            "cls": "membership",
+            "lines": 3
+          },
+          {
+            "text": "앱카드 가입",
+            "tag": "button",
+            "cls": "btn-wide",
+            "lines": 3
+          },
+          {
+            "text": "쿠폰바로받기",
+            "tag": "button",
+            "cls": "btn-wide",
+            "lines": 3
+          },
+          {
+            "text": "모으기",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "🅦",
+            "tag": "div",
+            "cls": "sq",
+            "lines": 2
+          },
+          {
+            "text": "⚾",
+            "tag": "div",
+            "cls": "sq",
+            "lines": 2
+          },
+          {
+            "text": "🎟",
+            "tag": "div",
+            "cls": "sq",
+            "lines": 2
+          },
+          {
+            "text": "더보기 ⌄",
+            "tag": "div",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "💳",
+            "tag": "div",
+            "cls": "sq",
+            "lines": 2
+          },
+          {
+            "text": "📈",
+            "tag": "div",
+            "cls": "sq",
+            "lines": 2
+          },
+          {
+            "text": "🛡",
+            "tag": "div",
+            "cls": "sq",
+            "lines": 2
+          },
+          {
+            "text": "홈",
+            "tag": "div",
+            "cls": "act",
+            "lines": 5
+          },
+          {
+            "text": "금융",
+            "tag": "div",
+            "cls": "",
+            "lines": 5
+          },
+          {
+            "text": "상품",
+            "tag": "div",
+            "cls": "",
+            "lines": 5
+          },
+          {
+            "text": "혜택",
+            "tag": "div",
+            "cls": "",
+            "lines": 5
+          },
+          {
+            "text": "주식",
+            "tag": "div",
+            "cls": "",
+            "lines": 5
+          }
+        ],
+        "shown": []
+      },
+      "recipient": {
+        "landed_on": "recipient",
+        "actions": [
+          "back-home",
+          "back-home",
+          "go-account"
+        ],
+        "ids": [],
+        "screens": [
+          "home",
+          "recipient",
+          "bank",
+          "account",
+          "amount",
+          "confirm",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "1:39\n5G 66\n‹\n다건이체\n👤\n✕\n누구에게 보낼까요?\n계좌번호 직접 입력\n▣\n자주쓰는 계좌\n편집\n2개 ⌄\n내 계좌\n14개 ⌄\n최근\n50개 ⌃\nB\n김시현\n카카오뱅크 3333000000000\n★\nB\n김시현\n카카오뱅크 3333000000000\n★\nS\n안성진\n신한 110-000-000000\n☆\nN\n박정순\n농협 1110000000000\n☆\nS\n박숙자\n신한 110-000-000000\n☆\nT\n김시현\n토스증권 14400000000\n☆\nS\n김명희\n신한 110-000-000000\n☆",
+        "height": 844,
+        "choices": {
+          "pick-bank": [
+            "신한",
+            "제주",
+            "국민",
+            "기업",
+            "농협",
+            "산업",
+            "수협",
+            "신협",
+            "우리",
+            "하나",
+            "한국씨티",
+            "카카오뱅크",
+            "케이뱅크",
+            "토스뱅크",
+            "경남",
+            "광주",
+            "아이엠뱅크(대구)",
+            "부산",
+            "전북",
+            "회원수협",
+            "새마을",
+            "우체국",
+            "저축은행",
+            "지역농.축협",
+            "도이치",
+            "중국",
+            "중국건설",
+            "중국공상",
+            "BNP파리바",
+            "BOA",
+            "HSBC",
+            "JP모간",
+            "SC",
+            "산림조합",
+            "국세",
+            "지방세",
+            "국고금",
+            "관세",
+            "신한투자증권",
+            "교보증권",
+            "다올투자증권",
+            "대신증권",
+            "메리츠증권",
+            "미래에셋증권",
+            "부국증권",
+            "삼성증권",
+            "상상인증권",
+            "신영증권",
+            "에스케이증권",
+            "유안타증권",
+            "유진투자증권",
+            "LS증권",
+            "카카오페이증권",
+            "케이프투자증권",
+            "키움증권",
+            "토스증권",
+            "우리투자증권",
+            "하나증권",
+            "아이엠증권",
+            "한국투자증권",
+            "한화투자증권",
+            "현대차증권",
+            "BNK투자증권",
+            "DB증권",
+            "IBK투자증권",
+            "KB증권",
+            "NH투자증권"
+          ],
+          "acc-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "quick": [
+            "10000",
+            "50000",
+            "100000",
+            "all"
+          ],
+          "num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "00",
+            "0"
+          ],
+          "pw": [
+            "4",
+            "5",
+            "1",
+            "3",
+            "0",
+            "8",
+            "2",
+            "6",
+            "9",
+            "7"
+          ]
+        },
+        "contrast": [
+          {
+            "text": "계좌번호 직접 입력",
+            "tag": "span",
+            "cls": "ph",
+            "color": "rgb(180, 185, 193)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 17,
+            "ratio": 1.97,
+            "need": 4.5
+          },
+          {
+            "text": "편집",
+            "tag": "span",
+            "cls": "tag",
+            "color": "rgb(107, 114, 128)",
+            "bg": "rgb(239, 241, 245)",
+            "fontSize": 11,
+            "ratio": 4.28,
+            "need": 4.5
+          },
+          {
+            "text": "☆",
+            "tag": "span",
+            "cls": "st",
+            "color": "rgb(211, 215, 221)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 17,
+            "ratio": 1.44,
+            "need": 4.5
+          },
+          {
+            "text": "☆",
+            "tag": "span",
+            "cls": "st",
+            "color": "rgb(211, 215, 221)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 17,
+            "ratio": 1.44,
+            "need": 4.5
+          },
+          {
+            "text": "☆",
+            "tag": "span",
+            "cls": "st",
+            "color": "rgb(211, 215, 221)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 17,
+            "ratio": 1.44,
+            "need": 4.5
+          },
+          {
+            "text": "T",
+            "tag": "div",
+            "cls": "av",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(59, 123, 246)",
+            "fontSize": 15,
+            "ratio": 3.93,
+            "need": 4.5
+          },
+          {
+            "text": "☆",
+            "tag": "span",
+            "cls": "st",
+            "color": "rgb(211, 215, 221)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 17,
+            "ratio": 1.44,
+            "need": 4.5
+          },
+          {
+            "text": "☆",
+            "tag": "span",
+            "cls": "st",
+            "color": "rgb(211, 215, 221)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 17,
+            "ratio": 1.44,
+            "need": 4.5
+          }
+        ],
+        "inherited": [
+          {
+            "text": "1:39",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "5G 66",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "누구에게 보낼까요?",
+            "tag": "div",
+            "cls": "h1",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "▣",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "자주쓰는 계좌",
+            "tag": "span",
+            "cls": "lbl",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "내 계좌",
+            "tag": "span",
+            "cls": "lbl",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "최근",
+            "tag": "span",
+            "cls": "lbl",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "김시현",
+            "tag": "div",
+            "cls": "nm",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "김시현",
+            "tag": "div",
+            "cls": "nm",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "안성진",
+            "tag": "div",
+            "cls": "nm",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "박정순",
+            "tag": "div",
+            "cls": "nm",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "박숙자",
+            "tag": "div",
+            "cls": "nm",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "김시현",
+            "tag": "div",
+            "cls": "nm",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "김명희",
+            "tag": "div",
+            "cls": "nm",
+            "color": "rgb(26, 26, 26)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "누구에게 보낼까요?",
+            "tag": "div",
+            "cls": "h1",
+            "lines": 2
+          },
+          {
+            "text": "편집",
+            "tag": "span",
+            "cls": "tag",
+            "lines": 2
+          },
+          {
+            "text": "2개 ⌄",
+            "tag": "span",
+            "cls": "pill",
+            "lines": 2
+          },
+          {
+            "text": "14개 ⌄",
+            "tag": "span",
+            "cls": "pill",
+            "lines": 2
+          },
+          {
+            "text": "50개 ⌃",
+            "tag": "span",
+            "cls": "pill",
+            "lines": 2
+          },
+          {
+            "text": "B",
+            "tag": "div",
+            "cls": "av",
+            "lines": 2
+          },
+          {
+            "text": "B",
+            "tag": "div",
+            "cls": "av",
+            "lines": 2
+          },
+          {
+            "text": "S",
+            "tag": "div",
+            "cls": "av",
+            "lines": 2
+          },
+          {
+            "text": "N",
+            "tag": "div",
+            "cls": "av",
+            "lines": 2
+          },
+          {
+            "text": "S",
+            "tag": "div",
+            "cls": "av",
+            "lines": 2
+          },
+          {
+            "text": "T",
+            "tag": "div",
+            "cls": "av",
+            "lines": 2
+          },
+          {
+            "text": "S",
+            "tag": "div",
+            "cls": "av",
+            "lines": 2
+          }
+        ],
+        "shown": []
+      },
+      "account": {
+        "landed_on": "account",
+        "actions": [
+          "back-recipient",
+          "back-home",
+          "open-bank",
+          "acc-num",
+          "acc-num",
+          "acc-num",
+          "acc-num",
+          "acc-num",
+          "acc-num",
+          "acc-num",
+          "acc-num",
+          "acc-num",
+          "acc-num",
+          "acc-del",
+          "account-next"
+        ],
+        "ids": [
+          "acc-input",
+          "picked-bank",
+          "acc-next"
+        ],
+        "screens": [
+          "home",
+          "recipient",
+          "bank",
+          "account",
+          "amount",
+          "confirm",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "3:33\n5G 56\n‹\n✕\n누구에게 보낼까요?\n계좌번호\n은행 또는 증권사 선택\n⌄\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n⌫\n다음",
+        "height": 844,
+        "choices": {
+          "pick-bank": [
+            "신한",
+            "제주",
+            "국민",
+            "기업",
+            "농협",
+            "산업",
+            "수협",
+            "신협",
+            "우리",
+            "하나",
+            "한국씨티",
+            "카카오뱅크",
+            "케이뱅크",
+            "토스뱅크",
+            "경남",
+            "광주",
+            "아이엠뱅크(대구)",
+            "부산",
+            "전북",
+            "회원수협",
+            "새마을",
+            "우체국",
+            "저축은행",
+            "지역농.축협",
+            "도이치",
+            "중국",
+            "중국건설",
+            "중국공상",
+            "BNP파리바",
+            "BOA",
+            "HSBC",
+            "JP모간",
+            "SC",
+            "산림조합",
+            "국세",
+            "지방세",
+            "국고금",
+            "관세",
+            "신한투자증권",
+            "교보증권",
+            "다올투자증권",
+            "대신증권",
+            "메리츠증권",
+            "미래에셋증권",
+            "부국증권",
+            "삼성증권",
+            "상상인증권",
+            "신영증권",
+            "에스케이증권",
+            "유안타증권",
+            "유진투자증권",
+            "LS증권",
+            "카카오페이증권",
+            "케이프투자증권",
+            "키움증권",
+            "토스증권",
+            "우리투자증권",
+            "하나증권",
+            "아이엠증권",
+            "한국투자증권",
+            "한화투자증권",
+            "현대차증권",
+            "BNK투자증권",
+            "DB증권",
+            "IBK투자증권",
+            "KB증권",
+            "NH투자증권"
+          ],
+          "acc-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "quick": [
+            "10000",
+            "50000",
+            "100000",
+            "all"
+          ],
+          "num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "00",
+            "0"
+          ],
+          "pw": [
+            "4",
+            "5",
+            "1",
+            "3",
+            "0",
+            "8",
+            "2",
+            "6",
+            "9",
+            "7"
+          ]
+        },
+        "contrast": [
+          {
+            "text": "은행 또는 증권사 선택",
+            "tag": "span",
+            "cls": "ph",
+            "color": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 19,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "⌄",
+            "tag": "span",
+            "cls": "chev",
+            "color": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 19,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "다음",
+            "tag": "button",
+            "cls": "btn-next",
+            "color": "rgb(154, 160, 168)",
+            "bg": "rgb(238, 240, 244)",
+            "fontSize": 17,
+            "ratio": 2.31,
+            "need": 4.5
+          }
+        ],
+        "inherited": [
+          {
+            "text": "3:33",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "5G 56",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "누구에게 보낼까요?",
+            "tag": "div",
+            "cls": "h1",
+            "color": "rgb(26, 26, 26)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "누구에게 보낼까요?",
+            "tag": "div",
+            "cls": "h1",
+            "lines": 2
+          },
+          {
+            "text": "1",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "2",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "3",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "4",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "5",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "6",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "7",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "8",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "9",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "0",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "⌫",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "다음",
+            "tag": "button",
+            "cls": "btn-next",
+            "lines": 3
+          }
+        ],
+        "shown": []
+      },
+      "bank": {
+        "landed_on": "bank",
+        "actions": [
+          "back-recipient",
+          "tab-bank",
+          "tab-sec",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank"
+        ],
+        "ids": [
+          "tab-bank",
+          "tab-sec",
+          "grid-bank",
+          "grid-sec"
+        ],
+        "screens": [
+          "home",
+          "recipient",
+          "bank",
+          "account",
+          "amount",
+          "confirm",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "1:40\n5G 66\n은행 또는 증권사 선택\n✕\n은행\n증권사\n신\n신한\n제\n제주\n국\n국민\n기\n기업\n농\n농협\n산\n산업\n수\n수협\n신\n신협\n우\n우리\n하\n하나\n한\n한국씨티\n카\n카카오뱅크\n케\n케이뱅크\n토\n토스뱅크\n경\n경남\n광\n광주\n아\n아이엠뱅크(대구)\n부\n부산\n전\n전북\n회\n회원수협\n새\n새마을\n우\n우체국\n저\n저축은행\n지\n지역농.축협\n도\n도이치\n중\n중국\n중\n중국건설\n중\n중국공상\nB\nBNP파리바\nB\nBOA\nH\nHSBC\nJ\nJP모간\nS\nSC\n산\n산림조합\n국\n국세\n지\n지방세\n국\n국고금\n관\n관세",
+        "height": 844,
+        "choices": {
+          "pick-bank": [
+            "신한",
+            "제주",
+            "국민",
+            "기업",
+            "농협",
+            "산업",
+            "수협",
+            "신협",
+            "우리",
+            "하나",
+            "한국씨티",
+            "카카오뱅크",
+            "케이뱅크",
+            "토스뱅크",
+            "경남",
+            "광주",
+            "아이엠뱅크(대구)",
+            "부산",
+            "전북",
+            "회원수협",
+            "새마을",
+            "우체국",
+            "저축은행",
+            "지역농.축협",
+            "도이치",
+            "중국",
+            "중국건설",
+            "중국공상",
+            "BNP파리바",
+            "BOA",
+            "HSBC",
+            "JP모간",
+            "SC",
+            "산림조합",
+            "국세",
+            "지방세",
+            "국고금",
+            "관세",
+            "신한투자증권",
+            "교보증권",
+            "다올투자증권",
+            "대신증권",
+            "메리츠증권",
+            "미래에셋증권",
+            "부국증권",
+            "삼성증권",
+            "상상인증권",
+            "신영증권",
+            "에스케이증권",
+            "유안타증권",
+            "유진투자증권",
+            "LS증권",
+            "카카오페이증권",
+            "케이프투자증권",
+            "키움증권",
+            "토스증권",
+            "우리투자증권",
+            "하나증권",
+            "아이엠증권",
+            "한국투자증권",
+            "한화투자증권",
+            "현대차증권",
+            "BNK투자증권",
+            "DB증권",
+            "IBK투자증권",
+            "KB증권",
+            "NH투자증권"
+          ],
+          "acc-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "quick": [
+            "10000",
+            "50000",
+            "100000",
+            "all"
+          ],
+          "num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "00",
+            "0"
+          ],
+          "pw": [
+            "4",
+            "5",
+            "1",
+            "3",
+            "0",
+            "8",
+            "2",
+            "6",
+            "9",
+            "7"
+          ]
+        },
+        "contrast": [
+          {
+            "text": "1:40",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(138, 143, 152)",
+            "fontSize": 15,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "5G 66",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(138, 143, 152)",
+            "fontSize": 12,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "증권사",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 15,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "국",
+            "tag": "div",
+            "cls": "bi",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(229, 72, 77)",
+            "fontSize": 12,
+            "ratio": 3.91,
+            "need": 4.5
+          },
+          {
+            "text": "기",
+            "tag": "div",
+            "cls": "bi",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(242, 162, 12)",
+            "fontSize": 12,
+            "ratio": 2.11,
+            "need": 4.5
+          },
+          {
+            "text": "농",
+            "tag": "div",
+            "cls": "bi",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(18, 161, 80)",
+            "fontSize": 12,
+            "ratio": 3.37,
+            "need": 4.5
+          },
+          {
+            "text": "수",
+            "tag": "div",
+            "cls": "bi",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(59, 123, 246)",
+            "fontSize": 12,
+            "ratio": 3.93,
+            "need": 4.5
+          },
+          {
+            "text": "한",
+            "tag": "div",
+            "cls": "bi",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(229, 72, 77)",
+            "fontSize": 12,
+            "ratio": 3.91,
+            "need": 4.5
+          },
+          {
+            "text": "카",
+            "tag": "div",
+            "cls": "bi",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(242, 162, 12)",
+            "fontSize": 12,
+            "ratio": 2.11,
+            "need": 4.5
+          },
+          {
+            "text": "케",
+            "tag": "div",
+            "cls": "bi",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(18, 161, 80)",
+            "fontSize": 12,
+            "ratio": 3.37,
+            "need": 4.5
+          },
+          {
+            "text": "경",
+            "tag": "div",
+            "cls": "bi",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(59, 123, 246)",
+            "fontSize": 12,
+            "ratio": 3.93,
+            "need": 4.5
+          },
+          {
+            "text": "전",
+            "tag": "div",
+            "cls": "bi",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(229, 72, 77)",
+            "fontSize": 12,
+            "ratio": 3.91,
+            "need": 4.5
+          },
+          {
+            "text": "회",
+            "tag": "div",
+            "cls": "bi",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(242, 162, 12)",
+            "fontSize": 12,
+            "ratio": 2.11,
+            "need": 4.5
+          },
+          {
+            "text": "새",
+            "tag": "div",
+            "cls": "bi",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(18, 161, 80)",
+            "fontSize": 12,
+            "ratio": 3.37,
+            "need": 4.5
+          },
+          {
+            "text": "저",
+            "tag": "div",
+            "cls": "bi",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(59, 123, 246)",
+            "fontSize": 12,
+            "ratio": 3.93,
+            "need": 4.5
+          },
+          {
+            "text": "중",
+            "tag": "div",
+            "cls": "bi",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(229, 72, 77)",
+            "fontSize": 12,
+            "ratio": 3.91,
+            "need": 4.5
+          },
+          {
+            "text": "중",
+            "tag": "div",
+            "cls": "bi",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(242, 162, 12)",
+            "fontSize": 12,
+            "ratio": 2.11,
+            "need": 4.5
+          },
+          {
+            "text": "B",
+            "tag": "div",
+            "cls": "bi",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(18, 161, 80)",
+            "fontSize": 12,
+            "ratio": 3.37,
+            "need": 4.5
+          },
+          {
+            "text": "H",
+            "tag": "div",
+            "cls": "bi",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(59, 123, 246)",
+            "fontSize": 12,
+            "ratio": 3.93,
+            "need": 4.5
+          },
+          {
+            "text": "국",
+            "tag": "div",
+            "cls": "bi",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(229, 72, 77)",
+            "fontSize": 12,
+            "ratio": 3.91,
+            "need": 4.5
+          },
+          {
+            "text": "지",
+            "tag": "div",
+            "cls": "bi",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(242, 162, 12)",
+            "fontSize": 12,
+            "ratio": 2.11,
+            "need": 4.5
+          },
+          {
+            "text": "국",
+            "tag": "div",
+            "cls": "bi",
+            "color": "rgb(255, 255, 255)",
+            "bg": "rgb(18, 161, 80)",
+            "fontSize": 12,
+            "ratio": 3.37,
+            "need": 4.5
+          }
+        ],
+        "inherited": [
+          {
+            "text": "1:40",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "5G 66",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "은행 또는 증권사 선택",
+            "tag": "b",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "✕",
+            "tag": "span",
+            "cls": "ico",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신한",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "제주",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "국민",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "기업",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "농협",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "산업",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "수협",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신협",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "우리",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "하나",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "한국씨티",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "카카오뱅크",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "케이뱅크",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "토스뱅크",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "경남",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "광주",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "아이엠뱅크(대구)",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "부산",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "전북",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "회원수협",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "새마을",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "우체국",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "저축은행",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "지역농.축협",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "도이치",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "중국",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "중국건설",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "중국공상",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "BNP파리바",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "BOA",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "HSBC",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "JP모간",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "SC",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "산림조합",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "국세",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "지방세",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "국고금",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "관세",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신한투자증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "교보증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "다올투자증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "대신증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "메리츠증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "미래에셋증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "부국증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "삼성증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "상상인증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신영증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "에스케이증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "유안타증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "유진투자증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "LS증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "카카오페이증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "케이프투자증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "키움증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "토스증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "우리투자증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "하나증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "아이엠증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "한국투자증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "한화투자증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "현대차증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "BNK투자증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "DB증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "IBK투자증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "KB증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "NH투자증권",
+            "tag": "div",
+            "cls": "bk",
+            "color": "rgb(26, 26, 26)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "은행",
+            "tag": "div",
+            "cls": "act",
+            "lines": 3
+          },
+          {
+            "text": "증권사",
+            "tag": "div",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "신한",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "신",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "제주",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "제",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "국민",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "국",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "기업",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "기",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "농협",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "농",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "산업",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "산",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "수협",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "수",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "신협",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "신",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "우리",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "우",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "하나",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "하",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "한국씨티",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "한",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "카카오뱅크",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "카",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "케이뱅크",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "케",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "토스뱅크",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "토",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "경남",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "경",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "광주",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "광",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "아이엠뱅크(대구)",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "아",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "부산",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "부",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "전북",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "전",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "회원수협",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "회",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "새마을",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "새",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "우체국",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "우",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "저축은행",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "저",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "지역농.축협",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "지",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "도이치",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "도",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "중국",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "중",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "중국건설",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "중",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "중국공상",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "중",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "BNP파리바",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "B",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "BOA",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "B",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "HSBC",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "H",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "JP모간",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "J",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "SC",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "S",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "산림조합",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "산",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "국세",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "국",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "지방세",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "지",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "국고금",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "국",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "관세",
+            "tag": "div",
+            "cls": "bk",
+            "lines": 6
+          },
+          {
+            "text": "관",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          }
+        ],
+        "shown": []
+      },
+      "amount": {
+        "landed_on": "amount",
+        "actions": [
+          "back-account",
+          "back-home",
+          "quick",
+          "quick",
+          "quick",
+          "quick",
+          "num",
+          "num",
+          "num",
+          "num",
+          "num",
+          "num",
+          "num",
+          "num",
+          "num",
+          "num",
+          "num",
+          "del",
+          "amount-next"
+        ],
+        "ids": [
+          "amt-acc",
+          "amt-display",
+          "amt-next"
+        ],
+        "screens": [
+          "home",
+          "recipient",
+          "bank",
+          "account",
+          "amount",
+          "confirm",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "1:40\n5G 66\n‹\n✕\n[금융거래한도계좌2]신한 주… 계좌에서 ⌄\n김시현님 계좌로\n카카오뱅크 3333000000000\n얼마를 보낼까요?\n출금가능금액 100,000원\n+1만\n+5만\n+10만\n전액\n1\n2\n3\n4\n5\n6\n7\n8\n9\n00\n0\n⌫\n다음",
+        "height": 844,
+        "choices": {
+          "pick-bank": [
+            "신한",
+            "제주",
+            "국민",
+            "기업",
+            "농협",
+            "산업",
+            "수협",
+            "신협",
+            "우리",
+            "하나",
+            "한국씨티",
+            "카카오뱅크",
+            "케이뱅크",
+            "토스뱅크",
+            "경남",
+            "광주",
+            "아이엠뱅크(대구)",
+            "부산",
+            "전북",
+            "회원수협",
+            "새마을",
+            "우체국",
+            "저축은행",
+            "지역농.축협",
+            "도이치",
+            "중국",
+            "중국건설",
+            "중국공상",
+            "BNP파리바",
+            "BOA",
+            "HSBC",
+            "JP모간",
+            "SC",
+            "산림조합",
+            "국세",
+            "지방세",
+            "국고금",
+            "관세",
+            "신한투자증권",
+            "교보증권",
+            "다올투자증권",
+            "대신증권",
+            "메리츠증권",
+            "미래에셋증권",
+            "부국증권",
+            "삼성증권",
+            "상상인증권",
+            "신영증권",
+            "에스케이증권",
+            "유안타증권",
+            "유진투자증권",
+            "LS증권",
+            "카카오페이증권",
+            "케이프투자증권",
+            "키움증권",
+            "토스증권",
+            "우리투자증권",
+            "하나증권",
+            "아이엠증권",
+            "한국투자증권",
+            "한화투자증권",
+            "현대차증권",
+            "BNK투자증권",
+            "DB증권",
+            "IBK투자증권",
+            "KB증권",
+            "NH투자증권"
+          ],
+          "acc-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "quick": [
+            "10000",
+            "50000",
+            "100000",
+            "all"
+          ],
+          "num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "00",
+            "0"
+          ],
+          "pw": [
+            "4",
+            "5",
+            "1",
+            "3",
+            "0",
+            "8",
+            "2",
+            "6",
+            "9",
+            "7"
+          ]
+        },
+        "contrast": [
+          {
+            "text": "얼마를 보낼까요?",
+            "tag": "div",
+            "cls": "amtq",
+            "color": "rgb(199, 203, 210)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 27,
+            "ratio": 1.63,
+            "need": 3
+          },
+          {
+            "text": "출금가능금액 원",
+            "tag": "div",
+            "cls": "amtsub",
+            "color": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 14,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "100,000",
+            "tag": "u",
+            "cls": "",
+            "color": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 14,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "다음",
+            "tag": "button",
+            "cls": "btn-next",
+            "color": "rgb(154, 160, 168)",
+            "bg": "rgb(238, 240, 244)",
+            "fontSize": 17,
+            "ratio": 2.31,
+            "need": 4.5
+          }
+        ],
+        "inherited": [
+          {
+            "text": "1:40",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "5G 66",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "카카오뱅크",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(75, 81, 88)"
+          },
+          {
+            "text": "3333000000000",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(75, 81, 88)"
+          },
+          {
+            "text": "100,000",
+            "tag": "u",
+            "cls": "",
+            "color": "rgb(138, 143, 152)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "[금융거래한도계좌2]신한 주… 계좌에서 ⌄",
+            "tag": "div",
+            "cls": "amthead",
+            "lines": 3
+          },
+          {
+            "text": "+1만",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "+5만",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "+10만",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "전액",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "1",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "2",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "3",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "4",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "5",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "6",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "7",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "8",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "9",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "00",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "0",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "⌫",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "다음",
+            "tag": "button",
+            "cls": "btn-next",
+            "lines": 3
+          }
+        ],
+        "shown": [
+          [
+            "#amt-acc",
+            "3333000000000"
+          ]
+        ]
+      },
+      "confirm": {
+        "landed_on": "confirm",
+        "actions": [
+          "back-amount",
+          "back-home",
+          "send"
+        ],
+        "ids": [
+          "cf-amt",
+          "cf-acc"
+        ],
+        "screens": [
+          "home",
+          "recipient",
+          "bank",
+          "account",
+          "amount",
+          "confirm",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "1:40\n5G 66\n‹\n✕\nB\n김시현님 계좌로\n10,000원 보낼까요?\n수수료 무료\n보내는 계좌\n신한 110-000-000000\n받는 계좌\n카카오뱅크 3333000000000\n받는분 메모\n김시현 ✎\n내통장 메모\n김시현 ✎\n보내기",
+        "height": 844,
+        "choices": {
+          "pick-bank": [
+            "신한",
+            "제주",
+            "국민",
+            "기업",
+            "농협",
+            "산업",
+            "수협",
+            "신협",
+            "우리",
+            "하나",
+            "한국씨티",
+            "카카오뱅크",
+            "케이뱅크",
+            "토스뱅크",
+            "경남",
+            "광주",
+            "아이엠뱅크(대구)",
+            "부산",
+            "전북",
+            "회원수협",
+            "새마을",
+            "우체국",
+            "저축은행",
+            "지역농.축협",
+            "도이치",
+            "중국",
+            "중국건설",
+            "중국공상",
+            "BNP파리바",
+            "BOA",
+            "HSBC",
+            "JP모간",
+            "SC",
+            "산림조합",
+            "국세",
+            "지방세",
+            "국고금",
+            "관세",
+            "신한투자증권",
+            "교보증권",
+            "다올투자증권",
+            "대신증권",
+            "메리츠증권",
+            "미래에셋증권",
+            "부국증권",
+            "삼성증권",
+            "상상인증권",
+            "신영증권",
+            "에스케이증권",
+            "유안타증권",
+            "유진투자증권",
+            "LS증권",
+            "카카오페이증권",
+            "케이프투자증권",
+            "키움증권",
+            "토스증권",
+            "우리투자증권",
+            "하나증권",
+            "아이엠증권",
+            "한국투자증권",
+            "한화투자증권",
+            "현대차증권",
+            "BNK투자증권",
+            "DB증권",
+            "IBK투자증권",
+            "KB증권",
+            "NH투자증권"
+          ],
+          "acc-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "quick": [
+            "10000",
+            "50000",
+            "100000",
+            "all"
+          ],
+          "num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "00",
+            "0"
+          ],
+          "pw": [
+            "4",
+            "5",
+            "1",
+            "3",
+            "0",
+            "8",
+            "2",
+            "6",
+            "9",
+            "7"
+          ]
+        },
+        "contrast": [
+          {
+            "text": "수수료 무료",
+            "tag": "div",
+            "cls": "fee",
+            "color": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 14,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "보내는 계좌",
+            "tag": "span",
+            "cls": "k",
+            "color": "rgb(138, 143, 152)",
+            "bg": "rgb(245, 246, 249)",
+            "fontSize": 14,
+            "ratio": 3.01,
+            "need": 4.5
+          },
+          {
+            "text": "받는 계좌",
+            "tag": "span",
+            "cls": "k",
+            "color": "rgb(138, 143, 152)",
+            "bg": "rgb(245, 246, 249)",
+            "fontSize": 14,
+            "ratio": 3.01,
+            "need": 4.5
+          },
+          {
+            "text": "받는분 메모",
+            "tag": "span",
+            "cls": "k",
+            "color": "rgb(138, 143, 152)",
+            "bg": "rgb(245, 246, 249)",
+            "fontSize": 14,
+            "ratio": 3.01,
+            "need": 4.5
+          },
+          {
+            "text": "내통장 메모",
+            "tag": "span",
+            "cls": "k",
+            "color": "rgb(138, 143, 152)",
+            "bg": "rgb(245, 246, 249)",
+            "fontSize": 14,
+            "ratio": 3.01,
+            "need": 4.5
+          }
+        ],
+        "inherited": [
+          {
+            "text": "1:40",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "5G 66",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "김시현님 계좌로 원 보낼까요?",
+            "tag": "div",
+            "cls": "q2",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "10,000",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신한 110-000-000000",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "카카오뱅크",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "3333000000000",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "김시현 ✎",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "김시현 ✎",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "B",
+            "tag": "div",
+            "cls": "bigav",
+            "lines": 2
+          },
+          {
+            "text": "김시현님 계좌로 원 보낼까요?",
+            "tag": "div",
+            "cls": "q2",
+            "lines": 2
+          },
+          {
+            "text": "보내기",
+            "tag": "button",
+            "cls": "btn-primary",
+            "lines": 3
+          }
+        ],
+        "shown": [
+          [
+            "#cf-acc",
+            "3333000000000"
+          ],
+          [
+            "#cf-amt",
+            "10,000"
+          ]
+        ]
+      },
+      "password": {
+        "landed_on": "password",
+        "actions": [
+          "back-confirm",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw-shuffle",
+          "pw",
+          "pw-del"
+        ],
+        "ids": [
+          "pw-dots",
+          "pwpad"
+        ],
+        "screens": [
+          "home",
+          "recipient",
+          "bank",
+          "account",
+          "amount",
+          "confirm",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "5:55\n5G 89\n✕\n계좌 비밀번호\n3\n9\n1\n6\n8\n5\n4\n0\n2\n재배열\n7\n⌫",
+        "height": 844,
+        "choices": {
+          "pick-bank": [
+            "신한",
+            "제주",
+            "국민",
+            "기업",
+            "농협",
+            "산업",
+            "수협",
+            "신협",
+            "우리",
+            "하나",
+            "한국씨티",
+            "카카오뱅크",
+            "케이뱅크",
+            "토스뱅크",
+            "경남",
+            "광주",
+            "아이엠뱅크(대구)",
+            "부산",
+            "전북",
+            "회원수협",
+            "새마을",
+            "우체국",
+            "저축은행",
+            "지역농.축협",
+            "도이치",
+            "중국",
+            "중국건설",
+            "중국공상",
+            "BNP파리바",
+            "BOA",
+            "HSBC",
+            "JP모간",
+            "SC",
+            "산림조합",
+            "국세",
+            "지방세",
+            "국고금",
+            "관세",
+            "신한투자증권",
+            "교보증권",
+            "다올투자증권",
+            "대신증권",
+            "메리츠증권",
+            "미래에셋증권",
+            "부국증권",
+            "삼성증권",
+            "상상인증권",
+            "신영증권",
+            "에스케이증권",
+            "유안타증권",
+            "유진투자증권",
+            "LS증권",
+            "카카오페이증권",
+            "케이프투자증권",
+            "키움증권",
+            "토스증권",
+            "우리투자증권",
+            "하나증권",
+            "아이엠증권",
+            "한국투자증권",
+            "한화투자증권",
+            "현대차증권",
+            "BNK투자증권",
+            "DB증권",
+            "IBK투자증권",
+            "KB증권",
+            "NH투자증권"
+          ],
+          "acc-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "quick": [
+            "10000",
+            "50000",
+            "100000",
+            "all"
+          ],
+          "num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "00",
+            "0"
+          ],
+          "pw": [
+            "3",
+            "9",
+            "1",
+            "6",
+            "8",
+            "5",
+            "4",
+            "0",
+            "2",
+            "7"
+          ]
+        },
+        "contrast": [],
+        "inherited": [
+          {
+            "text": "5:55",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "5G 89",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "계좌 비밀번호",
+            "tag": "div",
+            "cls": "pwtitle",
+            "color": "rgb(26, 26, 26)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "3",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "9",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "1",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "6",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "8",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "5",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "4",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "0",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "2",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "재배열",
+            "tag": "button",
+            "cls": "sm",
+            "lines": 5
+          },
+          {
+            "text": "7",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "⌫",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          }
+        ],
+        "shown": []
+      },
+      "done": {
+        "landed_on": "done",
+        "actions": [
+          "finish"
+        ],
+        "ids": [
+          "dn-amt"
+        ],
+        "screens": [
+          "home",
+          "recipient",
+          "bank",
+          "account",
+          "amount",
+          "confirm",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "1:41\n5G 66\n✓\n김시현님 계좌로\n10,000원 보냈어요.\n추가이체\n상세보기\n공유\n확인",
+        "height": 844,
+        "choices": {
+          "pick-bank": [
+            "신한",
+            "제주",
+            "국민",
+            "기업",
+            "농협",
+            "산업",
+            "수협",
+            "신협",
+            "우리",
+            "하나",
+            "한국씨티",
+            "카카오뱅크",
+            "케이뱅크",
+            "토스뱅크",
+            "경남",
+            "광주",
+            "아이엠뱅크(대구)",
+            "부산",
+            "전북",
+            "회원수협",
+            "새마을",
+            "우체국",
+            "저축은행",
+            "지역농.축협",
+            "도이치",
+            "중국",
+            "중국건설",
+            "중국공상",
+            "BNP파리바",
+            "BOA",
+            "HSBC",
+            "JP모간",
+            "SC",
+            "산림조합",
+            "국세",
+            "지방세",
+            "국고금",
+            "관세",
+            "신한투자증권",
+            "교보증권",
+            "다올투자증권",
+            "대신증권",
+            "메리츠증권",
+            "미래에셋증권",
+            "부국증권",
+            "삼성증권",
+            "상상인증권",
+            "신영증권",
+            "에스케이증권",
+            "유안타증권",
+            "유진투자증권",
+            "LS증권",
+            "카카오페이증권",
+            "케이프투자증권",
+            "키움증권",
+            "토스증권",
+            "우리투자증권",
+            "하나증권",
+            "아이엠증권",
+            "한국투자증권",
+            "한화투자증권",
+            "현대차증권",
+            "BNK투자증권",
+            "DB증권",
+            "IBK투자증권",
+            "KB증권",
+            "NH투자증권"
+          ],
+          "acc-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "quick": [
+            "10000",
+            "50000",
+            "100000",
+            "all"
+          ],
+          "num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "00",
+            "0"
+          ],
+          "pw": [
+            "3",
+            "9",
+            "1",
+            "6",
+            "8",
+            "5",
+            "4",
+            "0",
+            "2",
+            "7"
+          ]
+        },
+        "contrast": [],
+        "inherited": [
+          {
+            "text": "1:41",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "5G 66",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "김시현님 계좌로 원 보냈어요.",
+            "tag": "div",
+            "cls": "q2",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "10,000",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "✓",
+            "tag": "div",
+            "cls": "okc",
+            "lines": 2
+          },
+          {
+            "text": "김시현님 계좌로 원 보냈어요.",
+            "tag": "div",
+            "cls": "q2",
+            "lines": 2
+          },
+          {
+            "text": "추가이체",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "상세보기",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "공유",
+            "tag": "button",
+            "cls": "ghost",
+            "lines": 3
+          },
+          {
+            "text": "확인",
+            "tag": "button",
+            "cls": "fill",
+            "lines": 3
+          }
+        ],
+        "shown": [
+          [
+            "#dn-amt",
+            "10,000"
+          ]
+        ]
+      }
+    },
+    "dialogs": [],
+    "js_errors": [],
+    "reached": [
+      "home",
+      "recipient",
+      "account",
+      "bank",
+      "amount",
+      "confirm",
+      "password",
+      "done"
+    ],
+    "missing_ids": [],
+    "state_pairs": [
+      {
+        "base": ".screen",
+        "state": "on",
+        "props": [
+          "display"
+        ],
+        "differing": [
+          "display"
+        ],
+        "base_values": [
+          "display=none"
+        ]
+      },
+      {
+        "base": ".sheetwrap",
+        "state": "on",
+        "props": [
+          "display"
+        ],
+        "differing": [
+          "display"
+        ],
+        "base_values": [
+          "display=none"
+        ]
+      },
+      {
+        "base": ".btn-next",
+        "state": "on",
+        "props": [
+          "background-image",
+          "background-position-x",
+          "background-position-y",
+          "background-size",
+          "background-repeat",
+          "background-attachment",
+          "background-origin",
+          "background-clip",
+          "background-color",
+          "color"
+        ],
+        "differing": [
+          "background-color",
+          "color"
+        ],
+        "base_values": [
+          "background-image=none",
+          "background-position-x=0%",
+          "background-position-y=0%",
+          "background-size=auto",
+          "background-repeat=repeat",
+          "background-attachment=scroll",
+          "background-origin=padding-box",
+          "background-clip=border-box",
+          "background-color=rgb(238, 240, 244)",
+          "color=rgb(154, 160, 168)"
+        ]
+      }
+    ],
+    "load_failed": null,
+    "notes": [],
+    "js_error_details": [],
+    "flow": "original",
+    "undefined_classes": []
+  },
+  "rep": {
+    "screens": {
+      "start": {
+        "landed_on": "start",
+        "actions": [
+          "go-who",
+          "noop"
+        ],
+        "ids": [
+          "st-balance"
+        ],
+        "screens": [
+          "start",
+          "who",
+          "accno",
+          "bank",
+          "whoconfirm",
+          "amount",
+          "review",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "1:39\n5G\n김시현 님\n내 통장\n100,000원\n돈 보내기\n쓴 내역 보기",
+        "height": 844,
+        "choices": {
+          "pick-person": [
+            "김시현",
+            "안성진",
+            "박정순",
+            "박숙자",
+            "김명희"
+          ],
+          "acc-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "pick-bank": [
+            "신한",
+            "국민",
+            "카카오뱅크",
+            "농협",
+            "우리",
+            "하나",
+            "기업",
+            "토스뱅크"
+          ],
+          "amt-set": [
+            "10000",
+            "30000",
+            "50000",
+            "100000"
+          ],
+          "amt-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "pw": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ]
+        },
+        "contrast": [],
+        "inherited": [
+          {
+            "text": "1:39",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(74, 80, 88)"
+          },
+          {
+            "text": "5G",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(74, 80, 88)"
+          },
+          {
+            "text": "김시현 님",
+            "tag": "div",
+            "cls": "greet",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "원",
+            "tag": "div",
+            "cls": "amt",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "100,000",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "쓴 내역 보기",
+            "tag": "button",
+            "cls": "secondary",
+            "color": "rgb(21, 21, 21)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "김시현 님",
+            "tag": "div",
+            "cls": "greet",
+            "lines": 2
+          },
+          {
+            "text": "돈 보내기",
+            "tag": "button",
+            "cls": "primary",
+            "lines": 3
+          },
+          {
+            "text": "쓴 내역 보기",
+            "tag": "button",
+            "cls": "secondary",
+            "lines": 3
+          }
+        ],
+        "shown": []
+      },
+      "who": {
+        "landed_on": "who",
+        "actions": [
+          "back-start",
+          "pick-person",
+          "pick-person",
+          "pick-person",
+          "pick-person",
+          "pick-person",
+          "go-accno"
+        ],
+        "ids": [],
+        "screens": [
+          "start",
+          "who",
+          "accno",
+          "bank",
+          "whoconfirm",
+          "amount",
+          "review",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "1:39\n5G\n← 이전\n누구에게\n보낼까요?\n김\n김시현카카오뱅크 ····0000\n안\n안성진신한 ····0000\n박\n박정순농협 ····0000\n박\n박숙자신한 ····0001\n김\n김명희신한 ····0002\n처음 보내는 곳",
+        "height": 844,
+        "choices": {
+          "pick-person": [
+            "김시현",
+            "안성진",
+            "박정순",
+            "박숙자",
+            "김명희"
+          ],
+          "acc-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "pick-bank": [
+            "신한",
+            "국민",
+            "카카오뱅크",
+            "농협",
+            "우리",
+            "하나",
+            "기업",
+            "토스뱅크"
+          ],
+          "amt-set": [
+            "10000",
+            "30000",
+            "50000",
+            "100000"
+          ],
+          "amt-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "pw": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ]
+        },
+        "contrast": [],
+        "inherited": [
+          {
+            "text": "1:39",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(74, 80, 88)"
+          },
+          {
+            "text": "5G",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(74, 80, 88)"
+          },
+          {
+            "text": "← 이전",
+            "tag": "button",
+            "cls": "backbtn",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "누구에게 보낼까요?",
+            "tag": "div",
+            "cls": "q",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "김시현",
+            "tag": "span",
+            "cls": "nm",
+            "color": "rgb(0, 0, 0)"
+          },
+          {
+            "text": "안성진",
+            "tag": "span",
+            "cls": "nm",
+            "color": "rgb(0, 0, 0)"
+          },
+          {
+            "text": "박정순",
+            "tag": "span",
+            "cls": "nm",
+            "color": "rgb(0, 0, 0)"
+          },
+          {
+            "text": "박숙자",
+            "tag": "span",
+            "cls": "nm",
+            "color": "rgb(0, 0, 0)"
+          },
+          {
+            "text": "김명희",
+            "tag": "span",
+            "cls": "nm",
+            "color": "rgb(0, 0, 0)"
+          },
+          {
+            "text": "처음 보내는 곳",
+            "tag": "button",
+            "cls": "secondary",
+            "color": "rgb(21, 21, 21)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "← 이전",
+            "tag": "button",
+            "cls": "backbtn",
+            "lines": 2
+          },
+          {
+            "text": "누구에게 보낼까요?",
+            "tag": "div",
+            "cls": "q",
+            "lines": 3
+          },
+          {
+            "text": "김",
+            "tag": "span",
+            "cls": "av",
+            "lines": 2
+          },
+          {
+            "text": "안",
+            "tag": "span",
+            "cls": "av",
+            "lines": 2
+          },
+          {
+            "text": "박",
+            "tag": "span",
+            "cls": "av",
+            "lines": 2
+          },
+          {
+            "text": "박",
+            "tag": "span",
+            "cls": "av",
+            "lines": 2
+          },
+          {
+            "text": "김",
+            "tag": "span",
+            "cls": "av",
+            "lines": 2
+          },
+          {
+            "text": "처음 보내는 곳",
+            "tag": "button",
+            "cls": "secondary",
+            "lines": 3
+          }
+        ],
+        "shown": []
+      },
+      "accno": {
+        "landed_on": "accno",
+        "actions": [
+          "back-who",
+          "acc-num",
+          "acc-num",
+          "acc-num",
+          "acc-num",
+          "acc-num",
+          "acc-num",
+          "acc-num",
+          "acc-num",
+          "acc-num",
+          "acc-num",
+          "acc-del",
+          "accno-next"
+        ],
+        "ids": [
+          "acc-display",
+          "acc-count",
+          "acc-next"
+        ],
+        "screens": [
+          "start",
+          "who",
+          "accno",
+          "bank",
+          "whoconfirm",
+          "amount",
+          "review",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "1:40\n5G\n← 이전\n계좌번호를\n눌러주세요\n아직 누르지 않았습니다\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n지우기\n다음",
+        "height": 844,
+        "choices": {
+          "pick-person": [
+            "김시현",
+            "안성진",
+            "박정순",
+            "박숙자",
+            "김명희"
+          ],
+          "acc-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "pick-bank": [
+            "신한",
+            "국민",
+            "카카오뱅크",
+            "농협",
+            "우리",
+            "하나",
+            "기업",
+            "토스뱅크"
+          ],
+          "amt-set": [
+            "10000",
+            "30000",
+            "50000",
+            "100000"
+          ],
+          "amt-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "pw": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ]
+        },
+        "contrast": [
+          {
+            "text": "다음",
+            "tag": "button",
+            "cls": "primary",
+            "color": "rgb(140, 147, 156)",
+            "bg": "rgb(228, 232, 238)",
+            "fontSize": 22,
+            "ratio": 2.52,
+            "need": 3
+          }
+        ],
+        "inherited": [
+          {
+            "text": "1:40",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(74, 80, 88)"
+          },
+          {
+            "text": "5G",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(74, 80, 88)"
+          },
+          {
+            "text": "← 이전",
+            "tag": "button",
+            "cls": "backbtn",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "계좌번호를 눌러주세요",
+            "tag": "div",
+            "cls": "q sm",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "1",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "2",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "3",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "4",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "5",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "6",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "7",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "8",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "9",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "0",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "← 이전",
+            "tag": "button",
+            "cls": "backbtn",
+            "lines": 2
+          },
+          {
+            "text": "계좌번호를 눌러주세요",
+            "tag": "div",
+            "cls": "q sm",
+            "lines": 3
+          },
+          {
+            "text": "아직 누르지 않았습니다",
+            "tag": "div",
+            "cls": "count",
+            "lines": 2
+          },
+          {
+            "text": "1",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "2",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "3",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "4",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "5",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "6",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "7",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "8",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "9",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "0",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "지우기",
+            "tag": "button",
+            "cls": "word",
+            "lines": 3
+          },
+          {
+            "text": "다음",
+            "tag": "button",
+            "cls": "primary",
+            "lines": 3
+          }
+        ],
+        "shown": []
+      },
+      "bank": {
+        "landed_on": "bank",
+        "actions": [
+          "back-accno",
+          "bank-yes",
+          "bank-other",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank",
+          "pick-bank"
+        ],
+        "ids": [
+          "bank-guess-wrap",
+          "bank-guess-icon",
+          "bank-guess",
+          "bank-list-wrap",
+          "bank-search",
+          "bank-list"
+        ],
+        "screens": [
+          "start",
+          "who",
+          "accno",
+          "bank",
+          "whoconfirm",
+          "amount",
+          "review",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "1:40\n5G\n← 이전\n이 은행이\n맞나요?\n카\n카카오뱅크\n입력하신 번호는 카카오뱅크에서 쓰는 번호입니다.\n네, 맞아요\n다른 은행이에요",
+        "height": 844,
+        "choices": {
+          "pick-person": [
+            "김시현",
+            "안성진",
+            "박정순",
+            "박숙자",
+            "김명희"
+          ],
+          "acc-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "pick-bank": [
+            "신한",
+            "국민",
+            "카카오뱅크",
+            "농협",
+            "우리",
+            "하나",
+            "기업",
+            "토스뱅크"
+          ],
+          "amt-set": [
+            "10000",
+            "30000",
+            "50000",
+            "100000"
+          ],
+          "amt-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "pw": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ]
+        },
+        "contrast": [],
+        "inherited": [
+          {
+            "text": "1:40",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(74, 80, 88)"
+          },
+          {
+            "text": "5G",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(74, 80, 88)"
+          },
+          {
+            "text": "← 이전",
+            "tag": "button",
+            "cls": "backbtn",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "이 은행이 맞나요?",
+            "tag": "div",
+            "cls": "q sm",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "카카오뱅크",
+            "tag": "div",
+            "cls": "bn",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "다른 은행이에요",
+            "tag": "button",
+            "cls": "secondary",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "어느 은행인가요?",
+            "tag": "div",
+            "cls": "q sm",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "신한",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(0, 0, 0)"
+          },
+          {
+            "text": "국민",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(0, 0, 0)"
+          },
+          {
+            "text": "카카오뱅크",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(0, 0, 0)"
+          },
+          {
+            "text": "농협",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(0, 0, 0)"
+          },
+          {
+            "text": "우리",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(0, 0, 0)"
+          },
+          {
+            "text": "하나",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(0, 0, 0)"
+          },
+          {
+            "text": "기업",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(0, 0, 0)"
+          },
+          {
+            "text": "토스뱅크",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(0, 0, 0)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "← 이전",
+            "tag": "button",
+            "cls": "backbtn",
+            "lines": 2
+          },
+          {
+            "text": "이 은행이 맞나요?",
+            "tag": "div",
+            "cls": "q sm",
+            "lines": 3
+          },
+          {
+            "text": "카",
+            "tag": "div",
+            "cls": "bi",
+            "lines": 2
+          },
+          {
+            "text": "입력하신 번호는 카카오뱅크에서 쓰는 번호입니다.",
+            "tag": "div",
+            "cls": "hint",
+            "lines": 3
+          },
+          {
+            "text": "네, 맞아요",
+            "tag": "button",
+            "cls": "primary",
+            "lines": 3
+          },
+          {
+            "text": "다른 은행이에요",
+            "tag": "button",
+            "cls": "secondary",
+            "lines": 3
+          }
+        ],
+        "shown": []
+      },
+      "whoconfirm": {
+        "landed_on": "whoconfirm",
+        "actions": [
+          "back-bank",
+          "who-yes",
+          "who-no"
+        ],
+        "ids": [
+          "wc-name",
+          "wc-acc"
+        ],
+        "screens": [
+          "start",
+          "who",
+          "accno",
+          "bank",
+          "whoconfirm",
+          "amount",
+          "review",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "1:40\n5G\n← 이전\n이 분이\n맞나요?\n김\n김시현\n카카오뱅크\n3333 0000 0000 0\n네, 맞아요\n아니요, 다시 누를게요",
+        "height": 844,
+        "choices": {
+          "pick-person": [
+            "김시현",
+            "안성진",
+            "박정순",
+            "박숙자",
+            "김명희"
+          ],
+          "acc-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "pick-bank": [
+            "신한",
+            "국민",
+            "카카오뱅크",
+            "농협",
+            "우리",
+            "하나",
+            "기업",
+            "토스뱅크"
+          ],
+          "amt-set": [
+            "10000",
+            "30000",
+            "50000",
+            "100000"
+          ],
+          "amt-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "pw": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ]
+        },
+        "contrast": [],
+        "inherited": [
+          {
+            "text": "1:40",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(74, 80, 88)"
+          },
+          {
+            "text": "5G",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(74, 80, 88)"
+          },
+          {
+            "text": "← 이전",
+            "tag": "button",
+            "cls": "backbtn",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "이 분이 맞나요?",
+            "tag": "div",
+            "cls": "q sm",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "김시현",
+            "tag": "div",
+            "cls": "nm",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "아니요, 다시 누를게요",
+            "tag": "button",
+            "cls": "secondary",
+            "color": "rgb(21, 21, 21)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "← 이전",
+            "tag": "button",
+            "cls": "backbtn",
+            "lines": 2
+          },
+          {
+            "text": "이 분이 맞나요?",
+            "tag": "div",
+            "cls": "q sm",
+            "lines": 3
+          },
+          {
+            "text": "김",
+            "tag": "div",
+            "cls": "av",
+            "lines": 2
+          },
+          {
+            "text": "카카오뱅크 3333 0000 0000 0",
+            "tag": "div",
+            "cls": "ac",
+            "lines": 2
+          },
+          {
+            "text": "네, 맞아요",
+            "tag": "button",
+            "cls": "primary",
+            "lines": 3
+          },
+          {
+            "text": "아니요, 다시 누를게요",
+            "tag": "button",
+            "cls": "secondary",
+            "lines": 3
+          }
+        ],
+        "shown": [
+          [
+            "#wc-name",
+            "김시현"
+          ]
+        ]
+      },
+      "amount": {
+        "landed_on": "amount",
+        "actions": [
+          "back-from-amount",
+          "amt-set",
+          "amt-set",
+          "amt-set",
+          "amt-set",
+          "amt-num",
+          "amt-num",
+          "amt-num",
+          "amt-num",
+          "amt-num",
+          "amt-num",
+          "amt-num",
+          "amt-num",
+          "amt-num",
+          "amt-num",
+          "amt-del",
+          "amount-next"
+        ],
+        "ids": [
+          "am-who",
+          "amt-display",
+          "amt-korean",
+          "amt-next"
+        ],
+        "screens": [
+          "start",
+          "who",
+          "accno",
+          "bank",
+          "whoconfirm",
+          "amount",
+          "review",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "1:40\n5G\n← 이전\n김시현 님께 얼마를 보낼까요?\n0원\n보낼 수 있는 돈 100,000원 (십만 원)\n1만원\n3만원\n5만원\n10만원\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n지우기\n다음",
+        "height": 844,
+        "choices": {
+          "pick-person": [
+            "김시현",
+            "안성진",
+            "박정순",
+            "박숙자",
+            "김명희"
+          ],
+          "acc-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "pick-bank": [
+            "신한",
+            "국민",
+            "카카오뱅크",
+            "농협",
+            "우리",
+            "하나",
+            "기업",
+            "토스뱅크"
+          ],
+          "amt-set": [
+            "10000",
+            "30000",
+            "50000",
+            "100000"
+          ],
+          "amt-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "pw": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ]
+        },
+        "contrast": [
+          {
+            "text": "0원",
+            "tag": "div",
+            "cls": "amtnum",
+            "color": "rgb(154, 161, 170)",
+            "bg": "rgb(255, 255, 255)",
+            "fontSize": 44,
+            "ratio": 2.61,
+            "need": 3
+          },
+          {
+            "text": "다음",
+            "tag": "button",
+            "cls": "primary",
+            "color": "rgb(140, 147, 156)",
+            "bg": "rgb(228, 232, 238)",
+            "fontSize": 22,
+            "ratio": 2.52,
+            "need": 3
+          }
+        ],
+        "inherited": [
+          {
+            "text": "1:40",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(74, 80, 88)"
+          },
+          {
+            "text": "5G",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(74, 80, 88)"
+          },
+          {
+            "text": "← 이전",
+            "tag": "button",
+            "cls": "backbtn",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "100,000",
+            "tag": "b",
+            "cls": "",
+            "color": "rgb(74, 80, 88)"
+          },
+          {
+            "text": "1만원",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "3만원",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "5만원",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "10만원",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "1",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "2",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "3",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "4",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "5",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "6",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "7",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "8",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "9",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "0",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "← 이전",
+            "tag": "button",
+            "cls": "backbtn",
+            "lines": 2
+          },
+          {
+            "text": "보낼 수 있는 돈 원 (십만 원)",
+            "tag": "div",
+            "cls": "avail",
+            "lines": 2
+          },
+          {
+            "text": "1만원",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "3만원",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "5만원",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "10만원",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "1",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "2",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "3",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "4",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "5",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "6",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "7",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "8",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "9",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "0",
+            "tag": "button",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "지우기",
+            "tag": "button",
+            "cls": "word",
+            "lines": 3
+          },
+          {
+            "text": "다음",
+            "tag": "button",
+            "cls": "primary",
+            "lines": 3
+          }
+        ],
+        "shown": []
+      },
+      "review": {
+        "landed_on": "review",
+        "actions": [
+          "back-amount",
+          "edit-who",
+          "edit-amount",
+          "send",
+          "bio",
+          "use-pw",
+          "auth-cancel",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw-del",
+          "auth-cancel"
+        ],
+        "ids": [
+          "rv-who",
+          "rv-acc",
+          "rv-amt",
+          "rv-amt-kor",
+          "rv-rest",
+          "auth-modal",
+          "auth-pick",
+          "auth-pw",
+          "pw-dots",
+          "pwpad"
+        ],
+        "screens": [
+          "start",
+          "who",
+          "accno",
+          "bank",
+          "whoconfirm",
+          "amount",
+          "review",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "1:40\n5G\n← 이전\n이대로\n보낼까요?\n받는 분\n김시현\n카카오뱅크 3333000000000\n고치기\n보내는 돈\n10,000원\n만 원\n고치기\n보내고 나면\n90,000원\n내 통장에 남습니다\n수수료 없음\n보내기",
+        "height": 844,
+        "choices": {
+          "pick-person": [
+            "김시현",
+            "안성진",
+            "박정순",
+            "박숙자",
+            "김명희"
+          ],
+          "acc-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "pick-bank": [
+            "신한",
+            "국민",
+            "카카오뱅크",
+            "농협",
+            "우리",
+            "하나",
+            "기업",
+            "토스뱅크"
+          ],
+          "amt-set": [
+            "10000",
+            "30000",
+            "50000",
+            "100000"
+          ],
+          "amt-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "pw": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ]
+        },
+        "contrast": [],
+        "inherited": [
+          {
+            "text": "1:40",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(74, 80, 88)"
+          },
+          {
+            "text": "5G",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(74, 80, 88)"
+          },
+          {
+            "text": "← 이전",
+            "tag": "button",
+            "cls": "backbtn",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "이대로 보낼까요?",
+            "tag": "div",
+            "cls": "q sm",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "김시현",
+            "tag": "div",
+            "cls": "v",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "10,000원",
+            "tag": "div",
+            "cls": "v",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "90,000원",
+            "tag": "div",
+            "cls": "v",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "본인이 맞는지 확인합니다",
+            "tag": "div",
+            "cls": "mt",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "👍",
+            "tag": "div",
+            "cls": "bio",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "비밀번호로 확인",
+            "tag": "button",
+            "cls": "secondary",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "취소",
+            "tag": "button",
+            "cls": "secondary",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "비밀번호 네 자리",
+            "tag": "div",
+            "cls": "mt",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "1",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "2",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "3",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "4",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "5",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "6",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "7",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "8",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "9",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "0",
+            "tag": "button",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "취소",
+            "tag": "button",
+            "cls": "secondary",
+            "color": "rgb(21, 21, 21)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "← 이전",
+            "tag": "button",
+            "cls": "backbtn",
+            "lines": 2
+          },
+          {
+            "text": "이대로 보낼까요?",
+            "tag": "div",
+            "cls": "q sm",
+            "lines": 3
+          },
+          {
+            "text": "김시현",
+            "tag": "div",
+            "cls": "v",
+            "lines": 2
+          },
+          {
+            "text": "고치기",
+            "tag": "button",
+            "cls": "fix",
+            "lines": 2
+          },
+          {
+            "text": "10,000원",
+            "tag": "div",
+            "cls": "v",
+            "lines": 2
+          },
+          {
+            "text": "고치기",
+            "tag": "button",
+            "cls": "fix",
+            "lines": 2
+          },
+          {
+            "text": "90,000원",
+            "tag": "div",
+            "cls": "v",
+            "lines": 2
+          },
+          {
+            "text": "수수료 없음",
+            "tag": "div",
+            "cls": "fee",
+            "lines": 2
+          },
+          {
+            "text": "보내기",
+            "tag": "button",
+            "cls": "primary",
+            "lines": 3
+          }
+        ],
+        "shown": [
+          [
+            "#rv-acc",
+            "카카오뱅크 3333000000000"
+          ],
+          [
+            "#rv-amt",
+            "10,000원만 원"
+          ]
+        ]
+      },
+      "done": {
+        "landed_on": "done",
+        "actions": [
+          "back-start",
+          "finish"
+        ],
+        "ids": [
+          "dn-name",
+          "dn-amt",
+          "dn-kor",
+          "dn-rest"
+        ],
+        "screens": [
+          "start",
+          "who",
+          "accno",
+          "bank",
+          "whoconfirm",
+          "amount",
+          "review",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "1:41\n5G\n← 처음으로\n✓\n보냈습니다\n김시현 님께\n10,000원 (만)\n내 통장에 90,000원 남았습니다\n처음으로",
+        "height": 844,
+        "choices": {
+          "pick-person": [
+            "김시현",
+            "안성진",
+            "박정순",
+            "박숙자",
+            "김명희"
+          ],
+          "acc-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "pick-bank": [
+            "신한",
+            "국민",
+            "카카오뱅크",
+            "농협",
+            "우리",
+            "하나",
+            "기업",
+            "토스뱅크"
+          ],
+          "amt-set": [
+            "10000",
+            "30000",
+            "50000",
+            "100000"
+          ],
+          "amt-num": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ],
+          "pw": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+          ]
+        },
+        "contrast": [],
+        "inherited": [
+          {
+            "text": "1:41",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(74, 80, 88)"
+          },
+          {
+            "text": "5G",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(74, 80, 88)"
+          },
+          {
+            "text": "← 처음으로",
+            "tag": "button",
+            "cls": "backbtn",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "보냈습니다",
+            "tag": "div",
+            "cls": "t",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "님께 원 ( )",
+            "tag": "div",
+            "cls": "s",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "김시현",
+            "tag": "b",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "10,000",
+            "tag": "b",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "만",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(21, 21, 21)"
+          },
+          {
+            "text": "90,000",
+            "tag": "b",
+            "cls": "",
+            "color": "rgb(74, 80, 88)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "← 처음으로",
+            "tag": "button",
+            "cls": "backbtn",
+            "lines": 2
+          },
+          {
+            "text": "✓",
+            "tag": "div",
+            "cls": "okc",
+            "lines": 2
+          },
+          {
+            "text": "님께 원 ( )",
+            "tag": "div",
+            "cls": "s",
+            "lines": 2
+          },
+          {
+            "text": "처음으로",
+            "tag": "button",
+            "cls": "primary",
+            "lines": 3
+          }
+        ],
+        "shown": [
+          [
+            "#dn-amt",
+            "10,000"
+          ],
+          [
+            "#dn-name",
+            "김시현"
+          ]
+        ]
+      }
+    },
+    "dialogs": [],
+    "js_errors": [],
+    "reached": [
+      "start",
+      "who",
+      "accno",
+      "bank",
+      "whoconfirm",
+      "amount",
+      "review",
+      "done"
+    ],
+    "missing_ids": [],
+    "state_pairs": [
+      {
+        "base": ".screen",
+        "state": "on",
+        "props": [
+          "display"
+        ],
+        "differing": [
+          "display"
+        ],
+        "base_values": [
+          "display=none"
+        ]
+      }
+    ],
+    "load_failed": null,
+    "notes": [],
+    "js_error_details": [],
+    "flow": "run3",
+    "undefined_classes": []
+  }
+}

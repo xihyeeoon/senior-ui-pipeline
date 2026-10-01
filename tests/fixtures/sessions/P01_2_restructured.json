@@ -1,0 +1,202 @@
+{
+  "participant": 1,
+  "condition": "restructured",
+  "condition_label": "재구성본 (Run 1)",
+  "order_index": 1,
+  "task": "긴 과업 · 처음 보내는 계좌",
+  "instruction": "김시현 씨에게 1만 원을 보내 주세요. 계좌번호는 3333-0000-0000-0 이고, 카카오뱅크입니다. 저장된 목록에 있더라도 계좌번호를 직접 넣어서 보내 주세요.",
+  "completed": true,
+  "started_at": 1759004200000,
+  "elapsed_ms": 61300,
+  "screen_size": [
+    390,
+    844
+  ],
+  "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+  "metrics": {
+    "seconds": 61.3,
+    "completed": true,
+    "taps": 9,
+    "misses": 0,
+    "backs": 0,
+    "deletes": 0,
+    "screens_visited": 8,
+    "unique_screens": 8,
+    "dwell_ms": {
+      "start": 3220,
+      "who": 5520,
+      "accno": 11620,
+      "bank": 7820,
+      "amount": 10420,
+      "review": 9420,
+      "auth": 5320,
+      "done": 0
+    }
+  },
+  "log": [
+    {
+      "t": 1759004200000,
+      "screen": "start",
+      "type": "screen_enter",
+      "to": "start"
+    },
+    {
+      "t": 1759004203100,
+      "screen": "start",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "go-who",
+      "text": "go-who",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759004203220,
+      "screen": "who",
+      "type": "screen_enter",
+      "to": "who"
+    },
+    {
+      "t": 1759004208620,
+      "screen": "who",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "go-accno",
+      "text": "go-accno",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759004208740,
+      "screen": "accno",
+      "type": "screen_enter",
+      "to": "accno"
+    },
+    {
+      "t": 1759004216940,
+      "screen": "accno",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "acc-num",
+      "text": "acc-num",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759004220240,
+      "screen": "accno",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "go-bank",
+      "text": "go-bank",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759004220360,
+      "screen": "bank",
+      "type": "screen_enter",
+      "to": "bank"
+    },
+    {
+      "t": 1759004228060,
+      "screen": "bank",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "pick-bank",
+      "text": "pick-bank",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759004228180,
+      "screen": "amount",
+      "type": "screen_enter",
+      "to": "amount"
+    },
+    {
+      "t": 1759004234280,
+      "screen": "amount",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "num",
+      "text": "num",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759004238480,
+      "screen": "amount",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "go-review",
+      "text": "go-review",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759004238600,
+      "screen": "review",
+      "type": "screen_enter",
+      "to": "review"
+    },
+    {
+      "t": 1759004247900,
+      "screen": "review",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "send",
+      "text": "send",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759004248020,
+      "screen": "auth",
+      "type": "screen_enter",
+      "to": "auth"
+    },
+    {
+      "t": 1759004252820,
+      "screen": "auth",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "pw",
+      "text": "pw",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759004253220,
+      "screen": "auth",
+      "type": "submit",
+      "bank": "카카오뱅크",
+      "account": "3333000000000",
+      "amount": 10000
+    },
+    {
+      "t": 1759004253340,
+      "screen": "done",
+      "type": "screen_enter",
+      "to": "done"
+    }
+  ]
+}

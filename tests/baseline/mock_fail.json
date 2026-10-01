@@ -1,0 +1,61 @@
+{
+  "model": "gpt-4o",
+  "mock": "fail",
+  "stage": "styled",
+  "attempts": [
+    {
+      "n": 1,
+      "finish_reason": "stop",
+      "usage": null,
+      "html": "<run>/attempt_1.html",
+      "flow": "<run>/attempt_1.flow.json",
+      "stage": "audit",
+      "passed": false,
+      "fatal": 9,
+      "warning": 0
+    },
+    {
+      "n": 2,
+      "finish_reason": "stop",
+      "usage": null,
+      "html": "<run>/attempt_2.html",
+      "flow": "<run>/attempt_2.flow.json",
+      "stage": "audit",
+      "passed": false,
+      "fatal": 9,
+      "warning": 0
+    }
+  ],
+  "passed": false,
+  "final": {
+    "attempt": 2,
+    "html": "<run>/attempt_2.html",
+    "flow": "<run>/attempt_2.flow.json",
+    "audit": "<run>/attempt_2.audit.json"
+  },
+  "budget": {
+    "format_used": 0,
+    "format_budget": 2,
+    "audit_used": 2,
+    "audit_budget": 2
+  },
+  "stopped_reason": "budget_exhausted",
+  "trend": [
+    {
+      "attempt": 1,
+      "fatal_total": 8,
+      "fatal_root": 1,
+      "fatal_derived": 7,
+      "screens": "1/9",
+      "stopped_at": "who"
+    },
+    {
+      "attempt": 2,
+      "fatal_total": 8,
+      "fatal_root": 1,
+      "fatal_derived": 7,
+      "screens": "1/9",
+      "stopped_at": "who"
+    }
+  ]
+}

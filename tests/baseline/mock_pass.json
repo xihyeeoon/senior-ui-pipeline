@@ -1,0 +1,42 @@
+{
+  "model": "gpt-4o",
+  "mock": "pass",
+  "stage": "styled",
+  "attempts": [
+    {
+      "n": 1,
+      "finish_reason": "stop",
+      "usage": null,
+      "html": "<run>/attempt_1.html",
+      "flow": "<run>/attempt_1.flow.json",
+      "stage": "audit",
+      "passed": false,
+      "fatal": 1,
+      "warning": 0
+    }
+  ],
+  "passed": false,
+  "final": {
+    "attempt": 1,
+    "html": "<run>/attempt_1.html",
+    "flow": "<run>/attempt_1.flow.json",
+    "audit": "<run>/attempt_1.audit.json"
+  },
+  "budget": {
+    "format_used": 0,
+    "format_budget": 1,
+    "audit_used": 1,
+    "audit_budget": 1
+  },
+  "stopped_reason": "budget_exhausted",
+  "trend": [
+    {
+      "attempt": 1,
+      "fatal_total": 0,
+      "fatal_root": 0,
+      "fatal_derived": 0,
+      "screens": "9/9",
+      "stopped_at": null
+    }
+  ]
+}

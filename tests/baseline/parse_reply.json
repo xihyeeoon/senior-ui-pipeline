@@ -1,0 +1,260 @@
+{
+  "pass": {
+    "reply_finish_reason": "stop",
+    "reply_text_sha256": "a194da4555f2075c82e2615a55f23906b77679265b7e298d7d9312a7927c0ba4",
+    "html_len": 26901,
+    "html_sha256": "d54a905b8c30bd77d90f59fcad84c9972f18d5bf96b1fa3501967ff619356b48",
+    "flow": {
+      "name": "auto",
+      "note": "LLM-restructured design, 9 screens. Not a repair of the original document, so the per-screen structural comparison is skipped - see derived_from_original. This drives the long path (a first-time account) so every screen is exercised; the saved-recipient path is 5 taps shorter and skips accno/bank/whoconfirm. type 액션은 숫자판(key 에 %s, 글자마다 클릭)과 입력 칸(%s 없이 fill) 둘 다 쓸 수 있다. 이 흐름은 숫자판 형식이다.",
+      "derived_from_original": false,
+      "required_ids": [
+        "phone",
+        "acc-display",
+        "acc-count",
+        "acc-next",
+        "bank-guess",
+        "bank-search",
+        "bank-list",
+        "wc-name",
+        "wc-acc",
+        "am-who",
+        "amt-display",
+        "amt-korean",
+        "amt-next",
+        "rv-who",
+        "rv-acc",
+        "rv-amt",
+        "rv-rest",
+        "pw-dots",
+        "pwpad",
+        "dn-amt",
+        "dn-name"
+      ],
+      "steps": [
+        {
+          "screen": "start"
+        },
+        {
+          "screen": "who",
+          "click": "[data-action='go-who']"
+        },
+        {
+          "screen": "accno",
+          "click": "[data-action='go-accno']"
+        },
+        {
+          "screen": "bank",
+          "do": [
+            {
+              "type": "{ACCOUNT}",
+              "key": "[data-action='acc-num'][data-v='%s']"
+            },
+            {
+              "click": "#acc-next"
+            }
+          ]
+        },
+        {
+          "screen": "whoconfirm",
+          "click": "[data-action='bank-yes']"
+        },
+        {
+          "screen": "amount",
+          "click": "[data-action='who-yes']"
+        },
+        {
+          "screen": "review",
+          "do": [
+            {
+              "type": "{AMOUNT}",
+              "key": "[data-action='amt-num'][data-v='%s']"
+            },
+            {
+              "click": "#amt-next"
+            }
+          ]
+        },
+        {
+          "screen": "auth",
+          "click": "[data-action='send']"
+        },
+        {
+          "screen": "done",
+          "do": [
+            {
+              "click": "[data-action='use-pw']"
+            },
+            {
+              "wait": 0.2
+            },
+            {
+              "repeat": 4,
+              "click": "#pwpad [data-action='pw']",
+              "wait": 0.15
+            }
+          ]
+        }
+      ],
+      "expect": {
+        "whoconfirm": [
+          [
+            "#wc-name",
+            "{NAME}"
+          ]
+        ],
+        "review": [
+          [
+            "#rv-acc",
+            "{ACCOUNT}"
+          ],
+          [
+            "#rv-amt",
+            "{AMOUNT_SHOWN}"
+          ]
+        ],
+        "done": [
+          [
+            "#dn-amt",
+            "{AMOUNT_SHOWN}"
+          ],
+          [
+            "#dn-name",
+            "{NAME}"
+          ]
+        ]
+      },
+      "done_amount": "#dn-amt"
+    },
+    "flow_text_sha256": "7b8a930d366d03bffa51b158aa7fa04410761b76b7843560541613ca36a4ff36"
+  },
+  "fail": {
+    "reply_finish_reason": "stop",
+    "reply_text_sha256": "01f551323b7d76e243829ae4d17ea709013d723f65d3987d6eaea224a46d7e06",
+    "html_len": 26901,
+    "html_sha256": "d54a905b8c30bd77d90f59fcad84c9972f18d5bf96b1fa3501967ff619356b48",
+    "flow": {
+      "name": "auto",
+      "note": "LLM-restructured design, 9 screens. Not a repair of the original document, so the per-screen structural comparison is skipped - see derived_from_original. This drives the long path (a first-time account) so every screen is exercised; the saved-recipient path is 5 taps shorter and skips accno/bank/whoconfirm. type 액션은 숫자판(key 에 %s, 글자마다 클릭)과 입력 칸(%s 없이 fill) 둘 다 쓸 수 있다. 이 흐름은 숫자판 형식이다.",
+      "derived_from_original": false,
+      "required_ids": [
+        "phone",
+        "acc-display",
+        "acc-count",
+        "acc-next",
+        "bank-guess",
+        "bank-search",
+        "bank-list",
+        "wc-name",
+        "wc-acc",
+        "am-who",
+        "amt-display",
+        "amt-korean",
+        "amt-next",
+        "rv-who",
+        "rv-acc",
+        "rv-amt",
+        "rv-rest",
+        "pw-dots",
+        "pwpad",
+        "dn-amt",
+        "dn-name"
+      ],
+      "steps": [
+        {
+          "screen": "start"
+        },
+        {
+          "screen": "who",
+          "click": "[data-action='does-not-exist']"
+        },
+        {
+          "screen": "accno",
+          "click": "[data-action='go-accno']"
+        },
+        {
+          "screen": "bank",
+          "do": [
+            {
+              "type": "{ACCOUNT}",
+              "key": "[data-action='acc-num'][data-v='%s']"
+            },
+            {
+              "click": "#acc-next"
+            }
+          ]
+        },
+        {
+          "screen": "whoconfirm",
+          "click": "[data-action='bank-yes']"
+        },
+        {
+          "screen": "amount",
+          "click": "[data-action='who-yes']"
+        },
+        {
+          "screen": "review",
+          "do": [
+            {
+              "type": "{AMOUNT}",
+              "key": "[data-action='amt-num'][data-v='%s']"
+            },
+            {
+              "click": "#amt-next"
+            }
+          ]
+        },
+        {
+          "screen": "auth",
+          "click": "[data-action='send']"
+        },
+        {
+          "screen": "done",
+          "do": [
+            {
+              "click": "[data-action='use-pw']"
+            },
+            {
+              "wait": 0.2
+            },
+            {
+              "repeat": 4,
+              "click": "#pwpad [data-action='pw']",
+              "wait": 0.15
+            }
+          ]
+        }
+      ],
+      "expect": {
+        "whoconfirm": [
+          [
+            "#wc-name",
+            "{NAME}"
+          ]
+        ],
+        "review": [
+          [
+            "#rv-acc",
+            "{ACCOUNT}"
+          ],
+          [
+            "#rv-amt",
+            "{AMOUNT_SHOWN}"
+          ]
+        ],
+        "done": [
+          [
+            "#dn-amt",
+            "{AMOUNT_SHOWN}"
+          ],
+          [
+            "#dn-name",
+            "{NAME}"
+          ]
+        ]
+      },
+      "done_amount": "#dn-amt"
+    },
+    "flow_text_sha256": "3c4cf42ebb685d098be44ee19be347c474b197a7375cb3ada4fbca4feabc0708"
+  }
+}

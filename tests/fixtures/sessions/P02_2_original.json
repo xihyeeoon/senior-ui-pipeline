@@ -1,0 +1,190 @@
+{
+  "participant": 2,
+  "condition": "original",
+  "condition_label": "원본 (신한 SOL 재현)",
+  "order_index": 1,
+  "task": "긴 과업 · 처음 보내는 계좌",
+  "instruction": "김시현 씨에게 1만 원을 보내 주세요. 계좌번호는 3333-0000-0000-0 이고, 카카오뱅크입니다. 저장된 목록에 있더라도 계좌번호를 직접 넣어서 보내 주세요.",
+  "completed": false,
+  "started_at": 1759007800000,
+  "elapsed_ms": 184500,
+  "screen_size": [
+    390,
+    844
+  ],
+  "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+  "metrics": {
+    "seconds": 184.5,
+    "completed": false,
+    "taps": 10,
+    "misses": 4,
+    "backs": 1,
+    "deletes": 1,
+    "screens_visited": 6,
+    "unique_screens": 4,
+    "dwell_ms": {
+      "home": 8920,
+      "recipient": 35220,
+      "account": 69140,
+      "bank": 48720
+    }
+  },
+  "log": [
+    {
+      "t": 1759007800000,
+      "screen": "home",
+      "type": "screen_enter",
+      "to": "home"
+    },
+    {
+      "t": 1759007808800,
+      "screen": "home",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "go-recipient",
+      "text": "go-recipient",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759007808920,
+      "screen": "recipient",
+      "type": "screen_enter",
+      "to": "recipient"
+    },
+    {
+      "t": 1759007823120,
+      "screen": "recipient",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": false,
+      "action": null,
+      "text": "",
+      "tw": null,
+      "th": null
+    },
+    {
+      "t": 1759007832720,
+      "screen": "recipient",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": false,
+      "action": null,
+      "text": "",
+      "tw": null,
+      "th": null
+    },
+    {
+      "t": 1759007844020,
+      "screen": "recipient",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "go-account",
+      "text": "go-account",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759007844140,
+      "screen": "account",
+      "type": "screen_enter",
+      "to": "account"
+    },
+    {
+      "t": 1759007865540,
+      "screen": "account",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": false,
+      "action": null,
+      "text": "",
+      "tw": null,
+      "th": null
+    },
+    {
+      "t": 1759007882340,
+      "screen": "account",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "open-bank",
+      "text": "open-bank",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759007882460,
+      "screen": "bank",
+      "type": "screen_enter",
+      "to": "bank"
+    },
+    {
+      "t": 1759007911360,
+      "screen": "bank",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": false,
+      "action": null,
+      "text": "",
+      "tw": null,
+      "th": null
+    },
+    {
+      "t": 1759007931060,
+      "screen": "bank",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "back-account",
+      "text": "back-account",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759007931180,
+      "screen": "account",
+      "type": "screen_enter",
+      "to": "account"
+    },
+    {
+      "t": 1759007944680,
+      "screen": "account",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "acc-del",
+      "text": "acc-del",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759007961880,
+      "screen": "account",
+      "type": "tap",
+      "x": 195,
+      "y": 400,
+      "valid": true,
+      "action": "open-bank",
+      "text": "open-bank",
+      "tw": 120,
+      "th": 56
+    },
+    {
+      "t": 1759007962000,
+      "screen": "bank",
+      "type": "screen_enter",
+      "to": "bank"
+    }
+  ]
+}

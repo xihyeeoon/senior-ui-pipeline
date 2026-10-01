@@ -1,0 +1,475 @@
+## 이전 시도의 실패
+
+[원인]
+JavaScript 오류가 클릭 처리기를 중단시켰다. 이것만 고치면 된다.
+  ReferenceError: ReferenceError: S is not defined  (2회)
+  발생 위치 — 412번째 줄 근처:
+       411 |   <div class="row">줄 411</div>
+    >  412 |   <div class="row">줄 412</div>
+       413 |   <div class="row">줄 413</div>
+  → 선언하지 않은 이름을 쓴 것으로 보인다. 그 이름을 정의하거나 쓰는 쪽을 고쳐라.
+  선언하지 않은 전역 이름을 쓰는 실수가 반복되고 있다. 출력하기 전에, 코드에서 쓰는 모든 이름이 선언되어 있는지 확인하라.
+
+[막힌 지점]
+  amount: [data-action='go-amount']  <button disabled data-action="go-amount">  disabled 가 풀리지 않음 (disabled 라 누를 수 없음)
+      → [data-action='go-amount'] 는 'review' 화면에 있는데 지금 켜진 화면은 'amount' 이다. 요소가 아니라 화면 전환을 확인하라.
+
+[아래는 위 원인의 결과다. 따로 고치지 마라]
+  review · done — 도달 못 함
+
+직전 출력을 고쳐라. 설계를 처음부터 새로 하지 마라.
+
+### 직전 흐름 명세
+
+```json
+{
+  "name": "synthetic",
+  "derived_from_original": false,
+  "required_ids": [
+    "phone",
+    "dn-amt"
+  ],
+  "steps": [
+    {
+      "screen": "start"
+    },
+    {
+      "screen": "amount",
+      "click": "[data-action='go-amount']"
+    }
+  ],
+  "expect": {
+    "done": [
+      [
+        "#dn-amt",
+        "{AMOUNT_SHOWN}"
+      ]
+    ]
+  }
+}
+```
+
+### 직전 HTML
+
+```html
+<div class="row">줄 1</div>
+  <div class="row">줄 2</div>
+  <div class="row">줄 3</div>
+  <div class="row">줄 4</div>
+  <div class="row">줄 5</div>
+  <div class="row">줄 6</div>
+  <div class="row">줄 7</div>
+  <div class="row">줄 8</div>
+  <div class="row">줄 9</div>
+  <div class="row">줄 10</div>
+  <div class="row">줄 11</div>
+  <div class="row">줄 12</div>
+  <div class="row">줄 13</div>
+  <div class="row">줄 14</div>
+  <div class="row">줄 15</div>
+  <div class="row">줄 16</div>
+  <div class="row">줄 17</div>
+  <div class="row">줄 18</div>
+  <div class="row">줄 19</div>
+  <div class="row">줄 20</div>
+  <div class="row">줄 21</div>
+  <div class="row">줄 22</div>
+  <div class="row">줄 23</div>
+  <div class="row">줄 24</div>
+  <div class="row">줄 25</div>
+  <div class="row">줄 26</div>
+  <div class="row">줄 27</div>
+  <div class="row">줄 28</div>
+  <div class="row">줄 29</div>
+  <div class="row">줄 30</div>
+  <div class="row">줄 31</div>
+  <div class="row">줄 32</div>
+  <div class="row">줄 33</div>
+  <div class="row">줄 34</div>
+  <div class="row">줄 35</div>
+  <div class="row">줄 36</div>
+  <div class="row">줄 37</div>
+  <div class="row">줄 38</div>
+  <div class="row">줄 39</div>
+  <div class="row">줄 40</div>
+  <div class="row">줄 41</div>
+  <div class="row">줄 42</div>
+  <div class="row">줄 43</div>
+  <div class="row">줄 44</div>
+  <div class="row">줄 45</div>
+  <div class="row">줄 46</div>
+  <div class="row">줄 47</div>
+  <div class="row">줄 48</div>
+  <div class="row">줄 49</div>
+  <div class="row">줄 50</div>
+  <div class="row">줄 51</div>
+  <div class="row">줄 52</div>
+  <div class="row">줄 53</div>
+  <div class="row">줄 54</div>
+  <div class="row">줄 55</div>
+  <div class="row">줄 56</div>
+  <div class="row">줄 57</div>
+  <div class="row">줄 58</div>
+  <div class="row">줄 59</div>
+  <div class="row">줄 60</div>
+  <div class="row">줄 61</div>
+  <div class="row">줄 62</div>
+  <div class="row">줄 63</div>
+  <div class="row">줄 64</div>
+  <div class="row">줄 65</div>
+  <div class="row">줄 66</div>
+  <div class="row">줄 67</div>
+  <div class="row">줄 68</div>
+  <div class="row">줄 69</div>
+  <div class="row">줄 70</div>
+  <div class="row">줄 71</div>
+  <div class="row">줄 72</div>
+  <div class="row">줄 73</div>
+  <div class="row">줄 74</div>
+  <div class="row">줄 75</div>
+  <div class="row">줄 76</div>
+  <div class="row">줄 77</div>
+  <div class="row">줄 78</div>
+  <div class="row">줄 79</div>
+  <div class="row">줄 80</div>
+  <div class="row">줄 81</div>
+  <div class="row">줄 82</div>
+  <div class="row">줄 83</div>
+  <div class="row">줄 84</div>
+  <div class="row">줄 85</div>
+  <div class="row">줄 86</div>
+  <div class="row">줄 87</div>
+  <div class="row">줄 88</div>
+  <div class="row">줄 89</div>
+  <div class="row">줄 90</div>
+  <div class="row">줄 91</div>
+  <div class="row">줄 92</div>
+  <div class="row">줄 93</div>
+  <div class="row">줄 94</div>
+  <div class="row">줄 95</div>
+  <div class="row">줄 96</div>
+  <div class="row">줄 97</div>
+  <div class="row">줄 98</div>
+  <div class="row">줄 99</div>
+  <div class="row">줄 100</div>
+  <div class="row">줄 101</div>
+  <div class="row">줄 102</div>
+  <div class="row">줄 103</div>
+  <div class="row">줄 104</div>
+  <div class="row">줄 105</div>
+  <div class="row">줄 106</div>
+  <div class="row">줄 107</div>
+  <div class="row">줄 108</div>
+  <div class="row">줄 109</div>
+  <div class="row">줄 110</div>
+  <div class="row">줄 111</div>
+  <div class="row">줄 112</div>
+  <div class="row">줄 113</div>
+  <div class="row">줄 114</div>
+  <div class="row">줄 115</div>
+  <div class="row">줄 116</div>
+  <div class="row">줄 117</div>
+  <div class="row">줄 118</div>
+  <div class="row">줄 119</div>
+  <div class="row">줄 120</div>
+  <div class="row">줄 121</div>
+  <div class="row">줄 122</div>
+  <div class="row">줄 123</div>
+  <div class="row">줄 124</div>
+  <div class="row">줄 125</div>
+  <div class="row">줄 126</div>
+  <div class="row">줄 127</div>
+  <div class="row">줄 128</div>
+  <div class="row">줄 129</div>
+  <div class="row">줄 130</div>
+  <div class="row">줄 131</div>
+  <div class="row">줄 132</div>
+  <div class="row">줄 133</div>
+  <div class="row">줄 134</div>
+  <div class="row">줄 135</div>
+  <div class="row">줄 136</div>
+  <div class="row">줄 137</div>
+  <div class="row">줄 138</div>
+  <div class="row">줄 139</div>
+  <div class="row">줄 140</div>
+  <div class="row">줄 141</div>
+  <div class="row">줄 142</div>
+  <div class="row">줄 143</div>
+  <div class="row">줄 144</div>
+  <div class="row">줄 145</div>
+  <div class="row">줄 146</div>
+  <div class="row">줄 147</div>
+  <div class="row">줄 148</div>
+  <div class="row">줄 149</div>
+  <div class="row">줄 150</div>
+  <div class="row">줄 151</div>
+  <div class="row">줄 152</div>
+  <div class="row">줄 153</div>
+  <div class="row">줄 154</div>
+  <div class="row">줄 155</div>
+  <div class="row">줄 156</div>
+  <div class="row">줄 157</div>
+  <div class="row">줄 158</div>
+  <div class="row">줄 159</div>
+  <div class="row">줄 160</div>
+  <div class="row">줄 161</div>
+  <div class="row">줄 162</div>
+  <div class="row">줄 163</div>
+  <div class="row">줄 164</div>
+  <div class="row">줄 165</div>
+  <div class="row">줄 166</div>
+  <div class="row">줄 167</div>
+  <div class="row">줄 168</div>
+  <div class="row">줄 169</div>
+  <div class="row">줄 170</div>
+  <div class="row">줄 171</div>
+  <div class="row">줄 172</div>
+  <div class="row">줄 173</div>
+  <div class="row">줄 174</div>
+  <div class="row">줄 175</div>
+  <div class="row">줄 176</div>
+  <div class="row">줄 177</div>
+  <div class="row">줄 178</div>
+  <div class="row">줄 179</div>
+  <div class="row">줄 180</div>
+  <div class="row">줄 181</div>
+  <div class="row">줄 182</div>
+  <div class="row">줄 183</div>
+  <div class="row">줄 184</div>
+  <div class="row">줄 185</div>
+  <div class="row">줄 186</div>
+  <div class="row">줄 187</div>
+  <div class="row">줄 188</div>
+  <div class="row">줄 189</div>
+  <div class="row">줄 190</div>
+  <div class="row">줄 191</div>
+  <div class="row">줄 192</div>
+  <div class="row">줄 193</div>
+  <div class="row">줄 194</div>
+  <div class="row">줄 195</div>
+  <div class="row">줄 196</div>
+  <div class="row">줄 197</div>
+  <div class="row">줄 198</div>
+  <div class="row">줄 199</div>
+  <div class="row">줄 200</div>
+  <div class="row">줄 201</div>
+  <div class="row">줄 202</div>
+  <div class="row">줄 203</div>
+  <div class="row">줄 204</div>
+  <div class="row">줄 205</div>
+  <div class="row">줄 206</div>
+  <div class="row">줄 207</div>
+  <div class="row">줄 208</div>
+  <div class="row">줄 209</div>
+  <div class="row">줄 210</div>
+  <div class="row">줄 211</div>
+  <div class="row">줄 212</div>
+  <div class="row">줄 213</div>
+  <div class="row">줄 214</div>
+  <div class="row">줄 215</div>
+  <div class="row">줄 216</div>
+  <div class="row">줄 217</div>
+  <div class="row">줄 218</div>
+  <div class="row">줄 219</div>
+  <div class="row">줄 220</div>
+  <div class="row">줄 221</div>
+  <div class="row">줄 222</div>
+  <div class="row">줄 223</div>
+  <div class="row">줄 224</div>
+  <div class="row">줄 225</div>
+  <div class="row">줄 226</div>
+  <div class="row">줄 227</div>
+  <div class="row">줄 228</div>
+  <div class="row">줄 229</div>
+  <div class="row">줄 230</div>
+  <div class="row">줄 231</div>
+  <div class="row">줄 232</div>
+  <div class="row">줄 233</div>
+  <div class="row">줄 234</div>
+  <div class="row">줄 235</div>
+  <div class="row">줄 236</div>
+  <div class="row">줄 237</div>
+  <div class="row">줄 238</div>
+  <div class="row">줄 239</div>
+  <div class="row">줄 240</div>
+  <div class="row">줄 241</div>
+  <div class="row">줄 242</div>
+  <div class="row">줄 243</div>
+  <div class="row">줄 244</div>
+  <div class="row">줄 245</div>
+  <div class="row">줄 246</div>
+  <div class="row">줄 247</div>
+  <div class="row">줄 248</div>
+  <div class="row">줄 249</div>
+  <div class="row">줄 250</div>
+  <div class="row">줄 251</div>
+  <div class="row">줄 252</div>
+  <div class="row">줄 253</div>
+  <div class="row">줄 254</div>
+  <div class="row">줄 255</div>
+  <div class="row">줄 256</div>
+  <div class="row">줄 257</div>
+  <div class="row">줄 258</div>
+  <div class="row">줄 259</div>
+  <div class="row">줄 260</div>
+  <div class="row">줄 261</div>
+  <div class="row">줄 262</div>
+  <div class="row">줄 263</div>
+  <div class="row">줄 264</div>
+  <div class="row">줄 265</div>
+  <div class="row">줄 266</div>
+  <div class="row">줄 267</div>
+  <div class="row">줄 268</div>
+  <div class="row">줄 269</div>
+  <div class="row">줄 270</div>
+  <div class="row">줄 271</div>
+  <div class="row">줄 272</div>
+  <div class="row">줄 273</div>
+  <div class="row">줄 274</div>
+  <div class="row">줄 275</div>
+  <div class="row">줄 276</div>
+  <div class="row">줄 277</div>
+  <div class="row">줄 278</div>
+  <div class="row">줄 279</div>
+  <div class="row">줄 280</div>
+  <div class="row">줄 281</div>
+  <div class="row">줄 282</div>
+  <div class="row">줄 283</div>
+  <div class="row">줄 284</div>
+  <div class="row">줄 285</div>
+  <div class="row">줄 286</div>
+  <div class="row">줄 287</div>
+  <div class="row">줄 288</div>
+  <div class="row">줄 289</div>
+  <div class="row">줄 290</div>
+  <div class="row">줄 291</div>
+  <div class="row">줄 292</div>
+  <div class="row">줄 293</div>
+  <div class="row">줄 294</div>
+  <div class="row">줄 295</div>
+  <div class="row">줄 296</div>
+  <div class="row">줄 297</div>
+  <div class="row">줄 298</div>
+  <div class="row">줄 299</div>
+  <div class="row">줄 300</div>
+  <div class="row">줄 301</div>
+  <div class="row">줄 302</div>
+  <div class="row">줄 303</div>
+  <div class="row">줄 304</div>
+  <div class="row">줄 305</div>
+  <div class="row">줄 306</div>
+  <div class="row">줄 307</div>
+  <div class="row">줄 308</div>
+  <div class="row">줄 309</div>
+  <div class="row">줄 310</div>
+  <div class="row">줄 311</div>
+  <div class="row">줄 312</div>
+  <div class="row">줄 313</div>
+  <div class="row">줄 314</div>
+  <div class="row">줄 315</div>
+  <div class="row">줄 316</div>
+  <div class="row">줄 317</div>
+  <div class="row">줄 318</div>
+  <div class="row">줄 319</div>
+  <div class="row">줄 320</div>
+  <div class="row">줄 321</div>
+  <div class="row">줄 322</div>
+  <div class="row">줄 323</div>
+  <div class="row">줄 324</div>
+  <div class="row">줄 325</div>
+  <div class="row">줄 326</div>
+  <div class="row">줄 327</div>
+  <div class="row">줄 328</div>
+  <div class="row">줄 329</div>
+  <div class="row">줄 330</div>
+  <div class="row">줄 331</div>
+  <div class="row">줄 332</div>
+  <div class="row">줄 333</div>
+  <div class="row">줄 334</div>
+  <div class="row">줄 335</div>
+  <div class="row">줄 336</div>
+  <div class="row">줄 337</div>
+  <div class="row">줄 338</div>
+  <div class="row">줄 339</div>
+  <div class="row">줄 340</div>
+  <div class="row">줄 341</div>
+  <div class="row">줄 342</div>
+  <div class="row">줄 343</div>
+  <div class="row">줄 344</div>
+  <div class="row">줄 345</div>
+  <div class="row">줄 346</div>
+  <div class="row">줄 347</div>
+  <div class="row">줄 348</div>
+  <div class="row">줄 349</div>
+  <div class="row">줄 350</div>
+  <div class="row">줄 351</div>
+  <div class="row">줄 352</div>
+  <div class="row">줄 353</div>
+  <div class="row">줄 354</div>
+  <div class="row">줄 355</div>
+  <div class="row">줄 356</div>
+  <div class="row">줄 357</div>
+  <div class="row">줄 358</div>
+  <div class="row">줄 359</div>
+  <div class="row">줄 360</div>
+  <div class="row">줄 361</div>
+  <div class="row">줄 362</div>
+  <div class="row">줄 363</div>
+  <div class="row">줄 364</div>
+  <div class="row">줄 365</div>
+  <div class="row">줄 366</div>
+  <div class="row">줄 367</div>
+  <div class="row">줄 368</div>
+  <div class="row">줄 369</div>
+  <div class="row">줄 370</div>
+  <div class="row">줄 371</div>
+  <div class="row">줄 372</div>
+  <div class="row">줄 373</div>
+  <div class="row">줄 374</div>
+  <div class="row">줄 375</div>
+  <div class="row">줄 376</div>
+  <div class="row">줄 377</div>
+  <div class="row">줄 378</div>
+  <div class="row">줄 379</div>
+  <div class="row">줄 380</div>
+  <div class="row">줄 381</div>
+  <div class="row">줄 382</div>
+  <div class="row">줄 383</div>
+  <div class="row">줄 384</div>
+  <div class="row">줄 385</div>
+  <div class="row">줄 386</div>
+  <div class="row">줄 387</div>
+  <div class="row">줄 388</div>
+  <div class="row">줄 389</div>
+  <div class="row">줄 390</div>
+  <div class="row">줄 391</div>
+  <div class="row">줄 392</div>
+  <div class="row">줄 393</div>
+  <div class="row">줄 394</div>
+  <div class="row">줄 395</div>
+  <div class="row">줄 396</div>
+  <div class="row">줄 397</div>
+  <div class="row">줄 398</div>
+  <div class="row">줄 399</div>
+  <div class="row">줄 400</div>
+  <div class="row">줄 401</div>
+  <div class="row">줄 402</div>
+  <div class="row">줄 403</div>
+  <div class="row">줄 404</div>
+  <div class="row">줄 405</div>
+  <div class="row">줄 406</div>
+  <div class="row">줄 407</div>
+  <div class="row">줄 408</div>
+  <div class="row">줄 409</div>
+  <div class="row">줄 410</div>
+  <div class="row">줄 411</div>
+  <div class="row">줄 412</div>
+  <div class="row">줄 413</div>
+  <div class="row">줄 414</div>
+  <div class="row">줄 415</div>
+  <div class="row">줄 416</div>
+  <div class="row">줄 417</div>
+  <div class="row">줄 418</div>
+  <div class="row">줄 419</div>
+  <div class="row">줄 420</div>
+```
