@@ -110,9 +110,59 @@ def load_template():
     return m.group(1)
 
 
-def build_prompt(template, original_html, retry_block):
+def build_prompt(template, original_html, retry_block, choices=""):
     return (template.replace("{{ORIGINAL_HTML}}", original_html)
-                    .replace("{{RETRY_BLOCK}}", retry_block))
+                    .replace("{{RETRY_BLOCK}}", retry_block)
+                    .replace("{{CHOICES}}", choices))
+
+
+ARRAY_DECL = re.compile(r"(?:const|let|var)\s+([A-Za-z_]\w*)\s*=\s*\[([^\]]*)\]")
+
+
+def choices_block(orig_snapshot, original_html):
+    """원본이 가진 반복 선택지를 요약한다.
+
+    검사 I 가 렌더링된 DOM 에서 수집하는 바로 그 집합을 쓴다. 모델이 보는 것과
+    검사가 세는 것이 어긋나면 안 되기 때문이다. 원본은 은행 67개를 스크립트
+    배열로만 들고 있어서, 프롬프트에 원본 파일을 그대로 넣으면 마크업에는
+    템플릿 조각 하나만 보인다 - 모델이 스크립트를 읽어야만 발견한다.
+
+    마크업에 직접 쓰인 것(숫자판 등)과 스크립트가 그리는 것(은행 목록 등)을
+    가른다. 전자는 그대로 두면 되고, 후자만 "배열을 참조해 그려라" 가 된다.
+    은행이나 금융에 묶이지 않은 일반 규칙이다."""
+    groups = {}
+    for row in (orig_snapshot.get("screens") or {}).values():
+        for action, vals in (row.get("choices") or {}).items():
+            groups.setdefault(action, set()).update(vals)
+    if not groups:
+        return ""
+
+    script = "\n".join(re.findall(r"<script[^>]*>(.*?)</script>", original_html, re.S))
+    arrays = [(name, [v.strip().strip("'\"") for v in body.split(",") if v.strip()])
+              for name, body in ARRAY_DECL.findall(script)]
+
+    generated, inline = [], []
+    for action, vals in sorted(groups.items(), key=lambda kv: -len(kv[1])):
+        in_markup = len(re.findall(r'data-action="%s"' % re.escape(action), original_html))
+        # 그 선택지 값을 담고 있는 스크립트 배열을 찾는다
+        src = [(n, len(items)) for n, items in arrays
+               if items and len(set(items) & vals) >= max(2, len(items) // 2)]
+        if in_markup < len(vals):
+            where = (" (%s)" % " + ".join("%s %d" % (n, c) for n, c in src)) if src else ""
+            generated.append("  %s — %d개%s" % (action, len(vals), where))
+        else:
+            inline.append("  %s — %d개" % (action, len(vals)))
+
+    out = ["## 원본이 가진 선택지", ""]
+    if generated:
+        out += ["원본의 반복 선택지 (스크립트가 런타임에 그린다):", *generated, "",
+                "이 배열들은 원본 그대로 두고, 화면은 그 배열을 참조해 그려라.",
+                "목록 항목을 마크업에 직접 쓰지 마라. 몇 개를 보일지는 네가 정한다 —",
+                "전부 보여도 되고, 검색이나 추정으로 좁혀도 된다. 다만 값은 하나도",
+                "빠뜨리지 마라.", ""]
+    if inline:
+        out += ["마크업에 직접 있는 것 (그대로 두면 된다):", *inline, ""]
+    return "\n".join(out)
 
 
 def one_line(s):
@@ -522,6 +572,10 @@ def main():
         base_flow = A.load_flow(None)
         log("audit: driving the original once (baseline for contrast / language)")
         orig_snapshot = asyncio.run(A.drive(ORIGINAL_URL, base_flow))
+        choices = choices_block(orig_snapshot, original_html)
+        if choices:
+            log("선택지: %s" % " / ".join(
+                l.strip() for l in choices.splitlines() if l.startswith("  ")))
 
         prev = {"report": None, "html": None, "flow_text": None}
         # 예산을 둘로 나눈다. 형식 오류(흐름 명세가 규격에 안 맞음)와 검사 fatal
@@ -539,7 +593,7 @@ def main():
                 % (n, fmt_used, fmt_budget, aud_used, aud_budget))
             block = retry_block(prev["report"], prev["html"], prev["flow_text"]) \
                 if prev["report"] else ""
-            prompt = build_prompt(template, original_html, block)
+            prompt = build_prompt(template, original_html, block, choices)
             p = os.path.join(run_dir, "attempt_%d" % n)
             io.open(p + ".prompt.txt", "w", encoding="utf-8", newline="\n").write(prompt)
             log("prompt: %d chars%s" % (len(prompt), " (with retry block)" if block else ""))

@@ -58,16 +58,6 @@ AMOUNT_SHOWN = "10,000"
 BANK = "카카오뱅크"
 NAME = "김시현"
 
-# What each screen must be showing once the task reaches it.
-EXPECT_TEXT = {
-    # no "account" entry: that screen is snapshotted on arrival, before the
-    # bank modal has been opened, so #picked-bank is still the placeholder.
-    # The bank choice is verified downstream, on confirm.
-    "amount": [("#amt-acc", ACCOUNT)],
-    "confirm": [("#cf-acc", ACCOUNT), ("#cf-amt", AMOUNT_SHOWN)],
-    "done": [("#dn-amt", AMOUNT_SHOWN)],
-}
-
 HEIGHT_GROWTH_LIMIT = 1.5      # screen scrollHeight vs the original
 ENGLISH = re.compile(r"[A-Za-z][A-Za-z'’]{1,}")
 
@@ -361,14 +351,17 @@ def audit(orig, rep, orig_html, rep_html, flow):
         F("A", None, "ids the transition script needs are gone: "
           + ", ".join(rep["missing_ids"]), lost=rep["missing_ids"])
 
-    done = rep["screens"].get("done", {})
-    shown_done = dict(done.get("shown", []) or {}).get("#dn-amt") \
-        if isinstance(done.get("shown"), dict) else \
-        dict(done.get("shown") or []).get("#dn-amt")
+    # 완료 화면은 흐름의 마지막 단계이고, 금액을 담은 선택자는 흐름이 알려 준다.
+    # 화면 이름을 "done" 으로 못박으면 다른 이름을 쓴 설계를 검사할 수 없다.
+    last_screen = want[-1] if want else None
+    done_sel = flow.get("done_amount") or "#dn-amt"
+    done = (rep["screens"].get(last_screen) or {}) if last_screen else {}
+    shown_done = dict(done.get("shown") or []).get(done_sel)
+    metrics["done_screen"] = last_screen
     metrics["done_amount"] = shown_done
     if done and shown_done != AMOUNT_SHOWN:
-        F("A", "done", "completion screen shows %r, entered %r"
-          % (shown_done, AMOUNT_SHOWN))
+        F("A", last_screen, "완료 화면의 %s 가 %r 을 보여 준다. 과제가 넣은 값은 %r 이다."
+          % (done_sel, shown_done, AMOUNT_SHOWN))
 
     for key, label in [("screens", "data-screen"), ("actions", "data-action"),
                        ("ids", "id")]:
