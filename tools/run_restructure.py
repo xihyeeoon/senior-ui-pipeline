@@ -399,6 +399,19 @@ def validate_flow(flow, html):
                 "흐름 명세: %r 의 마지막 동작이 %s 이다. 타이핑은 화면을 넘기지 "
                 "않으므로 %r 로 갈 수 없다. %s 에서 %s 로 넘어가는 클릭 단계를 "
                 "추가하라." % (here, kind, nxt, here, nxt))
+    # 값싼 조기 탐지. "나머지는 생략" 하고 끝낸 목록은 검사기 I 가 잡지만,
+    # 브라우저를 띄우기 전에 걸러내면 한 번 덜 돈다. I 의 대체가 아니라 차단이다.
+    OMIT = r"(\.\.\.|…|\betc\b|\bother\b|생략|나머지)"
+    for m in re.finditer(r"<(ul|ol|select|tbody)\b[^>]*>(.*?)</\1>", html, re.S | re.I):
+        tail = m.group(2)[-400:]
+        if re.search(r"<!--[^-]*?%s.*?-->" % OMIT, tail, re.I | re.S) \
+                or re.search(r">\s*%s\s*<" % OMIT, tail, re.I):
+            problems.append(
+                '목록이 "생략" 표시로 끝난다 (… / etc / other / 생략). 원본에 있던 '
+                "선택지는 하나도 빠뜨리면 안 된다. 화면에 몇 개를 보일지는 네가 정하되 "
+                "값은 전부 포함하라.")
+            break
+
     ids = set(re.findall(r'\bid="([^"]+)"', html))
     req = flow.get("required_ids")
     if not isinstance(req, list):

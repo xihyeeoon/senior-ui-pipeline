@@ -36,6 +36,7 @@ CHECKS = [
     ("F", "언어 (새 영어)"),
     ("G", "상태 구분"),
     ("H", "미정의 클래스"),
+    ("I", "선택지 보존"),
 ]
 SEVERITY = {"A": "fatal", "B": "fatal", "C": "fatal",
             "D": "warning", "E": "warning", "F": "warning",

@@ -44,13 +44,14 @@ import audit as A                                            # noqa: E402
 # 아직 채워지지 않았다.
 STAGES = {
     "wireframe": {
-        "checks": ["A", "B", "C", "F"],
+        # I(선택지 보존)는 시각 디테일이 아니라 구조 문제이므로 여기서도 본다.
+        "checks": ["A", "B", "C", "F", "I"],
         "label": "와이어프레임",
         "why": "시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 "
                "스타일 이식 후에 봅니다.",
     },
     "styled": {
-        "checks": ["A", "B", "C", "D", "E", "F", "G", "H"],
+        "checks": ["A", "B", "C", "D", "E", "F", "G", "H", "I"],
         "label": "스타일 이식본",
         "why": None,
     },

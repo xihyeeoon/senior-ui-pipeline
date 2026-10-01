@@ -110,6 +110,7 @@ in `metrics.flow_notes`. It does not silently accept the mismatch.
 | F | English words the original did not have (runtime and markup-only) | warning |
 | G | `.x` and `.x.on` must still render differently | warning |
 | H | classes the markup uses that no stylesheet defines | warning |
+| I | values the original offered as choices must still exist somewhere in the build | fatal |
 
 H is not in the original brief. It was added because it is the shared root cause
 of two rendering failures: example1's `bg-primary`/`text-primary` and the
@@ -170,8 +171,8 @@ modifying it.
 
 | stage | checks | why |
 |---|---|---|
-| `wireframe` | A 과제 완주 · B 표시 정확성 · C 죽은 컨트롤 · F 언어 | contrast, layout, state colour and undefined classes are about detail nobody has filled in yet |
-| `styled` | A~H | everything |
+| `wireframe` | A 과제 완주 · B 표시 정확성 · C 죽은 컨트롤 · F 언어 · I 선택지 보존 | contrast, layout, state colour and undefined classes are about detail nobody has filled in yet |
+| `styled` | A~I | everything |
 
 ```powershell
 .\.venv\Scripts\python.exe toolsudit_stage.py --flow toolslows

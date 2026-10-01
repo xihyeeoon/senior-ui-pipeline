@@ -248,3 +248,51 @@ STATE_PAIRS = r"""
   return out;
 }
 """
+
+
+# --- I: 반복 선택지의 식별값 --------------------------------------------------
+# 같은 data-action 을 공유하는 요소가 둘 이상이면 그것은 "고르는 것들" 이다 -
+# 은행 목록이든 숫자판이든 받는 사람 목록이든. 각 요소를 가리키는 값은
+# data-action 이 아닌 다른 data-* 를 우선 쓰고, 없으면 보이는 글자를 쓴다.
+# 스크립트가 만들어 넣는 목록도 있으므로 렌더링된 DOM 에서 모은다.
+CHOICE_GROUPS = r"""
+() => {
+  const groups = {};
+  document.querySelectorAll('[data-action]').forEach(el => {
+    const a = el.getAttribute('data-action');
+    if (!a) return;
+    (groups[a] = groups[a] || []).push(el);
+  });
+  const out = {};
+  for (const action of Object.keys(groups)) {
+    // 같은 부모 아래 나란히 있는 것만 선택지다. 뒤로가기처럼 화면마다 하나씩
+    // 놓인 같은 동작의 버튼은 "고르는 것들" 이 아니므로 제외한다.
+    const byParent = new Map();
+    groups[action].forEach(el => {
+      const p = el.parentElement;
+      if (!p) return;
+      if (!byParent.has(p)) byParent.set(p, []);
+      byParent.get(p).push(el);
+    });
+    // 같은 선택지가 여러 묶음에 나뉘어 있을 수 있다 - 원본은 은행 38개와
+    // 증권사 29개를 탭으로 갈라 두었다. 둘 다 고를 수 있는 값이므로 합친다.
+    let els = [];
+    byParent.forEach(sibs => { if (sibs.length >= 2) els = els.concat(sibs); });
+    if (els.length < 2) continue;          // 형제가 둘 이상이어야 선택지다
+    const vals = [];
+    els.forEach(el => {
+      let v = null;
+      for (const k in el.dataset) {
+        if (k === 'action') continue;
+        const x = (el.dataset[k] || '').trim();
+        if (x) { v = x; break; }
+      }
+      if (!v) v = (el.textContent || '').trim();
+      if (v && v.length <= 40) vals.push(v);
+    });
+    const uniq = Array.from(new Set(vals));
+    if (uniq.length >= 2) out[action] = uniq;
+  }
+  return out;
+}
+"""
