@@ -30,14 +30,11 @@ import json
 import os
 import sys
 
+from ..config import ORIGINAL_FILE, ORIGINAL_URL, OUTPUTS_DIR
 from .core import audit
 from .drive import drive
 from .flow import load_flow
 from .stage import STAGES, apply_stage
-
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-ORIGINAL_URL = "http://localhost:3003/inputs/original_transfer.html"
-ORIGINAL_FILE = os.path.join(ROOT, "inputs", "original_transfer.html")
 
 
 def cannot_run(detail):
@@ -60,7 +57,7 @@ def main(argv=None):
     ap.add_argument("--build-file", "--repaired-file", dest="build_file",
                     required=True,
                     help="같은 빌드의 파일 경로 (--repaired-file 은 옛 이름)")
-    ap.add_argument("--out", default=os.path.join(ROOT, "outputs", "audit.json"))
+    ap.add_argument("--out", default=os.path.join(OUTPUTS_DIR, "audit.json"))
     ap.add_argument("--flow", default=None,
                     help="flow file describing the screens and how to reach them")
     ap.add_argument("--stage", choices=sorted(STAGES), default=None,

@@ -30,8 +30,7 @@ import os
 import statistics as st
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__))))
+from senior_ui.config import ROOT
 
 # (key in metrics, 표시 이름, 단위, 낮을수록 좋은가)
 MEASURES = [

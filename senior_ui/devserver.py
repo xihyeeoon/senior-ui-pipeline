@@ -7,14 +7,12 @@ r"""프로젝트 루트를 :3003 에 서빙하는 개발용 서버.
 ensure_server() 는 이미 떠 있는 서버를 재사용한다 - 그때는 None 을 돌려주고,
 부른 쪽은 끝에서도 그 서버를 건드리지 않는다.
 """
-import os
 import socket
 import subprocess
 import sys
 import time
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PORT = 3003
+from .config import PORT, ROOT
 
 
 def listening(port):

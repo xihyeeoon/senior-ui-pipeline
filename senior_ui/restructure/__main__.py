@@ -46,18 +46,14 @@ import time
 
 from senior_ui import audit as A
 from senior_ui.audit import stage as S
+from senior_ui.config import (FLOWS_DIR, ORIGINAL_FILE, ORIGINAL_URL,
+                              OUTPUTS_DIR, PORT, ROOT, url_for)
 # listening 은 여기서 쓰지 않는다. 기준값 캡처(tests/_api.py)가 이 이름을
 # run_restructure 에서 가져다 쓰던 것을 그대로 유지하기 위한 재수출이다.
 from senior_ui.devserver import ensure_server, listening    # noqa: F401
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__))))
-
-PORT = 3003
 PROMPT_FILE = os.path.join(ROOT, "docs", "restructure-prompt.md")
-ORIGINAL_FILE = os.path.join(ROOT, "inputs", "original_transfer.html")
-ORIGINAL_URL = "http://localhost:%d/inputs/original_transfer.html" % PORT
-RUNS_DIR = os.path.join(ROOT, "outputs", "restructure_auto")
+RUNS_DIR = os.path.join(OUTPUTS_DIR, "restructure_auto")
 
 
 # --------------------------------------------------------------------------- #
@@ -326,9 +322,9 @@ def call_model(model, prompt, max_tokens, log=None, backoff=(20, 45, 90, 180)):
 def mock_reply(mode):
     """No API: replay Run 1. 'fail' hands back a flow whose second step clicks
     a selector that does not exist, so every attempt dies on screen 2."""
-    html = io.open(os.path.join(ROOT, "outputs", "restructured_transfer.html"),
+    html = io.open(os.path.join(OUTPUTS_DIR, "restructured_transfer.html"),
                    encoding="utf-8").read()
-    flow = json.load(io.open(os.path.join(ROOT, "flows", "restructured.json"),
+    flow = json.load(io.open(os.path.join(FLOWS_DIR, "restructured.json"),
                              encoding="utf-8"))
     flow["name"] = "auto"
     if mode == "fail":
@@ -641,7 +637,7 @@ def main():
                 fmt_used += 1
             else:
                 rel = os.path.relpath(html_path, ROOT).replace(os.sep, "/")
-                url = "http://localhost:%d/%s" % (PORT, rel)
+                url = url_for(rel)
                 shots = os.path.join(run_dir, "shots", "attempt_%d" % n)
                 os.makedirs(shots, exist_ok=True)
                 try:
@@ -711,9 +707,9 @@ def main():
     # the last build that got as far as a file, passed or not
     if summary["final"]:
         f = summary["final"]
-        shutil.copy2(f["html"], os.path.join(ROOT, "outputs", "restructured_auto.html"))
-        shutil.copy2(f["flow"], os.path.join(ROOT, "outputs", "restructured_auto.flow.json"))
-        shutil.copy2(f["audit"], os.path.join(ROOT, "outputs", "audit_auto.json"))
+        shutil.copy2(f["html"], os.path.join(OUTPUTS_DIR, "restructured_auto.html"))
+        shutil.copy2(f["flow"], os.path.join(OUTPUTS_DIR, "restructured_auto.flow.json"))
+        shutil.copy2(f["audit"], os.path.join(OUTPUTS_DIR, "audit_auto.json"))
         log("final: attempt %d -> outputs/restructured_auto.html (+ .flow.json, audit_auto.json)"
             % f["attempt"])
     json.dump(summary, io.open(os.path.join(run_dir, "summary.json"), "w", encoding="utf-8"),

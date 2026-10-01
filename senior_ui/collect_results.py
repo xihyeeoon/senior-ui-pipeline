@@ -10,8 +10,8 @@ Usage: python -m senior_ui.collect_results
 import os
 import shutil
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-RESULTS = os.path.join(ROOT, "results")
+from senior_ui.config import RESULTS_DIR as RESULTS
+from senior_ui.config import ROOT
 
 # (source relative to ROOT, destination relative to results/)
 FILES = [

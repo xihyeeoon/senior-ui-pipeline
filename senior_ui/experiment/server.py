@@ -31,20 +31,8 @@ import socket
 import sys
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
+from senior_ui.config import CONDITIONS, OUTPUTS_DIR, PORT, ROOT
 from senior_ui.viewer import build_index
-
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__))))
-
-# The two builds under comparison. `url` is what the phone loads in the frame.
-CONDITIONS = [
-    {"key": "original",
-     "label": "원본 (신한 SOL 재현)",
-     "url": "/inputs/original_transfer.html"},
-    {"key": "restructured",
-     "label": "재구성본 (Run 1)",
-     "url": "/outputs/restructured_transfer.html"},
-]
 
 # What the participant is asked to do. The long task is the one the redesign
 # was aimed at: a first-time account, typed in full. The short task exists to
@@ -62,7 +50,7 @@ TASKS = [
 def reindex():
     """outputs/index.json 을 다시 만든다. 뷰어의 '다시 읽기' 가 부른다."""
     idx = build_index.build()
-    out = os.path.join(ROOT, "outputs", "index.json")
+    out = os.path.join(OUTPUTS_DIR, "index.json")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with io.open(out, "w", encoding="utf-8", newline="\n") as f:
         json.dump(idx, f, ensure_ascii=False, indent=1)
@@ -148,7 +136,7 @@ def make_handler(sessions_dir, tasks):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--port", type=int, default=3003)
+    ap.add_argument("--port", type=int, default=PORT)
     ap.add_argument("--sessions", default=os.path.join(ROOT, "sessions"))
     ap.add_argument("--task-file", default=None,
                     help="JSON list of {name, instruction} to replace the built-in tasks")

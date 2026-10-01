@@ -1,0 +1,44 @@
+r"""한 곳에만 적는 값들.
+
+포트 3003, 원본 시제품의 경로와 URL, 산출물 폴더, 실험 조건. 옮기기 전에는
+이것들이 파일마다 복사되어 있었다. 포트 하나를 바꾸려면 다섯 군데를 고쳐야
+했고, 고쳐지지 않은 한 군데는 조용히 어긋났다.
+
+실험 조건(CONDITIONS)이 여기 있는 이유는 다르다. 조건을 정의하던 곳은 실험
+서버이고 그것을 읽어 가던 곳은 뷰어 색인이었는데, 서버가 색인을 다시 만들기
+위해 뷰어를 import 하고 있어서 둘이 맞물려 있었다. 어느 쪽도 다른 쪽의 주인이
+아니므로 값을 여기로 빼서 고리를 끊는다.
+"""
+import os
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# 개발용 http.server · 실험 서버 · 검사기가 모두 이 포트의 같은 루트를 본다.
+PORT = 3003
+BASE_URL = "http://localhost:%d" % PORT
+
+FLOWS_DIR = os.path.join(ROOT, "flows")
+OUTPUTS_DIR = os.path.join(ROOT, "outputs")      # .gitignore - 재생성 가능
+RESULTS_DIR = os.path.join(ROOT, "results")      # 추적함 - 남겨야 할 증거
+
+# 모든 갈래가 여기서 출발한다.
+ORIGINAL_FILE = os.path.join(ROOT, "inputs", "original_transfer.html")
+ORIGINAL_REL = "inputs/original_transfer.html"
+
+
+def url_for(path):
+    """루트 기준 경로를 서버가 서빙하는 URL 로. 구분자는 항상 '/' 다."""
+    return "%s/%s" % (BASE_URL, str(path).replace(os.sep, "/").lstrip("/"))
+
+
+ORIGINAL_URL = url_for(ORIGINAL_REL)
+
+# The two builds under comparison. `url` is what the phone loads in the frame.
+CONDITIONS = [
+    {"key": "original",
+     "label": "원본 (신한 SOL 재현)",
+     "url": "/inputs/original_transfer.html"},
+    {"key": "restructured",
+     "label": "재구성본 (Run 1)",
+     "url": "/outputs/restructured_transfer.html"},
+]

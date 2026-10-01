@@ -11,8 +11,7 @@ load_flow() 가 여기 있다.
 import json
 import os
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-FLOWS_DIR = os.path.join(ROOT, "flows")
+from ..config import FLOWS_DIR
 
 # Ground truth for the drive; every displayed value is checked against these.
 ACCOUNT = "3333000000000"

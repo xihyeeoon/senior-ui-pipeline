@@ -34,10 +34,10 @@ import os
 import re
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__))))
-OUTPUTS = os.path.join(ROOT, "outputs")
-FLOWS = os.path.join(ROOT, "flows")
+from senior_ui.config import CONDITIONS, ROOT
+from senior_ui.config import FLOWS_DIR as FLOWS
+from senior_ui.config import OUTPUTS_DIR as OUTPUTS
+
 SHOTS = os.path.join(OUTPUTS, "shots")
 
 # Nicer labels for builds we happen to know. Anything missing falls back to the
@@ -322,16 +322,10 @@ def collect_builds():
 
 
 def study_conditions():
-    """실험에 실제로 쓰는 두 조건. senior_ui.experiment.server 가 정의하므로
-    거기서 읽는다 - 두 곳에 적으면 언젠가 어긋난다.
-
-    server 는 이 모듈을 import 하므로, 맞물리지 않도록 여기서 늦게 읽는다."""
-    try:
-        from senior_ui.experiment import server
-        return [{"key": c["key"], "label": c["label"],
-                 "build": c["url"].lstrip("/")} for c in server.CONDITIONS]
-    except Exception:
-        return []
+    """실험에 실제로 쓰는 두 조건. 정의는 senior_ui/config.py 한 곳에만 있다 -
+    두 곳에 적으면 언젠가 어긋난다."""
+    return [{"key": c["key"], "label": c["label"],
+             "build": c["url"].lstrip("/")} for c in CONDITIONS]
 
 
 def collect_baseline(dirs):
