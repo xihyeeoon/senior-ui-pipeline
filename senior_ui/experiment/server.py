@@ -2,12 +2,12 @@ r"""Run the elderly-participant sessions from a phone, collect the logs on the P
 
 The prototypes already record every tap; what was missing was a way to run a
 session on a real device and get the data back. This serves the project root
-over the local network, hands tools/session.html the condition and task
+over the local network, hands web/session.html the condition and task
 definitions, and writes one JSON file per participant x condition.
 
   1. PC and phone on the same Wi-Fi
-  2. python tools/session_server.py
-  3. open the printed http://<PC ip>:3003/tools/session.html on the phone
+  2. python -m senior_ui.experiment.server
+  3. open the printed http://<PC ip>:3003/web/session.html on the phone
 
 Saved to sessions/P01_1_original.json:
   participant, condition, order_index, task, completed, elapsed_ms,
@@ -31,10 +31,10 @@ import socket
 import sys
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(ROOT, "tools"))
+from senior_ui.viewer import build_index
 
-import build_index                                          # noqa: E402
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__))))
 
 # The two builds under comparison. `url` is what the phone loads in the frame.
 CONDITIONS = [
@@ -172,11 +172,11 @@ def main():
     print("=" * 62)
     print(" 폰에서 열 주소 — 실험 진행 (PC 와 같은 Wi-Fi 여야 합니다):")
     print()
-    print("     http://%s:%d/tools/session.html" % (ip, args.port))
+    print("     http://%s:%d/web/session.html" % (ip, args.port))
     print()
     print(" PC 브라우저에서 열 주소 — 파이프라인 확인:")
     print()
-    print("     http://localhost:%d/tools/viewers/dashboard.html" % args.port)
+    print("     http://localhost:%d/web/dashboard.html" % args.port)
     print()
     print(" 조건 : " + " / ".join(c["label"] for c in CONDITIONS))
     print(" 과업 : " + " / ".join(t["name"] for t in tasks))

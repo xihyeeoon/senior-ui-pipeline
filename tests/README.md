@@ -1,7 +1,7 @@
 # 정리 전 기준값과 회귀 테스트
 
 구조 정리는 동작을 바꾸지 않아야 한다. 이 폴더는 그 "바꾸지 않았음" 을 사람 눈이
-아니라 파일 비교로 확인하기 위한 것이다. `tools/` 는 한 줄도 건드리지 않는다.
+아니라 파일 비교로 확인하기 위한 것이다. `senior_ui/` 는 한 줄도 건드리지 않는다.
 
 ## 쓰는 법
 
@@ -34,7 +34,7 @@
 
 ### `_api.py` 가 있는 이유
 
-테스트 본문은 `tools/` 를 직접 import 하지 않는다. 전부 `_api.py` 를 거친다.
+테스트 본문은 `senior_ui/` 를 직접 import 하지 않는다. 전부 `_api.py` 를 거친다.
 정리 단계에서 파일이 옮겨지거나 이름이 바뀌면 **`_api.py` 의 import 줄만** 고치면
 되고, 테스트 본문은 한 줄도 고치지 않는다. 고쳐야 할 곳이 생기면 그것은
 "구조만 정리" 가 아니라는 신호다.
@@ -46,10 +46,10 @@
 
 | 이름 | 빌드 | 흐름 |
 |---|---|---|
-| `original_vs_original` | `inputs/original_transfer.html` | `tools/flows/original.json` |
-| `run1` | `results/restructured_transfer.html` | `tools/flows/restructured.json` |
-| `run2` | `results/restructured_run2.html` | `tools/flows/run2.json` |
-| `run3` | `results/restructured_run3.html` | `tools/flows/run3.json` |
+| `original_vs_original` | `inputs/original_transfer.html` | `flows/original.json` |
+| `run1` | `results/restructured_transfer.html` | `flows/restructured.json` |
+| `run2` | `results/restructured_run2.html` | `flows/run2.json` |
+| `run3` | `results/restructured_run3.html` | `flows/run3.json` |
 
 빌드는 `results/` 에서 가져온다. `outputs/` 는 `.gitignore` 에 있어 PC 마다 내용이
 달라서 기준값의 입력이 될 수 없다.

@@ -1,13 +1,13 @@
 r"""Scan what the pipeline has produced and write outputs/index.json for the viewer.
 
-tools/viewers/dashboard.html reads this one file instead of guessing at paths.
+web/dashboard.html reads this one file instead of guessing at paths.
 Nothing here defines a new format: every field is lifted out of files the
 pipeline already writes.
 
   outputs/audit*.json              the verdicts - and, via their `inputs` block,
                                    which build and which flow each one judged
   outputs/*.html                   the builds themselves
-  tools/flows/*.json               screen order
+  flows/*.json                     screen order
   outputs/shots/**/*.png           per-screen screenshots
   docs/restructure-changelog.md    the 28 changes
   kb/senior_kb.csv                 the 46 rules, to mark which were cited
@@ -21,9 +21,9 @@ its file.
 inputs/*.png (the real SOL captures) are never indexed - they show a real name.
 
 Usage:
-  python tools/build_index.py                  -> outputs/index.json
-  python tools/build_index.py --out somewhere.json
-  python tools/build_index.py --print          -> stdout summary
+  python -m senior_ui.viewer.build_index                  -> outputs/index.json
+  python -m senior_ui.viewer.build_index --out somewhere.json
+  python -m senior_ui.viewer.build_index --print          -> stdout summary
 """
 import argparse
 import csv
@@ -34,8 +34,10 @@ import os
 import re
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__))))
 OUTPUTS = os.path.join(ROOT, "outputs")
+FLOWS = os.path.join(ROOT, "flows")
 SHOTS = os.path.join(OUTPUTS, "shots")
 
 # Nicer labels for builds we happen to know. Anything missing falls back to the
@@ -70,11 +72,11 @@ PIPELINE = [
     {"id": "restructure", "name": "LLM 재구성", "note": "과업의 어려움을 보고 구조를 다시 설계",
      "artifact": "outputs/restructured_*.html"},
     {"id": "audit", "name": "검사기", "note": "와이어프레임은 A·B·C·F, 스타일 이식 후 A~H",
-     "artifact": "tools/audit_stage.py"},
+     "artifact": "senior_ui/audit/stage.py"},
     {"id": "style", "name": "스타일 이식", "note": "시각 디테일을 채운다 — 아직",
      "artifact": None},
     {"id": "study", "name": "실험", "note": "원본 vs 재구성본, 고령 사용자",
-     "artifact": "tools/session_server.py"},
+     "artifact": "senior_ui/experiment/server.py"},
 ]
 
 BANNER = "현재 파이프라인은 LLM 직접 재구성만 사용합니다."
@@ -223,6 +225,24 @@ def audit_digest(d, path):
     }
 
 
+def flow_path_of(flow_raw):
+    """audit JSON 이 적어 둔 흐름 파일을 지금 레이아웃에서 찾는다.
+
+    results/ 의 옛 JSON 에는 "tools/flows/run2.json" 같은 이동 전 경로가 그대로
+    들어 있다. 그것들은 증거 파일이므로 고치지 않는다 - 대신 읽는 쪽이 옛 경로도
+    알아보게 한다. 경로가 그 자리에 없으면 파일 이름만 떼어 flows/ 에서 찾는다.
+    """
+    if not flow_raw or flow_raw.startswith("("):
+        return None
+    f = flow_raw.replace("\\", "/")
+    if ROOT.replace("\\", "/") in f:
+        f = rel(os.path.normpath(flow_raw))
+    if os.path.exists(os.path.join(ROOT, f)):
+        return f
+    name = f.rsplit("/", 1)[-1]
+    return "flows/" + name if os.path.exists(os.path.join(FLOWS, name)) else None
+
+
 def collect_builds():
     dirs = shot_dirs()
     found = {}          # build rel path -> record
@@ -272,13 +292,7 @@ def collect_builds():
         else:
             alts = []
 
-        flow_raw = (d.get("inputs") or {}).get("flow") or ""
-        flow_rel = None
-        if flow_raw and not flow_raw.startswith("("):
-            f = flow_raw.replace("\\", "/")
-            if ROOT.replace("\\", "/") in f:
-                f = rel(os.path.normpath(flow_raw))
-            flow_rel = f if os.path.exists(os.path.join(ROOT, f)) else None
+        flow_rel = flow_path_of((d.get("inputs") or {}).get("flow") or "")
         flow_name = (d.get("metrics") or {}).get("flow") or (
             os.path.splitext(os.path.basename(flow_rel))[0] if flow_rel else None)
 
@@ -308,12 +322,14 @@ def collect_builds():
 
 
 def study_conditions():
-    """실험에 실제로 쓰는 두 조건. tools/session_server.py 가 정의하므로
-    거기서 읽는다 - 두 곳에 적으면 언젠가 어긋난다."""
+    """실험에 실제로 쓰는 두 조건. senior_ui.experiment.server 가 정의하므로
+    거기서 읽는다 - 두 곳에 적으면 언젠가 어긋난다.
+
+    server 는 이 모듈을 import 하므로, 맞물리지 않도록 여기서 늦게 읽는다."""
     try:
-        import session_server
+        from senior_ui.experiment import server
         return [{"key": c["key"], "label": c["label"],
-                 "build": c["url"].lstrip("/")} for c in session_server.CONDITIONS]
+                 "build": c["url"].lstrip("/")} for c in server.CONDITIONS]
     except Exception:
         return []
 
@@ -328,7 +344,7 @@ def collect_baseline(dirs):
         "html": rel(path), "when": when(mtime(path)),
         "screens": screens_of(path),
         "shots": match_shots(dirs, None, "original_transfer", want_prefix="before"),
-        "audit": None, "flow": {"name": "original", "path": "tools/flows/original.json"},
+        "audit": None, "flow": {"name": "original", "path": "flows/original.json"},
         "attempts": [],
     }
 

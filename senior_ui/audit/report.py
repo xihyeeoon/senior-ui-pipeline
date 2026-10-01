@@ -1,6 +1,6 @@
-r"""Render one or more tools/audit.py reports as a side-by-side Markdown table.
+r"""Render one or more senior_ui.audit reports as a side-by-side Markdown table.
 
-audit.py writes JSON for a regenerate-on-failure loop; nobody can read three of
+The audit writes JSON for a regenerate-on-failure loop; nobody can read three of
 them next to each other. This takes any number of those files and prints:
 
   1. overview      - passed, fatal / warning counts, screens, low-contrast
@@ -14,8 +14,8 @@ them next to each other. This takes any number of those files and prints:
                      --max per check)
 
 Usage:
-  python tools/audit_report.py results/audit.json results/audit_restructured.json
-  python tools/audit_report.py 규칙기반=results/audit.json Run1=results/audit_restructured.json \
+  python -m senior_ui.audit.report results/audit.json results/audit_restructured.json
+  python -m senior_ui.audit.report 규칙기반=results/audit.json Run1=results/audit_restructured.json \
       Run2=results/audit_run2.json Run3=results/audit_run3.json --details --out docs/audit-report.md
 
 A bare path is labelled by its file name with the "audit_" prefix dropped, so

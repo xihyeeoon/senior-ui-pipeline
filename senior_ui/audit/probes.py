@@ -1,4 +1,4 @@
-r"""In-page JavaScript probes used by tools/audit.py.
+r"""In-page JavaScript probes used by senior_ui.audit.drive.
 
 Kept separate from the driver so each probe can be read and tested on its own.
 Every probe is scoped to the screen that is currently `.on`, except STATE_PAIRS

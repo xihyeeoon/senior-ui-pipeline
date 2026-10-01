@@ -1,5 +1,5 @@
 /* 내부 확인용 대시보드.
-   데이터는 outputs/index.json 하나뿐이고, tools/build_index.py 가 만든다.
+   데이터는 outputs/index.json 하나뿐이고, senior_ui/viewer/build_index.py 가 만든다.
    이 파일은 읽기만 한다 - 파이프라인을 실행하거나 고치지 않는다. */
 'use strict';
 
@@ -437,7 +437,7 @@ function go(page){
 async function load(){
   const r = await fetch('/outputs/index.json?t=' + Date.now());
   if (!r.ok) throw new Error('index.json 을 읽지 못했습니다 (' + r.status + '). ' +
-    'python tools/build_index.py 를 먼저 돌리세요.');
+    'python -m senior_ui.viewer.build_index 를 먼저 돌리세요.');
   IX = await r.json();
   $('#when').textContent = IX.generated.replace('T', ' ');
   go(location.hash.replace('#', '') || 'home');

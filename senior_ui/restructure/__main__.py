@@ -1,5 +1,5 @@
 r"""Restructure-and-audit loop: ask an LLM for a redesigned transfer prototype,
-audit it with tools/audit.py, feed the fatal findings back, up to N attempts.
+audit it with senior_ui.audit, feed the fatal findings back, up to N attempts.
 
 What used to be three manual steps - paste a prompt into a chat, save the HTML
 it returns, run audit.py, read the JSON, ask again - is one command:
@@ -9,7 +9,7 @@ it returns, run audit.py, read the JSON, ask again - is one command:
        a. build the prompt from docs/restructure-prompt.md (+ the previous
           attempt's fatal list on a retry), call the model
        b. split the reply into HTML + flow JSON, save both under outputs/
-       c. audit it - audit.py is imported and called, never edited
+       c. audit it - senior_ui.audit is imported and called, never edited
        d. stop on pass; otherwise carry the fatal list into the next prompt
   3. stop the server if this script started it
   4. copy the final build to outputs/restructured_auto.html (+ .flow.json,
@@ -24,10 +24,10 @@ Everything from a run lands in outputs/restructure_auto/<timestamp>/:
   run.log, summary.json
 
 Usage:
-  python tools/run_restructure.py                 # real model, 3 attempts
-  python tools/run_restructure.py --attempts 2 --model gpt-4o
-  python tools/run_restructure.py --mock pass     # no API: replays Run 1
-  python tools/run_restructure.py --mock fail     # no API: a broken flow, every attempt fails
+  python -m senior_ui.restructure                 # real model, 3 attempts
+  python -m senior_ui.restructure --attempts 2 --model gpt-4o
+  python -m senior_ui.restructure --mock pass     # no API: replays Run 1
+  python -m senior_ui.restructure --mock fail     # no API: a broken flow, every attempt fails
 
 The key comes from .envs (OPENAI_API_KEY=...) or the environment. The model
 comes from --model, then RESTRUCTURE_MODEL, then DESIGNREPAIR_MODEL, then gpt-4o.
@@ -41,16 +41,17 @@ import json
 import os
 import re
 import shutil
-import socket
-import subprocess
 import sys
 import time
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(ROOT, "tools"))
+from senior_ui import audit as A
+from senior_ui.audit import stage as S
+# listening 은 여기서 쓰지 않는다. 기준값 캡처(tests/_api.py)가 이 이름을
+# run_restructure 에서 가져다 쓰던 것을 그대로 유지하기 위한 재수출이다.
+from senior_ui.devserver import ensure_server, listening    # noqa: F401
 
-import audit as A                                            # noqa: E402
-import audit_stage as S                                      # noqa: E402
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__))))
 
 PORT = 3003
 PROMPT_FILE = os.path.join(ROOT, "docs", "restructure-prompt.md")
@@ -76,30 +77,6 @@ def load_env():
             continue
         k, v = line.split("=", 1)
         os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
-
-
-def listening(port):
-    with socket.socket() as s:
-        s.settimeout(0.3)
-        return s.connect_ex(("127.0.0.1", port)) == 0
-
-
-def ensure_server(log):
-    """Return the Popen we started, or None if :3003 was already up (then we
-    leave it alone at the end too)."""
-    if listening(PORT):
-        log("server: :%d already listening, reusing it" % PORT)
-        return None
-    proc = subprocess.Popen(
-        [sys.executable, "-m", "http.server", str(PORT), "--directory", ROOT],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    for _ in range(50):
-        if listening(PORT):
-            log("server: started http.server on :%d (pid %d)" % (PORT, proc.pid))
-            return proc
-        time.sleep(0.1)
-    proc.kill()
-    raise RuntimeError("could not start http.server on :%d" % PORT)
 
 
 def load_template():
@@ -351,7 +328,7 @@ def mock_reply(mode):
     a selector that does not exist, so every attempt dies on screen 2."""
     html = io.open(os.path.join(ROOT, "outputs", "restructured_transfer.html"),
                    encoding="utf-8").read()
-    flow = json.load(io.open(os.path.join(ROOT, "tools", "flows", "restructured.json"),
+    flow = json.load(io.open(os.path.join(ROOT, "flows", "restructured.json"),
                              encoding="utf-8"))
     flow["name"] = "auto"
     if mode == "fail":
@@ -499,10 +476,10 @@ def failure_report(kind, detail):
 
 
 # --------------------------------------------------------------------------- #
-# audit (tools/audit.py, called as a library)
+# audit (senior_ui.audit, called as a library)
 # --------------------------------------------------------------------------- #
 def run_audit(orig_snapshot, orig_html, html_path, flow_path, url, shots, stage):
-    """audit.py 로 검사한 뒤 단계 밖 검사를 걷어낸다. 와이어프레임 단계에서는
+    """senior_ui.audit 로 검사한 뒤 단계 밖 검사를 걷어낸다. 와이어프레임 단계에서는
     대비·레이아웃·상태 색·미정의 클래스를 보지 않는다 - 아직 채우지 않은
     디테일이기 때문이다. 걸러낸 이유는 checks_stood_down 에 남는다."""
     flow = A.load_flow(flow_path)

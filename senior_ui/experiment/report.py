@@ -1,6 +1,6 @@
 r"""Turn the saved participant sessions into a readable comparison.
 
-tools/session_server.py writes one JSON per participant x condition. This reads
+senior_ui.experiment.server writes one JSON per participant x condition. This reads
 them all and prints, as Markdown:
 
   1. 진행 현황  - who has done what, and what is still missing
@@ -18,9 +18,9 @@ numbers are all present so any test can be run elsewhere. --csv writes a tidy
 one-row-per-session file for exactly that.
 
 Usage:
-  python tools/session_report.py
-  python tools/session_report.py --sessions sessions --out results/session-report.md
-  python tools/session_report.py --csv results/sessions.csv
+  python -m senior_ui.experiment.report
+  python -m senior_ui.experiment.report --sessions sessions --out results/session-report.md
+  python -m senior_ui.experiment.report --csv results/sessions.csv
 """
 import argparse
 import csv
@@ -30,7 +30,8 @@ import os
 import statistics as st
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__))))
 
 # (key in metrics, 표시 이름, 단위, 낮을수록 좋은가)
 MEASURES = [
@@ -240,7 +241,7 @@ def main():
     rows = load(args.sessions)
     if not rows:
         print("세션 파일이 없습니다: %s" % args.sessions)
-        print("tools/session_server.py 로 실험을 진행하면 여기에 쌓입니다.")
+        print("python -m senior_ui.experiment.server 로 실험을 진행하면 여기에 쌓입니다.")
         return 1
 
     conditions = []

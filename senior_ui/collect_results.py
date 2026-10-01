@@ -5,7 +5,7 @@ restructured builds are not: they come out of an LLM run, so re-making them
 costs API spend and never reproduces byte for byte. This copies them, their
 audit JSON and their screenshots into results/, which is tracked.
 
-Usage: python tools/collect_results.py
+Usage: python -m senior_ui.collect_results
 """
 import os
 import shutil

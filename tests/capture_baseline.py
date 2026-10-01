@@ -4,7 +4,7 @@ r"""정리 전의 동작을 기준값으로 한 번 뽑는다.
 파일 비교로 확인하려면 정리 전 출력이 디스크에 있어야 한다. 이 스크립트가 그
 출력을 만들고, tests/test_baseline.py 와 tests/test_drive.py 가 그것과 비교한다.
 
-tools/ 는 한 줄도 건드리지 않는다. 전부 tests/_api.py 를 거쳐 호출한다.
+senior_ui/ 는 한 줄도 건드리지 않는다. 전부 tests/_api.py 를 거쳐 호출한다.
 
   [1] audit.py main() 과 같은 순서로 4가지 경우
       원본 vs 원본 / Run1 / Run2 / Run3
@@ -117,7 +117,7 @@ def sha(text):
 # [1] audit.py main() 과 같은 순서로 4가지 경우
 # --------------------------------------------------------------------- #
 def flow_path_of(flow_name):
-    return os.path.join(ROOT, "tools", "flows", flow_name or "original.json")
+    return os.path.join(ROOT, "flows", flow_name or "original.json")
 
 
 def capture_cases(out):
@@ -339,7 +339,7 @@ MOCK_RUNS = [
 
 
 def run_mock(args):
-    cmd = [sys.executable, os.path.join(ROOT, "tools", "run_restructure.py")] + args
+    cmd = [sys.executable, "-m", "senior_ui.restructure"] + args
     env = dict(os.environ, PYTHONIOENCODING="utf-8")
     p = subprocess.run(cmd, cwd=ROOT, env=env, capture_output=True, text=True,
                        encoding="utf-8", errors="replace")
@@ -355,7 +355,7 @@ def run_mock(args):
 def capture_mock(out):
     copied = ensure_mock_input()
     for name, args in MOCK_RUNS:
-        say("  %s: python tools/run_restructure.py %s" % (name, " ".join(args)))
+        say("  %s: python -m senior_ui.restructure %s" % (name, " ".join(args)))
         summary, code = run_mock(args)
         dump(os.path.join(out, "%s.json" % name), strip_volatile(summary))
         say("    -> passed=%s exit=%d" % (summary.get("passed"), code))
@@ -365,10 +365,10 @@ def capture_mock(out):
 # --------------------------------------------------------------------- #
 # [6] 가짜 세션 + session_report
 # --------------------------------------------------------------------- #
-# tools/session.html 이 /api/session 으로 보내는 그 형식이다 (participant /
+# web/session.html 이 /api/session 으로 보내는 그 형식이다 (participant /
 # condition / condition_label / order_index / task / instruction / completed /
 # started_at / elapsed_ms / screen_size / user_agent / metrics / log).
-# 파일 이름은 session_server.py 가 붙이는 규칙
+# 파일 이름은 senior_ui/experiment/server.py 가 붙이는 규칙
 # "P%02d_%d_%s.json" % (pid, order_index + 1, condition) 을 그대로 쓴다.
 UA = ("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15"
       " (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1")
@@ -408,7 +408,7 @@ def expand_log(spec, t0):
 
 
 def metrics_of(log, elapsed, completed):
-    """tools/session.html 의 metrics() 와 같은 계산. 가짜 세션이 실제 세션과 같은
+    """web/session.html 의 metrics() 와 같은 계산. 가짜 세션이 실제 세션과 같은
     모양이 되도록 숫자를 손으로 적지 않고 여기서 센다."""
     taps = [e for e in log if e["type"] == "tap"]
     enters = [e for e in log if e["type"] == "screen_enter"]

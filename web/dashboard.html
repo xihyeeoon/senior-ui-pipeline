@@ -7,13 +7,13 @@
 <!--
   내부 확인용. 발표용이 아니다.
 
-  데이터는 outputs/index.json 하나뿐이고 tools/build_index.py 가 만든다.
+  데이터는 outputs/index.json 하나뿐이고 senior_ui/viewer/build_index.py 가 만든다.
   새 빌드는 자기 audit JSON 만 있으면 여기 자동으로 나타난다 - 이 파일에
   목록을 적을 일은 없다.
 
-    python tools/build_index.py
-    python tools/session_server.py       (또는 시작.bat)
-    http://localhost:3003/tools/viewers/dashboard.html
+    python -m senior_ui.viewer.build_index
+    python -m senior_ui.experiment.server       (또는 시작.bat)
+    http://localhost:3003/web/dashboard.html
 
   inputs/ 의 실제 앱 캡처는 인덱싱하지 않는다. 실명이 보이기 때문이다.
 -->

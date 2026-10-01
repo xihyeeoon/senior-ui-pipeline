@@ -1,0 +1,11 @@
+# 실제로 import 하는 외부 패키지만 적는다. 버전은 이 레포의 .venv 에 설치된 것이다.
+#
+#   playwright  검사기가 페이지를 걷는다 (senior_ui/audit/drive.py)
+#               설치 후 브라우저도 받아야 한다: python -m playwright install chromium
+#   openai      재구성 루프가 모델을 부른다 (senior_ui/restructure/__main__.py)
+#   pytest      회귀 테스트 (tests/)
+#
+# 서버·세션 저장·색인은 전부 표준 라이브러리로 돈다.
+playwright==1.62.0
+openai==3.8.0
+pytest==9.1.1
