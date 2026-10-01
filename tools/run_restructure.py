@@ -212,7 +212,9 @@ def retry_block(report, prev_html, prev_flow_text):
                   "JavaScript 오류가 클릭 처리기를 중단시켰다. 이것만 고치면 된다.",
                   *cause,
                   "  → 선언하지 않은 이름을 쓴 것으로 보인다. 그 이름을 정의하거나 "
-                  "쓰는 쪽을 고쳐라.", ""]
+                  "쓰는 쪽을 고쳐라.",
+                  "  선언하지 않은 전역 이름을 쓰는 실수가 반복되고 있다. "
+                  "출력하기 전에, 코드에서 쓰는 모든 이름이 선언되어 있는지 확인하라.", ""]
         if other:
             parts += ["[막힌 지점]"]
             for f in other:
@@ -248,15 +250,34 @@ def retry_block(report, prev_html, prev_flow_text):
 # --------------------------------------------------------------------------- #
 # the model
 # --------------------------------------------------------------------------- #
-def call_model(model, prompt, max_tokens):
+class RateLimited(Exception):
+    """백오프를 다 쓰고도 429 가 계속된 경우. 설계 실패가 아니라 인프라 한도다."""
+
+
+def call_model(model, prompt, max_tokens, log=None, backoff=(20, 45, 90, 180)):
+    """시도마다 직전 HTML 전체를 다시 보내므로 프롬프트가 크다. 이 계정은 전에
+    TPM 30,000 한도에 걸린 적이 있으므로 429 를 지수적으로 기다렸다 다시 친다.
+    그래도 안 되면 RateLimited 를 올려 설계 실패와 섞이지 않게 한다."""
     from openai import OpenAI
+    from openai import RateLimitError
     client = OpenAI()
     t0 = time.time()
-    resp = client.chat.completions.create(
-        model=model,
-        messages=[{"role": "user", "content": prompt}],
-        max_completion_tokens=max_tokens,
-    )
+    for i, wait in enumerate((0,) + tuple(backoff)):
+        if wait:
+            if log:
+                log("429 — %d초 기다렸다 다시 시도 (%d/%d)" % (wait, i, len(backoff)))
+            time.sleep(wait)
+        try:
+            resp = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                max_completion_tokens=max_tokens,
+            )
+            break
+        except RateLimitError as e:
+            last = e
+    else:
+        raise RateLimited(str(last))
     choice = resp.choices[0]
     usage = getattr(resp, "usage", None)
     return {
@@ -413,6 +434,8 @@ def main():
     ap.add_argument("--original", default=ORIGINAL_FILE)
     ap.add_argument("--stage", choices=sorted(S.STAGES), default="styled",
                     help="검사 단계. wireframe 은 A·B·C·F 만 본다")
+    ap.add_argument("--delay", type=float, default=15.0,
+                    help="시도 사이 대기(초). 프롬프트가 커서 TPM 한도에 걸리기 쉽다")
     args = ap.parse_args()
 
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -445,7 +468,7 @@ def main():
     server = None
     summary = {"run_dir": run_dir, "model": model, "mock": args.mock,
                "stage": args.stage, "attempts": [], "passed": False, "final": None,
-               "budget": {}}
+               "budget": {}, "stopped_reason": None, "trend": []}
     try:
         server = ensure_server(log)
         base_flow = A.load_flow(None)
@@ -462,6 +485,8 @@ def main():
         n = 0
         while True:
             n += 1
+            if n > 1 and args.delay and not args.mock:
+                time.sleep(args.delay)
             log("---- attempt %d (형식 %d/%d · 검사 %d/%d)"
                 % (n, fmt_used, fmt_budget, aud_used, aud_budget))
             block = retry_block(prev["report"], prev["html"], prev["flow_text"]) \
@@ -475,8 +500,18 @@ def main():
                 reply = mock_reply(args.mock)
             else:
                 try:
-                    reply = call_model(model, prompt, args.max_tokens)
-                except Exception as e:                       # network, 429, auth
+                    reply = call_model(model, prompt, args.max_tokens, log)
+                except RateLimited as e:
+                    # 설계 실패가 아니다. 예산을 깎지 않고 여기서 멈춘다.
+                    log("중단: 인프라 한도 — 백오프를 다 쓰고도 429 (%s)" % e)
+                    summary["stopped_reason"] = "rate_limit"
+                    report = failure_report("INFRA", "인프라 한도로 중단: %s" % e)
+                    json.dump(report, io.open(p + ".audit.json", "w", encoding="utf-8"),
+                              ensure_ascii=False, indent=2)
+                    summary["attempts"].append({"n": n, "stage": "rate_limit",
+                                                "passed": False, "error": str(e)})
+                    break
+                except Exception as e:                       # network, auth
                     log("model: call failed: %s" % e)
                     report = failure_report("LLM", "모델 호출 실패: %s" % e)
                     json.dump(report, io.open(p + ".audit.json", "w", encoding="utf-8"),
@@ -543,8 +578,13 @@ def main():
                 if not report.get("passed"):
                     aud_used += 1
                 m = report.get("metrics", {})
-                log("audit: passed=%s fatal=%d warning=%d screens=%s/%s"
-                    % (report.get("passed"), len(report.get("fatal", [])),
+                summary["trend"].append({
+                    "attempt": n, "fatal_total": m.get("fatal_total"),
+                    "fatal_root": m.get("fatal_root"), "fatal_derived": m.get("fatal_derived"),
+                    "screens": "%s/%s" % (m.get("screens_reached"), m.get("screens_expected")),
+                    "stopped_at": m.get("stopped_at")})
+                log("audit: passed=%s fatal=%d (근본 %s) warning=%d screens=%s/%s"
+                    % (report.get("passed"), len(report.get("fatal", [])), m.get("fatal_root"),
                        len(report.get("warning", [])), m.get("screens_reached"),
                        m.get("screens_expected")))
                 for f in report.get("fatal", [])[:8]:
@@ -572,6 +612,16 @@ def main():
                 break
         if not summary["passed"]:
             log("통과 없음 — 형식 재시도 %d회 / 검사 재시도 %d회" % (fmt_used, aud_used))
+            if summary["stopped_reason"] is None:
+                summary["stopped_reason"] = "budget_exhausted"
+        if summary["trend"]:
+            log("")
+            log("fatal_root 추이")
+            log("  시도 | fatal | 근본 | 파생 | 화면    | 멈춘 곳")
+            for t in summary["trend"]:
+                log("  %4s | %5s | %4s | %4s | %-7s | %s"
+                    % (t["attempt"], t["fatal_total"], t["fatal_root"],
+                       t["fatal_derived"], t["screens"], t["stopped_at"] or "-"))
         summary["budget"] = {"format_used": fmt_used, "format_budget": fmt_budget,
                              "audit_used": aud_used, "audit_budget": aud_budget}
     finally:

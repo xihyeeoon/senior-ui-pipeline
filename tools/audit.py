@@ -303,6 +303,12 @@ def audit(orig, rep, orig_html, rep_html, flow):
             F("A", name, "navigation failed: " + row["error"])
             if not stopped_at:
                 stopped_at = name
+        elif row["landed_on"] is None:
+            # __screen() 이 없거나 null 을 돌려준 것이다. "landed on None" 만으로는
+            # 어디를 고쳐야 할지 알 수 없으므로 무엇이 깨졌는지 적는다.
+            F("A", name, "화면 전환 후 window.__screen() 이 null 을 반환했다. "
+                         "기록 훅 __screen() 은 현재 화면의 id 를 반환해야 한다. "
+                         "원본 HTML 의 __screen() · __startTask() · __dump() 를 유지하라.")
         elif row["landed_on"] != name:
             F("A", name, "landed on %r instead" % row["landed_on"])
 
