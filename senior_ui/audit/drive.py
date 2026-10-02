@@ -111,6 +111,56 @@ async def where_is(page, error_text):
     return None
 
 
+SHOWN = """sels => sels.map(s => {
+                 const e = document.querySelector(s);
+                 return [s, e ? e.textContent.trim() : null];
+               })"""
+
+
+def attach_listeners(page, data):
+    """JS 오류와 dialog 를 `data` 에 모은다. 둘 다 언제 올지 모르므로, 걷기를
+    시작하기 전에 붙여 둔다."""
+    def on_pageerror(e):
+        # 메시지만 남기면 "S is not defined" 뿐이라 어디를 고칠지 알 수 없다.
+        # stack 에 파일과 줄 번호가 들어 있으므로 함께 보관한다.
+        data["js_errors"].append(str(e))
+        data["js_error_details"].append({
+            "name": getattr(e, "name", None),
+            "message": str(e),
+            "stack": getattr(e, "stack", None),
+        })
+    page.on("pageerror", on_pageerror)
+
+    async def on_dialog(d):
+        data["dialogs"].append({"screen": data["reached"][-1] if data["reached"]
+                                else "?", "type": d.type, "message": d.message})
+        await d.dismiss()
+    page.on("dialog", lambda d: asyncio.ensure_future(on_dialog(d)))
+
+
+async def collect_screen(page, flow, name, reached=None):
+    """한 화면에 도착한 뒤의 상태를 전부 긁어 하나의 row 로 돌려준다.
+
+    `reached` 를 주면 __screen() 의 답을 긁기 직전에 거기에 먼저 적는다. 걷는
+    중에 뜬 dialog 는 `reached` 의 마지막 이름으로 기록되므로, 이 순서가 dialog
+    가 어느 화면에 붙는지를 정한다.
+    """
+    at = await page.evaluate("() => window.__screen && window.__screen()")
+    if reached is not None:
+        reached.append(at)
+    row = {"landed_on": at}
+    row.update(await page.evaluate(P.INVENTORY))
+    row["choices"] = await page.evaluate(P.CHOICE_GROUPS)
+    row["contrast"] = await page.evaluate(P.CONTRAST)
+    row["inherited"] = await page.evaluate(P.INHERITED_COLOUR)
+    row["overlap"] = await page.evaluate(P.OVERLAP)
+    row["overflow"] = await page.evaluate(P.OVERFLOW)
+    row["wrapped"] = await page.evaluate(P.WRAPPED)
+    row["shown"] = await page.evaluate(
+        SHOWN, [fill(s) for s, _ in flow["expect"].get(name, [])])
+    return row
+
+
 async def drive(url, flow, want_shots=None):
     """Walk the task once and collect everything the checks need."""
     data = {"screens": {}, "dialogs": [], "js_errors": [], "reached": [],
@@ -120,22 +170,7 @@ async def drive(url, flow, want_shots=None):
     async with async_playwright() as pw:
         browser = await pw.chromium.launch()
         page = await browser.new_page(viewport={"width": 390, "height": 844})
-        def _on_pageerror(e):
-            # 메시지만 남기면 "S is not defined" 뿐이라 어디를 고칠지 알 수 없다.
-            # stack 에 파일과 줄 번호가 들어 있으므로 함께 보관한다.
-            data["js_errors"].append(str(e))
-            data["js_error_details"].append({
-                "name": getattr(e, "name", None),
-                "message": str(e),
-                "stack": getattr(e, "stack", None),
-            })
-        page.on("pageerror", _on_pageerror)
-
-        async def on_dialog(d):
-            data["dialogs"].append({"screen": data["reached"][-1] if data["reached"]
-                                    else "?", "type": d.type, "message": d.message})
-            await d.dismiss()
-        page.on("dialog", lambda d: asyncio.ensure_future(on_dialog(d)))
+        attach_listeners(page, data)
 
         try:
             await page.goto(url, wait_until="networkidle")
@@ -166,23 +201,8 @@ async def drive(url, flow, want_shots=None):
                 break
             await asyncio.sleep(0.45)
 
-            at = await page.evaluate("() => window.__screen && window.__screen()")
-            data["reached"].append(at)
-            row = {"landed_on": at}
-            row.update(await page.evaluate(P.INVENTORY))
-            row["choices"] = await page.evaluate(P.CHOICE_GROUPS)
-            row["contrast"] = await page.evaluate(P.CONTRAST)
-            row["inherited"] = await page.evaluate(P.INHERITED_COLOUR)
-            row["overlap"] = await page.evaluate(P.OVERLAP)
-            row["overflow"] = await page.evaluate(P.OVERFLOW)
-            row["wrapped"] = await page.evaluate(P.WRAPPED)
-            row["shown"] = await page.evaluate(
-                """sels => sels.map(s => {
-                     const e = document.querySelector(s);
-                     return [s, e ? e.textContent.trim() : null];
-                   })""",
-                [fill(s) for s, _ in flow["expect"].get(name, [])])
-            data["screens"][name] = row
+            data["screens"][name] = await collect_screen(
+                page, flow, name, data["reached"])
             if want_shots:
                 await page.screenshot(path=os.path.join(
                     want_shots, "audit_%s.png" % name))
