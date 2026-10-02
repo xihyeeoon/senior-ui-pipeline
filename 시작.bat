@@ -3,12 +3,15 @@ chcp 65001 > nul
 cd /d "%~dp0"
 set PYTHONUTF8=1
 
+rem Wait for the server to answer, then open the dashboard. Opening it
+rem first fails: nothing is listening on :3003 yet.
+start "" /b powershell -NoProfile -Command "for($i=0;$i -lt 60;$i++){try{$c=New-Object Net.Sockets.TcpClient;$c.Connect('127.0.0.1',3003);$c.Close();Start-Process 'http://localhost:3003/web/dashboard.html';break}catch{Start-Sleep -Milliseconds 500}}"
+
 echo.
 echo  파이프라인 확인 화면과 실험 서버를 띄웁니다.
 echo  창을 닫으면 서버가 꺼집니다.
 echo.
 
-start "" http://localhost:3003/web/dashboard.html
 .\.venv\Scripts\python.exe -m senior_ui.experiment.server
 
 pause

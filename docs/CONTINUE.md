@@ -1,10 +1,9 @@
 # 이어서 작업하기
 
-2026-09-17 기준. 새 세션이 첫 턴부터 이어갈 수 있도록 현재 상태와 남은 일을 적어둔다.
-구조와 실행법은 `README.md`, 실험 결과는 `senior-kb-handoff.md`, 재구성 변경 내역은
-`restructure-changelog.md`, 재구성 3회 비교는 `restructure-runs.md`,
-실험 절차는 `experiment-guide.md`, DesignRepair 를 왜 뺐는지는
-`comparison-validity.md`(닫힘) 에 있다. 이 문서는 그것들을 읽기 전에 보는 한 장이다.
+2026-10-02 기준. 새 세션이 첫 턴부터 이어갈 수 있도록 현재 상태와 남은 일을 적어둔다.
+구조와 실행법은 `README.md`, 재구성 변경 내역은 `restructure-changelog.md`,
+재구성 3회 비교는 `restructure-runs.md`, 자동 실행의 편차는 `variance-notes.md`,
+실험 절차는 `experiment-guide.md` 에 있다. 이 문서는 그것들을 읽기 전에 보는 한 장이다.
 
 ## 지금 어디까지 왔나
 
@@ -14,8 +13,8 @@
 캡처 → LLM 재구성 → 검사기 → (스타일 이식) → 실험
 ```
 
-**보관 자료** — DesignRepair 결과, `kb/senior_kb.csv`. 파이프라인에 쓰지 않는다.
-지우지도 않는다. 사후 대조와 기록용이다.
+**보관 자료** — `kb/senior_kb.csv`. 파이프라인에 쓰지 않는다. 지우지도 않는다.
+용도는 **재구성본 사후 대조** 하나다.
 
 **질문:** 고령자가 이체 과업을 끝낼 수 있게 화면 구조를 다시 짤 수 있는가. 도구의
 산출물은 **와이어프레임 수준의 구조 시안**이고 시각 디테일은 디자이너가 채운다.
@@ -25,25 +24,33 @@
 셋 다 fatal 0 / warning 0. 갈라지는 것은 검사기 밖의 지표(돈 나가기 전 확인
 3·1·3, 탭 수 30·28·30)다. 세 재구성본은 같은 조건을 받았으므로 이 비교는 유효하다.
 
+(검사 I 추가 이전 기준. 현재 기준은 아래 산출물 표와 그 밑의 주를 참고한다.)
+
 **DesignRepair 계열은 연구에서 뺐다 (2026-09-30).** 도구의 목적이 다르고(완성된
 화면의 시각 품질 vs 구조 시안), 같은 입력 단위를 줄 수 없어(전체 파일은 TPM 한도
 초과) 공정한 비교가 성립하지 않는다. "규칙 기반이 구조를 바꿀 수 있는가" 는 더
-이상 연구 질문이 아니다. 경위는 `comparison-validity.md` — 닫힌 문서다.
+이상 연구 질문이 아니다. 경위는 히스토리 참고 (커밋 `66186fe` 까지).
 
 | 산출물 | 위치 | 상태 |
 |---|---|---|
 | 원본 프로토타입 (8화면, 실제 캡처 반영) | `inputs/original_transfer.html` | 완료 |
-| 규칙 기반 수리본 | `outputs/repaired_transfer.html` | audit **fatal 7 / warning 47** |
-| LLM 재구성 Run 1 (9화면) | `outputs/restructured_transfer.html` | audit **fatal 0 / warning 0** |
-| LLM 재구성 Run 2 (7화면) | `outputs/restructured_run2.html` + `tools/flows/run2.json` | audit **fatal 0 / warning 0** |
-| LLM 재구성 Run 3 (8화면) | `outputs/restructured_run3.html` + `tools/flows/run3.json` | audit **fatal 0 / warning 0** |
+| LLM 재구성 Run 1 (9화면) | `results/restructured_transfer.html` + `flows/restructured.json` | audit **fatal 0 / warning 0** |
+| LLM 재구성 Run 2 (7화면) | `results/restructured_run2.html` + `flows/run2.json` | audit **fatal 0 / warning 0** |
+| LLM 재구성 Run 3 (8화면) | `results/restructured_run3.html` + `flows/run3.json` | audit **fatal 0 / warning 0** |
+| LLM 재구성 Run 4 (7화면, 자동 파이프라인) | `results/restructured_run4.html` + `flows/run4.json` | 당시 통과 / 현재 검사기 기준 **I fatal 2** |
 | 3회 비교 | `docs/restructure-runs.md` | 완료 (탭 수·확인 횟수는 손으로 셈) |
-| 검사기 | `tools/audit.py` + `tools/flows/*.json` | 완료, 네 흐름 모두 동작 |
+| 검사기 | `senior_ui/audit/` + `flows/*.json` | 완료, 다섯 흐름 모두 동작 |
 | 변경 기록 (28건, SDF 대조) | `docs/restructure-changelog.md` | 완료 |
 
-마지막 커밋: `8c8c5ca 재구성 변경 기록과 이어서 작업하기 문서`
-(그 뒤 Run 2·3 구현 — `outputs/restructured_run{2,3}.html`, `tools/flows/run{2,3}.json`,
-`docs/restructure-runs.md`, `results/` 사본 — 은 2026-09-17 작업분, 커밋 여부는 git status 로 확인)
+**표의 fatal 수치는 그 판정을 받은 시점 기준이다.** Run 1·2·3 의 `fatal 0` 은
+검사 I(선택지 보존, `b2db795`)가 생기기 전의 값이다. 지금 검사기로 다시 걸으면
+셋 다 I 에서 fatal 1건이 난다 (원본 `pick-bank` 67개 중 58개 누락) — 측정값은
+`tests/baseline/` 에 있고 근거는 `tests/README.md` 에 적혀 있다. Run 4 의 두 수치는
+`results/audit_run4.json`(당시)과 `results/audit_run4.recheck.json`(현재)이다.
+
+마지막 코드 변경: **2026-10-01 코드 정리** — DesignRepair 시기 파일 삭제, `tools/`
+를 `senior_ui/` 패키지와 `web/`·`flows/` 로 이동, 큰 함수 분리. 동작은 바꾸지
+않았고 `tests/` 의 기준값 비교로 확인했다 (`refactor/cleanup` 브랜치).
 
 ## 남은 일 (미뤄둔 순서대로)
 
@@ -51,9 +58,10 @@
    대화의 설계 표는 없어서 CONTINUE 의 요약만으로 Run 1 코드 위에 구현했다 — 따라서
    Run 1 에 더 강하게 닻내림돼 있다. 후속: 검사기에 "돈 나가기 전 명시적 확인 횟수"와
    "화면당 결정 수" 지표를 넣어야 셋이 갈라진다. 지금은 손으로 센 값이다.
-2. **재구성본 화면별 분리본.** `tools/split_screens.py` 가 원본 경로와 `SCREENS`
-   목록을 상수로 갖고 있어 인자를 받도록 고쳐야 한다. 원본 8 ↔ 재구성 9 를
-   비교창에 나란히 놓으려면 필요하다. Run 2·3 도 같은 도구로 나눠야 한다.
+2. **재구성본 화면별 분리본.** 화면을 파일로 쪼개는 도구(`tools/split_screens.py`,
+   정리 전 경로)는 DesignRepair 시기 파일이라 삭제했다 — 히스토리 참고. 원본 8 ↔ 재구성 9 를
+   비교창에 나란히 놓으려면 원본 경로와 화면 목록을 인자로 받는 형태로 새로 써야
+   한다. Run 2·3·4 도 같은 도구로 나눠야 한다.
 3. **3회 반복을 제대로 재기.** 지금의 Run 1·2·3 은 한 대화 안에서 연달아 만든 것이라
    뒤 설계가 앞에 닻내림된다. 측정된 편차는 하한이다. 서로 모르는 세 세션에서
    같은 프롬프트로 돌려야 진짜 편차가 나온다.
@@ -75,24 +83,32 @@
 2. **`senior_kb.csv` 를 와이어프레임 범위로 정리.** 색·대비·여백 항목은 이 단계에서
    판정할 수 없다. 사후 대조에 쓸 때 그 항목들을 빼야 한다.
 3. **`outputs/` 를 실험별 하위 폴더로 분리.** 지금 세 실험이 이름으로만 구분된다.
-   경로가 바뀌면 `collect_results.py` 와 `results/` 사본도 따라 고쳐야 한다.
+   경로가 바뀌면 `senior_ui/collect_results.py` 와 `results/` 사본도 따라 고쳐야 한다.
 
 ## 반드시 알아야 할 함정
 
-- **`outputs/` 와 `logs/` 는 ignore 대상.** 손으로 쓴 `restructured_transfer.html`,
-  `restructured_run2.html`, `restructured_run3.html` 이 거기 있다. 고치면 `python tools/collect_results.py` 를 돌려야 `results/` 사본이
-  따라온다. 안 돌리면 커밋되는 사본이 낡은 채 남는다.
-- **`PYTHONUTF8=1` 없이 DesignRepair 를 돌리면 죽는다.** 업스트림이 인코딩 없이
-  파일을 열어 cp949 로 쓰다 `⌂` 에서 터진다. `tools/run_screens.py` 가 자동으로
-  넣는다. 직접 `run_local.py` 를 부를 때는 환경변수를 직접 줘야 한다.
-- **검사기는 흐름 파일이 필요하다.** `--flow tools/flows/original.json` (기본),
-  `restructured.json`, `run2.json`, `run3.json`. `derived_from_original: false` 면 화면 대응이 필요한 검사는
-  수행하지 않고 `checks_stood_down` 에 기록한다. **화면 이름이 같다고 같은 화면이
-  아니다** — 원본과 재구성본 둘 다 `bank`, `amount` 가 있고 전혀 다른 화면이다.
-- **검사는 두 단계다.** 와이어프레임은 A·B·C·F 만(`tools/audit_stage.py --stage
-  wireframe`), 스타일 이식 후에는 A~H 전부. 대비·레이아웃·상태 색을 아직 채우지
-  않은 산출물에 D·E·G·H 를 들이대면 없는 일을 트집 잡는 셈이다. `audit.py` 는
-  그대로 두고 래퍼가 걸러내며, 무엇을 왜 건너뛰었는지는 `checks_stood_down` 에 남는다.
+- **`outputs/` 는 ignore 대상.** 손으로 쓴 `restructured_transfer.html`,
+  `restructured_run2.html`, `restructured_run3.html` 이 거기 있다. 고치면
+  `python -m senior_ui.collect_results` 를 돌려야 `results/` 사본이 따라온다.
+  안 돌리면 커밋되는 사본이 낡은 채 남는다. 테스트의 기준값도 `results/` 를 입력으로
+  쓰므로, 사본이 낡으면 `pytest` 가 보는 것도 낡은 것이다.
+- **재구성 루프는 `PYTHONUTF8=1` 이 있어야 한다.** 파일은 전부
+  `encoding="utf-8"` 로 열지만, 로그를 찍는 `restructure/loop.py` 의 `log()` 는
+  stdout 을 UTF-8 로 맞추지 않는다. cp949 콘솔에서 실행하면 요약을 찍다가
+  `UnicodeEncodeError` 로 죽는다 (실행 자체는 이미 끝난 뒤다).
+  `$env:PYTHONUTF8=1` 을 앞에 두거나 `시작.bat` 처럼 환경에 넣어 둔다.
+  검사기·`audit.report`·`build_index`·`experiment.report` 는 스스로
+  `reconfigure` 하므로 필요 없다 — 단 `experiment.report` 의 "세션 파일이
+  없습니다" 한 줄만 그 앞에서 찍힌다.
+- **검사기는 흐름 파일이 필요하다.** `--flow flows/original.json` (기본),
+  `restructured.json`, `run2.json`, `run3.json`, `run4.json`.
+  `derived_from_original: false` 면 화면 대응이 필요한 검사는 수행하지 않고
+  `checks_stood_down` 에 기록한다. **화면 이름이 같다고 같은 화면이 아니다** —
+  원본과 재구성본 둘 다 `bank`, `amount` 가 있고 전혀 다른 화면이다.
+- **검사는 두 단계다.** 와이어프레임은 A·B·C·F·I 만(`--stage wireframe`), 스타일
+  이식 후에는 A~I 전부. 대비·레이아웃·상태 색을 아직 채우지 않은 산출물에 D·E·G·H
+  를 들이대면 없는 일을 트집 잡는 셈이다. 무엇을 왜 건너뛰었는지는
+  `checks_stood_down` 에 남는다.
 - **검사기 F 항목은 `<title>` 의 영어도 잡는다.** "Run 2" 라고 쓰면 warning 이 난다.
   제목은 한글로 ("2회차").
 - **셸 기본 폴더가 옛 경로일 수 있다.** 이전 세션이 `designrepair` 에서 시작됐다.
@@ -101,6 +117,8 @@
 - **서버는 프로젝트 루트를 3003 으로 서빙한다.** 모든 도구의 기본 URL 이 여기를
   가정한다. 안 떠 있으면:
   `.\.venv\Scripts\python.exe -m http.server 3003 --directory .`
+- **`.venv` 에는 pip 이 없다.** 패키지는 `uv pip install -r requirements.txt` 로
+  넣는다.
 
 ## 아직 답 안 난 판단
 
@@ -114,6 +132,9 @@
   기운다. "부분 충족" 기준에 따라 달라진다. 표에서 실제 인용된 것은 26개다.
 - **changelog 의 "해당 없음" 판정** — #11(account 분할)에 SDF-G2-3, #12(예금주 확인)에
   SDF-G9-3 이 실제로 대응한다. KB 에 구조 규칙이 11개 있다. 재판정이 필요하다.
+- **검사 I 와 설계 판단의 충돌** — 원본의 `전액` 버튼을 안전을 위해 의도적으로
+  지운 것(changelog #15)도 지금은 fatal 로 센다. 안전한 제거와 귀찮아서 빠뜨린
+  것을 구분하지 못한다. `defect-types.md` 참고.
 
 ## 30초 상태 확인
 
@@ -122,7 +143,7 @@
 
 ```powershell
 cd C:\Users\xihye\senior-ui-pipeline
-.\.venv\Scripts\python.exe tools\build_index.py --print
+.\.venv\Scripts\python.exe -m senior_ui.viewer.build_index --print
 ```
 
 옛 방식:
@@ -131,14 +152,14 @@ cd C:\Users\xihye\senior-ui-pipeline
 cd C:\Users\xihye\senior-ui-pipeline
 git log --oneline -3
 .\.venv\Scripts\python.exe -m http.server 3003 --directory .   # 다른 터미널에서
-$env:PYTHONUTF8=1
-.\.venv\Scripts\python.exe tools\audit.py --flow tools\flows\restructured.json `
-   --repaired http://localhost:3003/outputs/restructured_transfer.html `
-   --repaired-file outputs\restructured_transfer.html
-# 기대: passed true, fatal 0, warning 0, exit 0
+.\.venv\Scripts\python.exe -m senior_ui.audit --flow flows\restructured.json `
+   --build http://localhost:3003/results/restructured_transfer.html `
+   --build-file results\restructured_transfer.html
+# 지금 기준의 기대값: fatal 1 (검사 I 선택지 보존), warning 0, exit 1
 
 # 네 빌드를 한 표로 (JSON 은 사람이 못 읽는다)
-.\.venv\Scripts\python.exe tools\audit_report.py 규칙기반=results\audit.json `
-   Run1=results\audit_restructured.json Run2=results\audit_run2.json Run3=results\audit_run3.json `
+.\.venv\Scripts\python.exe -m senior_ui.audit.report `
+   Run1=results\audit_restructured.json Run2=results\audit_run2.json `
+   Run3=results\audit_run3.json Run4=results\audit_run4.recheck.json `
    --details --out results\audit-report.md
 ```

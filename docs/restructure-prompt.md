@@ -1,17 +1,19 @@
 # 재구성 프롬프트 템플릿
 
-`tools/run_restructure.py` 가 이 파일을 읽어 LLM 에 보낸다. `<!-- PROMPT -->` 와
+재구성 루프(`senior_ui/restructure/prompt.py`)가 이 파일을 읽어 LLM 에
+보낸다. 실행은 `python -m senior_ui.restructure` 다. `<!-- PROMPT -->` 와
 `<!-- /PROMPT -->` 사이만 프롬프트이고, 그 밖은 사람용 메모다.
 
 **출처 메모.** Run 1 (`outputs/restructured_transfer.html`) 은 대화에서 직접 지시해 만들었고
 그 문장은 저장소에 남아 있지 않다. 아래 본문은 `restructure-runs.md` 에 인용된 브리프
 ("고령자가 이체 과업을 끝낼 수 있게 화면을 다시 설계하라"), `restructure-changelog.md` 의
 "규칙을 주지 않고 과업 수행의 어려움만 보고 설계" 원칙, 그리고 Run 1 이 실제로 지킨 기술
-계약(검사기 `tools/audit.py` 가 요구하는 것)으로 복원한 것이다. 원래 쓰던 문장이 있으면 본문
+계약(검사기 `senior_ui/audit/` 가 요구하는 것)으로 복원한 것이다. 원래 쓰던 문장이 있으면 본문
 1·2 절을 그것으로 바꾸면 된다. 3·4 절이 자동화를 위해 새로 붙인 두 가지다.
 
-치환 자리: `{{ORIGINAL_HTML}}` (원본 파일 전체), `{{RETRY_BLOCK}}` (재시도일 때만 채워짐,
-첫 시도는 빈 문자열).
+치환 자리 셋: `{{ORIGINAL_HTML}}` (원본 파일 전체), `{{RETRY_BLOCK}}` (재시도일 때만
+채워짐, 첫 시도는 빈 문자열), `{{CHOICES}}` (원본이 가진 선택지 요약 — 검사 I 가 세는
+바로 그 집합이다).
 
 <!-- PROMPT -->
 ## 1. 과제

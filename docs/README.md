@@ -1,68 +1,105 @@
 # senior-ui-pipeline
 
-Running [DesignRepair](https://github.com/UGAIForge/DesignRepair)
-(arXiv:2411.01606) against a senior-usability knowledge base, and auditing what
-comes out.
+고령 사용자가 은행 이체 과업을 혼자 끝낼 수 있도록 화면 구조를 LLM 으로 다시
+짜고, 그 산출물을 자동으로 검사하고, 실제 고령 피험자에게 돌려 보는 파이프라인.
+
+```
+캡처 → LLM 재구성 → 검사기 → (스타일 이식) → 실험
+```
+
+산출물은 **와이어프레임 수준의 구조 시안**이고 시각 디테일은 디자이너가 채운다.
+그 전제가 아래 모든 것을 — 특히 검사를 두 단계로 나눈 것을 — 결정한다.
+
+2026-09-30 에 DesignRepair 를 연구에서 뺐고, 관련 코드와 자료는 커밋 `66186fe`
+까지의 히스토리에 있다.
+
+## 설치
+
+Python 3.12. `.venv` 에는 **pip 이 없고** [uv](https://docs.astral.sh/uv/) 로
+관리한다.
+
+```powershell
+uv venv .venv                                   # 없을 때만
+uv pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m playwright install chromium
+```
+
+`requirements.txt` 는 실제로 import 하는 것만 적는다 — playwright(검사기),
+openai(재구성 루프), pytest(테스트). 서버·세션 저장·색인은 전부 표준
+라이브러리로 돈다.
+
+LLM 을 부르는 것은 재구성 루프 하나뿐이고, 키는 `.envs` 의 `OPENAI_API_KEY=…`
+또는 환경변수에서 읽는다. 검사기·뷰어·실험 서버는 키가 없어도 돈다.
 
 ## Layout
 
 | Path | What | Tracked |
 |---|---|---|
-| `vendor/designrepair/` | Pristine upstream clone, still its own git checkout. **Never modified.** | no — pull it yourself |
-| `kb/senior_kb.csv` | The replacement system-level KB. 46 rows, rule ids in the `relation` column (`SDF-*` x41, `KS-*` x5). | yes |
-| `inputs/` | What the pipeline reads: `original_transfer.html` (8-screen transfer prototype), `page/` and `page-bank/` (example1 precompiled to a static page). | yes |
-| `tools/` | Everything written for this project — runners, probes, the auditor, the viewers. | yes |
-| `run_local.py` | The runner. Upstream `backend/test.py` plus the fixes listed below. | yes |
-| `outputs/` | Repaired code, split screens, screenshots, audit JSON. Regenerable. | no |
-| `logs/` | Per-screen pipeline logs. | no |
-| `results/` | The evidence worth keeping, copied out of `outputs/` and `logs/` by `tools/collect_results.py`. | **yes** |
-| `.venv/`, `.envs` | Python 3.12 env; `.envs` holds `OPENAI_API_KEY`. | no |
+| `senior_ui/` | 이 프로젝트에서 쓴 코드 전부 — 재구성 루프, 검사기, 뷰어 색인, 실험 서버. 모두 `python -m senior_ui.…` 로 실행한다. | yes |
+| `web/` | 브라우저에서 열리는 것 — `dashboard.html`(내부 확인용 4화면), `session.html`(폰에서 쓰는 실험 진행 화면). | yes |
+| `flows/` | 흐름 파일. 검사기가 화면을 어떤 순서로 어떻게 몰고 다니는지의 명세. `original.json` 과 재구성본별 `restructured`·`run2`·`run3`·`run4`. | yes |
+| `inputs/` | 파이프라인이 읽는 것. `original_transfer.html` 이 8화면 이체 시제품이고 모든 갈래가 여기서 출발한다. `*.png` 는 실제 SOL 캡처라 추적하지 않는다 (실명이 보인다). | html 만 |
+| `kb/` | 재구성본 사후 대조용 규칙 46개. 생성에는 쓰지 않는다. | yes |
+| `results/` | 남겨야 할 증거. 재구성본 html, 그 검사 JSON, 스크린샷, 자동 실행 폴더 사본. `python -m senior_ui.collect_results` 가 `outputs/` 에서 복사해 온다. | **yes** |
+| `tests/` | 회귀 테스트와 기준값. 구조를 정리해도 동작이 그대로인지 파일 비교로 확인한다. 자세한 것은 `tests/README.md`. | yes |
+| `docs/` | 이 문서들. 재구성 프롬프트 템플릿(`restructure-prompt.md`)도 여기 있고 루프가 그 파일을 읽어 모델에 보낸다. | yes |
+| `outputs/` | 실행 산출물. 크고 대부분 재생성 가능하므로 ignore 한다 — 그래서 `results/` 가 있다. | no |
+| `sessions/` | 피험자 세션 기록. 사람에게서 받은 자료라 저장소에 넣지 않는다. | no |
+| `.venv/`, `.envs` | Python 환경과 `OPENAI_API_KEY`. | no |
 
-`outputs/` and `logs/` are ignored because they are large and mostly
-regenerable — but `logs/transfer/*.log` is *not* cheaply regenerable. The
-pipeline never writes its suggestion JSON to disk, so those prompt dumps are the
-only record of what the property stream actually suggested; recreating them
-costs ~40 minutes and a round of API spend. That is why `results/` exists.
+`outputs/` 를 ignore 하면서 `results/` 를 따로 두는 이유는 하나다. 재구성본은
+LLM 이 쓴 것이라 다시 만들려면 API 비용이 들고 바이트까지 같게 재현되지도
+않는다. `collect_results` 가 그것들만 골라 추적되는 자리로 옮긴다.
 
-## Run
+## 실행
 
-Serve the project root once and leave it up — every tool defaults to
-`http://localhost:3003/…` paths under it:
+서버를 한 번 띄워 두고 그대로 둔다. 모든 도구가 이 포트의 같은 루트를 본다.
 
 ```powershell
 .\.venv\Scripts\python.exe -m http.server 3003 --directory .
 ```
 
-Full pipeline over the 8-screen transfer prototype:
+재구성 루프 — 프롬프트 조립 → 모델 호출 → 검사 → fatal 을 다음 프롬프트에
+되먹임, 통과하거나 예산이 끝날 때까지:
 
 ```powershell
-.\.venv\Scripts\python.exe tools\split_screens.py     # inputs -> outputs/screens/
-.\.venv\Scripts\python.exe tools\run_screens.py       # DesignRepair, one screen at a time
-.\.venv\Scripts\python.exe tools\reassemble.py        # -> outputs/repaired_transfer.html
-.\.venv\Scripts\python.exe tools\audit.py             # -> outputs/audit.json, exit 1 if fatal
+$env:PYTHONUTF8 = "1"
+.\.venv\Scripts\python.exe -m senior_ui.restructure --stage wireframe
+.\.venv\Scripts\python.exe -m senior_ui.restructure --mock pass    # API 없이 확인
 ```
 
-`run_screens.py` sets `PYTHONUTF8=1` for the child process. It has to: upstream
-opens its logs and writes the repaired file with no encoding argument, so
-Windows picks cp949 and dies on the first character outside KS X 1001 — this
-input has `⌂`, `⌫`, `☺` and emoji.
+루프만 `PYTHONUTF8=1` 이 필요하다. 로그를 찍는 쪽이 stdout 을 UTF-8 로 맞추지
+않아서, cp949 콘솔에서는 마지막 요약을 찍다가 `UnicodeEncodeError` 로 죽는다.
+다른 도구는 스스로 맞추므로 필요 없다.
 
-Single example1 run:
+한 실행의 모든 것이 `outputs/restructure_auto/<타임스탬프>/` 에 남는다 — 보낸
+프롬프트 전문, 받은 답 전문, 시도별 html·흐름·검사 결과, 화면별 스크린샷,
+`run.log`, `summary.json`.
+
+검사기만 따로 돌리기:
 
 ```powershell
-$env:DESIGNREPAIR_MODEL = "gpt-4o"
-$env:DESIGNREPAIR_SYSTEM_KB = "$PWD\kb\senior_kb.csv"
-.\.venv\Scripts\python.exe run_local.py
+.\.venv\Scripts\python.exe -m senior_ui.audit `
+   --flow flows\run4.json `
+   --build http://localhost:3003/results/restructured_run4.html `
+   --build-file results\restructured_run4.html `
+   --stage wireframe --out outputs\audit_run4.json
 ```
 
-Playwright-only checks, no API key needed: `tools\probe_stream_b.py`,
-`tools\probe_screens.py`, `tools\check_contrast.py`, `tools\verify_flow.py`.
+나머지:
+
+```powershell
+.\.venv\Scripts\python.exe -m senior_ui.viewer.build_index --print    # 뷰어 색인
+.\.venv\Scripts\python.exe -m senior_ui.collect_results               # outputs -> results
+.\.venv\Scripts\python.exe -m senior_ui.experiment.server             # 실험 서버 (또는 시작.bat)
+.\.venv\Scripts\python.exe -m senior_ui.experiment.report             # 세션 집계
+```
 
 ## The auditor
 
-`tools/audit.py` drives the original and the repaired build through the same
-8-screen task and diffs them. It prints machine-readable JSON and exits 0 only
-when nothing fatal fired, so it can gate a regenerate-on-failure loop.
+`python -m senior_ui.audit` drives the original and the build under test through
+the same 8-screen task and diffs them. It prints machine-readable JSON and exits
+0 only when nothing fatal fired, so it can gate a regenerate-on-failure loop.
 
 ### Counting fatals across runs
 
@@ -117,57 +154,33 @@ of two rendering failures: example1's `bg-primary`/`text-primary` and the
 transfer run's `sr-only`. A class no stylesheet defines does nothing, so a label
 meant to be hidden shows up and a colour meant to be applied never lands.
 
-The JSON is for machines. `tools/audit_report.py` turns any number of those
-files into one side-by-side Markdown table (overview, per-check A–H, the
+One module per check under `senior_ui/audit/checks/`, each with a single
+`run(ctx)` and a docstring saying what that check does and does not see.
+`core.py` only orchestrates; `context.py` holds the inputs every check shares;
+the JS that runs inside the page lives in `probes.py`; `flow.py` loads and
+validates a flow file; `drive.py` walks the page with Playwright.
+
+The JSON is for machines. `python -m senior_ui.audit.report` turns any number of
+those files into one side-by-side Markdown table (overview, per-check A–I, the
 metrics behind each check, what was stood down, and with `--details` every
 finding):
 
 ```powershell
-.\.venv\Scripts\python.exe tools\audit_report.py 규칙기반=results\audit.json `
-   Run1=results\audit_restructured.json Run2=results\audit_run2.json Run3=results\audit_run3.json `
+.\.venv\Scripts\python.exe -m senior_ui.audit.report `
+   Run1=results\audit_restructured.json Run2=results\audit_run2.json `
+   Run3=results\audit_run3.json Run4=results\audit_run4.recheck.json `
    --details --out results\audit-report.md
 ```
-
-It reuses `tools/verify_flow.py` (required ids), `tools/check_contrast.py` (the
-WCAG probe) and `tools/runtime_audit.py` (the flow definition); those three still
-work standalone. The in-page JS lives in `tools/audit_probes.py`.
 
 Known gaps, both real: it cannot tell that `☆` labelled "선택됨" is factually
 inverted (that needs a declared class↔label mapping), and it has no
 duplicate-text check, so `confirm`'s doubled "수수료 무료" passes.
 
-## The pipeline, and what sits outside it
-
-```
-캡처 → LLM 재구성 → 검사기 → (스타일 이식) → 실험
-```
-
-The tool's output is a **wireframe-level structural proposal**; a designer fills
-in the visual detail afterwards. That shapes everything below, including how the
-auditing works.
-
-| | |
-|---|---|
-| **파이프라인** | the chain above. Neither DesignRepair nor `senior_kb.csv` is in it. |
-| **실험 조건** | 원본 vs 재구성본, two conditions, on real elderly participants. |
-| **보관 자료** | DesignRepair results and `kb/senior_kb.csv`. Kept, not used. `vendor/designrepair/` stays too. |
-
-**DesignRepair was dropped from the research on 2026-09-30.** It repairs the
-visual quality of a finished screen, which is a different job from proposing a
-structure, and the two branches could not be given the same input unit: feeding
-DesignRepair the whole file needs 39,276 tokens against a 30,000 TPM account
-limit. A fair comparison is therefore not available, so the two results are not
-compared. `docs/comparison-validity.md` records how that was established and is
-closed.
-
-`kb/senior_kb.csv` stays for **사후 대조** - checking after the fact which rules a
-design happens to satisfy. It is not fed to anything in the pipeline.
-
 ## Two audit stages
 
-Because the tool now emits a wireframe first and a styled build later, the
-checks split in two. `tools/audit_stage.py` wraps `tools/audit.py` without
-modifying it.
+Because the tool emits a wireframe first and a styled build later, the checks
+split in two. The stage is one argument on the auditor's own CLI - there is no
+separate wrapper.
 
 | stage | checks | why |
 |---|---|---|
@@ -175,39 +188,39 @@ modifying it.
 | `styled` | A~I | everything |
 
 ```powershell
-.\.venv\Scripts\python.exe toolsudit_stage.py --flow toolslows
-estructured.json `
-   --repaired http://localhost:3003/outputs/restructured_transfer.html `
-   --repaired-file outputs
-estructured_transfer.html --stage wireframe
+.\.venv\Scripts\python.exe -m senior_ui.audit `
+   --flow flows\restructured.json `
+   --build http://localhost:3003/results/restructured_transfer.html `
+   --build-file results\restructured_transfer.html --stage wireframe
 ```
 
 The stage can also live in the flow file as `"stage": "wireframe"`; the flag
 wins. A flow with neither runs everything, so existing flows behave as before.
 Dropped checks are recorded in `checks_stood_down` with the reason, the same
-place `audit.py` already notes what it stood down.
+place the auditor already notes what it stood down.
 
 ## The viewer
 
-`시작.bat` (or `python tools/session_server.py`) serves the project and opens
-**`tools/viewers/dashboard.html`** - four pages for checking where things stand
+`시작.bat` (or `python -m senior_ui.experiment.server`) serves the project and
+opens **`web/dashboard.html`** - four pages for checking where things stand
 while working:
 
 | | |
 |---|---|
 | 대시보드 | one row per build: passed, fatal, warning, screens, low-contrast before→after, flow |
 | 화면 비교 | 2-4 builds side by side at 390px, each with its own screen picker. Screen names differ between designs (original `account` vs Run 1 `accno`+`bank`), so nothing is auto-synced. A screenshot mode swaps the iframes for the png in `outputs/shots`, which needs no server and shows the state as captured. |
-| 검사 결과 | audits side by side, folded per check A-H. Findings link to that screen's screenshot; stood-down checks say why; the metric table is folded away because a count is not a grade. |
+| 검사 결과 | audits side by side, folded per check A-I. Findings link to that screen's screenshot; stood-down checks say why; the metric table is folded away because a count is not a grade. |
 | 변경 추적 | the changelog's changes with rule filters, and all 46 KB rules split by whether a table actually cites them |
 
-It reads one file, `outputs/index.json`, written by **`tools/build_index.py`**.
-Builds are discovered, not listed: each audit JSON records the URL of the build
-it drove and the flow it used, so a new build with its own audit appears without
-editing anything. Screenshots are matched by flow name, then build id, then the
-older flat `before_`/`after_` convention.
+It reads one file, `outputs/index.json`, written by
+**`python -m senior_ui.viewer.build_index`**. Builds are discovered, not listed:
+each audit JSON records the URL of the build it drove and the flow it used, so a
+new build with its own audit appears without editing anything. Screenshots are
+matched by flow name, then build id, then the older flat `before_`/`after_`
+convention.
 
 ```powershell
-.\.venv\Scripts\python.exe toolsuild_index.py --print
+.\.venv\Scripts\python.exe -m senior_ui.viewer.build_index --print
 ```
 
 The "다시 읽기" button asks the server to rebuild the index first, so editing a
@@ -219,35 +232,52 @@ Two numbers the viewer deliberately keeps apart: the changelog's tables cite
 the author's own judgement with no table behind them, which the document itself
 flags as optimistic.
 
-## Older viewers
+## 테스트
 
-- `tools/viewers/kb_compare.html` — example1 under the base KB vs the senior KB. A different experiment; left alone.
-- `outputs/compare/kb-compare.html` — the same comparison as one self-contained file (no server, no CDN). Rebuild with `node tools\compareuild.js`, then the tailwind CLI step and `tools\compare\make_standalone.py`.
+구조를 정리해도 동작이 그대로인지 파일 비교로 확인한다. 기준값은
+`tests/baseline/` 에 있고, 입력은 `results/` 의 고정된 파일이다.
 
-`tools/viewers/transfer_compare.html`, `tools/dashboard.html` and
-`tools/pipeline_state.py` were removed: the four pages above cover what they did.
+```powershell
+.\.venv\Scripts\python.exe -m pytest                # 브라우저 없음 (32건, 몇 초)
+.\.venv\Scripts\python.exe -m pytest -m browser     # 실제로 다시 걷는다 (18건, 2분 15초)
+```
 
-## Fixes layered on top of upstream
+`pytest.ini` 의 `addopts` 가 `-m "not browser"` 라서 기본 실행은 브라우저를
+띄우지 않는다. `-m browser` 는 Playwright 로 원본과 재구성본을 실제로 다시 몰고
+다니며 저장된 스냅샷과 비교한다. 서버는 테스트가 직접 띄운다.
 
-In `run_local.py`, so the clone stays pristine:
+**기준값을 다시 뽑는 것은 동작을 의도적으로 바꿨을 때만이다.**
 
-1. **KB filename** — upstream `test.py:102` opens `components_knowledge_base.json`; the file is `component_knowledge_base.json`. Otherwise `FileNotFoundError`.
-2. **pydantic v2** — `root_directory: str = None` raises `ValidationError` on pydantic 2.x, and pydantic is not pinned in `pyproject.toml`. Fixed to `Optional[str]`.
-3. **Model shutdown** — upstream uses `gpt-4-1106-preview` and `gpt-4-turbo-2024-04-09`; both shut down 2026-10-23. `DESIGNREPAIR_MODEL` overrides them.
-4. **Rate limits** — 30k TPM against 10–15k-token property prompts, so consecutive calls trip 429. Retries with the delay the API asks for.
-5. **Output location** — upstream writes into `backend/<name>/`; the runner chdirs to `outputs/`.
-6. **Encoding** — `PYTHONUTF8=1` from `tools/run_screens.py`, see above.
+```powershell
+.\.venv\Scripts\python.exe tests\capture_baseline.py
+```
 
-Not on the execution path but worth knowing: `core/llm.py` still defines
-`gpt-4-vision-preview`, removed from the API in Dec 2024.
+`:3003` 을 이미 누가 쓰고 있으면 캡처는 멈춘다 — 기준값은 그 포트가 서빙하는
+내용에 전적으로 달려 있어서, 남이 띄운 서버를 그대로 쓰면 기준값이 무엇을
+기준으로 한 것인지 알 수 없어진다. 실행마다 흔들리는 값(원본 시제품의 비밀번호
+숫자판 셔플)을 어떻게 빼는지, 지금 기준값에 어떤 동작이 담겨 있는지는
+`tests/README.md` 에 적혀 있다.
 
-## Findings so far
+## 파이프라인과 그 밖에 있는 것
 
-`docs/senior-kb-handoff.md` has the full write-up. In short: the senior KB makes
-DesignRepair cite traceable rule ids (150 of 173 suggestions, 27 distinct rules
-of 46) where the upstream KB cited none, and it does produce the intended
-changes — bigger text, more contrast, lower density, plainer wording. It also
-introduces conflicts the rules do not resolve among themselves: a contrast rule
-repaints a deliberately-dimmed disabled button, an icon-labelling rule adds
-English to a KB that forbids English, and a feedback rule injects
-`alert('1원이 전송됩니다')` with the amount hardcoded.
+| | |
+|---|---|
+| **파이프라인** | 위의 사슬. `senior_kb.csv` 는 여기 들어가지 않는다. |
+| **실험 조건** | 원본 vs 재구성본, 두 조건, 실제 고령 피험자. |
+| **보관 자료** | `kb/senior_kb.csv`. 남겨 두지만 생성에는 쓰지 않는다. |
+
+`kb/senior_kb.csv` 는 **사후 대조** 용이다 — 만들어진 설계가 결과적으로 어떤
+규칙에 해당하는지 나중에 확인하는 것. 재구성본을 만들 때 모델에 주지 않았고
+앞으로도 주지 않는다. 자세한 것은 `kb/README.md`.
+
+## 다른 문서
+
+| | |
+|---|---|
+| `CONTINUE.md` | 지금 어디까지 왔고 무엇이 남았나. 새 세션이 먼저 읽는 한 장. |
+| `experiment-guide.md` | 실험 당일 절차. 준비·진행·집계. |
+| `restructure-prompt.md` | 재구성 프롬프트 템플릿. 루프가 이 파일을 읽는다. |
+| `restructure-runs.md` | 손수 제작 Run 1·2·3 비교. |
+| `variance-notes.md` | 같은 프롬프트를 다시 돌릴 때 무엇이 달라지는가. |
+| `restructure-changelog.md` | Run 1 의 변경 내역과 KB 규칙 사후 대조. |
+| `defect-types.md` | 생성물에 반복해 나타나는 결함 유형. 검사기에 넣을 후보. |

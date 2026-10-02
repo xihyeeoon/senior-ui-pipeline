@@ -13,13 +13,13 @@
 
 ```powershell
 cd C:\Users\xihye\senior-ui-pipeline
-.\.venv\Scripts\python.exe tools\session_server.py
+.\.venv\Scripts\python.exe -m senior_ui.experiment.server
 ```
 
 주소가 출력됩니다. 폰 브라우저에서 그 주소를 엽니다.
 
 ```
-http://192.168.0.12:3003/tools/session.html
+http://192.168.0.12:3003/web/session.html
 ```
 
 **연결이 안 되면** 방화벽입니다. PowerShell을 관리자로 열어 한 번만 실행합니다.
@@ -72,7 +72,8 @@ New-NetFirewallRule -DisplayName "senior-ui 실험" -Direction Inbound -LocalPor
 차이가 잘 안 납니다. 시간이 허락하면 긴 과업만 두 조건으로 하고, 남으면 짧은 과업을
 추가하는 편이 낫습니다.
 
-지시문을 바꾸려면 `tools/session_server.py` 위쪽의 `TASKS` 를 고칩니다.
+지시문을 바꾸려면 `senior_ui/experiment/server.py` 위쪽의 `TASKS` 를 고칩니다.
+페이지를 열 때 폰이 읽어 가므로 서버만 다시 띄우면 됩니다.
 
 ## 4. 수집되는 자료
 
@@ -99,13 +100,14 @@ New-NetFirewallRule -DisplayName "senior-ui 실험" -Direction Inbound -LocalPor
 언제든 중간 집계를 볼 수 있습니다.
 
 ```powershell
-.\.venv\Scripts\python.exe tools\session_report.py
+.\.venv\Scripts\python.exe -m senior_ui.experiment.report
 ```
 
 논문·발표용으로 파일까지 만들려면:
 
 ```powershell
-.\.venv\Scripts\python.exe tools\session_report.py --out results\session-report.md --csv results\sessions.csv
+.\.venv\Scripts\python.exe -m senior_ui.experiment.report `
+   --out results\session-report.md --csv results\sessions.csv
 ```
 
 - `session-report.md` — 진행 현황, 피험자별, 조건 비교, 화면별 체류, 막힌 지점

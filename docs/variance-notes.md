@@ -4,7 +4,7 @@
 쌓는 것이 목적이고, 어느 설계가 낫다는 판단은 여기서 하지 않는다.
 
 손으로 만든 Run 1·2·3 의 비교는 `restructure-runs.md` 에 있다. 이 문서는 그 뒤에
-`tools/run_restructure.py` 로 자동 생성한 것들을 기록한다.
+`python -m senior_ui.restructure` 로 자동 생성한 것들을 기록한다.
 
 ## Run 2 (2026-09-30)
 
@@ -30,6 +30,7 @@
 
 **검사 fatal 0 을 자동으로 달성한 첫 사례.** 시도 3 에서 통과했다 (형식 1회,
 검사 1회 소모).
+(검사 I 추가 이전 기준. 현재 기준은 아래 "지금 검사기로 다시 검사하면" 단락 참고)
 
 - 화면 7개: `start` · `account` · `bank` · `amount` · `confirm` · `password` · `done`
 - 계좌와 은행을 **분리**했다 (자동 Run 3 과 같고 Run 2 와 다르다)
@@ -39,12 +40,19 @@
 - 남은 warning 8건은 전부 F(영어) — 상태바의 "LTE"
 
 실행: `outputs/restructure_auto/20261001-125247/`
+(같은 폴더의 사본이 `results/runs/20261001-125247/` 에 있다 — 시도 1~3 의
+프롬프트·응답·html·흐름·검사 결과, `run.log`, 스크린샷 전부)
 
 통과를 만든 것은 검사기 메시지였다. 시도 2 는 일곱 화면 전부에서
 `window.__screen()` 이 null 이었는데, 그 전까지 "landed on None instead" 라고만
 알려 주던 것을 "기록 훅 `__screen()` 은 현재 화면의 id 를 반환해야 한다. 원본의
 `__screen()` · `__startTask()` · `__dump()` 를 유지하라" 로 바꾸자 다음 시도에서
 정확히 고쳤다. 모델의 문제라기보다 검사기가 무엇을 원하는지 말하지 않은 문제였다.
+
+Run 4 는 검사 I(선택지 보존, `b2db795`) 가 생기기 전의 검사기로 통과했다. 지금
+검사기로 다시 검사하면 I 에서 fatal 2건(`pick-bank` 67개 중 64개 누락, `quick`
+4개 전부 누락)으로 통과하지 못한다. 그때 판정은 `results/audit_run4.json`, 다시
+검사한 결과는 `results/audit_run4.recheck.json`.
 
 ## 표 1. 같은 방식 내 편차 — 손수 제작 3회
 

@@ -1,14 +1,14 @@
 # 재구성 3회 비교 (Run 1 · 2 · 3)
 
 같은 브리프("고령자가 이체 과업을 끝낼 수 있게 화면을 다시 설계하라")로 만든 세 재구성본을
-같은 검사기(`tools/audit.py`)로 검사한 결과. 질문은 하나다 — **설계 편차가 결과 차이로
+같은 검사기(`senior_ui/audit/`)로 검사한 결과. 질문은 하나다 — **설계 편차가 결과 차이로
 이어지는가.**
 
 | | 파일 | 흐름 파일 | 화면 수 |
 |---|---|---|---|
-| Run 1 | `outputs/restructured_transfer.html` | `tools/flows/restructured.json` | 9 |
-| Run 2 | `outputs/restructured_run2.html` | `tools/flows/run2.json` | 7 |
-| Run 3 | `outputs/restructured_run3.html` | `tools/flows/run3.json` | 8 |
+| Run 1 | `outputs/restructured_transfer.html` | `flows/restructured.json` | 9 |
+| Run 2 | `outputs/restructured_run2.html` | `flows/run2.json` | 7 |
+| Run 3 | `outputs/restructured_run3.html` | `flows/run3.json` | 8 |
 
 세 파일 모두 `results/` 에 사본이 있고, 검사 스크린샷은 `results/shots/{restructured,run2,run3}/`.
 
@@ -78,12 +78,15 @@ Run 2 가 2탭 짧은 대신 확인 두 개를 잃었다. 원본 `account` 화�
 ```powershell
 cd C:\Users\xihye\senior-ui-pipeline
 .\.venv\Scripts\python.exe -m http.server 3003 --directory .   # 다른 터미널
-$env:PYTHONUTF8=1
 foreach ($r in "run2","run3") {
-  .\.venv\Scripts\python.exe tools\audit.py --flow tools\flows\$r.json `
-     --repaired http://localhost:3003/outputs/restructured_$r.html `
-     --repaired-file outputs\restructured_$r.html `
+  .\.venv\Scripts\python.exe -m senior_ui.audit --flow flows\$r.json `
+     --build http://localhost:3003/outputs/restructured_$r.html `
+     --build-file outputs\restructured_$r.html `
      --out outputs\audit_$r.json --shots outputs\shots\$r
 }
-.\.venv\Scripts\python.exe tools\collect_results.py
+.\.venv\Scripts\python.exe -m senior_ui.collect_results
 ```
+
+위 표의 `fatal 0 / warning 0` 은 검사 I(선택지 보존, `b2db795`)가 생기기 전의
+값이다. 지금 검사기로 같은 명령을 돌리면 셋 다 I 에서 fatal 1건이 난다 (원본
+`pick-bank` 67개 중 58개 누락). 측정값은 `tests/baseline/` 에 있다.

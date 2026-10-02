@@ -5,7 +5,7 @@
 
 ## 검사기가 잡는 것
 
-`tools/audit.py` 의 A~H. 자세한 내용은 `README.md` 의 검사기 절에 있다.
+`senior_ui/audit/` 의 검사 A~I. 자세한 내용은 `README.md` 의 검사기 절에 있다.
 
 | | 결함 | 심각도 |
 |---|---|---|
