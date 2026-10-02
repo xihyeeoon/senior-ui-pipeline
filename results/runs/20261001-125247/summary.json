@@ -1,0 +1,84 @@
+{
+  "run_dir": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-125247",
+  "model": "gpt-4o",
+  "mock": null,
+  "stage": "wireframe",
+  "attempts": [
+    {
+      "n": 1,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt": 12045,
+        "completion": 3430
+      },
+      "seconds": 27.7,
+      "html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-125247\\attempt_1.html",
+      "flow": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-125247\\attempt_1.flow.json",
+      "stage": "flow",
+      "passed": false,
+      "fatal": 1
+    },
+    {
+      "n": 2,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt": 15580,
+        "completion": 3425
+      },
+      "seconds": 26.5,
+      "html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-125247\\attempt_2.html",
+      "flow": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-125247\\attempt_2.flow.json",
+      "stage": "audit",
+      "passed": false,
+      "fatal": 7,
+      "warning": 8
+    },
+    {
+      "n": 3,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt": 15891,
+        "completion": 3520
+      },
+      "seconds": 27.9,
+      "html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-125247\\attempt_3.html",
+      "flow": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-125247\\attempt_3.flow.json",
+      "stage": "audit",
+      "passed": true,
+      "fatal": 0,
+      "warning": 8
+    }
+  ],
+  "passed": true,
+  "final": {
+    "attempt": 3,
+    "html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-125247\\attempt_3.html",
+    "flow": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-125247\\attempt_3.flow.json",
+    "audit": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-125247\\attempt_3.audit.json"
+  },
+  "budget": {
+    "format_used": 1,
+    "format_budget": 5,
+    "audit_used": 1,
+    "audit_budget": 6
+  },
+  "stopped_reason": null,
+  "trend": [
+    {
+      "attempt": 2,
+      "fatal_total": 7,
+      "fatal_root": 7,
+      "fatal_derived": 0,
+      "screens": "8/8",
+      "stopped_at": null
+    },
+    {
+      "attempt": 3,
+      "fatal_total": 0,
+      "fatal_root": 0,
+      "fatal_derived": 0,
+      "screens": "8/8",
+      "stopped_at": null
+    }
+  ]
+}

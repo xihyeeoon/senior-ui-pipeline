@@ -1,0 +1,304 @@
+```html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>은행 앱</title>
+<style>
+  :root {
+    --blue: #1B64DA;
+    --ink: #1A1A1A;
+    --sub: #8A8F98;
+    --line: #EDEFF3;
+    --bg: #F2F4F8;
+    --white: #FFFFFF;
+  }
+  * {box-sizing: border-box; -webkit-tap-highlight-color: transparent;}
+  html, body {margin: 0; padding: 0; background: #DFE3EA;}
+  body {
+    font-family: 'Malgun Gothic', sans-serif;
+    color: var(--ink);
+    display: flex; justify-content: center;
+  }
+  #phone {
+    width: min(390px, 100vw); height: 844px;
+    background: var(--white); position: relative; overflow: hidden;
+    box-shadow: 0 0 0 1px #cfd4dd;
+  }
+  .screen {position: absolute; inset: 0; display: none; flex-direction: column; background: var(--white);}
+  .screen.on {display: flex;}
+  .statusbar, .navbar {
+    height: 44px; flex: 0 0 44px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px; font-size: 15px; font-weight: 600;
+  }
+  .statusbar .right, .navbar .mid {font-size: 12px;}
+  .body {flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch;}
+  .btn {background: var(--blue); color: var(--white); border: 0; border-radius: 8px; padding: 12px; font-size: 16px; font-weight: 600; text-align: center; cursor: pointer; margin: 10px 20px;}
+  .field {margin: 10px 20px; border: 1px solid var(--line); padding: 10px; border-radius: 5px;}
+  .field input {width: 100%; border: 0; outline: 0; font-size: 18px;}
+  .keypad {display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 20px; background: #F6F7FB;}
+  .keypad button {background: var(--white); border: 0; height: 60px; font-size: 20px; font-weight: 600; border-radius: 5px;}
+</style>
+</head>
+<body>
+<div id="phone">
+
+<!-- ================= 시작 화면 ================= -->
+<section class="screen on" data-screen="start">
+  <div class="statusbar"><span>1:00</span><span class="right">LTE</span></div>
+  <div class="body">
+    <button class="btn" data-action="go-account">이체 시작</button>
+  </div>
+</section>
+
+<!-- ================= 계좌번호 입력 ================= -->
+<section class="screen" data-screen="account">
+  <div class="statusbar"><span>1:02</span><span class="right">LTE</span></div>
+  <div class="navbar"><span></span><span class="mid">계좌 정보 입력</span><span></span></div>
+  <div class="body">
+    <div class="field">
+      <input type="text" id="bank-name" placeholder="은행명 입력" readonly>
+      <button class="btn" data-action="select-bank">은행 선택</button>
+    </div>
+    <div class="field">
+      <input type="text" id="account-number" placeholder="계좌번호 입력" readonly>
+    </div>
+    <div class="keypad" id="account-keypad">
+      <button data-action="acc-num" data-v="1">1</button><button data-action="acc-num" data-v="2">2</button><button data-action="acc-num" data-v="3">3</button>
+      <button data-action="acc-num" data-v="4">4</button><button data-action="acc-num" data-v="5">5</button><button data-action="acc-num" data-v="6">6</button>
+      <button data-action="acc-num" data-v="7">7</button><button data-action="acc-num" data-v="8">8</button><button data-action="acc-num" data-v="9">9</button>
+      <button class="blank" disabled></button><button data-action="acc-num" data-v="0">0</button><button data-action="acc-del">⌫</button>
+    </div>
+    <button class="btn" data-action="go-amount">다음</button>
+  </div>
+</section>
+
+<!-- ================= 은행 선택 ================= -->
+<section class="screen" data-screen="bank">
+  <div class="statusbar"><span>1:04</span><span class="right">LTE</span></div>
+  <div class="body">
+    <div class="field">
+      <input type="text" placeholder="은행 이름으로 검색">
+    </div>
+    <div class="body" style="padding: 0 20px;">
+      <ul>
+        <li data-action="pick-bank" data-bank="카카오뱅크">카카오뱅크</li>
+        <li data-action="pick-bank" data-bank="신한은행">신한은행</li>
+        <li data-action="pick-bank" data-bank="국민은행">국민은행</li>
+        <!-- ... other banks ... -->
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 금액 입력 ================= -->
+<section class="screen" data-screen="amount">
+  <div class="statusbar"><span>1:06</span><span class="right">LTE</span></div>
+  <div class="navbar"><span></span><span class="mid">이체 금액 입력</span><span></span></div>
+  <div class="body">
+    <div class="field">
+      <input type="text" id="amount-input" placeholder="금액 입력" readonly>
+    </div>
+    <div class="keypad" id="amount-keypad">
+      <button data-action="num" data-v="1">1</button><button data-action="num" data-v="2">2</button><button data-action="num" data-v="3">3</button>
+      <button data-action="num" data-v="4">4</button><button data-action="num" data-v="5">5</button><button data-action="num" data-v="6">6</button>
+      <button data-action="num" data-v="7">7</button><button data-action="num" data-v="8">8</button><button data-action="num" data-v="9">9</button>
+      <button data-action="num" data-v="00">00</button><button data-action="num" data-v="0">0</button><button data-action="del">⌫</button>
+    </div>
+    <button class="btn" data-action="go-confirm">다음</button>
+  </div>
+</section>
+
+<!-- ================= 최종 확인 ================= -->
+<section class="screen" data-screen="confirm">
+  <div class="statusbar"><span>1:07</span><span class="right">LTE</span></div>
+  <div class="navbar"><span></span><span class="mid">확인</span><span></span></div>
+  <div class="body">
+    <div class="field">
+      <p><strong>받는 은행: </strong><span id="confirm-bank">카카오뱅크</span></p>
+      <p><strong>계좌번호: </strong><span id="confirm-account">3333000000000</span></p>
+      <p><strong>금액: </strong><span id="confirm-amount">10,000</span>원</p>
+    </div>
+    <button class="btn" data-action="go-password">송금하기</button>
+  </div>
+</section>
+
+<!-- ================= 비밀번호 입력 ================= -->
+<section class="screen" data-screen="password">
+  <div class="statusbar"><span>1:08</span><span class="right">LTE</span></div>
+  <div class="navbar"><span></span><span class="mid">비밀번호 입력</span><span></span></div>
+  <div class="body">
+    <div class="field">
+      <p>계좌 비밀번호를 입력하세요:</p>
+      <div class="dots" id="pw-dots"><i class="cur"></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="keypad" id="pw-pad">
+      <!-- Password keypad will be generated here -->
+    </div>
+  </div>
+</section>
+
+<!-- ================= 완료 화면 ================= -->
+<section class="screen" data-screen="done">
+  <div class="statusbar"><span>1:09</span><span class="right">LTE</span></div>
+  <div class="body">
+    <div class="okwrap">
+      <div class="okc">✓</div>
+      <div class="q2">송금이 완료되었습니다.<br>김시현님 계좌로<br><span id="dn-amt">10,000</span>원을 보냈습니다.</div>
+    </div>
+    <button class="btn" data-action="finish">확인</button>
+  </div>
+</section>
+
+</div>
+
+<script>
+const LOG = [];
+window.__log = LOG;
+window.__task = { startedAt: null, screen: 'start' };
+
+function log(type, data) {
+  LOG.push(Object.assign({ t: Date.now(), screen: window.__task.screen, type }, data||{}));
+}
+window.__startTask = function() { LOG.length = 0; window.__task.startedAt = Date.now(); log('task_start'); };
+window.__dump = function() { return JSON.parse(JSON.stringify(LOG)); };
+
+function show(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.dataset.screen === name));
+  window.__task.screen = name;
+  log('screen_enter', { to: name });
+  window.scrollTo(0, 0);
+}
+
+const S = { bank: '', account: '', amount: '', pw: '' };
+
+function renderAccount() {
+  document.getElementById('account-number').value = S.account;
+}
+
+function renderAmount() {
+  document.getElementById('amount-input').value = Number(S.amount).toLocaleString();
+}
+
+function renderDots() { 
+  document.querySelectorAll('#pw-dots i').forEach((d, i) => {
+    d.className = i < S.pw.length ? 'fill' : (i === S.pw.length ? 'cur' : '');
+  });
+}
+
+function buildPwPad() {
+  const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].sort(()=>Math.random()-0.5);
+  const pad = document.getElementById('pw-pad');
+  pad.innerHTML = nums.map(n => `<button data-action="pw" data-v="${n}">${n}</button>`).join('')
+    + `<button data-action="pw-del">⌫</button>`;
+}
+
+document.getElementById('phone').addEventListener('click', function(e) {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  
+  if (a === 'go-account') {
+    S.bank = '';
+    S.account = '';
+    show('account');
+  } else if (a === 'select-bank') {
+    show('bank');
+  } else if (a === 'pick-bank') {
+    S.bank = el.dataset.bank;
+    document.getElementById('bank-name').value = S.bank;
+    show('account');
+  } else if (a === 'acc-num') {
+    if (S.account.length < 16) {
+      S.account += el.dataset.v;
+      renderAccount();
+    }
+  } else if (a === 'acc-del') {
+    S.account = S.account.slice(0, -1);
+    renderAccount();
+  } else if (a === 'go-amount') {
+    if(S.account && S.bank) {
+      renderAmount();
+      show('amount');
+    }
+  } else if (a === 'num') {
+    if(S.amount.length < 9) {
+      S.amount = (S.amount + el.dataset.v).replace(/^0+/, '');
+      renderAmount();
+    }
+  } else if (a === 'del') {
+    S.amount = S.amount.slice(0, -1);
+    renderAmount();
+  } else if (a === 'go-confirm') {
+    if(S.amount) {
+      document.getElementById('confirm-bank').textContent = S.bank;
+      document.getElementById('confirm-account').textContent = S.account;
+      document.getElementById('confirm-amount').textContent = Number(S.amount).toLocaleString();
+      show('confirm');
+    }
+  } else if (a === 'go-password') {
+    S.pw = '';
+    buildPwPad();
+    renderDots();
+    show('password');
+  } else if (a === 'pw') {
+    if(S.pw.length < 4) {
+      S.pw += el.dataset.v;
+      renderDots();
+    }
+    if(S.pw.length === 4) {
+      setTimeout(() => show('done'), 260);
+    }
+  } else if (a === 'pw-del') {
+    S.pw = S.pw.slice(0, -1);
+    renderDots();
+  } else if (a === 'finish') {
+    log('task_end');
+    show('start');
+  }
+});
+
+renderAccount();
+renderAmount();
+buildPwPad();
+log('screen_enter', { to:'start' });
+</script>
+</body>
+</html>
+```
+
+```json
+{
+  "name": "auto",
+  "note": "A streamlined process for transferring money.",
+  "derived_from_original": false,
+  "required_ids": ["phone", "dn-amt"],
+  "steps": [
+    {"screen": "start", "click": "[data-action='go-account']"},
+    {"screen": "account", "do": [
+      {"click": "[data-action='select-bank']"}
+    ]},
+    {"screen": "bank", "do": [
+      {"click": "[data-action='pick-bank'][data-bank='{BANK}']"}
+    ]},
+    {"screen": "account", "do": [
+      {"type": "{ACCOUNT}", "key": "[data-action='acc-num'][data-v='%s']"},
+      {"click": ".btn"}
+    ]},
+    {"screen": "amount", "do": [
+      {"type": "{AMOUNT}", "key": "[data-action='num'][data-v='%s']"},
+      {"click": ".btn"}
+    ]},
+    {"screen": "confirm", "click": "[data-action='go-password']"},
+    {"screen": "password", "do": [
+      {"repeat": 4, "click": "[data-action='pw']", "wait": 0.15}
+    ]},
+    {"screen": "done", "click": "[data-action='finish']"}
+  ],
+  "expect": {
+    "done": [["#dn-amt", "{AMOUNT_SHOWN}"]]
+  },
+  "done_amount": "#dn-amt"
+}
+```

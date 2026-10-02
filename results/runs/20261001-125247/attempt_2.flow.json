@@ -1,0 +1,77 @@
+{
+  "name": "auto",
+  "note": "A streamlined process for transferring money.",
+  "derived_from_original": false,
+  "required_ids": [
+    "phone",
+    "dn-amt"
+  ],
+  "steps": [
+    {
+      "screen": "start"
+    },
+    {
+      "screen": "account",
+      "click": "[data-action='go-account']"
+    },
+    {
+      "screen": "bank",
+      "click": "[data-action='select-bank']"
+    },
+    {
+      "screen": "account",
+      "do": [
+        {
+          "click": "[data-action='pick-bank'][data-bank='{BANK}']"
+        }
+      ]
+    },
+    {
+      "screen": "amount",
+      "do": [
+        {
+          "type": "{ACCOUNT}",
+          "key": "[data-action='acc-num'][data-v='%s']"
+        },
+        {
+          "click": "[data-action='go-amount']"
+        }
+      ]
+    },
+    {
+      "screen": "confirm",
+      "do": [
+        {
+          "type": "{AMOUNT}",
+          "key": "[data-action='num'][data-v='%s']"
+        },
+        {
+          "click": "[data-action='go-confirm']"
+        }
+      ]
+    },
+    {
+      "screen": "password",
+      "click": "[data-action='go-password']"
+    },
+    {
+      "screen": "done",
+      "do": [
+        {
+          "repeat": 4,
+          "click": "#pw-pad [data-action='pw']",
+          "wait": 0.15
+        }
+      ]
+    }
+  ],
+  "expect": {
+    "done": [
+      [
+        "#dn-amt",
+        "{AMOUNT_SHOWN}"
+      ]
+    ]
+  },
+  "done_amount": "#dn-amt"
+}

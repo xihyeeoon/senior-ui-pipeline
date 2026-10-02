@@ -1,0 +1,15 @@
+{
+  "passed": false,
+  "warning": [],
+  "metrics": {
+    "flow": "auto",
+    "not_audited": true
+  },
+  "fatal": [
+    {
+      "check": "FLOW",
+      "screen": null,
+      "detail": "steps[0] 은 시작 화면이므로 동작(click/do)이 없어야 한다. 각 step 의 screen 은 그 동작을 한 *뒤에* 도착해 있는 화면이다 — 동작이 일어나는 화면이 아니다. 목록 전체를 한 칸씩 다시 맞춰라"
+    }
+  ]
+}

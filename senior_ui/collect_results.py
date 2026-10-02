@@ -24,6 +24,12 @@ FILES = [
     ("outputs/audit_run2.json", "audit_run2.json"),
     ("outputs/restructured_run3.html", "restructured_run3.html"),
     ("outputs/audit_run3.json", "audit_run3.json"),
+    # Run 4 는 자동 파이프라인이 낸 것이어서 승격 전 이름이 다르다. 통과한
+    # 시도(attempt_3)가 run2·run3 과 같은 자리에 오도록 이름을 바꿔 둔다.
+    ("outputs/restructure_auto/20261001-125247/attempt_3.html",
+     "restructured_run4.html"),
+    ("outputs/restructure_auto/20261001-125247/attempt_3.audit.json",
+     "audit_run4.json"),
 ]
 
 # whole directories worth keeping, and what to take from them
@@ -31,6 +37,8 @@ TREES = [
     ("outputs/shots/restructured", "shots/restructured", (".png",)),
     ("outputs/shots/run2", "shots/run2", (".png",)),
     ("outputs/shots/run3", "shots/run3", (".png",)),
+    ("outputs/restructure_auto/20261001-125247/shots/attempt_3",
+     "shots/run4", (".png",)),
 ]
 
 

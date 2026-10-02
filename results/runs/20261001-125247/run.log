@@ -1,0 +1,30 @@
+12:52:47 run: C:\Users\xihye\senior-ui-pipeline\outputs\restructure_auto\20261001-125247 | model=gpt-4o | attempts=3 | stage=wireframe | mock=None
+12:52:47 server: :3003 already listening, reusing it
+12:52:47 audit: driving the original once (baseline for contrast / language)
+12:52:53 ---- attempt 1 (형식 0/5 · 검사 0/6)
+12:52:53 prompt: 34096 chars
+12:53:22 model: 11147 chars, finish=stop, 27.7s, usage={'prompt': 12045, 'completion': 3430}
+12:53:22 flow: 1 problem(s): steps[0] 은 시작 화면이므로 동작(click/do)이 없어야 한다. 각 step 의 screen 은 그 동작을 한 *뒤에* 도착해 있는 화면이다 — 동작이 일어나는 화면이 아니다. 목록 전체를 한 칸씩 다시 맞춰라
+12:53:37 ---- attempt 2 (형식 1/5 · 검사 0/6)
+12:53:37 prompt: 45451 chars (with retry block)
+12:54:03 model: 11141 chars, finish=stop, 26.5s, usage={'prompt': 15580, 'completion': 3425}
+12:54:10 audit: passed=False fatal=7 (근본 7) warning=8 screens=8/8
+12:54:10   F [A] start: 화면 전환 후 window.__screen() 이 null 을 반환했다. 기록 훅 __screen() 은 현재 화면의 id 를 반환해야 한다. 원본 HTML 의 __screen() · __startTask() · __dump() 를 유지하라.
+12:54:10   F [A] account: 화면 전환 후 window.__screen() 이 null 을 반환했다. 기록 훅 __screen() 은 현재 화면의 id 를 반환해야 한다. 원본 HTML 의 __screen() · __startTask() · __dump() 를 유지하라.
+12:54:10   F [A] bank: 화면 전환 후 window.__screen() 이 null 을 반환했다. 기록 훅 __screen() 은 현재 화면의 id 를 반환해야 한다. 원본 HTML 의 __screen() · __startTask() · __dump() 를 유지하라.
+12:54:10   F [A] amount: 화면 전환 후 window.__screen() 이 null 을 반환했다. 기록 훅 __screen() 은 현재 화면의 id 를 반환해야 한다. 원본 HTML 의 __screen() · __startTask() · __dump() 를 유지하라.
+12:54:10   F [A] confirm: 화면 전환 후 window.__screen() 이 null 을 반환했다. 기록 훅 __screen() 은 현재 화면의 id 를 반환해야 한다. 원본 HTML 의 __screen() · __startTask() · __dump() 를 유지하라.
+12:54:10   F [A] password: 화면 전환 후 window.__screen() 이 null 을 반환했다. 기록 훅 __screen() 은 현재 화면의 id 를 반환해야 한다. 원본 HTML 의 __screen() · __startTask() · __dump() 를 유지하라.
+12:54:10   F [A] done: 화면 전환 후 window.__screen() 이 null 을 반환했다. 기록 훅 __screen() 은 현재 화면의 id 를 반환해야 한다. 원본 HTML 의 __screen() · __startTask() · __dump() 를 유지하라.
+12:54:25 ---- attempt 3 (형식 1/5 · 검사 1/6)
+12:54:25 prompt: 46340 chars (with retry block)
+12:54:53 model: 11668 chars, finish=stop, 27.9s, usage={'prompt': 15891, 'completion': 3520}
+12:55:00 audit: passed=True fatal=0 (근본 0) warning=8 screens=8/8
+12:55:00 PASSED on attempt 3
+12:55:00 
+12:55:00 fatal_root 추이
+12:55:00   시도 | fatal | 근본 | 파생 | 화면    | 멈춘 곳
+12:55:00      2 |     7 |    7 |    0 | 8/8     | -
+12:55:00      3 |     0 |    0 |    0 | 8/8     | -
+12:55:00 final: attempt 3 -> outputs/restructured_auto.html (+ .flow.json, audit_auto.json)
+12:55:00 summary: C:\Users\xihye\senior-ui-pipeline\outputs\restructure_auto\20261001-125247\summary.json
