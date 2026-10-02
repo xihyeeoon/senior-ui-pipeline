@@ -9,8 +9,9 @@ from ..context import union
 from ..flow import AMOUNT_SHOWN
 
 
-def run(ctx):
-    rep, orig, want = ctx.rep, ctx.orig, ctx.want
+def _screens_reached(ctx):
+    """흐름이 적은 화면에 다 도달했는지. 한 번 멈추면 그 뒤는 전부 파생이다."""
+    rep, want = ctx.rep, ctx.want
     metrics, F = ctx.metrics, ctx.fatal_
 
     metrics["screens_expected"] = len(want)
@@ -41,9 +42,19 @@ def run(ctx):
         elif row["landed_on"] != name:
             F("A", name, "landed on %r instead" % row["landed_on"])
 
+
+def _transition_ids(ctx):
+    """전환 스크립트가 이름으로 찾는 id 가 사라졌는지."""
+    rep, F = ctx.rep, ctx.fatal_
     if rep["missing_ids"]:
         F("A", None, "ids the transition script needs are gone: "
           + ", ".join(rep["missing_ids"]), lost=rep["missing_ids"])
+
+
+def _amount_round_trip(ctx):
+    """과제가 넣은 금액이 완료 화면까지 그대로 왕복했는지."""
+    rep, want = ctx.rep, ctx.want
+    metrics, F = ctx.metrics, ctx.fatal_
 
     # 완료 화면은 흐름의 마지막 단계이고, 금액을 담은 선택자는 흐름이 알려 준다.
     # 화면 이름을 "done" 으로 못박으면 다른 이름을 쓴 설계를 검사할 수 없다.
@@ -57,6 +68,13 @@ def run(ctx):
         F("A", last_screen, "완료 화면의 %s 가 %r 을 보여 준다. 과제가 넣은 값은 %r 이다."
           % (done_sel, shown_done, AMOUNT_SHOWN))
 
+
+def _preserved_attrs(ctx):
+    """data-screen · data-action · id 가 문서 전체에서 사라졌는지. 짝을 맞추는
+    비교이므로 원본에서 파생된 빌드에서만 돈다 - 새 설계에는 지킬 원본이 없다."""
+    rep, orig = ctx.rep, ctx.orig
+    metrics, F = ctx.metrics, ctx.fatal_
+
     for key, label in [("screens", "data-screen"), ("actions", "data-action"),
                        ("ids", "id")]:
         a, b = union(orig, key), union(rep, key)
@@ -69,6 +87,12 @@ def run(ctx):
             F("A", None, "%s values lost: %s" % (label, ", ".join(lost)), lost=lost)
     if not ctx.derived:
         ctx.skipped.append("A/preservation (new design, nothing to preserve)")
+
+
+def _per_screen_loss(ctx):
+    """같은 이름의 화면에서 data-action 이나 id 가 빠졌는지."""
+    rep, orig, want = ctx.rep, ctx.orig, ctx.want
+    metrics, F = ctx.metrics, ctx.fatal_
 
     per_screen_loss = {}
     for n in (want if ctx.derived else []):
@@ -91,6 +115,20 @@ def run(ctx):
     if not ctx.derived:
         ctx.skipped.append("A/per-screen attribute loss")
 
+
+def _js_errors(ctx):
+    """클릭 처리기를 멈추게 한 JS 오류. 셋까지만 적는다 - 나머지는 사본이다."""
+    rep = ctx.rep
     if rep["js_errors"]:
-        F("A", None, "JavaScript errors during the task: "
-          + " | ".join(rep["js_errors"][:3]))
+        ctx.fatal_("A", None, "JavaScript errors during the task: "
+                   + " | ".join(rep["js_errors"][:3]))
+
+
+# 이 순서가 fatal 목록과 metrics 키의 순서다 - 바꾸면 출력이 바뀐다.
+PARTS = [_screens_reached, _transition_ids, _amount_round_trip,
+         _preserved_attrs, _per_screen_loss, _js_errors]
+
+
+def run(ctx):
+    for part in PARTS:
+        part(ctx)

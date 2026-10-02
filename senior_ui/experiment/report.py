@@ -228,6 +228,54 @@ def write_csv(rows, path):
                         m.get("unique_screens"), r.get("_file")])
 
 
+def conditions_of(rows):
+    """등장 순서가 아니라 이름 순으로 정렬한 조건 목록. 표의 열 순서가 된다."""
+    conditions = []
+    for r in rows:
+        if r["condition"] not in conditions:
+            conditions.append(r["condition"])
+    conditions.sort()
+    return conditions
+
+
+def render(rows, conditions, completed_only):
+    """다섯 개의 표를 하나의 Markdown 으로. 여기서는 아무것도 쓰지 않는다."""
+    pids = {r["participant"] for r in rows}
+    parts = [
+        "# 실험 세션 집계", "",
+        "피험자 %d명 · 세션 %d건 · 조건 %s" % (len(pids), len(rows), ", ".join(conditions)),
+        "", "## 1. 진행 현황", "", progress(rows, conditions), "",
+        "## 2. 피험자별", "", per_session(rows), "",
+        "## 3. 조건 비교", "",
+        "%s 기준입니다. 중앙값을 먼저 보세요 — 표본이 작아 한 명이 평균을 크게 흔듭니다." %
+        ("완료한 세션만" if completed_only else "중단 포함 전체 세션"),
+        "", compare(rows, conditions, completed_only), "",
+        "## 4. 화면별 체류", "", dwell(rows, conditions), "",
+        "## 5. 막힌 지점", "",
+        "빗나간 탭은 \"어디를 눌러야 할지 몰랐다\", 되돌아가기와 지우기는 \"잘못 갔다\"는 신호입니다.",
+        "", trouble(rows, conditions), "",
+    ]
+    return "\n".join(parts)
+
+
+def emit(md, rows, out, csv_path):
+    """만들어진 md 를 내보낸다 - --out 파일, --csv 파일, 그리고 화면."""
+    if out:
+        os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
+        with io.open(out, "w", encoding="utf-8", newline="\n") as f:
+            f.write(md)
+    if csv_path:
+        write_csv(rows, csv_path)
+
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    sys.stdout.write(md)
+    if out:
+        sys.stdout.write("\n(저장: %s)\n" % out)
+    if csv_path:
+        sys.stdout.write("(CSV: %s)\n" % csv_path)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--sessions", default=os.path.join(ROOT, "sessions"))
@@ -243,43 +291,8 @@ def main():
         print("python -m senior_ui.experiment.server 로 실험을 진행하면 여기에 쌓입니다.")
         return 1
 
-    conditions = []
-    for r in rows:
-        if r["condition"] not in conditions:
-            conditions.append(r["condition"])
-    conditions.sort()
-
-    pids = {r["participant"] for r in rows}
-    parts = [
-        "# 실험 세션 집계", "",
-        "피험자 %d명 · 세션 %d건 · 조건 %s" % (len(pids), len(rows), ", ".join(conditions)),
-        "", "## 1. 진행 현황", "", progress(rows, conditions), "",
-        "## 2. 피험자별", "", per_session(rows), "",
-        "## 3. 조건 비교", "",
-        "%s 기준입니다. 중앙값을 먼저 보세요 — 표본이 작아 한 명이 평균을 크게 흔듭니다." %
-        ("완료한 세션만" if args.completed_only else "중단 포함 전체 세션"),
-        "", compare(rows, conditions, args.completed_only), "",
-        "## 4. 화면별 체류", "", dwell(rows, conditions), "",
-        "## 5. 막힌 지점", "",
-        "빗나간 탭은 \"어디를 눌러야 할지 몰랐다\", 되돌아가기와 지우기는 \"잘못 갔다\"는 신호입니다.",
-        "", trouble(rows, conditions), "",
-    ]
-    md = "\n".join(parts)
-
-    if args.out:
-        os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
-        with io.open(args.out, "w", encoding="utf-8", newline="\n") as f:
-            f.write(md)
-    if args.csv:
-        write_csv(rows, args.csv)
-
-    if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(encoding="utf-8")
-    sys.stdout.write(md)
-    if args.out:
-        sys.stdout.write("\n(저장: %s)\n" % args.out)
-    if args.csv:
-        sys.stdout.write("(CSV: %s)\n" % args.csv)
+    conditions = conditions_of(rows)
+    emit(render(rows, conditions, args.completed_only), rows, args.out, args.csv)
     return 0
 
 

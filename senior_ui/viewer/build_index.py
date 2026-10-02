@@ -243,10 +243,12 @@ def flow_path_of(flow_raw):
     return "flows/" + name if os.path.exists(os.path.join(FLOWS, name)) else None
 
 
-def collect_builds():
-    dirs = shot_dirs()
-    found = {}          # build rel path -> record
+def audited_builds():
+    """outputs/ 의 audit*.json 을 훑어 (파일 이름, 경로, 리포트, 빌드 경로) 를 낸다.
 
+    빌드는 목록이 아니라 발견된다. audit JSON 이 자기가 검사한 빌드의 URL 을
+    적어 두므로, 새 빌드에 audit 이 하나 생기면 아무것도 고치지 않아도 여기
+    나타난다. 그 빌드가 더 이상 없으면(옛 레이아웃) 건너뛴다."""
     for name in sorted(os.listdir(OUTPUTS)) if os.path.isdir(OUTPUTS) else []:
         if not (name.startswith("audit") and name.endswith(".json")):
             continue
@@ -259,62 +261,82 @@ def collect_builds():
             continue      # audit of a build that no longer exists (old layout)
         if os.path.basename(build_rel).startswith(SKIP_PREFIXES):
             continue      # 규칙 기반 시기의 산출물
+        yield name, path, d, build_rel
 
-        # audit.py writes both --out and a stdout copy; the stdout one is a
-        # duplicate and never interesting.
-        if "_stdout" in name:
-            dup = True
-        else:
-            dup = False
 
+def merge_audit(prev, name, path, d):
+    """같은 빌드의 audit 를 이미 본 적이 있을 때 둘을 어떻게 둘지 정한다.
+
+    돌려주는 것은 새 기록의 other_audits 에 들어갈 목록, 또는 None - None 이면
+    이번 audit 을 버리고 이미 있는 기록을 그대로 둔다.
+
+    audit.py writes both --out and a stdout copy; the stdout one is a duplicate
+    and never interesting. 같은 빌드를 다른 흐름으로 검사한 것이면 둘 다
+    남긴다. 조건을 바꾸면 결과가 어떻게 달라지는지가 이 프로젝트에서 가장 알고
+    싶은 것이다."""
+    if "_stdout" in name:
+        return None
+    newer = (mtime(path) or 0) > (prev["audit"]["mtime"] or 0)
+    prev_flow = (prev["audit"].get("metrics") or {}).get("flow")
+    this_flow = (d.get("metrics") or {}).get("flow")
+    if prev_flow == this_flow:
+        return prev.get("other_audits", []) if newer else None
+    if newer:
+        prev.setdefault("other_audits", []).insert(
+            0, dict(prev["audit"], flow=prev_flow))
+        return prev.pop("other_audits")
+    prev.setdefault("other_audits", []).append(
+        dict(audit_digest(d, path), flow=this_flow))
+    return None
+
+
+def pair_screens(build_rel, flow_rel, flow_name, dirs):
+    """화면과 그 화면의 스크린샷을 짝지어 둔다. 화면 이름은 마크업 순서,
+    스크린샷은 흐름 이름이나 빌드 id 로 찾은 폴더에서 온다."""
+    stem = os.path.splitext(os.path.basename(build_rel))[0]
+    return {
+        "flow": {"name": flow_name, "path": flow_rel,
+                 "steps": (read_json(os.path.join(ROOT, flow_rel)) or {}).get("steps")
+                          if flow_rel else None},
+        "screens": screens_of(os.path.join(ROOT, build_rel)),
+        "shots": match_shots(dirs, flow_name, stem),
+    }
+
+
+def build_row(build_rel, path, d, dirs, alts):
+    """색인에 들어갈 빌드 한 줄."""
+    flow_rel = flow_path_of((d.get("inputs") or {}).get("flow") or "")
+    flow_name = (d.get("metrics") or {}).get("flow") or (
+        os.path.splitext(os.path.basename(flow_rel))[0] if flow_rel else None)
+    stem = os.path.splitext(os.path.basename(build_rel))[0]
+    return {
+        "id": stem,
+        "name": NAMES.get(stem, stem),
+        "layer": "pipeline",
+        "layer_note": None,
+        "html": build_rel,
+        "when": when(mtime(os.path.join(ROOT, build_rel))),
+        "audit": audit_digest(d, path),
+        **pair_screens(build_rel, flow_rel, flow_name, dirs),
+        # 같은 빌드를 다른 조건으로 검사한 것들
+        "other_audits": alts,
+        # 자동 루프가 쌓을 시도 이력이 들어올 자리. 지금은 늘 비어 있다.
+        "attempts": [],
+    }
+
+
+def collect_builds():
+    dirs = shot_dirs()
+    found = {}          # build rel path -> record
+    for name, path, d, build_rel in audited_builds():
         prev = found.get(build_rel)
-        if prev and dup:
-            continue
-        if prev and not dup:
-            # 같은 빌드를 다른 흐름으로 검사한 것이면 둘 다 남긴다. 조건을 바꾸면
-            # 결과가 어떻게 달라지는지가 이 프로젝트에서 가장 알고 싶은 것이다.
-            prev_flow = (prev["audit"].get("metrics") or {}).get("flow")
-            this_flow = (d.get("metrics") or {}).get("flow")
-            if prev_flow != this_flow:
-                newer = (mtime(path) or 0) > (prev["audit"]["mtime"] or 0)
-                if newer:
-                    prev.setdefault("other_audits", []).insert(
-                        0, dict(prev["audit"], flow=prev_flow))
-                    alts = prev.pop("other_audits")
-                else:
-                    prev.setdefault("other_audits", []).append(
-                        dict(audit_digest(d, path), flow=this_flow))
-                    continue
-            else:
-                alts = prev.get("other_audits", [])
-                if (mtime(path) or 0) <= (prev["audit"]["mtime"] or 0):
-                    continue
-        else:
+        if prev is None:
             alts = []
-
-        flow_rel = flow_path_of((d.get("inputs") or {}).get("flow") or "")
-        flow_name = (d.get("metrics") or {}).get("flow") or (
-            os.path.splitext(os.path.basename(flow_rel))[0] if flow_rel else None)
-
-        stem = os.path.splitext(os.path.basename(build_rel))[0]
-        found[build_rel] = {
-            "id": stem,
-            "name": NAMES.get(stem, stem),
-            "layer": "pipeline",
-            "layer_note": None,
-            "html": build_rel,
-            "when": when(mtime(os.path.join(ROOT, build_rel))),
-            "audit": audit_digest(d, path),
-            "flow": {"name": flow_name, "path": flow_rel,
-                     "steps": (read_json(os.path.join(ROOT, flow_rel)) or {}).get("steps")
-                              if flow_rel else None},
-            "screens": screens_of(os.path.join(ROOT, build_rel)),
-            "shots": match_shots(dirs, flow_name, stem),
-            # 같은 빌드를 다른 조건으로 검사한 것들
-            "other_audits": alts,
-            # 자동 루프가 쌓을 시도 이력이 들어올 자리. 지금은 늘 비어 있다.
-            "attempts": [],
-        }
+        else:
+            alts = merge_audit(prev, name, path, d)
+            if alts is None:
+                continue
+        found[build_rel] = build_row(build_rel, path, d, dirs, alts)
 
     builds = list(found.values())
     builds.sort(key=lambda b: (ORDER.index(b["id"]) if b["id"] in ORDER else 99, b["id"]))
