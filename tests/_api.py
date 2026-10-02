@@ -19,9 +19,13 @@ if ROOT not in sys.path:
 # 지금 위치 - 정리 단계에서 고칠 곳은 여기까지다.
 # ======================================================================= #
 from senior_ui import audit as _audit                        # noqa: E402
+from senior_ui import config as _config                      # noqa: E402
+from senior_ui import devserver as _devserver                # noqa: E402
 from senior_ui.audit import stage as _audit_stage            # noqa: E402
 from senior_ui.audit import report as _audit_report          # noqa: E402
-from senior_ui.restructure import __main__ as _run_restructure  # noqa: E402
+from senior_ui.restructure import model as _model            # noqa: E402
+from senior_ui.restructure import prompt as _prompt          # noqa: E402
+from senior_ui.restructure import reply as _reply            # noqa: E402
 from senior_ui.experiment import report as _session_report    # noqa: E402
 # ======================================================================= #
 
@@ -41,18 +45,24 @@ ar_render = _audit_report.render
 ar_CHECKS = _audit_report.CHECKS
 ar_SEVERITY = _audit_report.SEVERITY
 
-# ---- senior_ui/restructure/__main__.py --------------------------------- #
-validate_flow = _run_restructure.validate_flow
-parse_reply = _run_restructure.parse_reply
-retry_block = _run_restructure.retry_block
-brief_failure = _run_restructure.brief_failure
-mock_reply = _run_restructure.mock_reply
-listening = _run_restructure.listening
-PORT = _run_restructure.PORT
-# 프롬프트 조립 - 템플릿 읽기 / 선택지 블록 / 슬롯 채우기
-load_template = _run_restructure.load_template
-choices_block = _run_restructure.choices_block
-build_prompt = _run_restructure.build_prompt
+# ---- senior_ui/restructure/reply.py (답 가르기 · 흐름 명세 모양) -------- #
+validate_flow = _reply.validate_flow
+parse_reply = _reply.parse_reply
+
+# ---- senior_ui/restructure/prompt.py ----------------------------------- #
+# 프롬프트 조립 - 템플릿 읽기 / 선택지 블록 / 슬롯 채우기 / 재시도 블록
+load_template = _prompt.load_template
+choices_block = _prompt.choices_block
+build_prompt = _prompt.build_prompt
+retry_block = _prompt.retry_block
+brief_failure = _prompt.brief_failure
+
+# ---- senior_ui/restructure/model.py (API 없이 도는 대역) --------------- #
+mock_reply = _model.mock_reply
+
+# ---- senior_ui/devserver.py · senior_ui/config.py ---------------------- #
+listening = _devserver.listening
+PORT = _config.PORT
 
 # ---- senior_ui/experiment/report.py (집계 함수) ------------------------- #
 sr_load = _session_report.load
