@@ -13,6 +13,7 @@ senior_ui/ 는 한 줄도 건드리지 않는다. 전부 tests/_api.py 를 거�
   [4] parse_reply / mock_reply
   [5] mock 실행 (--mock pass, --mock fail)
   [6] 가짜 세션 4건으로 session_report
+  [7] senior_ui.audit.report (여러 audit 를 나란히 놓는 md, --details 포함)
 
 빌드는 results/ 를 쓴다. outputs/ 는 .gitignore 에 있어 PC 마다 내용이 달라서
 기준값의 입력으로 쓸 수 없다.
@@ -52,6 +53,15 @@ CASES = [
     ("run3", "results/restructured_run3.html", "run3.json"),
 ]
 ORIGINAL_REL = "inputs/original_transfer.html"
+
+# [7] senior_ui.audit.report 의 입력. 브라우저가 필요 없고 results/ 의 audit JSON
+# 세 개만 읽는다. 테스트도 이 값을 그대로 쓴다 (한곳에만 적는다).
+REPORT_ARGS = ["Run1=results/audit_restructured.json",
+               "Run2=results/audit_run2.json",
+               "Run3=results/audit_run3.json"]
+# (기준값 파일 이름, 덧붙일 인자)
+REPORT_OUTPUTS = [("three_runs.md", []),
+                  ("three_runs.details.md", ["--details"])]
 
 
 def say(msg):
@@ -573,6 +583,39 @@ def capture_session_report(out, fixtures):
 
 
 # --------------------------------------------------------------------- #
+# [7] audit report (여러 audit 를 나란히 놓는 md)
+# --------------------------------------------------------------------- #
+def run_audit_report(extra, out_path):
+    """report 의 main() 을 그대로 부르고, 쓰인 md 를 돌려준다.
+
+    render() 만 부르면 main() 이 조립하는 부분(라벨 붙이기 · --details / --max
+    기본값)이 기준값에서 빠진다. REPORT_ARGS 가 상대 경로라서 레포 루트로
+    옮겨 와 부른다 - 문서에 적힌 명령과 같은 모양을 유지한다. stdout 으로도
+    쓰므로 삼켜 둔다. test_baseline.py 도 이 함수를 쓴다."""
+    argv, stdout, cwd = sys.argv, sys.stdout, os.getcwd()
+    sys.argv = ["report.py"] + REPORT_ARGS + extra + ["--out", out_path]
+    sys.stdout = io.StringIO()
+    try:
+        os.chdir(ROOT)
+        code = _api.ar_main()
+    finally:
+        os.chdir(cwd)
+        sys.argv, sys.stdout = argv, stdout
+    if code != 0:
+        raise SystemExit("audit report 가 %d 로 끝났습니다." % code)
+    return read(out_path)
+
+
+def capture_audit_report(out):
+    """날짜·시각처럼 실행마다 바뀌는 값은 이 출력에 없다 - 전문을 그대로 비교한다."""
+    out_dir = os.path.join(out, "report")
+    os.makedirs(out_dir, exist_ok=True)
+    for name, extra in REPORT_OUTPUTS:
+        run_audit_report(extra, os.path.join(out_dir, name))
+        say("  report/%s" % name)
+
+
+# --------------------------------------------------------------------- #
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=os.path.join(HERE, "baseline"),
@@ -592,24 +635,27 @@ def main():
     server = start_server()
     copied = False
     try:
-        say("[1/6] audit.py main() 과 같은 순서로 4가지 경우")
+        say("[1/7] audit.py main() 과 같은 순서로 4가지 경우")
         reports = capture_cases(out)
-        say("[2/6] retry_block")
+        say("[2/7] retry_block")
         capture_retry_block(out, reports)
-        say("[3/6] 재구성 프롬프트 조립")
+        say("[3/7] 재구성 프롬프트 조립")
         capture_prompt(out)
-        say("[4/6] parse_reply / mock_reply")
+        say("[4/7] parse_reply / mock_reply")
         capture_parse_reply(out)
-        say("[5/6] mock 실행")
+        say("[5/7] mock 실행")
         copied = capture_mock(out)
     finally:
         server.terminate()
         server.wait()
         say("서버: 종료 (pid %d)" % server.pid)
 
-    say("[6/6] session_report")
+    say("[6/7] session_report")
     write_fixtures(os.path.abspath(args.fixtures))
     capture_session_report(out, os.path.abspath(args.fixtures))
+
+    say("[7/7] audit report")
+    capture_audit_report(out)
 
     if copied:
         say("")

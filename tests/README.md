@@ -3,10 +3,16 @@
 구조 정리는 동작을 바꾸지 않아야 한다. 이 폴더는 그 "바꾸지 않았음" 을 사람 눈이
 아니라 파일 비교로 확인하기 위한 것이다. `senior_ui/` 는 한 줄도 건드리지 않는다.
 
+예외가 한 건 있다. `senior_ui/audit/report.py` 는 어떤 audit JSON 을 줘도
+`KeyError: 'I'` 로 죽었다 (검사 I 를 더한 `b2db795` 부터). 실행이 안 되면 정리 후에
+달라졌는지 확인할 방법이 없으므로, 죽지 않게만 고치고 (`SEVERITY` 에 `I` 추가,
+제목의 `A~H` → `A~I`) 그 상태를 기준값으로 잡았다. 리포트 내용 자체의 다른 문제는
+그대로 두었다 — 아래 '`report/` 에 남긴 동작' 을 보라.
+
 ## 쓰는 법
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest                # 빠름, 브라우저 없음 (29건, 0.2초)
+.\.venv\Scripts\python.exe -m pytest                # 빠름, 브라우저 없음 (32건, 0.3초)
 .\.venv\Scripts\python.exe -m pytest -m browser     # 실제로 다시 걷는다 (18건, 2분 15초)
 ```
 
@@ -72,6 +78,9 @@
 - `mock_pass.json` / `mock_fail.json` — `--mock pass --attempts 1` 과
   `--mock fail --attempts 2 --delay 0` 의 `summary.json`
 - `session_report.md` / `.csv`
+- `report/three_runs.md` / `report/three_runs.details.md` —
+  `senior_ui.audit.report` 가 Run1~3 의 audit JSON 세 개를 나란히 놓은 md
+  (`--details` 를 붙인 것과 안 붙인 것)
 
 ### 지금 기준값이 담고 있는 동작 (참고)
 
@@ -90,6 +99,30 @@
 findings 를 넣는 자리보다 앞이라서 그렇다. 이것은 정리 전부터 그런 동작이고, 이번
 단계는 동작을 바꾸지 않으므로 그대로 기준값에 담았다. 고칠지 말지는 나중 판단이다
 — 다만 정리 중에 **우연히** 고쳐지면 `pytest` 가 실패하므로 바로 드러난다.
+
+### `report/` 에 남긴 동작
+
+`report/` 는 `senior_ui.audit.report` 의 출력 전문이다. 이번에 고친 것은 죽지 않게
+만드는 세 줄뿐이고, 리포트 **내용**의 다음 문제들은 그대로 기준값에 담겼다. 정리
+단계에서 우연히 달라지면 바로 드러나고, 고칠지 말지는 버그 수정 단계의 판단이다.
+
+- `개요` 의 `fatal` 행은 `len(report["fatal"])` 을 쓴다 — `metrics.fatal_total`
+  (위의 주의할 점에서 0 인 그 값)이 아니다. 그래서 여기서는 Run1~3 이 `fatal 1` 로
+  나온다. 두 값이 어긋나 있다는 사실 자체는 리포트에 드러나지 않는다.
+- `핵심 지표` 표에 검사 I 행이 없다. A~H 의 지표만 적혀 있어서, 지금 유일한 fatal
+  인 선택지 보존의 숫자(원본 67개 중 몇 개가 남았는지)는 `--details` 쪽에서만
+  읽을 수 있다.
+
+### `report/` 에서 제외한 값은 없다
+
+날짜·시각처럼 실행마다 바뀌는 값을 비교에서 빼야 하는지 확인했는데, **뺄 것이
+없었다.** 출력에 실행 시각이 들어가는 자리가 아예 없고(`render()` 는 제목·표·입력
+목록만 쓴다), 입력 세 개는 `results/` 의 고정된 audit JSON 이다. `## 입력` 절에
+적히는 경로도 그 JSON 안의 `inputs.repaired` 값(`http://localhost:3003/...`)이라
+PC 마다 달라지지도 않는다. 그래서 두 md 는 전문을 바이트까지 비교한다.
+
+확인 방법: `capture_baseline.capture_audit_report` 를 다른 폴더에 두 번 돌려
+`tests/baseline/report/` 와 바이트 비교했다 — 세 출력이 모두 같았다.
 
 ## 무시하는 키 (`IGNORE`)
 
@@ -129,8 +162,8 @@ findings 를 넣는 자리보다 앞이라서 그렇다. 이것은 정리 전부
 F(언어)가 보는 값이다.
 
 `REPORT` 는 **비어 있다.** 측정 결과 `audit()` · `apply_stage()` ·
-`validate_flow` · `retry_block` · mock 실행 `summary.json` · `session_report` 의
-출력은 두 실행이 바이트까지 같았다. 리포트는 무시할 키 없이 그대로 비교한다 —
+`validate_flow` · `retry_block` · mock 실행 `summary.json` · `session_report` ·
+`audit.report` 의 출력은 두 실행이 바이트까지 같았다. 리포트는 무시할 키 없이 그대로 비교한다 —
 `fatal` / `warning` 은 순서까지 같아야 한다.
 
 `test_baseline.py` 는 `IGNORE` 를 아예 쓰지 않는다. 저장된 스냅샷을 입력으로

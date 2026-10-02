@@ -20,6 +20,7 @@ if ROOT not in sys.path:
 # ======================================================================= #
 from senior_ui import audit as _audit                        # noqa: E402
 from senior_ui.audit import stage as _audit_stage            # noqa: E402
+from senior_ui.audit import report as _audit_report          # noqa: E402
 from senior_ui.restructure import __main__ as _run_restructure  # noqa: E402
 from senior_ui.experiment import report as _session_report    # noqa: E402
 # ======================================================================= #
@@ -32,6 +33,13 @@ load_flow = _audit.load_flow
 # ---- senior_ui/audit/stage.py ------------------------------------------ #
 apply_stage = _audit_stage.apply_stage
 STAGES = _audit_stage.STAGES
+
+# ---- senior_ui/audit/report.py (여러 audit 를 나란히 놓는 md) ----------- #
+ar_main = _audit_report.main
+ar_load = _audit_report.load
+ar_render = _audit_report.render
+ar_CHECKS = _audit_report.CHECKS
+ar_SEVERITY = _audit_report.SEVERITY
 
 # ---- senior_ui/restructure/__main__.py --------------------------------- #
 validate_flow = _run_restructure.validate_flow

@@ -215,6 +215,28 @@ def test_parse_reply_matches_baseline(mode):
 
 
 # --------------------------------------------------------------------- #
+# audit report (여러 audit 를 나란히 놓는 md)
+# --------------------------------------------------------------------- #
+@pytest.mark.parametrize("name,extra", C.REPORT_OUTPUTS,
+                         ids=[n for n, _ in C.REPORT_OUTPUTS])
+def test_audit_report_matches_baseline(name, extra, tmp_path):
+    """results/ 의 audit JSON 세 개는 고정물이므로 출력도 고정되어야 한다.
+    날짜·시각처럼 실행마다 바뀌는 값은 이 출력에 없다 - 전문 비교다."""
+    want = load_text("report", name)
+    got = C.run_audit_report(extra, str(tmp_path / name))
+    assert got == want
+
+
+def test_audit_report_has_severity_for_every_check():
+    """계약: CHECKS 의 모든 글자가 SEVERITY 에 있어야 한다. 없으면 report 는
+    어떤 입력을 줘도 KeyError 로 죽는다 - 검사 I 를 더했을 때 실제로 그랬다.
+    전문 비교만으로는 다음에 검사 J 가 늘어날 때 같은 일을 또 놓친다."""
+    missing = [l for l, _ in _api.ar_CHECKS if l not in _api.ar_SEVERITY]
+    assert not missing, "SEVERITY 에 없는 검사: %s" % ", ".join(missing)
+    assert _api.ar_SEVERITY["I"] == "fatal"
+
+
+# --------------------------------------------------------------------- #
 # session_report
 # --------------------------------------------------------------------- #
 def run_session_report(out_dir):
