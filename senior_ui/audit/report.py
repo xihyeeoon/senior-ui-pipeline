@@ -5,7 +5,7 @@ them next to each other. This takes any number of those files and prints:
 
   1. overview      - passed, fatal / warning counts, screens, low-contrast
                      before -> after, which flow drove the build
-  2. per check A-H - fatal / warning per check per build, with a mark on any
+  2. per check A-I - fatal / warning per check per build, with a mark on any
                      check the audit stood down for that build
   3. key metrics   - the numbers behind each check (dead controls, overlaps,
                      new English words, ...)
@@ -40,7 +40,7 @@ CHECKS = [
 ]
 SEVERITY = {"A": "fatal", "B": "fatal", "C": "fatal",
             "D": "warning", "E": "warning", "F": "warning",
-            "G": "warning", "H": "warning"}
+            "G": "warning", "H": "warning", "I": "fatal"}
 
 
 def load(arg):
@@ -244,7 +244,7 @@ def details(builds, cap):
 def render(builds, want_details, cap, title):
     parts = ["# %s" % title, ""]
     parts += ["## 개요", "", overview(builds), ""]
-    parts += ["## 검사 항목별 (A~H)", "", per_check(builds), ""]
+    parts += ["## 검사 항목별 (A~I)", "", per_check(builds), ""]
     parts += ["## 핵심 지표", "", key_metrics(builds), ""]
     parts += ["## 생략된 검사", "", stood_down(builds), ""]
     if want_details:
