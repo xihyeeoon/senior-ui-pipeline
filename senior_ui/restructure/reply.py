@@ -58,7 +58,7 @@ def _check_steps(flow, html, steps, screens):
 
 def _check_handlers(flow, html, steps, screens):
     """클릭 처리기가 검사기가 읽을 수 있는 모양인지, 분기 없는 data-action 이
-    있는지. audit.py 는 아래 패턴 하나로만 처리기를 읽는다 - switch/case 나 다른
+    있는지. 검사기는 아래 패턴 하나로만 처리기를 읽는다 - switch/case 나 다른
     변수 이름을 쓰면 모든 data-action 이 죽은 것으로 보인다."""
     problems = []
     handled = set(re.findall(r"a\s*===\s*'([a-z-]+)'", html))
@@ -196,7 +196,7 @@ CHECKS = [_check_steps, _check_handlers, _check_step_screens, _check_transitions
 
 
 def validate_flow(flow, html):
-    """Shape checks audit.py would otherwise crash on, phrased for the model."""
+    """Shape checks the audit would otherwise crash on, phrased for the model."""
     if not isinstance(flow, dict):
         return ["흐름 명세가 객체가 아니다"]
     # literal names only - a template literal like data-screen="${x}" in the

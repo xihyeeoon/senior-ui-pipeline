@@ -227,7 +227,7 @@ def _drive_audit(r, n, build):
     try:
         return run_audit(r.orig_snapshot, r.original_html, build["html_path"],
                          build["flow_path"], url_for(rel), shots, r.args.stage)
-    except Exception as e:                           # a flow audit.py cannot drive
+    except Exception as e:                           # a flow the audit cannot drive
         r.log("audit: crashed: %s: %s" % (type(e).__name__, e))
         return failure_report("AUDIT", "검사기가 흐름 명세를 실행하지 못했다: %s: %s"
                               % (type(e).__name__, e))

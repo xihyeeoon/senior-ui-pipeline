@@ -9,7 +9,7 @@ pipeline already writes.
   outputs/*.html                   the builds themselves
   flows/*.json                     screen order
   outputs/shots/**/*.png           per-screen screenshots
-  docs/restructure-changelog.md    the 28 changes
+  docs/restructure-changelog.md    the 37 changes
   kb/senior_kb.csv                 the 46 rules, to mark which were cited
   inputs/original_transfer.html    the baseline
 
@@ -61,17 +61,14 @@ ORDER = ["restructured_transfer", "restructured_run2",
 #                id 에 대응시키는 사후 대조에만 쓴다.
 #   실험 조건    원본 vs 재구성본 둘.
 #
-# 규칙 기반 수리본은 2026-09-30 에 연구에서 빠졌고 파일도 지웠다. 그 시기의
-# 산출물이 outputs/ 에 남아 있어도 색인에 넣지 않는다 - 빌드가 어느 것인지는
-# 파일 이름으로 가른다.
-SKIP_PREFIXES = ("repaired_", "comp_", "property_")
-
+# 규칙 기반 수리본은 2026-09-30 에 연구에서 빠졌다. 파일도 산출물도 더는 없으므로
+# 이름으로 걸러낼 것이 없다.
 PIPELINE = [
     {"id": "capture", "name": "캡처", "note": "신한 SOL 화면을 8화면 시제품으로",
      "artifact": "inputs/original_transfer.html"},
     {"id": "restructure", "name": "LLM 재구성", "note": "과업의 어려움을 보고 구조를 다시 설계",
      "artifact": "outputs/restructured_*.html"},
-    {"id": "audit", "name": "검사기", "note": "와이어프레임은 A·B·C·F, 스타일 이식 후 A~H",
+    {"id": "audit", "name": "검사기", "note": "와이어프레임은 A·B·C·F·I, 스타일 이식 후 A~I",
      "artifact": "senior_ui/audit/stage.py"},
     {"id": "style", "name": "스타일 이식", "note": "시각 디테일을 채운다 — 아직",
      "artifact": None},
@@ -173,9 +170,6 @@ def match_shots(dirs, flow_name, build_id, want_prefix=None):
             candidates.append(d)
         elif leaf == build_id:
             candidates.append(d)
-    # audit.py's default --shots directory
-    if not candidates and flow_name == "original":
-        candidates = [d for d in dirs if d.rsplit("/", 1)[-1] == "audit"]
 
     out = {}
     for d in candidates:
@@ -259,8 +253,6 @@ def audited_builds():
         build_rel = url_to_rel((d.get("inputs") or {}).get("repaired"))
         if not build_rel or not os.path.exists(os.path.join(ROOT, build_rel)):
             continue      # audit of a build that no longer exists (old layout)
-        if os.path.basename(build_rel).startswith(SKIP_PREFIXES):
-            continue      # 규칙 기반 시기의 산출물
         yield name, path, d, build_rel
 
 
@@ -270,7 +262,7 @@ def merge_audit(prev, name, path, d):
     돌려주는 것은 새 기록의 other_audits 에 들어갈 목록, 또는 None - None 이면
     이번 audit 을 버리고 이미 있는 기록을 그대로 둔다.
 
-    audit.py writes both --out and a stdout copy; the stdout one is a duplicate
+    The audit CLI writes both --out and a stdout copy; the stdout one is a duplicate
     and never interesting. 같은 빌드를 다른 흐름으로 검사한 것이면 둘 다
     남긴다. 조건을 바꾸면 결과가 어떻게 달라지는지가 이 프로젝트에서 가장 알고
     싶은 것이다."""
@@ -412,7 +404,7 @@ def parse_changelog():
     with io.open(path, encoding="utf-8") as f:
         lines = f.read().splitlines()
 
-    changes, section, n = [], None, 0
+    changes, section = [], None
     for line in lines:
         h = re.match(r"^##\s+(.*)", line)
         if h:
@@ -429,8 +421,7 @@ def parse_changelog():
             num, before, after, why, rules = cells
             num = int(num)
         elif len(cells) == 3:
-            # 용어 절은 원문에 번호가 없다. 표시할 때 구분되도록 표시해 둔다.
-            n += 1
+            # 용어 절은 원문에 번호가 없다. n=None 으로 두어 표시할 때 구분된다.
             num, before, after, why, rules = None, cells[0], cells[1], "", cells[2]
         else:
             continue

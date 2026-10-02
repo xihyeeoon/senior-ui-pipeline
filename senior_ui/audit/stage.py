@@ -9,8 +9,8 @@ colour is judging work that has not been done yet - a designer fills that in
 later. So the wireframe stage runs only the checks that are about whether the
 thing works at all, and the styled stage runs everything.
 
-    wireframe   A 과제 완주 · B 표시 정확성 · C 죽은 컨트롤 · F 언어
-    styled      A~H 전부
+    wireframe   A 과제 완주 · B 표시 정확성 · C 죽은 컨트롤 · F 언어 · I 선택지
+    styled      A~I 전부
 
 This does not modify core.py. It takes the report core.audit() already produced,
 drops the findings whose check is out of scope for the stage, and records what

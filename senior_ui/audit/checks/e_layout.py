@@ -64,7 +64,8 @@ def run(ctx):
             else:
                 wrap_new.append(dict(x, screen=n))
     metrics["newly_wrapped_text"] = len(wrap_new)
-    if not ctx.derived and not shared:
+    # derived 가 거짓이면 shared 는 늘 비어 있다 (core.audit 이 그렇게 만든다).
+    if not ctx.derived:
         ctx.skipped.append(
             "E/newly-wrapped text and height growth (no shared screens)")
     for x in wrap_new[:20]:

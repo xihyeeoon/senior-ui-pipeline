@@ -19,7 +19,7 @@ Everything from a run lands in outputs/restructure_auto/<timestamp>/:
   attempt_N.prompt.txt   the exact prompt sent
   attempt_N.response.txt the raw reply
   attempt_N.html / attempt_N.flow.json
-  attempt_N.audit.json   audit.py's report (or the parse/validation failure)
+  attempt_N.audit.json   the audit's report (or the parse/validation failure)
   shots/attempt_N/       one screenshot per screen reached
   run.log, summary.json
 

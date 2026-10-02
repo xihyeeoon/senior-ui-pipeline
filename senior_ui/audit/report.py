@@ -14,8 +14,8 @@ them next to each other. This takes any number of those files and prints:
                      --max per check)
 
 Usage:
-  python -m senior_ui.audit.report results/audit.json results/audit_restructured.json
-  python -m senior_ui.audit.report 규칙기반=results/audit.json Run1=results/audit_restructured.json \
+  python -m senior_ui.audit.report results/audit_restructured.json results/audit_run2.json
+  python -m senior_ui.audit.report Run1=results/audit_restructured.json \
       Run2=results/audit_run2.json Run3=results/audit_run3.json --details --out docs/audit-report.md
 
 A bare path is labelled by its file name with the "audit_" prefix dropped, so
