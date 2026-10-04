@@ -429,3 +429,41 @@ def test_declaring_a_removal_does_not_change_the_kept_count(i_declared):
     찾을 수 있는 값의 수 그대로여야 한다."""
     assert i_declared["metrics"]["choice_values_kept"] == {"quick": 2}
 
+# --------------------------------------------------------------------- #
+# 4-2. 경계는 값의 글자 종류마다 다르다
+# --------------------------------------------------------------------- #
+@pytest.fixture(scope="module")
+def i_suffix(server):
+    return run_audit("i_suffix.json", "i_suffix_build.html",
+                     orig_page="i_suffix_orig.html")
+
+
+def test_a_hangul_value_may_grow_a_suffix(i_suffix):
+    """원본의 "국민" 을 빌드가 "국민은행" 으로 쓰는 것은 그 은행을 뺀 것이
+    아니다. 한글은 뒤에 말이 붙어 늘어나므로 앞쪽 경계만 본다.
+
+    낱말 경계를 양쪽에 걸면 Run4 처럼 은행 이름을 길게 쓴 빌드에서 멀쩡한
+    선택지가 전부 누락으로 세진다.
+    """
+    missing = i_suffix["metrics"]["choice_values_missing"].get("pick-bank", [])
+    assert missing == ["가람"], details(i_suffix["fatal"])
+    assert i_suffix["metrics"]["choice_values_kept"] == {"pick-bank": 2}
+
+
+def test_the_boundary_rule_follows_the_characters_in_the_value():
+    """계약: 값의 글자 종류가 경계를 정한다. 브라우저가 필요 없는 규칙이므로
+    여기서 직접 본다."""
+    from senior_ui.audit.checks.i_choices import present
+    # 한글 - 뒤는 늘어나도 되고, 앞은 붙으면 안 된다
+    assert present("국민", '<b data-bank="국민은행">')
+    assert not present("국민", '<b data-bank="농협국민">')
+    # 영문 - 앞뒤 모두 낱말 경계
+    assert present("all", '<b data-v="all">')
+    assert not present("all", '<p class="small">')
+    # 숫자 - 숫자가 붙으면 안 되고, 한글 단위는 붙어도 된다
+    assert present("10000", '<b data-v="10000">')
+    assert present("10000", "<p>10000원</p>")
+    assert not present("10000", '<b data-v="110000">')
+    # 숫자 - 영문 글자가 붙은 것은 다른 토막이다 (색 코드의 00 은 숫자판이 아니다)
+    assert not present("00", "<script>'#6B5B00'</script>")
+    assert present("00", '<b data-v="00">')

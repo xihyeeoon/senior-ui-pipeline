@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 I - 원본 쪽: 짧은 이름으로 둔 은행 목록</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- 원본은 은행을 짧은 이름으로 둔다 (진짜 원본의 data-bank 도 그렇다).
+     빌드가 같은 은행을 긴 이름으로 쓰면 글자는 달라도 같은 선택지다. -->
+<section class="screen on" data-screen="start" id="start">
+  <p id="amt">10,000원</p>
+  <div class="banks">
+    <button data-action="pick-bank" data-bank="국민">국민</button>
+    <button data-action="pick-bank" data-bank="신한">신한</button>
+    <button data-action="pick-bank" data-bank="가람">가람</button>
+  </div>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'pick-bank') { /* 은행을 고른다 */ }
+});
+</script>
+</body>
+</html>
