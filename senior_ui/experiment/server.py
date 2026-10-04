@@ -72,6 +72,21 @@ ALLOW = tuple(re.compile(x) for x in (
 ))
 
 
+# --session 을 줄 때만 더해지는 것. HTML 실험 장치(web/session.html)는
+# 본실험에 쓰지 않으므로 기본으로는 이것도 404 다.
+SESSION_ALLOW = tuple(re.compile(x) for x in (
+    r"web/session\.[A-Za-z0-9]+",
+))
+
+# 루프백으로 들어온 요청인가. 서버는 127.0.0.1 에만 바인드하므로 밖에서는
+# 닿지 않지만, 세션 저장은 받는 쪽에서도 한 번 더 본다.
+LOCAL = ("127.0.0.1", "::1", "::ffff:127.0.0.1")
+
+
+def is_local(addr):
+    return addr in LOCAL
+
+
 def clean_path(path):
     """요청 경로를 루트 기준 상대 경로로 바로잡는다. 질의와 %XX 를 풀고
     '.' 과 '..' 을 접는다. 루트 위로 올라가려는 '..' 은 버린다.
@@ -91,9 +106,10 @@ def clean_path(path):
     return "/".join(out)
 
 
-def allowed(rel):
+def allowed(rel, with_session=False):
     """바로잡은 경로가 허용 목록에 있는가. 파일을 보지 않는다."""
-    return any(p.fullmatch(rel) for p in ALLOW)
+    pats = ALLOW + SESSION_ALLOW if with_session else ALLOW
+    return any(p.fullmatch(rel) for p in pats)
 
 
 def make_server(port, handler):
@@ -123,7 +139,10 @@ def local_ip():
         s.close()
 
 
-def make_handler(sessions_dir, tasks):
+def make_handler(sessions_dir, tasks, allow_session=False):
+    """allow_session=False 면 HTML 실험 장치(web/session.* · /api/config ·
+    /api/sessions · /api/session)가 전부 404 다. 대시보드만 쓸 때의 기본값."""
+
     class H(SimpleHTTPRequestHandler):
         def __init__(self, *a, **kw):
             super().__init__(*a, directory=ROOT, **kw)
@@ -141,7 +160,7 @@ def make_handler(sessions_dir, tasks):
             """허용 목록에 있으면 바로잡은 경로를, 아니면 404 를 보내고
             None 을 돌려준다."""
             rel = clean_path(self.path)
-            if not allowed(rel):
+            if not allowed(rel, allow_session):
                 self.send_error(404, "Not found")
                 return None
             return "/" + rel
@@ -160,17 +179,16 @@ def make_handler(sessions_dir, tasks):
             self.wfile.write(body)
 
         def do_GET(self):
-            if self.path.split("?")[0] == "/api/config":
+            if allow_session and self.path.split("?")[0] == "/api/config":
                 return self._json(200, {"conditions": CONDITIONS, "tasks": tasks})
+            if allow_session and self.path.split("?")[0] == "/api/sessions":
+                files = sorted(os.listdir(sessions_dir)) if os.path.isdir(sessions_dir) else []
+                return self._json(200, {"files": [f for f in files if f.endswith(".json")]})
             if self.path.split("?")[0] == "/api/reindex":
                 try:
                     return self._json(200, reindex())
                 except Exception as e:
                     return self._json(500, {"error": "%s: %s" % (type(e).__name__, e)})
-            if self.path.split("?")[0] == "/api/sessions":
-                files = sorted(os.listdir(sessions_dir)) if os.path.isdir(sessions_dir) else []
-                return self._json(200, {"files": [f for f in files if f.endswith(".json")]})
-
             p = self._static()
             if p is None:
                 return
@@ -187,6 +205,12 @@ def make_handler(sessions_dir, tasks):
         def do_POST(self):
             if self.path.split("?")[0] != "/api/session":
                 return self._json(404, {"error": "unknown endpoint"})
+            if not allow_session:
+                # 본실험은 Flutter 더미앱으로 한다. --session 없이는 세션을
+                # 받지 않는다 - 폴더도 만들지 않는다.
+                return self._json(404, {"error": "session saving is off (--session)"})
+            if not is_local(self.client_address[0]):
+                return self._json(403, {"error": "127.0.0.1 에서만 받습니다"})
             try:
                 n = int(self.headers.get("Content-Length") or 0)
                 data = json.loads(self.rfile.read(n).decode("utf-8"))
@@ -222,6 +246,9 @@ def build_parser():
     ap.add_argument("--sessions", default=os.path.join(ROOT, "sessions"))
     ap.add_argument("--task-file", default=None,
                     help="JSON list of {name, instruction} to replace the built-in tasks")
+    ap.add_argument("--session", action="store_true",
+                    help="HTML 실험 장치(web/session.html · /api/session)를 켠다. "
+                         "본실험은 Flutter 더미앱으로 하므로 기본은 꺼짐이다")
     return ap
 
 
@@ -232,14 +259,15 @@ def main():
     if args.task_file:
         tasks = json.load(io.open(args.task_file, encoding="utf-8"))
 
-    os.makedirs(args.sessions, exist_ok=True)
+    if args.session:
+        os.makedirs(args.sessions, exist_ok=True)
     try:
         r = reindex()
         print(" 인덱스: 빌드 %d개 · 변경 %d건" % (r["builds"], r["changes"]))
     except Exception as e:
         print(" 인덱스를 만들지 못했습니다: %s" % e)
     ip = local_ip()
-    handler = make_handler(args.sessions, tasks)
+    handler = make_handler(args.sessions, tasks, allow_session=args.session)
 
     print("=" * 62)
     print(" 실험 진행 서버")

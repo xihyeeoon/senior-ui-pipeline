@@ -57,7 +57,7 @@ def req(port, path, method="GET", body=None):
 
 
 def handler_kw(**over):
-    kw = {"sessions_dir": None, "tasks": []}
+    kw = {"sessions_dir": None, "tasks": [], "allow_session": False}
     kw.update(over)
     return kw
 
@@ -229,3 +229,76 @@ def test_index_가_가리키는_빌드와_스크린샷이_다_나간다():
             if status != 200:
                 bad.append((rel, status))
     assert not bad, "대시보드가 읽는데 서버가 막는다: %r" % (bad,)
+
+# --------------------------------------------------------------------- #
+# /api/session: 기본으로 꺼져 있다
+# --------------------------------------------------------------------- #
+# 본실험은 Flutter 더미앱으로 한다. HTML 실험 장치는 쓰지 않으므로 세션을
+# 받아 쓰는 길도 기본으로 닫는다. --session 을 줄 때만 열리고, 그때도
+# 127.0.0.1 에서 온 요청만 받는다.
+#
+# 저장 테스트는 tmp_path 에만 쓴다 - 레포의 sessions/ 는 건드리지 않는다.
+PAYLOAD = {"participant": 1, "condition": "original", "order_index": 0,
+           "completed": True, "elapsed_ms": 1234,
+           "metrics": {"seconds": 12.3, "taps": 9, "misses": 0, "backs": 1},
+           "events": []}
+
+
+def post_session(port, payload=None):
+    body = json.dumps(payload if payload is not None else PAYLOAD).encode("utf-8")
+    return req(port, "/api/session", method="POST", body=body)
+
+
+def test_기본으로는_세션을_받지_않는다(tmp_path):
+    sess = tmp_path / "sessions"
+    with serving(**handler_kw(sessions_dir=str(sess))) as port:
+        status, _, _ = post_session(port)
+    assert status == 404
+    assert not sess.exists(), "꺼져 있는데 폴더를 만들었다"
+
+
+@pytest.mark.parametrize("path", ["/api/config", "/api/sessions"])
+def test_실험_장치_전용_엔드포인트도_기본으로_꺼져_있다(path):
+    with serving(**handler_kw()) as port:
+        status, _, _ = req(port, path)
+    assert status == 404
+
+
+def test_session_옵션을_주면_저장된다(tmp_path):
+    sess = tmp_path / "sessions"
+    with serving(**handler_kw(sessions_dir=str(sess), allow_session=True)) as port:
+        status, body, _ = post_session(port)
+    assert status == 200, body
+    assert json.loads(body)["ok"] is True
+    assert [f.name for f in sess.iterdir()] == ["P01_1_original.json"]
+
+
+@pytest.mark.parametrize("path", ["/api/config", "/api/sessions", "/web/session.html"])
+def test_session_옵션을_주면_실험_장치도_나간다(path, tmp_path):
+    kw = handler_kw(sessions_dir=str(tmp_path), allow_session=True)
+    with serving(**kw) as port:
+        status, body, _ = req(port, path)
+    assert status == 200, body
+
+
+# 루프백에만 바인드하므로 밖에서는 닿지 않지만, 받는 쪽에서도 한 번 더 본다.
+@pytest.mark.parametrize("addr,ok", [
+    ("127.0.0.1", True),
+    ("::1", True),
+    ("::ffff:127.0.0.1", True),
+    ("192.168.0.5", False),
+    ("10.11.140.123", False),
+    ("0.0.0.0", False),
+    ("", False),
+])
+def test_루프백_판정(addr, ok):
+    assert _api.srv_is_local(addr) is ok
+
+
+def test_session_을_켜도_밖에서_온_요청은_거절한다(tmp_path, monkeypatch):
+    sess = tmp_path / "sessions"
+    monkeypatch.setattr(_api.srv_module, "is_local", lambda addr: False)
+    with serving(**handler_kw(sessions_dir=str(sess), allow_session=True)) as port:
+        status, _, _ = post_session(port)
+    assert status == 403
+    assert not sess.exists()

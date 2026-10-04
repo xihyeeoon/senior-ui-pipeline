@@ -70,6 +70,8 @@ ROOT_DIR = _config.ROOT
 srv_make_handler = _exp_server.make_handler
 srv_make_server = _exp_server.make_server
 srv_parser = _exp_server.build_parser
+srv_is_local = _exp_server.is_local
+srv_module = _exp_server
 
 # ---- senior_ui/experiment/report.py (집계 함수) ------------------------- #
 sr_load = _session_report.load
