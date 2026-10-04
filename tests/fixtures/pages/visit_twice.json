@@ -1,0 +1,24 @@
+{
+  "name": "visit_twice",
+  "note": "흐름이 'start' 를 두 번 지난다. 두 번째 방문이 첫 번째를 덮어쓰면 첫 방문의 틀린 금액이 사라진다. 방문 이름은 첫 방문이 화면 이름 그대로이고 두 번째가 'start#2' 다.",
+  "derived_from_original": false,
+  "required_ids": ["start", "detail", "done", "amt"],
+  "steps": [
+    {"screen": "start"},
+    {"screen": "detail", "click": "[data-action='go-detail']"},
+    {"screen": "start", "click": "[data-action='back']"},
+    {"screen": "done", "click": "[data-action='go-done']"}
+  ],
+  "expect": {
+    "start": [
+      ["#amt", "{AMOUNT_SHOWN}"]
+    ],
+    "start#2": [
+      ["#amt", "{AMOUNT_SHOWN}"]
+    ],
+    "done": [
+      ["#dn-amt", "{AMOUNT_SHOWN}"]
+    ]
+  },
+  "done_amount": "#dn-amt"
+}

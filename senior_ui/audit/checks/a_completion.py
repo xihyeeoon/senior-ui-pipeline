@@ -79,7 +79,7 @@ def _screens_reached(ctx):
             F("A", name, "화면 전환 후 window.__screen() 이 null 을 반환했다. "
                          "기록 훅 __screen() 은 현재 화면의 id 를 반환해야 한다. "
                          "원본 HTML 의 __screen() · __startTask() · __dump() 를 유지하라.")
-        elif row["landed_on"] != name:
+        elif row["landed_on"] != ctx.screen(name):
             # 예외는 나지 않았지만 과제는 여기서 더 나아가지 못했다. 뒤의 화면
             # 들은 그 결과이므로, 멈춘 곳으로 적어 파생으로 묶이게 한다.
             # 적지 않으면 첫 "도달 못 함" 이 stopped_at 을 자기 이름으로 채워,
@@ -87,7 +87,7 @@ def _screens_reached(ctx):
             F("A", name, "landed on %r instead" % row["landed_on"])
             if not ctx.stopped_at:
                 ctx.stopped_at = name
-        elif row.get("dom_screen") != name:
+        elif row.get("dom_screen") != ctx.screen(name):
             # 기록은 넘어갔는데 화면은 넘어가지 않았다. 예외도 나지 않고
             # __screen() 도 맞는 이름을 돌려주므로, 기록 하나만 보면 완주한
             # 것으로 보인다 - 사용자는 앞 화면에 그대로 서 있다. 엉뚱한 화면에
@@ -96,7 +96,8 @@ def _screens_reached(ctx):
                          "(`.screen.on`)의 data-screen 은 %r 이다. 기록만 "
                          "바뀌고 화면은 넘어가지 않았으므로 사용자는 아직 %r "
                          "을 보고 있다. 화면을 넘길 때 on 클래스를 함께 옮겨라."
-              % (name, row.get("dom_screen"), row.get("dom_screen")),
+              % (ctx.screen(name), row.get("dom_screen"),
+                 row.get("dom_screen")),
               dom_screen=row.get("dom_screen"))
             if not ctx.stopped_at:
                 ctx.stopped_at = name
@@ -110,15 +111,15 @@ def _transition_ids(ctx):
           + ", ".join(rep["missing_ids"]), lost=rep["missing_ids"])
 
 
-def _arrived(row, name):
+def _arrived(row, screen):
     """그 화면에 실제로 도착했는지. 도착하지 못한 화면에 무엇이 보이는지는
     물을 수 없다 - 물으면 한 번의 실패가 두 건이 된다.
 
     기록과 화면이 둘 다 그 이름이어야 도착이다. _screens_reached 의 판정과
     같은 규칙이어야 하므로 여기도 같이 본다."""
     return (bool(row) and "error" not in row
-            and row.get("landed_on") == name
-            and row.get("dom_screen") == name)
+            and row.get("landed_on") == screen
+            and row.get("dom_screen") == screen)
 
 
 def _amount_round_trip(ctx):
@@ -137,7 +138,7 @@ def _amount_round_trip(ctx):
     # 도착하지 못했으면(멈춤·오류·엉뚱한 화면) 금액은 애초에 볼 수 없다.
     # _screens_reached 가 그 도착 실패를 이미 fatal 로 적었으므로, 여기서 또
     # 적으면 결함 하나가 두 번 세진다. 지표(done_amount)는 그대로 남긴다.
-    if not _arrived(done, last_screen):
+    if not _arrived(done, ctx.screen(last_screen)):
         return
     # 흐름의 expect 에 같은 선택자가 적혀 있으면 검사 B 가 같은 값을 같은 기준
     # 으로 이미 본다. 결함은 하나이므로 거기에 맡기고 여기서는 지표만 남긴다.

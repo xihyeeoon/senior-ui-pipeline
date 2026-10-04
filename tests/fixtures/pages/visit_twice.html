@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>걷기 - 같은 화면을 두 번 지난다</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- 흐름이 '시작' 화면을 두 번 지난다. 첫 방문에는 금액이 틀려 있고 (9,000원),
+     '자세히' 를 거쳐 돌아오면 고쳐져 있다 (10,000원).
+
+     방문을 화면 이름 하나로만 기록하면 두 번째 방문이 첫 번째를 덮어쓴다.
+     그러면 첫 방문의 틀린 금액은 아무도 보지 못한 일이 되고, 사용자가 실제로
+     틀린 값을 보고 지나간 화면이 통과로 세어진다. -->
+<section class="screen on" data-screen="start" id="start">
+  <p id="amt">9,000원</p>
+  <div><button data-action="go-detail">자세히</button></div>
+  <div><button data-action="go-done">보내기</button></div>
+</section>
+<section class="screen" data-screen="detail" id="detail">
+  <p>보낼 돈을 고칩니다</p>
+  <div><button data-action="back">돌아가기</button></div>
+</section>
+<section class="screen" data-screen="done" id="done">
+  <p id="dn-amt">10,000원</p>
+  <p>보냈습니다</p>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+const show = (name) => {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+  document.getElementById(name).classList.add('on');
+  window.__task.screen = name;
+};
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'go-detail') { show('detail'); }
+  if (a === 'back') {
+    document.getElementById('amt').textContent = '10,000원';
+    show('start');
+  }
+  if (a === 'go-done') { show('done'); }
+});
+</script>
+</body>
+</html>

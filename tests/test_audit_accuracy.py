@@ -876,3 +876,41 @@ def test_a_dialog_raised_as_the_walk_ends_is_still_caught(drive_dialog_late):
     assert hit[0]["screen"] == "done"
     assert "보내기 결과를 확인하세요" in hit[0]["detail"]
     assert drive_dialog_late["metrics"]["dialogs_during_task"] == 1
+
+
+# ===================================================================== #
+# 11. 같은 화면을 두 번 지나면 두 번째 방문이 첫 번째를 덮어쓴다
+# ===================================================================== #
+@pytest.fixture(scope="module")
+def visit_twice(server):
+    return drive_and_audit("visit_twice.json", "visit_twice.html")
+
+
+def test_each_visit_is_kept_in_order(visit_twice):
+    """방문은 순서대로 남는다 - 첫 방문은 화면 이름 그대로, 그다음은 `#2`."""
+    assert list(visit_twice["rep"]["screens"]) == ["start", "detail",
+                                                   "start#2", "done"]
+    assert visit_twice["report"]["metrics"]["screens_in_flow"] == [
+        "start", "detail", "start#2", "done"]
+
+
+def test_the_first_visit_is_not_overwritten_by_the_second(visit_twice):
+    """첫 방문의 틀린 금액은 사용자가 실제로 본 것이다.
+
+    고치기 전: 두 번째 방문이 `screens['start']` 를 덮어썼다. 돌아왔을 때는
+    금액이 고쳐져 있으므로 검사 B 는 통과했다 - 사용자가 틀린 값을 보고 지나간
+    화면이 아무도 보지 못한 일이 됐다.
+    """
+    hit = [f for f in fatals(visit_twice["report"], "B")
+           if f.get("selector") == "#amt"]
+    assert len(hit) == 1, details(visit_twice["report"]["fatal"])
+    assert hit[0]["screen"] == "start"
+    assert hit[0]["got"] == "9,000원"
+
+
+def test_the_second_visit_passes_on_its_own(visit_twice):
+    """두 번째 방문은 고쳐진 값을 보여 준다 - 방문마다 따로 판정한다."""
+    assert [f for f in fatals(visit_twice["report"], "B")
+            if f.get("screen") == "start#2"] == []
+    assert len(visit_twice["report"]["fatal"]) == 1, \
+        details(visit_twice["report"]["fatal"])

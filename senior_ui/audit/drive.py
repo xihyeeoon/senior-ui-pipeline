@@ -11,7 +11,10 @@ from playwright.async_api import TimeoutError as PlaywrightTimeout
 from playwright.async_api import async_playwright
 
 from . import probes as P
-from .flow import fill
+from .flow import fill, visit_keys
+
+# 방문 이름의 `#` 는 파일 이름에서는 쓰지 않는다 (URL 에서 조각 구분자다).
+SHOT_SAFE = re.compile(r"[^0-9A-Za-z_.-]")
 
 # A `%s`-bearing attribute selector, e.g. the [data-v='%s'] in
 # "[data-action='acc-num'][data-v='%s']". Dropping it leaves the selector that
@@ -232,7 +235,7 @@ async def drain_dialogs(tasks, grace_ms=DIALOG_GRACE_MS):
         await asyncio.gather(*pending, return_exceptions=True)
 
 
-async def collect_screen(page, flow, name, reached=None):
+async def collect_screen(page, flow, visit, reached=None):
     """한 화면에 도착한 뒤의 상태를 전부 긁어 하나의 row 로 돌려준다.
 
     `reached` 를 주면 __screen() 의 답을 긁기 직전에 거기에 먼저 적는다. 걷는
@@ -261,8 +264,10 @@ async def collect_screen(page, flow, name, reached=None):
     row["overlap"] = await page.evaluate(P.OVERLAP)
     row["overflow"] = await page.evaluate(P.OVERFLOW)
     row["wrapped"] = await page.evaluate(P.WRAPPED)
+    # expect 는 방문 이름으로 적는다 - 화면 이름만 적으면 첫 방문이다
+    # (flow.visit_keys 참고).
     row["shown"] = await page.evaluate(
-        SHOWN, [fill(s) for s, _ in flow["expect"].get(name, [])])
+        SHOWN, [fill(s) for s, _ in flow["expect"].get(visit, [])])
     return row
 
 
@@ -300,7 +305,7 @@ async def walk(page, flow, data, want_shots, url):
     data["state_pairs"] = await page.evaluate(P.STATE_PAIRS)
     data["undefined_classes"] = await page.evaluate(P.UNDEFINED_CLASSES)
 
-    for step in flow["steps"]:
+    for step, visit in zip(flow["steps"], visit_keys(flow["steps"])):
         name = step["screen"]
         try:
             if "do" in step:
@@ -312,7 +317,7 @@ async def walk(page, flow, data, want_shots, url):
             hint = await where_is(page, msg)
             if hint:
                 msg += " || " + hint
-            data["screens"][name] = {"error": msg}
+            data["screens"][visit] = {"error": msg}
             break
         if not await settle(page, name):
             data["notes"].append(
@@ -320,8 +325,8 @@ async def walk(page, flow, data, want_shots, url):
                 "무엇이 켜져 있었는지는 검사 A 가 적는다."
                 % (name, SETTLE_TIMEOUT_MS))
 
-        data["screens"][name] = await collect_screen(
-            page, flow, name, data["reached"])
+        data["screens"][visit] = await collect_screen(
+            page, flow, visit, data["reached"])
         if want_shots:
             await page.screenshot(path=os.path.join(
-                want_shots, "audit_%s.png" % name))
+                want_shots, "audit_%s.png" % SHOT_SAFE.sub("_", visit)))

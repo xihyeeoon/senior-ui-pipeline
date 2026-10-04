@@ -35,6 +35,7 @@ from .checks import (a_completion, b_display, c_dead_controls, d_contrast,
                      e_layout, f_language, g_state, h_undefined_class,
                      i_choices)
 from .context import AuditContext
+from .flow import visit_keys
 
 # 집계보다 앞서 도는 검사들. 순서가 곧 fatal/warning 목록과 metrics 키의
 # 순서다 - 바꾸면 출력이 바뀐다. I 도 fatal 검사이므로 여기 들어 있어야 한다.
@@ -90,7 +91,9 @@ def audit(orig, rep, orig_html, rep_html, flow):
     # meaningful when the two share a structure, so those checks stand down and
     # say so rather than reporting noise.
     derived = bool(flow.get("derived_from_original", True))
-    want = [s["screen"] for s in flow["steps"]]
+    # 걸음마다 하나씩, 같은 화면을 두 번 지나면 두 번째는 "review#2" 다
+    # (flow.visit_keys 참고). 스냅샷의 screens 키도 같은 이름이다.
+    want = visit_keys(flow["steps"])
     # A name match is not a screen match: both designs happen to contain a
     # "bank" and an "amount" that have nothing to do with each other. Only a
     # build derived from the original may be compared screen by name.
@@ -98,7 +101,9 @@ def audit(orig, rep, orig_html, rep_html, flow):
         if derived else []
     ctx = AuditContext(orig=orig, rep=rep, orig_html=orig_html,
                        rep_html=rep_html, flow=flow, derived=derived,
-                       want=want, shared=shared)
+                       want=want, shared=shared,
+                       screen_of=dict(zip(want, (s["screen"]
+                                                 for s in flow["steps"]))))
     ctx.metrics["flow"] = flow["name"]
     ctx.metrics["derived_from_original"] = derived
     ctx.metrics["screens_in_flow"] = want

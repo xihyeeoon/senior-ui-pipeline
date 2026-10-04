@@ -30,6 +30,30 @@ def fill(s):
     return s
 
 
+def visit_keys(steps):
+    """흐름의 걸음마다 그 방문을 가리키는 이름.
+
+    흐름이 같은 화면을 두 번 지날 수 있다 (run4 의 흐름이 `account` 를 두 번
+    지난다). 방문을 화면 이름 하나로만 기록하면 두 번째 방문이 첫 번째를
+    덮어쓰므로, 첫 방문에 보인 틀린 값은 아무도 보지 못한 일이 된다 - 사용자가
+    실제로 그것을 보고 지나갔는데도.
+
+    첫 방문은 화면 이름 그대로이고 그다음부터 `#2`, `#3` 이 붙는다. 첫 방문의
+    이름을 바꾸지 않는 이유는 같은 화면을 두 번 지나지 않는 흐름 - 지금의 다섯
+    흐름 중 네 개 - 의 출력이 한 글자도 달라지지 않게 하기 위해서다.
+
+    흐름 파일의 `expect` 는 이 방문 이름으로 적는다. 화면 이름만 적으면 첫
+    방문에 걸린다 (`account`), 두 번째 방문은 `account#2` 다. 방문마다 보여야
+    하는 것이 다를 수 있으므로 모든 방문에 함께 걸지 않는다.
+    """
+    seen, out = {}, []
+    for step in steps:
+        name = step["screen"]
+        seen[name] = seen.get(name, 0) + 1
+        out.append(name if seen[name] == 1 else "%s#%d" % (name, seen[name]))
+    return out
+
+
 def load_flow(path):
     """A flow file describes the screens, how to reach each one, and what each
     must be showing. Keeping it out of the code is what lets a restructured
