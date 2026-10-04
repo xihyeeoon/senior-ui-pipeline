@@ -16,6 +16,10 @@
 실행: `outputs/restructure_auto/20260930-145811/` (gpt-4o, `--stage wireframe`,
 3회 시도 중 3회차가 흐름 검증 통과 후 audit 도달)
 
+검사 결과 (`attempt_3`) — 옛 검사기: fatal 4 / warning 0, 통과 못 함 / 현재(v3):
+fatal 6 (근본 3 · 파생 3) / warning 0, 통과 못 함. 늘어난 2건은 검사 I(선택지
+보존)다. 멈춘 지점(`amount`)과 도달 화면(6 중 2)은 그대로다.
+
 ## Run 3 (2026-09-30, 예산 분리 후 첫 실행)
 
 - 화면 8개: `account-entry` · `bank-selection` · `amount-entry` · `confirm` ·
@@ -26,11 +30,16 @@
 
 실행: `outputs/restructure_auto/20260930-154405/` (형식 재시도 3회 / 검사 재시도 2회)
 
+검사 결과 — 마지막으로 검사까지 간 시도는 `attempt_4` 다. 옛 검사기: fatal 9 /
+warning 0, 통과 못 함 / 현재(v3): fatal 11 (근본 7 · 파생 4) / warning 0, 통과 못
+함. 늘어난 2건은 검사 I 다. 8화면 중 3화면 도달은 그대로다.
+
 ## Run 4 (2026-10-01) — 자동 파이프라인 첫 통과
 
 **검사 fatal 0 을 자동으로 달성한 첫 사례.** 시도 3 에서 통과했다 (형식 1회,
 검사 1회 소모).
 (검사 I 추가 이전 기준. 현재 기준은 아래 "지금 검사기로 다시 검사하면" 단락 참고)
+(옛 검사기: fatal 0 / warning 8, 통과 / 현재(v3): fatal 2 / warning 8, 통과 못 함)
 
 - 화면 7개: `start` · `account` · `bank` · `amount` · `confirm` · `password` · `done`
 - 계좌와 은행을 **분리**했다 (자동 Run 3 과 같고 Run 2 와 다르다)
@@ -38,6 +47,11 @@
 - 과제 완주: 8/8 도달, 완료 화면 금액 10,000 일치
 - 저대비 66 → 0 (단 wireframe 단계라 D 는 검사하지 않았다)
 - 남은 warning 8건은 전부 F(영어) — 상태바의 "LTE"
+
+위 세 줄은 v3 에서도 그대로다 — 8/8 도달, 완료 금액 10,000 일치, warning 8건 전부
+F(영어) `LTE`. 다만 **"저대비 66 → 0" 의 66 은 지금 검사기가 더 내놓지 않는
+수치다** (검사 D 의 전후 비교가 새 설계에서 내려가 `low_contrast_before` 가
+`null`). 생성물 쪽 0 은 그대로고, wireframe 단계라 D 는 여전히 검사하지 않는다.
 
 실행: `outputs/restructure_auto/20261001-125247/`
 (같은 폴더의 사본이 `results/runs/20261001-125247/` 에 있다 — 시도 1~3 의
@@ -53,6 +67,12 @@ Run 4 는 검사 I(선택지 보존, `b2db795`) 가 생기기 전의 검사기�
 검사기로 다시 검사하면 I 에서 fatal 2건(`pick-bank` 67개 중 64개 누락, `quick`
 4개 전부 누락)으로 통과하지 못한다. 그때 판정은 `results/audit_run4.json`, 다시
 검사한 결과는 `results/audit_run4.recheck.json`.
+
+**이 단락의 fatal 2 는 v3 에서도 같다** (`pick-bank` 64개 · `quick` 4개 누락).
+함께 적을 수치는 warning 이다 — 옛 검사기: warning 8 / 현재(v3): warning 8, 둘 다
+전부 F(영어) `LTE`. 다시 검사한 기록의 **지금 판본은 `results/audit_run4.v3.json`
+이다** — `audit_run4.recheck.json` 은 집계 버그를 고치기 전(3단계 이전)의
+기록이므로 더 이상 지금 수치가 아니다.
 
 ## 표 1. 같은 방식 내 편차 — 손수 제작 3회
 
