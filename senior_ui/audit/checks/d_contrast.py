@@ -14,16 +14,20 @@ r"""검사 D - 명암비. warning.
 화면이다. 그 비교를 그대로 돌리면 화면 수와 구성이 다른 것을 결함으로 읽으므로,
 돌리지 않고 `checks_stood_down` 에 이유를 적는다.
 
-두 가지는 비교가 아니다 - 그 화면만 보고 알 수 있다. 그래서 모든 화면에서 돈다.
+나머지는 비교가 아니다 - 그 화면만 보고 알 수 있다. 그래서 모든 화면에서 돈다.
 
+    기준 미달    글자가 그 크기에 필요한 명암비를 넘는지. 새 설계에서만 돈다 -
+                 수리본에서는 위의 개수 비교가 그 일을 하고, 원본이 이미 안고
+                 있던 저명암을 생성물의 결함으로 적으면 고칠 수 없는 경고가
+                 쌓인다. 비교가 물러난 자리를 메우는 판정이다.
     판정 불가    그라디언트나 이미지 위의 글자는 뒤에 깔린 색이 하나가 아니라
                  잴 수 없다. 통과로 세면 배경을 그림으로 깐 빌드가 가장 선명한
-                 빌드가 되므로 저명암과 따로 센다.
+                 빌드가 되므로 저명암과 따로 센다. 경고는 아니다.
     상속 색      자기 색이 없는 글자. 수리본에서는 "원본에 없던 것" 을 가릴 수
                  있으므로 그것만 적는다. 새 설계에는 가릴 기준이 없고, 색을
                  상속받는 것 자체는 흔한 모양이다 (Run1 한 빌드에 102건). 그래서
-                 상속받은 색이 실제로 읽히지 않는 것 - 이 검사가 잡으려는 "색이
-                 없어서 사라진 라벨" - 만 적는다.
+                 읽히지 않는 것만 세고, 경고는 기준 미달 쪽 finding 에 "상속받은
+                 색이다" 로 함께 담는다 - 결함 하나에 finding 하나.
 """
 import re
 
@@ -114,26 +118,74 @@ def _inherited(ctx):
               % (x["text"], x["color"]), cls=x["cls"], tag=x["tag"])
         return
 
+    # 새 설계에는 "원본에 없던 것" 을 가릴 기준이 없다. 상속 자체는 흔한 모양
+    # 이므로 (Run1 한 빌드에 102건 - 숫자판 버튼과 상태바까지 전부 상속이고 전부
+    # 멀쩡하다) 그대로 적으면 경고가 노이즈로 찬다. 읽히지 않는 것만 세고, 경고는
+    # _below_threshold 가 그 글자의 finding 하나에 함께 담는다 - 결함 하나에
+    # finding 하나여야 하므로 같은 글자를 두 번 적지 않는다.
     metrics["new_inherited_colour"] = None
-    unreadable = []
+    metrics["inherited_colour_unreadable"] = len(_unreadable_inherited(ctx))
+
+
+def _unreadable_inherited(ctx):
+    """자기 색이 없는데 그 색으로는 읽히지 않는 글자. {(방문, tag, text)}.
+
+    probes 의 두 목록은 class 를 자르는 길이가 달라 (tag, text) 로 맞춘다.
+    한 화면 안에서 그 둘이면 같은 요소를 가리킨다.
+    """
+    out = set()
     for n in ctx.want:
-        row = rep["screens"].get(n) or {}
-        # probes 의 두 목록은 class 를 자르는 길이가 달라 (tag, text) 로 맞춘다.
-        # 한 화면 안에서 그 둘이면 같은 요소를 가리킨다.
-        low = {(x["tag"], x["text"]): x for x in row.get("contrast") or []}
+        row = ctx.rep["screens"].get(n) or {}
+        low = {(x["tag"], x["text"]) for x in row.get("contrast") or []}
         for x in row.get("inherited") or []:
-            hit = low.get((x["tag"], x["text"]))
-            if hit:
-                unreadable.append(dict(x, screen=n, ratio=hit["ratio"],
-                                       need=hit["need"], bg=hit["bg"]))
-    metrics["inherited_colour_unreadable"] = len(unreadable)
-    for x in unreadable[:20]:
-        W("D", x["screen"], "%r 은 자기 색이 없는데 상속받은 색(%s)이 배경(%s)에서 "
-          "%.2f:1 이라 읽히지 않는다 (%.1f:1 이 필요하다). 이 글자에 색을 정해 "
-          "주는 규칙이 없다." % (x["text"], x["color"], x["bg"], x["ratio"],
-                                 x["need"]),
-          cls=x["cls"], tag=x["tag"], color=x["color"], ratio=x["ratio"],
-          need=x["need"], bg=x["bg"])
+            if (x["tag"], x["text"]) in low:
+                out.add((n, x["tag"], x["text"]))
+    return out
+
+
+def _below_threshold(ctx):
+    """기준에 못 미치는 글자를 하나씩. 새 설계에서만 돈다.
+
+    수리본에서는 개수의 전후 비교가 그 일을 한다 - 원본이 이미 안고 있던 저명암을
+    생성물의 결함으로 적으면 고칠 수 없는 경고가 쌓인다. 새 설계에는 그 전후가
+    없으므로 비교가 물러나고(_counts), 그 자리에 아무 말도 남지 않으면 읽을 수
+    없는 글이 조용히 통과한다. 그래서 비교 대신 기준으로 판정한다 - 비교가 아니라
+    "이 글자가 읽히는가" 이므로 짝이 되는 원본 화면이 필요 없다.
+
+    경계는 요소마다 다르다 (큰 글씨는 3.0:1, 나머지는 4.5:1). probes.CONTRAST 가
+    요소별로 그 경계를 적어 두므로 여기서는 그 목록을 그대로 쓴다 - 목록에 있는
+    것이 곧 기준 미달이다.
+
+    판정 불가(그라디언트·이미지 위)는 이 목록에 없다. 경고가 아니라 따로 세는
+    것이고 그것은 _undetermined 가 한다.
+    """
+    if ctx.derived:
+        return
+    rep, W = ctx.rep, ctx.warn
+    inherited = _unreadable_inherited(ctx)
+    seen = set()
+    for n in ctx.want:
+        for x in (rep["screens"].get(n) or {}).get("contrast") or []:
+            k = (n, x["tag"], x["cls"], x["text"])
+            if k in seen:
+                continue
+            seen.add(k)
+            if len(seen) > 20:
+                return
+            where = x["tag"] + ("." + x["cls"] if x["cls"] else "")
+            # 선언된 색과 눈에 닿는 색이 다르면 알파나 opacity 가 끼어 있다.
+            # 그 둘을 다 적지 않으면 왜 걸렸는지 설명되지 않는다.
+            lit = ("" if x.get("seen") in (None, x["color"])
+                   else " (눈에 닿는 색 %s)" % x["seen"])
+            own = (n, x["tag"], x["text"]) in inherited
+            why = (" 이 글자에 색을 정해 주는 규칙이 없다 - 상속받은 색이다."
+                   if own else "")
+            W("D", n, "%r (%s) 의 명암비가 %.2f:1 이다 - %.1f:1 이 필요하다. "
+              "글자색 %s%s, 배경 %s.%s"
+              % (x["text"], where, x["ratio"], x["need"], x["color"], lit,
+                 x["bg"], why),
+              cls=x["cls"], tag=x["tag"], color=x["color"], seen=x.get("seen"),
+              bg=x["bg"], ratio=x["ratio"], need=x["need"], inherited=own)
 
 
 def _gained_text(ctx):
@@ -176,7 +228,7 @@ def _gained_text(ctx):
 
 
 # 이 순서가 warning 목록과 metrics 키의 순서다 - 바꾸면 출력이 바뀐다.
-PARTS = [_counts, _inherited, _undetermined, _gained_text]
+PARTS = [_counts, _inherited, _below_threshold, _undetermined, _gained_text]
 
 
 def run(ctx):

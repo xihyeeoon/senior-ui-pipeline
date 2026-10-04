@@ -751,7 +751,9 @@ def test_the_count_comparison_stands_down_with_its_reason(d_newdesign):
 
 
 def test_the_new_design_page_has_nothing_else_wrong(d_newdesign):
-    assert len(warnings_of(d_newdesign, "D")) == 1, details(d_newdesign["warning"])
+    """이 페이지의 저대비 요소는 둘이다 - 색을 물려받은 것과 별표 자리의 것.
+    기준 미달은 하나씩 적으므로 경고도 둘이고, 그 둘뿐이어야 한다."""
+    assert len(warnings_of(d_newdesign, "D")) == 2, details(d_newdesign["warning"])
     assert d_newdesign["fatal"] == [], details(d_newdesign["fatal"])
 
 
@@ -914,3 +916,68 @@ def test_the_second_visit_passes_on_its_own(visit_twice):
             if f.get("screen") == "start#2"] == []
     assert len(visit_twice["report"]["fatal"]) == 1, \
         details(visit_twice["report"]["fatal"])
+
+
+# ===================================================================== #
+# 12. 새 설계에서 기준 미달 대비를 아무도 말하지 않는다
+# ===================================================================== #
+@pytest.fixture(scope="module")
+def d_below(server):
+    return drive_and_audit("d_below.json", "d_below.html")
+
+
+@pytest.fixture(scope="module")
+def d_below_derived(server):
+    return run_audit("d_below_derived.json", "d_below.html")
+
+
+def test_text_under_the_threshold_is_warned_one_by_one(d_below):
+    """3.25:1 짜리 안내문은 4.5:1 이 필요하다 - 읽을 수 없는 글이다.
+
+    고치기 전: warning 0건. 새 설계에서는 개수의 전후 비교가 물러나고 그 자리에
+    아무 말도 남지 않았으므로, 기준 미달인 글자가 조용히 통과했다.
+    """
+    hit = [w for w in warnings_of(d_below["report"], "D")
+           if w.get("ratio") and "흐린 안내문" in w["detail"]]
+    assert len(hit) == 1, details(d_below["report"]["warning"])
+    w = hit[0]
+    assert w["screen"] == "start"
+    assert w["tag"] == "p"
+    assert 3.0 < w["ratio"] < 3.5
+    assert w["need"] == 4.5
+    assert w["color"] == "rgb(138, 143, 152)"
+    assert w["bg"] == "rgb(255, 255, 255)"
+
+
+def test_the_threshold_is_kept_per_element(d_below):
+    """같은 색의 26px 큰 글씨는 3.0:1 만 넘으면 된다 - 같은 3.25:1 로 통과한다.
+    요소마다 경계를 지키지 않으면 멀쩡한 큰 글씨까지 잡는다."""
+    assert [w for w in warnings_of(d_below["report"], "D")
+            if "큰 글씨" in w["detail"]] == [], details(d_below["report"]["warning"])
+    assert texts_of(contrast_of(d_below)) == ["물려받은 색입니다", "흐린 안내문입니다"]
+
+
+def test_an_unreadable_inherited_colour_is_one_warning_not_two(d_below):
+    """자기 색이 없어서 읽히지 않는 글자는 결함 하나다. 기준 미달 경고와 상속
+    경고를 따로 내면 결함 하나가 경고 둘이 된다 - 상속이라는 사실을 그 경고에
+    함께 담는다."""
+    hit = [w for w in warnings_of(d_below["report"], "D")
+           if "물려받은 색" in w["detail"]]
+    assert len(hit) == 1, details(d_below["report"]["warning"])
+    assert hit[0]["inherited"] is True
+    assert "색을 정해 주는 규칙이 없다" in hit[0]["detail"]
+    assert d_below["report"]["metrics"]["inherited_colour_unreadable"] == 1
+    assert len(warnings_of(d_below["report"], "D")) == 2, \
+        details(d_below["report"]["warning"])
+
+
+def test_a_derived_build_is_unchanged(d_below_derived):
+    """원본에서 파생된 빌드의 동작은 바뀌지 않는다. 같은 페이지를 원본으로도
+    쓰면 전후 비교는 아무것도 찾지 못하고, 요소별 경고도 나지 않는다 - 그
+    경고는 비교가 물러난 자리를 메우는 것이기 때문이다."""
+    assert warnings_of(d_below_derived, "D") == [], \
+        details(d_below_derived["warning"])
+    assert d_below_derived["metrics"]["low_contrast_before"] == 2
+    assert d_below_derived["metrics"]["low_contrast_after"] == 2
+    assert d_below_derived["metrics"]["new_inherited_colour"] == 0
+    assert d_below_derived["fatal"] == [], details(d_below_derived["fatal"])

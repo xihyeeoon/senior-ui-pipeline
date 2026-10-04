@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 D - 기준 미달 대비를 경고하지 않는다</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  .big{font-size:26px;}
+  .faint{color:#c9c9c9;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- 세 가지를 한 페이지에 둔다.
+
+     1) 흐린 안내문 - 18px 에 색이 흐려 3.25:1 이다. 4.5:1 이 필요하므로 기준
+        미달이다. 새 설계에서는 전후 비교가 물러나므로, 개수만 세고 아무 말도
+        하지 않으면 읽을 수 없는 글이 조용히 통과한다.
+
+     2) 같은 색의 큰 글씨 - 26px 는 3.0:1 만 넘으면 되므로 같은 3.25:1 로
+        통과한다. 경계를 요소마다 지키는지 보는 자리다.
+
+     3) 자기 색이 없는 글자 - 흐린 상자에서 색을 물려받아 1.65:1 이다. 결함은
+        하나이므로 경고도 하나여야 한다. 상속이라는 사실은 그 경고에 함께
+        담는다. -->
+<section class="screen on" data-screen="start" id="start">
+  <p style="color:#8a8f98">흐린 안내문입니다</p>
+  <p class="big" style="color:#8a8f98">큰 글씨입니다</p>
+  <div class="faint"><span>물려받은 색입니다</span></div>
+  <p id="amt" style="color:#111">10,000원</p>
+  <div><button data-action="noop" style="color:#111">확인</button></div>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'noop') { /* 이 페이지는 걷지 않는다 */ }
+});
+</script>
+</body>
+</html>
