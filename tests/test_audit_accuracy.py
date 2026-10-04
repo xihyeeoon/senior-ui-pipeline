@@ -753,3 +753,41 @@ def test_the_count_comparison_stands_down_with_its_reason(d_newdesign):
 def test_the_new_design_page_has_nothing_else_wrong(d_newdesign):
     assert len(warnings_of(d_newdesign, "D")) == 1, details(d_newdesign["warning"])
     assert d_newdesign["fatal"] == [], details(d_newdesign["fatal"])
+
+
+# ===================================================================== #
+# 8. 검사 H·G 가 @media·@supports·@layer 안의 규칙을 보지 않는다
+# ===================================================================== #
+@pytest.fixture(scope="module")
+def hg_nested(server):
+    return run_audit("hg_nested.json", "hg_nested.html",
+                     orig_page="hg_nested_orig.html")
+
+
+def test_classes_defined_inside_nested_blocks_are_defined(hg_nested):
+    """@media · @supports · @layer 안에서 정의한 클래스도 정의된 것이다.
+
+    고치기 전: H 경고 3건. cssRules 를 한 겹만 돌아서 조건 블록은 "선택자가
+    없는 규칙" 으로 지나쳐졌고, 멀쩡한 클래스 셋이 전부 "아무 스타일시트도
+    정의하지 않는다" 로 걸렸다.
+    """
+    assert warnings_of(hg_nested, "H") == [], details(hg_nested["warning"])
+    assert hg_nested["metrics"]["undefined_classes_new"] == []
+
+
+def test_state_pairs_inside_nested_blocks_are_checked(hg_nested):
+    """조건 블록 안의 `.x.on` 도 상태 쌍이다.
+
+    고치기 전: 짝을 집어 들지 못해 state_pairs_checked 가 1 (`.screen.on` 하나)
+    이었다. 고른 칩이 안 고른 칩과 똑같이 보여도 검사 G 는 할 말이 없었다.
+    """
+    assert hg_nested["metrics"]["state_pairs_checked"] == 2
+    hit = warnings_of(hg_nested, "G")
+    assert len(hit) == 1, details(hg_nested["warning"])
+    assert hit[0]["base"] == ".chip"
+    assert hit[0]["state"] == "on"
+
+
+def test_the_nested_page_has_nothing_else_wrong(hg_nested):
+    assert hg_nested["fatal"] == [], details(hg_nested["fatal"])
+    assert len(hg_nested["warning"]) == 1, details(hg_nested["warning"])

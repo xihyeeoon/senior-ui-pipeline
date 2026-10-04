@@ -384,21 +384,46 @@ WRAPPED = r"""
 }
 """
 
+# --- 스타일시트의 규칙을 하나하나 (중첩까지) -----------------------------------
+# @media · @supports · @layer · @container 안의 규칙도 규칙이다. cssRules 를 한
+# 겹만 돌면 그 블록들은 selectorText 가 없으므로 그냥 지나쳐지고, 그 안에서만
+# 정의한 클래스는 "아무 스타일시트도 정의하지 않는다"(H) 가 되고 그 안에서만
+# 적은 `.x.on` 은 상태 쌍으로 집히지 않는다(G). 그래서 재귀로 돈다.
+#
+# @keyframes 안의 규칙은 selectorText 가 아니라 keyText (`0%`) 이므로 들어가도
+# 걸리는 것이 없다. 들어가지 않는 쪽이 뜻이 분명하므로 건너뛴다.
+# @import 는 그 안에 또 하나의 스타일시트가 있다 - 같은 규칙으로 들어간다.
+EACH_RULE = r"""
+  const eachRule = (fn) => {
+    const walk = (rules) => {
+      for (const r of rules || []) {
+        if (r.type === CSSRule.KEYFRAMES_RULE) continue;
+        if (r.styleSheet) {                    /* @import */
+          try { walk(r.styleSheet.cssRules); } catch (e) { /* 읽을 수 없다 */ }
+          continue;
+        }
+        if (r.selectorText) fn(r);
+        if (r.cssRules) walk(r.cssRules);
+      }
+    };
+    for (const sheet of document.styleSheets) {
+      let rs;
+      try { rs = sheet.cssRules; } catch (e) { continue; }
+      walk(rs);
+    }
+  };
+"""
+
+
 # --- H: classes the markup uses that no stylesheet defines --------------------
 # example1 produced `bg-primary` / `text-primary`; this run produced `sr-only`.
 # Both render as if the class were never written, which is how a "hidden" label
 # ends up on screen.
-UNDEFINED_CLASSES = r"""
-() => {
+UNDEFINED_CLASSES = "() => {" + EACH_RULE + r"""
   const defined = new Set();
-  for (const sheet of document.styleSheets) {
-    let rs;
-    try { rs = sheet.cssRules; } catch (e) { continue; }
-    for (const r of rs) {
-      if (!r.selectorText) continue;
-      for (const m of r.selectorText.matchAll(/\.([A-Za-z0-9_-]+)/g)) defined.add(m[1]);
-    }
-  }
+  eachRule(r => {
+    for (const m of r.selectorText.matchAll(/\.([A-Za-z0-9_-]+)/g)) defined.add(m[1]);
+  });
   const used = new Map();
   document.querySelectorAll('[class]').forEach(el => {
     const screen = el.closest('[data-screen]');
@@ -424,15 +449,10 @@ UNDEFINED_CLASSES = r"""
 # --- G: does a state class still change how the element looks? ----------------
 # Probes `.x` against `.x.on` with real elements so `#0046FF` and
 # `var(--blue-deep)` compare equal, the way the eye sees them.
-STATE_PAIRS = r"""
-() => {
+STATE_PAIRS = "() => {" + EACH_RULE + r"""
   const STATES = ['on', 'act', 'active', 'selected', 'checked', 'disabled'];
   const rules = [];
-  for (const sheet of document.styleSheets) {
-    let rs;
-    try { rs = sheet.cssRules; } catch (e) { continue; }
-    for (const r of rs) if (r.selectorText && r.style) rules.push(r);
-  }
+  eachRule(r => { if (r.style) rules.push(r); });
   const out = [];
   const seen = new Set();
   for (const r of rules) {

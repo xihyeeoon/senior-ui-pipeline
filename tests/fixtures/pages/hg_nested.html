@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 H·G - 중첩 블록 안의 규칙을 보지 않는다</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  .chip{background:#F1F3F7; color:#111; padding:8px;}
+  @media (max-width: 480px) {
+    .chip.on{background:#F1F3F7; color:#111;}
+    .picked{border:2px solid #0046FF;}
+  }
+  @supports (display: grid) {
+    .boxed{padding:4px;}
+  }
+  @layer base {
+    .layered{margin:2px;}
+  }
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- 세 클래스는 조건 블록 안에서 정의된다. cssRules 를 한 겹만 보면 그 블록은
+     규칙이 아니라 "선택자가 없는 규칙" 으로 지나쳐지고, 세 클래스가 전부
+     "아무 스타일시트도 정의하지 않는다" 로 걸린다 - 멀쩡한 클래스들이다.
+
+     같은 이유로 상태 쌍도 못 찾는다. 여기서 고른 칩은 안 고른 칩과 똑같이
+     보이는데 (조건 블록 안에서 같은 값을 다시 적었다), 검사 G 는 그 짝을
+     아예 집어 들지 못하므로 할 말이 없다. -->
+<section class="screen on" data-screen="start" id="start">
+  <p class="chip">안 고름</p>
+  <p class="chip on">고름</p>
+  <p class="picked">테두리</p>
+  <p class="boxed">여백</p>
+  <p class="layered">겹</p>
+  <p id="amt">10,000원</p>
+  <div><button data-action="noop">확인</button></div>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'noop') { /* 이 페이지는 걷지 않는다 */ }
+});
+</script>
+</body>
+</html>
