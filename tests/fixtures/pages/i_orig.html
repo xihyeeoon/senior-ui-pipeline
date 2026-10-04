@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 I - 원본 쪽: 금액 빠른 선택 다섯 개</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  .quick{display:flex; gap:8px;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- 원본이 고를 수 있게 둔 금액 다섯 가지. 진짜 원본
+     (inputs/original_transfer.html) 의 .quick 묶음과 같은 모양이다. -->
+<section class="screen on" data-screen="start" id="start">
+  <p id="amt">10,000원</p>
+  <div class="quick">
+    <button data-action="quick" data-v="10000">+1만</button>
+    <button data-action="quick" data-v="50000">+5만</button>
+    <button data-action="quick" data-v="70000">+7만</button>
+    <button data-action="quick" data-v="100000">+10만</button>
+    <button data-action="quick" data-v="all">전액</button>
+  </div>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'quick') { /* 금액을 더한다 */ }
+});
+</script>
+</body>
+</html>

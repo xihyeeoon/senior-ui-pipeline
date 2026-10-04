@@ -11,7 +11,7 @@
       "flow": "<run>/attempt_1.flow.json",
       "stage": "audit",
       "passed": false,
-      "fatal": 9,
+      "fatal": 11,
       "warning": 0
     },
     {
@@ -22,7 +22,7 @@
       "flow": "<run>/attempt_2.flow.json",
       "stage": "audit",
       "passed": false,
-      "fatal": 9,
+      "fatal": 11,
       "warning": 0
     }
   ],
@@ -43,16 +43,16 @@
   "trend": [
     {
       "attempt": 1,
-      "fatal_total": 9,
-      "fatal_root": 2,
+      "fatal_total": 11,
+      "fatal_root": 4,
       "fatal_derived": 7,
       "screens": "1/9",
       "stopped_at": "who"
     },
     {
       "attempt": 2,
-      "fatal_total": 9,
-      "fatal_root": 2,
+      "fatal_total": 11,
+      "fatal_root": 4,
       "fatal_derived": 7,
       "screens": "1/9",
       "stopped_at": "who"

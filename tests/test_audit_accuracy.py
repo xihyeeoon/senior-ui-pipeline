@@ -318,3 +318,79 @@ def test_the_original_handler_list_is_not_substituted(c_nohandler):
     assert sorted(m["dead_controls_unverifiable"]) == ["pick-bank", "quick"]
     assert any(s.startswith("C/") for s in m["checks_stood_down"])
 
+# ===================================================================== #
+# 4. 검사 I 가 "문서 글자에 들어 있는가" 로만 찾는다
+# ===================================================================== #
+@pytest.fixture(scope="module")
+def i_substring(server):
+    return run_audit("i_substring.json", "i_build.html", orig_page="i_orig.html")
+
+
+@pytest.fixture(scope="module")
+def i_declared(server):
+    """같은 두 페이지에, 뺀 선택지를 선언해 둔 흐름."""
+    return run_audit("i_declared.json", "i_build.html", orig_page="i_orig.html")
+
+
+def missing_of(report):
+    return report["metrics"]["choice_values_missing"].get("quick", [])
+
+
+def test_a_short_value_inside_another_word_is_not_present(i_substring):
+    """'all' 은 class="small" 안에 있다. 거기 있다고 고를 수 있는 것은 아니다.
+
+    고치기 전: `v not in ctx.rep_html` 로 찾아서, 'all' 이 'small' 안에서,
+    '10000' 이 '110000' 안에서 맞았다. 빌드에 없는 선택지 둘이 남아 있는 것으로
+    읽혔다.
+    """
+    assert missing_of(i_substring) == ["10000", "100000", "all"]
+
+
+def test_values_kept_only_as_an_attribute_or_an_array_element_still_count(i_substring):
+    """화면에 다 보일 필요는 없다는 규칙은 그대로다. 50000 은 data-v 로,
+    70000 은 스크립트 배열 원소로만 있고 둘 다 남아 있는 것으로 센다."""
+    assert i_substring["metrics"]["choice_values_kept"] == {"quick": 2}
+    assert i_substring["metrics"]["choice_groups_original"] == {"quick": 5}
+
+
+def test_the_missing_choices_are_one_fatal(i_substring):
+    hit = fatals(i_substring, "I")
+    assert len(hit) == 1, details(i_substring["fatal"])
+    assert hit[0]["missing"] == ["10000", "100000", "all"]
+    assert len(i_substring["fatal"]) == 1, details(i_substring["fatal"])
+
+
+def test_a_declared_removal_is_not_fatal(i_declared):
+    """일부러 뺀 선택지는 누락이 아니다.
+
+    고치기 전: 선언할 방법이 없어서, 안전을 위해 뺀 선택지(전액 버튼)도
+    누락으로 세졌다 - 고칠 수 없는 fatal 이 재생성 루프에 계속 남는다.
+    """
+    assert missing_of(i_declared) == ["10000", "100000"]
+    hit = fatals(i_declared, "I")
+    assert len(hit) == 1, details(i_declared["fatal"])
+    assert hit[0]["missing"] == ["10000", "100000"]
+
+
+def test_a_declared_removal_is_recorded_with_its_reason(i_declared):
+    """fatal 로 세지 않는 대신 이유와 함께 남긴다 - 조용히 사라지면 안 된다."""
+    m = i_declared["metrics"]
+    by_design = m["choice_values_removed_by_design"]
+    assert by_design["quick"]["values"] == ["all"]
+    assert "changelog #15" in by_design["quick"]["reason"]
+    stood = [s for s in m["checks_stood_down"] if s.startswith("I/")]
+    assert len(stood) == 1
+    assert "all" in stood[0] and "changelog #15" in stood[0]
+
+
+def test_an_undeclared_removal_is_still_fatal(i_declared):
+    """선언한 것만 빠진다. 10000 · 100000 은 선언하지 않았으므로 그대로 fatal
+    이다 - 선언이 검사를 끄는 장치가 되어서는 안 된다."""
+    assert i_declared["passed"] is False
+    assert fatals(i_declared, "I")[0]["missing"] == ["10000", "100000"]
+
+
+def test_declaring_a_removal_does_not_change_the_kept_count(i_declared):
+    """선언한 값은 "남아 있다" 가 아니라 "일부러 뺐다" 다. 남은 개수는 실제로
+    찾을 수 있는 값의 수 그대로여야 한다."""
+    assert i_declared["metrics"]["choice_values_kept"] == {"quick": 2}

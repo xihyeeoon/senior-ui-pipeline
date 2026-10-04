@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 I - 빌드 쪽: 짧은 값이 다른 글자 속에서 맞는다</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  .quick{display:flex; gap:8px;}
+  .small{color:#555; font-size:16px;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- 원본이 둔 금액 다섯 가지 중 둘만 들고 있다.
+
+       +5만   data-v 로 화면에 있다                  - 남아 있다
+       +7만   화면에는 없고 스크립트 배열에만 있다   - 남아 있다
+       +1만   없다. 그런데 아래 +11만 버튼의 data-v 가 그 숫자를 품는다
+       +10만  없다. 품는 글자도 없다
+       전액   없다. 그런데 class="small" 이 그 글자를 품는다
+
+     값을 글자로만 찾는 검사기는 +1만 과 전액 을 남아 있는 것으로 읽는다.
+     (이 주석에 값을 그대로 적지 않는다 - 적으면 주석이 그 값을 품어서
+     재현이 되지 않는다.) -->
+<section class="screen on" data-screen="start" id="start">
+  <p id="amt">10,000원</p>
+  <div class="quick">
+    <button data-action="quick" data-v="50000">+5만</button>
+    <button data-action="quick" data-v="110000">+11만</button>
+  </div>
+  <p class="small">자주 쓰는 금액만 남겼습니다</p>
+</section>
+<script>
+// 화면에 다 보일 필요는 없다 - 스크립트가 배열로 들고 있어도 고를 수 있다.
+const PRESETS = ['50000', '70000'];
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'quick') { /* 금액을 더한다 */ }
+});
+</script>
+</body>
+</html>

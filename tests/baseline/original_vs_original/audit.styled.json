@@ -132,6 +132,7 @@
       "num": 11,
       "pw": 10
     },
+    "choice_values_removed_by_design": {},
     "choice_values_kept": {
       "pick-bank": 67,
       "acc-num": 10,

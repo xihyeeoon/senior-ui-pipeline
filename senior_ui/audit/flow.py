@@ -48,5 +48,8 @@ def load_flow(path):
     flow.setdefault("derived_from_original", True)
     flow.setdefault("expect", {})
     flow.setdefault("done_amount", "#dn-amt")
+    # 일부러 뺀 선택지의 선언 (checks/i_choices.declared 참고). 없으면 빈
+    # 선언이고, 그때 검사 I 는 모든 누락을 fatal 로 센다.
+    flow.setdefault("choices_removed", {})
     return flow
 
