@@ -4,6 +4,8 @@
       "home": {
         "landed_on": "home",
         "dom_screen": "home",
+        "attr_text": "",
+        "outside_text": "",
         "actions": [
           "go-recipient"
         ],
@@ -123,16 +125,16 @@
             "0"
           ],
           "pw": [
-            "6",
-            "8",
-            "2",
             "4",
+            "0",
+            "7",
+            "5",
+            "9",
+            "2",
+            "6",
             "1",
             "3",
-            "7",
-            "0",
-            "5",
-            "9"
+            "8"
           ]
         },
         "contrast": [
@@ -141,7 +143,9 @@
             "tag": "span",
             "cls": "dot",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(255, 122, 0)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 2.61,
             "need": 4.5
@@ -151,7 +155,9 @@
             "tag": "span",
             "cls": "arr",
             "color": "rgb(185, 190, 199)",
+            "seen": "rgb(185, 190, 199)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 17,
             "ratio": 1.87,
             "need": 4.5
@@ -161,7 +167,9 @@
             "tag": "span",
             "cls": "arr",
             "color": "rgb(185, 190, 199)",
+            "seen": "rgb(185, 190, 199)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 17,
             "ratio": 1.87,
             "need": 4.5
@@ -171,7 +179,9 @@
             "tag": "span",
             "cls": "arr",
             "color": "rgb(185, 190, 199)",
+            "seen": "rgb(185, 190, 199)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 17,
             "ratio": 1.87,
             "need": 4.5
@@ -181,7 +191,9 @@
             "tag": "span",
             "cls": "",
             "color": "rgb(229, 72, 77)",
+            "seen": "rgb(229, 72, 77)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 13,
             "ratio": 3.91,
             "need": 4.5
@@ -191,7 +203,9 @@
             "tag": "div",
             "cls": "",
             "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.25,
             "need": 4.5
@@ -201,37 +215,21 @@
             "tag": "div",
             "cls": "",
             "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
             "bg": "rgb(245, 246, 249)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.01,
             "need": 4.5
-          },
-          {
-            "text": "마이신한포인트",
-            "tag": "div",
-            "cls": "p1",
-            "color": "rgb(255, 255, 255)",
-            "bg": "rgb(242, 244, 248)",
-            "fontSize": 12,
-            "ratio": 1.1,
-            "need": 4.5
-          },
-          {
-            "text": "180P",
-            "tag": "div",
-            "cls": "p2",
-            "color": "rgb(255, 255, 255)",
-            "bg": "rgb(242, 244, 248)",
-            "fontSize": 20,
-            "ratio": 1.1,
-            "need": 3
           },
           {
             "text": "›",
             "tag": "span",
             "cls": "arr",
             "color": "rgb(185, 190, 199)",
+            "seen": "rgb(185, 190, 199)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 17,
             "ratio": 1.87,
             "need": 4.5
@@ -241,7 +239,9 @@
             "tag": "div",
             "cls": "t2",
             "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.25,
             "need": 4.5
@@ -251,7 +251,9 @@
             "tag": "div",
             "cls": "t2",
             "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.25,
             "need": 4.5
@@ -261,7 +263,9 @@
             "tag": "div",
             "cls": "t2",
             "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.25,
             "need": 4.5
@@ -271,7 +275,9 @@
             "tag": "div",
             "cls": "t2",
             "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.25,
             "need": 4.5
@@ -281,7 +287,9 @@
             "tag": "div",
             "cls": "t2",
             "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.25,
             "need": 4.5
@@ -291,7 +299,9 @@
             "tag": "div",
             "cls": "t2",
             "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.25,
             "need": 4.5
@@ -301,7 +311,9 @@
             "tag": "div",
             "cls": "",
             "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 11,
             "ratio": 2.64,
             "need": 4.5
@@ -311,7 +323,9 @@
             "tag": "span",
             "cls": "ti",
             "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 18,
             "ratio": 2.64,
             "need": 4.5
@@ -321,7 +335,9 @@
             "tag": "div",
             "cls": "",
             "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 11,
             "ratio": 2.64,
             "need": 4.5
@@ -331,7 +347,9 @@
             "tag": "span",
             "cls": "ti",
             "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 18,
             "ratio": 2.64,
             "need": 4.5
@@ -341,7 +359,9 @@
             "tag": "div",
             "cls": "",
             "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 11,
             "ratio": 2.64,
             "need": 4.5
@@ -351,7 +371,9 @@
             "tag": "span",
             "cls": "ti",
             "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 18,
             "ratio": 2.64,
             "need": 4.5
@@ -361,7 +383,9 @@
             "tag": "div",
             "cls": "",
             "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 11,
             "ratio": 2.64,
             "need": 4.5
@@ -371,10 +395,34 @@
             "tag": "span",
             "cls": "ti",
             "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 18,
             "ratio": 2.64,
             "need": 4.5
+          }
+        ],
+        "contrast_undetermined": [
+          {
+            "text": "마이신한포인트",
+            "tag": "div",
+            "cls": "p1",
+            "color": "rgb(255, 255, 255)",
+            "fontSize": 12,
+            "need": 4.5,
+            "background": "linear-gradient(90deg, rgb(61, 111, 232), rgb(91, 127, 240))",
+            "behind": "div.pointbar"
+          },
+          {
+            "text": "180P",
+            "tag": "div",
+            "cls": "p2",
+            "color": "rgb(255, 255, 255)",
+            "fontSize": 20,
+            "need": 3,
+            "background": "linear-gradient(90deg, rgb(61, 111, 232), rgb(91, 127, 240))",
+            "behind": "div.pointbar"
           }
         ],
         "inherited": [
@@ -692,124 +740,10 @@
         "overflow": [],
         "wrapped": [
           {
-            "text": "C",
-            "tag": "span",
-            "cls": "dot",
-            "lines": 2
-          },
-          {
-            "text": "S",
-            "tag": "div",
-            "cls": "logo",
-            "lines": 2
-          },
-          {
             "text": "[금융거래한도계좌2]신한 주거래 우대통장 (저축예금)",
             "tag": "div",
             "cls": "acctname",
             "lines": 3
-          },
-          {
-            "text": "이체",
-            "tag": "button",
-            "cls": "btn-sm",
-            "lines": 2
-          },
-          {
-            "text": "김시현님의 SOL멤버십 등급은 클래식 입니다",
-            "tag": "div",
-            "cls": "membership",
-            "lines": 3
-          },
-          {
-            "text": "앱카드 가입",
-            "tag": "button",
-            "cls": "btn-wide",
-            "lines": 3
-          },
-          {
-            "text": "쿠폰바로받기",
-            "tag": "button",
-            "cls": "btn-wide",
-            "lines": 3
-          },
-          {
-            "text": "모으기",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "🅦",
-            "tag": "div",
-            "cls": "sq",
-            "lines": 2
-          },
-          {
-            "text": "⚾",
-            "tag": "div",
-            "cls": "sq",
-            "lines": 2
-          },
-          {
-            "text": "🎟",
-            "tag": "div",
-            "cls": "sq",
-            "lines": 2
-          },
-          {
-            "text": "더보기 ⌄",
-            "tag": "div",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "💳",
-            "tag": "div",
-            "cls": "sq",
-            "lines": 2
-          },
-          {
-            "text": "📈",
-            "tag": "div",
-            "cls": "sq",
-            "lines": 2
-          },
-          {
-            "text": "🛡",
-            "tag": "div",
-            "cls": "sq",
-            "lines": 2
-          },
-          {
-            "text": "홈",
-            "tag": "div",
-            "cls": "act",
-            "lines": 5
-          },
-          {
-            "text": "금융",
-            "tag": "div",
-            "cls": "",
-            "lines": 5
-          },
-          {
-            "text": "상품",
-            "tag": "div",
-            "cls": "",
-            "lines": 5
-          },
-          {
-            "text": "혜택",
-            "tag": "div",
-            "cls": "",
-            "lines": 5
-          },
-          {
-            "text": "주식",
-            "tag": "div",
-            "cls": "",
-            "lines": 5
           }
         ],
         "shown": []
@@ -817,6 +751,8 @@
       "recipient": {
         "landed_on": "recipient",
         "dom_screen": "recipient",
+        "attr_text": "",
+        "outside_text": "",
         "actions": [
           "back-home",
           "back-home",
@@ -938,16 +874,16 @@
             "0"
           ],
           "pw": [
-            "6",
-            "8",
-            "2",
             "4",
+            "0",
+            "7",
+            "5",
+            "9",
+            "2",
+            "6",
             "1",
             "3",
-            "7",
-            "0",
-            "5",
-            "9"
+            "8"
           ]
         },
         "contrast": [
@@ -956,7 +892,9 @@
             "tag": "span",
             "cls": "ph",
             "color": "rgb(180, 185, 193)",
+            "seen": "rgb(180, 185, 193)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 17,
             "ratio": 1.97,
             "need": 4.5
@@ -966,7 +904,9 @@
             "tag": "span",
             "cls": "tag",
             "color": "rgb(107, 114, 128)",
+            "seen": "rgb(107, 114, 128)",
             "bg": "rgb(239, 241, 245)",
+            "opacity": 1,
             "fontSize": 11,
             "ratio": 4.28,
             "need": 4.5
@@ -976,7 +916,9 @@
             "tag": "span",
             "cls": "st",
             "color": "rgb(211, 215, 221)",
+            "seen": "rgb(211, 215, 221)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 17,
             "ratio": 1.44,
             "need": 4.5
@@ -986,7 +928,9 @@
             "tag": "span",
             "cls": "st",
             "color": "rgb(211, 215, 221)",
+            "seen": "rgb(211, 215, 221)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 17,
             "ratio": 1.44,
             "need": 4.5
@@ -996,7 +940,9 @@
             "tag": "span",
             "cls": "st",
             "color": "rgb(211, 215, 221)",
+            "seen": "rgb(211, 215, 221)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 17,
             "ratio": 1.44,
             "need": 4.5
@@ -1006,7 +952,9 @@
             "tag": "div",
             "cls": "av",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(59, 123, 246)",
+            "opacity": 1,
             "fontSize": 15,
             "ratio": 3.93,
             "need": 4.5
@@ -1016,7 +964,9 @@
             "tag": "span",
             "cls": "st",
             "color": "rgb(211, 215, 221)",
+            "seen": "rgb(211, 215, 221)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 17,
             "ratio": 1.44,
             "need": 4.5
@@ -1026,12 +976,15 @@
             "tag": "span",
             "cls": "st",
             "color": "rgb(211, 215, 221)",
+            "seen": "rgb(211, 215, 221)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 17,
             "ratio": 1.44,
             "need": 4.5
           }
         ],
+        "contrast_undetermined": [],
         "inherited": [
           {
             "text": "1:39",
@@ -1120,85 +1073,14 @@
         ],
         "overlap": [],
         "overflow": [],
-        "wrapped": [
-          {
-            "text": "누구에게 보낼까요?",
-            "tag": "div",
-            "cls": "h1",
-            "lines": 2
-          },
-          {
-            "text": "편집",
-            "tag": "span",
-            "cls": "tag",
-            "lines": 2
-          },
-          {
-            "text": "2개 ⌄",
-            "tag": "span",
-            "cls": "pill",
-            "lines": 2
-          },
-          {
-            "text": "14개 ⌄",
-            "tag": "span",
-            "cls": "pill",
-            "lines": 2
-          },
-          {
-            "text": "50개 ⌃",
-            "tag": "span",
-            "cls": "pill",
-            "lines": 2
-          },
-          {
-            "text": "B",
-            "tag": "div",
-            "cls": "av",
-            "lines": 2
-          },
-          {
-            "text": "B",
-            "tag": "div",
-            "cls": "av",
-            "lines": 2
-          },
-          {
-            "text": "S",
-            "tag": "div",
-            "cls": "av",
-            "lines": 2
-          },
-          {
-            "text": "N",
-            "tag": "div",
-            "cls": "av",
-            "lines": 2
-          },
-          {
-            "text": "S",
-            "tag": "div",
-            "cls": "av",
-            "lines": 2
-          },
-          {
-            "text": "T",
-            "tag": "div",
-            "cls": "av",
-            "lines": 2
-          },
-          {
-            "text": "S",
-            "tag": "div",
-            "cls": "av",
-            "lines": 2
-          }
-        ],
+        "wrapped": [],
         "shown": []
       },
       "account": {
         "landed_on": "account",
         "dom_screen": "account",
+        "attr_text": "",
+        "outside_text": "",
         "actions": [
           "back-recipient",
           "back-home",
@@ -1336,16 +1218,16 @@
             "0"
           ],
           "pw": [
-            "6",
-            "8",
-            "2",
             "4",
+            "0",
+            "7",
+            "5",
+            "9",
+            "2",
+            "6",
             "1",
             "3",
-            "7",
-            "0",
-            "5",
-            "9"
+            "8"
           ]
         },
         "contrast": [
@@ -1354,7 +1236,9 @@
             "tag": "span",
             "cls": "ph",
             "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 19,
             "ratio": 3.25,
             "need": 4.5
@@ -1364,7 +1248,9 @@
             "tag": "span",
             "cls": "chev",
             "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 19,
             "ratio": 3.25,
             "need": 4.5
@@ -1374,12 +1260,15 @@
             "tag": "button",
             "cls": "btn-next",
             "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
             "bg": "rgb(238, 240, 244)",
+            "opacity": 1,
             "fontSize": 17,
             "ratio": 2.31,
             "need": 4.5
           }
         ],
+        "contrast_undetermined": [],
         "inherited": [
           {
             "text": "3:33",
@@ -1402,91 +1291,14 @@
         ],
         "overlap": [],
         "overflow": [],
-        "wrapped": [
-          {
-            "text": "누구에게 보낼까요?",
-            "tag": "div",
-            "cls": "h1",
-            "lines": 2
-          },
-          {
-            "text": "1",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "2",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "3",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "4",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "5",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "6",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "7",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "8",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "9",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "0",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "⌫",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "다음",
-            "tag": "button",
-            "cls": "btn-next",
-            "lines": 3
-          }
-        ],
+        "wrapped": [],
         "shown": []
       },
       "bank": {
         "landed_on": "bank",
         "dom_screen": "bank",
+        "attr_text": "",
+        "outside_text": "",
         "actions": [
           "back-recipient",
           "tab-bank",
@@ -1680,16 +1492,16 @@
             "0"
           ],
           "pw": [
-            "6",
-            "8",
-            "2",
             "4",
+            "0",
+            "7",
+            "5",
+            "9",
+            "2",
+            "6",
             "1",
             "3",
-            "7",
-            "0",
-            "5",
-            "9"
+            "8"
           ]
         },
         "contrast": [
@@ -1698,7 +1510,9 @@
             "tag": "span",
             "cls": "",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(138, 143, 152)",
+            "opacity": 1,
             "fontSize": 15,
             "ratio": 3.25,
             "need": 4.5
@@ -1708,7 +1522,9 @@
             "tag": "span",
             "cls": "right",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(138, 143, 152)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.25,
             "need": 4.5
@@ -1718,7 +1534,9 @@
             "tag": "div",
             "cls": "",
             "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 15,
             "ratio": 2.64,
             "need": 4.5
@@ -1728,7 +1546,9 @@
             "tag": "div",
             "cls": "bi",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(229, 72, 77)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.91,
             "need": 4.5
@@ -1738,7 +1558,9 @@
             "tag": "div",
             "cls": "bi",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(242, 162, 12)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 2.11,
             "need": 4.5
@@ -1748,7 +1570,9 @@
             "tag": "div",
             "cls": "bi",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(18, 161, 80)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.37,
             "need": 4.5
@@ -1758,7 +1582,9 @@
             "tag": "div",
             "cls": "bi",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(59, 123, 246)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.93,
             "need": 4.5
@@ -1768,7 +1594,9 @@
             "tag": "div",
             "cls": "bi",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(229, 72, 77)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.91,
             "need": 4.5
@@ -1778,7 +1606,9 @@
             "tag": "div",
             "cls": "bi",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(242, 162, 12)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 2.11,
             "need": 4.5
@@ -1788,7 +1618,9 @@
             "tag": "div",
             "cls": "bi",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(18, 161, 80)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.37,
             "need": 4.5
@@ -1798,7 +1630,9 @@
             "tag": "div",
             "cls": "bi",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(59, 123, 246)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.93,
             "need": 4.5
@@ -1808,7 +1642,9 @@
             "tag": "div",
             "cls": "bi",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(229, 72, 77)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.91,
             "need": 4.5
@@ -1818,7 +1654,9 @@
             "tag": "div",
             "cls": "bi",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(242, 162, 12)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 2.11,
             "need": 4.5
@@ -1828,7 +1666,9 @@
             "tag": "div",
             "cls": "bi",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(18, 161, 80)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.37,
             "need": 4.5
@@ -1838,7 +1678,9 @@
             "tag": "div",
             "cls": "bi",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(59, 123, 246)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.93,
             "need": 4.5
@@ -1848,7 +1690,9 @@
             "tag": "div",
             "cls": "bi",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(229, 72, 77)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.91,
             "need": 4.5
@@ -1858,7 +1702,9 @@
             "tag": "div",
             "cls": "bi",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(242, 162, 12)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 2.11,
             "need": 4.5
@@ -1868,7 +1714,9 @@
             "tag": "div",
             "cls": "bi",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(18, 161, 80)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.37,
             "need": 4.5
@@ -1878,7 +1726,9 @@
             "tag": "div",
             "cls": "bi",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(59, 123, 246)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.93,
             "need": 4.5
@@ -1888,7 +1738,9 @@
             "tag": "div",
             "cls": "bi",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(229, 72, 77)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.91,
             "need": 4.5
@@ -1898,7 +1750,9 @@
             "tag": "div",
             "cls": "bi",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(242, 162, 12)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 2.11,
             "need": 4.5
@@ -1908,12 +1762,15 @@
             "tag": "div",
             "cls": "bi",
             "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
             "bg": "rgb(18, 161, 80)",
+            "opacity": 1,
             "fontSize": 12,
             "ratio": 3.37,
             "need": 4.5
           }
         ],
+        "contrast_undetermined": [],
         "inherited": [
           {
             "text": "1:40",
@@ -2344,481 +2201,14 @@
         ],
         "overlap": [],
         "overflow": [],
-        "wrapped": [
-          {
-            "text": "은행",
-            "tag": "div",
-            "cls": "act",
-            "lines": 3
-          },
-          {
-            "text": "증권사",
-            "tag": "div",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "신한",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "신",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "제주",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "제",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "국민",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "국",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "기업",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "기",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "농협",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "농",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "산업",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "산",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "수협",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "수",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "신협",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "신",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "우리",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "우",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "하나",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "하",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "한국씨티",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "한",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "카카오뱅크",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "카",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "케이뱅크",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "케",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "토스뱅크",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "토",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "경남",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "경",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "광주",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "광",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "아이엠뱅크(대구)",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "아",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "부산",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "부",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "전북",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "전",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "회원수협",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "회",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "새마을",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "새",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "우체국",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "우",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "저축은행",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "저",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "지역농.축협",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "지",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "도이치",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "도",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "중국",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "중",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "중국건설",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "중",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "중국공상",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "중",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "BNP파리바",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "B",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "BOA",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "B",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "HSBC",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "H",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "JP모간",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "J",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "SC",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "S",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "산림조합",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "산",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "국세",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "국",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "지방세",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "지",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "국고금",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "국",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          },
-          {
-            "text": "관세",
-            "tag": "div",
-            "cls": "bk",
-            "lines": 6
-          },
-          {
-            "text": "관",
-            "tag": "div",
-            "cls": "bi",
-            "lines": 2
-          }
-        ],
+        "wrapped": [],
         "shown": []
       },
       "amount": {
         "landed_on": "amount",
         "dom_screen": "amount",
+        "attr_text": "",
+        "outside_text": "",
         "actions": [
           "back-account",
           "back-home",
@@ -2960,16 +2350,16 @@
             "0"
           ],
           "pw": [
-            "6",
-            "8",
-            "2",
             "4",
+            "0",
+            "7",
+            "5",
+            "9",
+            "2",
+            "6",
             "1",
             "3",
-            "7",
-            "0",
-            "5",
-            "9"
+            "8"
           ]
         },
         "contrast": [
@@ -2978,7 +2368,9 @@
             "tag": "div",
             "cls": "amtq",
             "color": "rgb(199, 203, 210)",
+            "seen": "rgb(199, 203, 210)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 27,
             "ratio": 1.63,
             "need": 3
@@ -2988,7 +2380,9 @@
             "tag": "div",
             "cls": "amtsub",
             "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 14,
             "ratio": 3.25,
             "need": 4.5
@@ -2998,7 +2392,9 @@
             "tag": "u",
             "cls": "",
             "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 14,
             "ratio": 3.25,
             "need": 4.5
@@ -3008,12 +2404,15 @@
             "tag": "button",
             "cls": "btn-next",
             "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
             "bg": "rgb(238, 240, 244)",
+            "opacity": 1,
             "fontSize": 17,
             "ratio": 2.31,
             "need": 4.5
           }
         ],
+        "contrast_undetermined": [],
         "inherited": [
           {
             "text": "1:40",
@@ -3048,116 +2447,7 @@
         ],
         "overlap": [],
         "overflow": [],
-        "wrapped": [
-          {
-            "text": "[금융거래한도계좌2]신한 주… 계좌에서 ⌄",
-            "tag": "div",
-            "cls": "amthead",
-            "lines": 3
-          },
-          {
-            "text": "+1만",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "+5만",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "+10만",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "전액",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "1",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "2",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "3",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "4",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "5",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "6",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "7",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "8",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "9",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "00",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "0",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "⌫",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "다음",
-            "tag": "button",
-            "cls": "btn-next",
-            "lines": 3
-          }
-        ],
+        "wrapped": [],
         "shown": [
           [
             "#amt-acc",
@@ -3168,6 +2458,8 @@
       "confirm": {
         "landed_on": "confirm",
         "dom_screen": "confirm",
+        "attr_text": "",
+        "outside_text": "",
         "actions": [
           "back-amount",
           "back-home",
@@ -3292,16 +2584,16 @@
             "0"
           ],
           "pw": [
-            "6",
-            "8",
-            "2",
             "4",
+            "0",
+            "7",
+            "5",
+            "9",
+            "2",
+            "6",
             "1",
             "3",
-            "7",
-            "0",
-            "5",
-            "9"
+            "8"
           ]
         },
         "contrast": [
@@ -3310,7 +2602,9 @@
             "tag": "div",
             "cls": "fee",
             "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 14,
             "ratio": 2.64,
             "need": 4.5
@@ -3320,7 +2614,9 @@
             "tag": "span",
             "cls": "k",
             "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
             "bg": "rgb(245, 246, 249)",
+            "opacity": 1,
             "fontSize": 14,
             "ratio": 3.01,
             "need": 4.5
@@ -3330,7 +2626,9 @@
             "tag": "span",
             "cls": "k",
             "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
             "bg": "rgb(245, 246, 249)",
+            "opacity": 1,
             "fontSize": 14,
             "ratio": 3.01,
             "need": 4.5
@@ -3340,7 +2638,9 @@
             "tag": "span",
             "cls": "k",
             "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
             "bg": "rgb(245, 246, 249)",
+            "opacity": 1,
             "fontSize": 14,
             "ratio": 3.01,
             "need": 4.5
@@ -3350,12 +2650,15 @@
             "tag": "span",
             "cls": "k",
             "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
             "bg": "rgb(245, 246, 249)",
+            "opacity": 1,
             "fontSize": 14,
             "ratio": 3.01,
             "need": 4.5
           }
         ],
+        "contrast_undetermined": [],
         "inherited": [
           {
             "text": "1:40",
@@ -3416,22 +2719,10 @@
         "overflow": [],
         "wrapped": [
           {
-            "text": "B",
-            "tag": "div",
-            "cls": "bigav",
-            "lines": 2
-          },
-          {
             "text": "김시현님 계좌로 원 보낼까요?",
             "tag": "div",
             "cls": "q2",
             "lines": 2
-          },
-          {
-            "text": "보내기",
-            "tag": "button",
-            "cls": "btn-primary",
-            "lines": 3
           }
         ],
         "shown": [
@@ -3448,6 +2739,8 @@
       "password": {
         "landed_on": "password",
         "dom_screen": "password",
+        "attr_text": "",
+        "outside_text": "",
         "actions": [
           "back-confirm",
           "pw",
@@ -3478,7 +2771,7 @@
           "done"
         ],
         "onclicks": [],
-        "text": "5:55\n5G 89\n✕\n계좌 비밀번호\n4\n2\n3\n8\n1\n0\n7\n9\n5\n재배열\n6\n⌫",
+        "text": "5:55\n5G 89\n✕\n계좌 비밀번호\n1\n5\n0\n4\n7\n8\n3\n9\n2\n재배열\n6\n⌫",
         "height": 844,
         "choices": {
           "pick-bank": [
@@ -3582,19 +2875,20 @@
             "0"
           ],
           "pw": [
-            "4",
-            "2",
-            "3",
-            "8",
             "1",
-            "0",
-            "7",
-            "9",
             "5",
+            "0",
+            "4",
+            "7",
+            "8",
+            "3",
+            "9",
+            "2",
             "6"
           ]
         },
         "contrast": [],
+        "contrast_undetermined": [],
         "inherited": [
           {
             "text": "5:55",
@@ -3617,85 +2911,14 @@
         ],
         "overlap": [],
         "overflow": [],
-        "wrapped": [
-          {
-            "text": "4",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "2",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "3",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "8",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "1",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "0",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "7",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "9",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "5",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "재배열",
-            "tag": "button",
-            "cls": "sm",
-            "lines": 5
-          },
-          {
-            "text": "6",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "⌫",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          }
-        ],
+        "wrapped": [],
         "shown": []
       },
       "done": {
         "landed_on": "done",
         "dom_screen": "done",
+        "attr_text": "",
+        "outside_text": "",
         "actions": [
           "finish"
         ],
@@ -3817,19 +3040,20 @@
             "0"
           ],
           "pw": [
-            "4",
-            "2",
-            "3",
-            "8",
             "1",
-            "0",
-            "7",
-            "9",
             "5",
+            "0",
+            "4",
+            "7",
+            "8",
+            "3",
+            "9",
+            "2",
             "6"
           ]
         },
         "contrast": [],
+        "contrast_undetermined": [],
         "inherited": [
           {
             "text": "1:41",
@@ -3860,40 +3084,10 @@
         "overflow": [],
         "wrapped": [
           {
-            "text": "✓",
-            "tag": "div",
-            "cls": "okc",
-            "lines": 2
-          },
-          {
             "text": "김시현님 계좌로 원 보냈어요.",
             "tag": "div",
             "cls": "q2",
             "lines": 2
-          },
-          {
-            "text": "추가이체",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "상세보기",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "공유",
-            "tag": "button",
-            "cls": "ghost",
-            "lines": 3
-          },
-          {
-            "text": "확인",
-            "tag": "button",
-            "cls": "fill",
-            "lines": 3
           }
         ],
         "shown": [
@@ -3988,6 +3182,8 @@
       "start": {
         "landed_on": "start",
         "dom_screen": "start",
+        "attr_text": "",
+        "outside_text": "",
         "actions": [
           "go-who",
           "noop"
@@ -4073,6 +3269,7 @@
           ]
         },
         "contrast": [],
+        "contrast_undetermined": [],
         "inherited": [
           {
             "text": "1:39",
@@ -4113,31 +3310,14 @@
         ],
         "overlap": [],
         "overflow": [],
-        "wrapped": [
-          {
-            "text": "김시현 님",
-            "tag": "div",
-            "cls": "greet",
-            "lines": 2
-          },
-          {
-            "text": "돈 보내기",
-            "tag": "button",
-            "cls": "primary",
-            "lines": 3
-          },
-          {
-            "text": "쓴 내역 보기",
-            "tag": "button",
-            "cls": "secondary",
-            "lines": 3
-          }
-        ],
+        "wrapped": [],
         "shown": []
       },
       "who": {
         "landed_on": "who",
         "dom_screen": "who",
+        "attr_text": "",
+        "outside_text": "",
         "actions": [
           "back-start",
           "pick-person",
@@ -4226,6 +3406,7 @@
           ]
         },
         "contrast": [],
+        "contrast_undetermined": [],
         "inherited": [
           {
             "text": "1:39",
@@ -4292,52 +3473,10 @@
         "overflow": [],
         "wrapped": [
           {
-            "text": "← 이전",
-            "tag": "button",
-            "cls": "backbtn",
-            "lines": 2
-          },
-          {
             "text": "누구에게 보낼까요?",
             "tag": "div",
             "cls": "q",
-            "lines": 3
-          },
-          {
-            "text": "김",
-            "tag": "span",
-            "cls": "av",
             "lines": 2
-          },
-          {
-            "text": "안",
-            "tag": "span",
-            "cls": "av",
-            "lines": 2
-          },
-          {
-            "text": "박",
-            "tag": "span",
-            "cls": "av",
-            "lines": 2
-          },
-          {
-            "text": "박",
-            "tag": "span",
-            "cls": "av",
-            "lines": 2
-          },
-          {
-            "text": "김",
-            "tag": "span",
-            "cls": "av",
-            "lines": 2
-          },
-          {
-            "text": "처음 보내는 곳",
-            "tag": "button",
-            "cls": "secondary",
-            "lines": 3
           }
         ],
         "shown": []
@@ -4345,6 +3484,8 @@
       "account": {
         "landed_on": "account",
         "dom_screen": "account",
+        "attr_text": "",
+        "outside_text": "",
         "actions": [
           "back-who",
           "bank-other",
@@ -4468,12 +3609,15 @@
             "tag": "button",
             "cls": "primary",
             "color": "rgb(140, 147, 156)",
+            "seen": "rgb(140, 147, 156)",
             "bg": "rgb(228, 232, 238)",
+            "opacity": 1,
             "fontSize": 22,
             "ratio": 2.52,
             "need": 3
           }
         ],
+        "contrast_undetermined": [],
         "inherited": [
           {
             "text": "1:40",
@@ -4648,94 +3792,10 @@
         "overflow": [],
         "wrapped": [
           {
-            "text": "← 이전",
-            "tag": "button",
-            "cls": "backbtn",
-            "lines": 2
-          },
-          {
             "text": "계좌번호를 눌러주세요",
             "tag": "div",
             "cls": "q sm",
-            "lines": 3
-          },
-          {
-            "text": "아직 누르지 않았습니다",
-            "tag": "div",
-            "cls": "count",
             "lines": 2
-          },
-          {
-            "text": "1",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "2",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "3",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "4",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "5",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "6",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "7",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "8",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "9",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "0",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "지우기",
-            "tag": "button",
-            "cls": "word",
-            "lines": 3
-          },
-          {
-            "text": "다음",
-            "tag": "button",
-            "cls": "primary",
-            "lines": 3
           }
         ],
         "shown": []
@@ -4743,6 +3803,8 @@
       "amount": {
         "landed_on": "amount",
         "dom_screen": "amount",
+        "attr_text": "",
+        "outside_text": "",
         "actions": [
           "back-from-amount",
           "edit-who",
@@ -4854,7 +3916,9 @@
             "tag": "div",
             "cls": "amtnum",
             "color": "rgb(154, 161, 170)",
+            "seen": "rgb(154, 161, 170)",
             "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
             "fontSize": 44,
             "ratio": 2.61,
             "need": 3
@@ -4864,12 +3928,15 @@
             "tag": "button",
             "cls": "primary",
             "color": "rgb(140, 147, 156)",
+            "seen": "rgb(140, 147, 156)",
             "bg": "rgb(228, 232, 238)",
+            "opacity": 1,
             "fontSize": 22,
             "ratio": 2.52,
             "need": 3
           }
         ],
+        "contrast_undetermined": [],
         "inherited": [
           {
             "text": "1:40",
@@ -4994,128 +4061,7 @@
         ],
         "overlap": [],
         "overflow": [],
-        "wrapped": [
-          {
-            "text": "← 이전",
-            "tag": "button",
-            "cls": "backbtn",
-            "lines": 2
-          },
-          {
-            "text": "김",
-            "tag": "span",
-            "cls": "av",
-            "lines": 2
-          },
-          {
-            "text": "다른 분이에요",
-            "tag": "button",
-            "cls": "fix",
-            "lines": 2
-          },
-          {
-            "text": "보낼 수 있는 돈 원 (십만 원)",
-            "tag": "div",
-            "cls": "avail",
-            "lines": 2
-          },
-          {
-            "text": "1만원",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "3만원",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "5만원",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "10만원",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "1",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "2",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "3",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "4",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "5",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "6",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "7",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "8",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "9",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "0",
-            "tag": "button",
-            "cls": "",
-            "lines": 2
-          },
-          {
-            "text": "지우기",
-            "tag": "button",
-            "cls": "word",
-            "lines": 3
-          },
-          {
-            "text": "다음",
-            "tag": "button",
-            "cls": "primary",
-            "lines": 3
-          }
-        ],
+        "wrapped": [],
         "shown": [
           [
             "#am-name",
@@ -5130,6 +4076,8 @@
       "review": {
         "landed_on": "review",
         "dom_screen": "review",
+        "attr_text": "",
+        "outside_text": "",
         "actions": [
           "back-amount",
           "edit-who",
@@ -5221,6 +4169,7 @@
           ]
         },
         "contrast": [],
+        "contrast_undetermined": [],
         "inherited": [
           {
             "text": "1:40",
@@ -5269,58 +4218,10 @@
         "overflow": [],
         "wrapped": [
           {
-            "text": "← 이전",
-            "tag": "button",
-            "cls": "backbtn",
-            "lines": 2
-          },
-          {
             "text": "이대로 보낼까요?",
             "tag": "div",
             "cls": "q sm",
-            "lines": 3
-          },
-          {
-            "text": "김시현",
-            "tag": "div",
-            "cls": "v",
             "lines": 2
-          },
-          {
-            "text": "고치기",
-            "tag": "button",
-            "cls": "fix",
-            "lines": 2
-          },
-          {
-            "text": "10,000원",
-            "tag": "div",
-            "cls": "v",
-            "lines": 2
-          },
-          {
-            "text": "고치기",
-            "tag": "button",
-            "cls": "fix",
-            "lines": 2
-          },
-          {
-            "text": "90,000원",
-            "tag": "div",
-            "cls": "v",
-            "lines": 2
-          },
-          {
-            "text": "수수료 없음",
-            "tag": "div",
-            "cls": "fee",
-            "lines": 2
-          },
-          {
-            "text": "보내기",
-            "tag": "button",
-            "cls": "primary",
-            "lines": 3
           }
         ],
         "shown": [
@@ -5337,6 +4238,8 @@
       "auth": {
         "landed_on": "auth",
         "dom_screen": "auth",
+        "attr_text": "",
+        "outside_text": "",
         "actions": [
           "back-review",
           "bio",
@@ -5437,6 +4340,7 @@
           ]
         },
         "contrast": [],
+        "contrast_undetermined": [],
         "inherited": [
           {
             "text": "1:41",
@@ -5545,40 +4449,10 @@
         "overflow": [],
         "wrapped": [
           {
-            "text": "← 이전",
-            "tag": "button",
-            "cls": "backbtn",
-            "lines": 2
-          },
-          {
             "text": "본인이 맞는지 확인합니다",
             "tag": "div",
             "cls": "q sm",
-            "lines": 3
-          },
-          {
-            "text": "👍",
-            "tag": "div",
-            "cls": "bio",
             "lines": 2
-          },
-          {
-            "text": "지문을 대면 바로 보내집니다.",
-            "tag": "div",
-            "cls": "hint",
-            "lines": 2
-          },
-          {
-            "text": "지문으로 확인",
-            "tag": "button",
-            "cls": "primary",
-            "lines": 3
-          },
-          {
-            "text": "비밀번호로 확인",
-            "tag": "button",
-            "cls": "secondary",
-            "lines": 3
           }
         ],
         "shown": []
@@ -5586,6 +4460,8 @@
       "done": {
         "landed_on": "done",
         "dom_screen": "done",
+        "attr_text": "",
+        "outside_text": "",
         "actions": [
           "back-start",
           "finish"
@@ -5674,6 +4550,7 @@
           ]
         },
         "contrast": [],
+        "contrast_undetermined": [],
         "inherited": [
           {
             "text": "1:41",
@@ -5734,28 +4611,10 @@
         "overflow": [],
         "wrapped": [
           {
-            "text": "← 처음으로",
-            "tag": "button",
-            "cls": "backbtn",
-            "lines": 2
-          },
-          {
-            "text": "✓",
-            "tag": "div",
-            "cls": "okc",
-            "lines": 2
-          },
-          {
             "text": "님께 원 ( )",
             "tag": "div",
             "cls": "s",
             "lines": 2
-          },
-          {
-            "text": "처음으로",
-            "tag": "button",
-            "cls": "primary",
-            "lines": 3
           }
         ],
         "shown": [

@@ -149,10 +149,42 @@
     "dead_controls_unverifiable": [],
     "dead_controls_new": 0,
     "dead_controls_pre_existing": [],
-    "low_contrast_before": 66,
     "low_contrast_after": 3,
-    "low_contrast_by_screen": {},
-    "new_inherited_colour": 0,
+    "low_contrast_before": null,
+    "low_contrast_by_screen": {
+      "start": {
+        "before": null,
+        "after": 0
+      },
+      "who": {
+        "before": null,
+        "after": 0
+      },
+      "account": {
+        "before": null,
+        "after": 1
+      },
+      "amount": {
+        "before": null,
+        "after": 2
+      },
+      "review": {
+        "before": null,
+        "after": 0
+      },
+      "auth": {
+        "before": null,
+        "after": 0
+      },
+      "done": {
+        "before": null,
+        "after": 0
+      }
+    },
+    "new_inherited_colour": null,
+    "inherited_colour_unreadable": 0,
+    "contrast_undetermined": 0,
+    "contrast_undetermined_before": 2,
     "low_contrast_gained_text": 0,
     "overlaps_new": 0,
     "overflows_new": 0,
@@ -256,6 +288,8 @@
     "checks_stood_down": [
       "A/preservation (new design, nothing to preserve)",
       "A/per-screen attribute loss",
+      "D/저명암 개수 전후 비교 (합계·화면별) - 새 설계라 짝이 되는 원본 화면이 없다. 화면 이름이 같다고 같은 화면이 아니므로, 견주면 두 설계가 다른 것을 결함으로 읽는다.",
+      "D/gained-text (저대비 요소에 글이 늘었는지) - 새 설계라 짝이 되는 원본 화면이 없다. 화면 이름이 같다고 같은 화면이 아니므로, 견주면 두 설계가 다른 것을 결함으로 읽는다.",
       "E/newly-wrapped text and height growth (no shared screens)",
       "D/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다.",
       "E/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다.",

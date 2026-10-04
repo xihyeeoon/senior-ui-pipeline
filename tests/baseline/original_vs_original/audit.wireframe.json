@@ -78,12 +78,12 @@
     "dead_controls_unverifiable": [],
     "dead_controls_new": 0,
     "dead_controls_pre_existing": [],
-    "low_contrast_before": 66,
-    "low_contrast_after": 66,
+    "low_contrast_after": 64,
+    "low_contrast_before": 64,
     "low_contrast_by_screen": {
       "home": {
-        "before": 24,
-        "after": 24
+        "before": 22,
+        "after": 22
       },
       "recipient": {
         "before": 8,
@@ -115,6 +115,8 @@
       }
     },
     "new_inherited_colour": 0,
+    "contrast_undetermined": 2,
+    "contrast_undetermined_before": 2,
     "low_contrast_gained_text": 0,
     "overlaps_new": 0,
     "overflows_new": 0,
