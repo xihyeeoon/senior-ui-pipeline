@@ -103,8 +103,19 @@ def overview(builds):
     def row(name, fn):
         rows.append([name, *[fn(r) for _, r in builds]])
 
+    def fatal_cell(r):
+        """총 개수와 그 가름. run 끼리 비교할 때 봐야 하는 것은 독립 결함
+        (fatal_root) 이다 - 일찍 멈춘 실행은 그 뒤 화면 전부가 "도달 못 함"
+        으로 걸려 총 개수가 부풀려지기 때문이다."""
+        m = r["metrics"]
+        if m.get("fatal_root") is None and m.get("fatal_derived") is None:
+            return str(len(r["fatal"]))
+        return "%d (독립 %s · 파생 %s)" % (len(r["fatal"]),
+                                           fmt_num(m.get("fatal_root")),
+                                           fmt_num(m.get("fatal_derived")))
+
     row("통과", lambda r: "✓" if r.get("passed") else "✗")
-    row("fatal", lambda r: len(r["fatal"]))
+    row("fatal", fatal_cell)
     row("warning", lambda r: len(r["warning"]))
     row("화면 수 (도달 / 흐름)", lambda r: "%s / %s" % (
         fmt_num(r["metrics"].get("screens_reached")),
@@ -117,7 +128,10 @@ def overview(builds):
     row("흐름 파일", lambda r: fmt_num(r["metrics"].get("flow")))
     row("원본에서 파생", lambda r: "예" if r["metrics"].get("derived_from_original", True) else "아니오 (새 설계)")
     row("생략된 검사", lambda r: len(r["metrics"].get("checks_stood_down") or []) or "없음")
-    return table(header, rows)
+    note = ("fatal 행의 '독립' 은 `fatal_root`, '파생' 은 `fatal_derived` "
+            "(한 번 멈춘 탓에 줄줄이 따라온 '도달 못 함') 다. run 끼리 비교할 "
+            "때는 독립 쪽을 본다.")
+    return table(header, rows) + "\n\n" + note
 
 
 def per_check(builds):
@@ -192,6 +206,18 @@ def key_metrics(builds):
                                 fmt_num(r["metrics"].get("state_pairs_checked")))
                    for _, r in builds]])
     m("H", "정의 안 된 클래스", "undefined_classes_new", count_or_list)
+
+    def missing_choices(v):
+        """{data-action: [없는 값, …]} -> "pick-bank 58개". 값 이름을 늘어놓으면
+        67개짜리 은행 목록이 표를 덮으므로 개수만 적는다."""
+        if v is None:
+            return "–"
+        if not v:
+            return "0"
+        items = ["%s %d개" % (a, len(vals)) for a, vals in list(v.items())[:4]]
+        return ", ".join(items) + (" …" if len(v) > 4 else "")
+
+    m("I", "빌드에 없는 원본 선택지", "choice_values_missing", missing_choices)
     return table(header, rows)
 
 

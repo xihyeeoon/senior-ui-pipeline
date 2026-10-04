@@ -399,3 +399,73 @@ def test_cli_exits_2_when_an_input_cannot_be_read(monkeypatch, tmp_path):
     assert code == 2
     report = json.loads(out)
     assert "없는-빌드.html" in report["fatal"][0]["detail"]
+
+
+# --------------------------------------------------------------------- #
+# 5. 리포트: 개요의 fatal 행 · 핵심 지표의 I 행
+# --------------------------------------------------------------------- #
+def report_build(label="Run1", **metrics):
+    m = {"fatal_total": 3, "fatal_derived": 2, "fatal_root": 1,
+         "choice_values_missing": {"pick-bank": ["가은행", "나은행", "다은행"]},
+         "choice_values_kept": {"pick-bank": 9}}
+    m.update(metrics)
+    return (label, {"passed": False,
+                    "fatal": [{"check": "I", "screen": None, "detail": "선택지 누락"},
+                              {"check": "A", "screen": "amount",
+                               "detail": "navigation failed"},
+                              {"check": "A", "screen": "done",
+                               "detail": "never reached",
+                               "derived_from": "amount"}],
+                    "warning": [], "metrics": m, "inputs": {"repaired": "x"}})
+
+
+def md_section(md, title):
+    """리포트의 한 절만 떼어 온다. 검사 글자는 '검사 항목별' 표와 '핵심 지표'
+    표 양쪽에 나오므로, 절을 가르지 않으면 엉뚱한 행을 본다."""
+    out, on = [], False
+    for line in md.splitlines():
+        if line.startswith("## "):
+            on = line[3:].strip() == title
+            continue
+        if on:
+            out.append(line)
+    assert out, "'%s' 절이 리포트에 없습니다" % title
+    return out
+
+
+def md_row(md, label, section="개요"):
+    hits = [l for l in md_section(md, section)
+            if l.startswith("| %s |" % label)]
+    assert hits, "'%s' 행이 %s 절에 없습니다" % (label, section)
+    return hits[0]
+
+
+def test_overview_fatal_row_shows_root_and_derived():
+    """고치기 전: 개요의 fatal 행은 총 개수 하나였다. run 끼리 비교할 때 봐야
+    하는 것은 독립 결함(fatal_root) 인데 그 값이 표에 없었다."""
+    md = _api.ar_render([report_build()], False, 10, "t")
+    row = md_row(md, "fatal")
+    assert "3" in row and "독립 1" in row and "파생 2" in row
+
+
+def test_overview_fatal_row_without_the_metrics():
+    """옛 audit JSON 에는 그 두 값이 없을 수 있다. 그때도 죽지 않는다."""
+    _, rep = report_build()
+    for k in ("fatal_total", "fatal_derived", "fatal_root"):
+        rep["metrics"].pop(k)
+    md = _api.ar_render([("Old", rep)], False, 10, "t")
+    assert md_row(md, "fatal")
+
+
+def test_key_metrics_has_a_row_for_check_I():
+    """고치기 전: 핵심 지표 표는 A~H 만 있었다. I 는 fatal 검사인데 그 숫자를
+    표에서 볼 수 없었다."""
+    md = _api.ar_render([report_build()], False, 10, "t")
+    row = md_row(md, "I", "핵심 지표")
+    assert "choice" not in row              # 지표 이름이 아니라 사람 말로
+    assert "pick-bank" in row and "3" in row
+
+
+def test_key_metrics_I_row_with_nothing_missing():
+    md = _api.ar_render([report_build(choice_values_missing={})], False, 10, "t")
+    assert md_row(md, "I", "핵심 지표").endswith("| 0 |")
