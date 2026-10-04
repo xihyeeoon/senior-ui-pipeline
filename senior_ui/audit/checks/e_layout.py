@@ -34,7 +34,9 @@ def run(ctx):
         for x in r.get("overflow") or []:
             if (x["cls"], x["text"]) not in of:
                 of_new.append(dict(x, screen=n))
-        if o.get("height") and r.get("height") and (ctx.derived or n in shared):
+        # 짝이 되는 원본 화면이 없으면 o 는 위에서 이미 {} 다 - 높이가 있다는
+        # 것 자체가 짝이 있다는 뜻이므로 조건을 또 걸지 않는다.
+        if o.get("height") and r.get("height"):
             ratio = r["height"] / float(o["height"])
             if ratio > HEIGHT_GROWTH_LIMIT:
                 tall.append({"screen": n, "before": o["height"],
