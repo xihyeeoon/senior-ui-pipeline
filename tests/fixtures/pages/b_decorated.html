@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 B - 장식만 다른 값은 통과해야 한다</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- 같은 값을 사람이 읽기 좋게 꾸민 것이다 - 금액에 '원', 계좌에 하이픈.
+     값은 과제가 넣은 것과 같으므로 통과해야 한다. 걷어내는 장식은 '원' ·
+     공백 · 하이픈 뿐이다. -->
+<section class="screen on" data-screen="start" id="start">
+  <p id="dn-amt">10,000원</p>
+  <p id="acc">3333-0000-0000-0</p>
+  <button data-action="noop">확인</button>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'noop') { /* 이 페이지는 걷지 않는다 */ }
+});
+</script>
+</body>
+</html>

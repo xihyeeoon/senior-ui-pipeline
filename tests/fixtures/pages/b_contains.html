@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 B - 더 큰 값이 "포함" 으로 통과한다</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- 과제가 넣은 값은 10,000 원과 3333000000000 이다. 이 화면은 둘 다 자기
+     안에 품기만 하는 더 큰 값을 보여 준다 - 금액은 열한 배, 계좌는 한 자리 더
+     길다. "포함" 으로 비교하는 검사기는 이것을 통과시킨다. -->
+<section class="screen on" data-screen="start" id="start">
+  <p id="dn-amt">110,000원</p>
+  <p id="acc">33330000000009</p>
+  <button data-action="noop">확인</button>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'noop') { /* 이 페이지는 걷지 않는다 */ }
+});
+</script>
+</body>
+</html>
