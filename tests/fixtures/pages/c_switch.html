@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 C - switch/case 와 쌍따옴표를 읽지 못한다</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- 세 조작부 모두 분기가 있다 - 하나는 홑따옴표 case, 하나는 쌍따옴표 case,
+     하나는 쌍따옴표 === 다. `a === '이름'` 하나만 찾는 검사기는 분기를 하나도
+     못 찾고, 못 찾으면 원본 목록으로 대신하므로 세 개가 전부 "죽은 조작부" 로
+     걸린다. -->
+<section class="screen on" data-screen="start" id="start">
+  <p id="amt">10,000원</p>
+  <button data-action="go-next">다음</button>
+  <button data-action="back">뒤로</button>
+  <button data-action="reset">처음부터</button>
+</section>
+<section class="screen" data-screen="next" id="next">
+  <p>다음 화면</p>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  switch (a) {
+    case 'go-next':
+      break;
+    case "back":
+      break;
+  }
+  if (a === "reset") { /* 처음부터 */ }
+});
+</script>
+</body>
+</html>

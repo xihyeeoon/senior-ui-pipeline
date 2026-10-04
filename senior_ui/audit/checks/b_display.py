@@ -1,15 +1,51 @@
 r"""검사 B - 표시 정확도. fatal.
 
 각 화면이 과제가 넣은 값을 그대로 보여 주는지, 원본에 없던
-alert/confirm/prompt 나 onclick 이 끼어들었는지를 본다. 끼어든 쪽이 숫자를 박아
-넣었는지는 그 주입 finding 의 속성(`numbers`)으로 남긴다 - 결함 하나가 두 번
-세지지 않게. 흐름 파일의 expect 에 적힌 선택자만 본다 - 적히지 않은 곳이
-무엇을 보여 주는지는 보지 않는다.
+alert/confirm/prompt 나 onclick 이 끼어들었는지를 본다. 값은 숫자 경계로 본다 -
+라벨은 함께 있어도 되지만 숫자가 더 붙어 있으면 다른 값이다 (shows() 참고).
+
+끼어든 쪽이 숫자를 박아 넣었는지는 그 주입 finding 의 속성(`numbers`)으로
+남긴다 - 결함 하나가 두 번 세지지 않게.
+
+흐름 파일의 expect 에 적힌 선택자만 본다 - 적히지 않은 곳이 무엇을 보여 주는지는
+보지 않는다.
 """
 import re
 
 from ..context import union
 from ..flow import ACCOUNT, AMOUNT, AMOUNT_SHOWN, NAME, fill
+
+# 숫자 사이의 하이픈과 공백은 끊어 읽히게 하는 장식이다 (3333-0000-0000-0,
+# 3333 0000 0000 0). 숫자 사이가 아닌 것은 걷어내지 않는다 - "카카오뱅크
+# 3333000000000" 의 공백은 라벨과 값을 가르는 것이지 숫자의 장식이 아니다.
+DIGIT_GAP = re.compile(r"(?<=\d)[\s-]+(?=\d)")
+
+
+def joined(text):
+    """숫자 사이의 하이픈·공백만 걷어낸다. 그 밖의 글자는 그대로 둔다."""
+    return DIGIT_GAP.sub("", text or "")
+
+
+def shows(got, expected):
+    """그 선택자가 과제가 넣은 값을 보여 주는가.
+
+    기대값이 앞뒤에 다른 숫자가 붙지 않은 채로 들어 있으면 통과다. 값이 아닌
+    다른 글자는 함께 있어도 된다 - 한 요소가 라벨과 값을 같이 담는 것은 흔한
+    모양이고, 그것은 결함이 아니다.
+
+        "카카오뱅크 3333000000000"   계좌 옆에 은행 이름        -> 통과
+        "10,000원만 원"              금액 아래 한글 읽기(<small>) -> 통과
+        "3333-0000-0000-0"           끊어 읽는 계좌             -> 통과
+
+    "포함" 으로 보면 안 되는 쪽은 숫자다. 110,000원 은 10,000 을 품고
+    33330000000009 는 3333000000000 을 품으므로, 열한 배 금액과 한 자리 더 긴
+    계좌가 전부 통과한다 - 검사 B 가 잡아야 하는 바로 그 결함이다. 그래서
+    앞이나 뒤에 숫자가 더 붙은 자리는 세지 않는다.
+    """
+    want, have = joined(expected), joined(got)
+    if not want:
+        return True
+    return bool(re.search(r"(?<!\d)%s(?!\d)" % re.escape(want), have))
 
 
 def calls(html, fn):
@@ -30,7 +66,7 @@ def run(ctx):
             got = shown.get(sel)
             if got is None:
                 F("B", name, "%s is missing, cannot show %r" % (sel, expected))
-            elif expected not in got:
+            elif not shows(got, expected):
                 F("B", name, "%s shows %r but the task used %r"
                   % (sel, got, expected), selector=sel, expected=expected, got=got)
         # Only a name the original actually showed here can go missing.

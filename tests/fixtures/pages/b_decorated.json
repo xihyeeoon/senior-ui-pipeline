@@ -1,0 +1,19 @@
+{
+  "name": "b_decorated",
+  "note": "장식과 라벨이 붙은 값은 통과해야 한다. 화면 하나, 걸음 없음.",
+  "derived_from_original": false,
+  "required_ids": ["start"],
+  "steps": [
+    {"screen": "start"}
+  ],
+  "expect": {
+    "start": [
+      ["#dn-amt", "{AMOUNT_SHOWN}"],
+      ["#acc", "{ACCOUNT}"],
+      ["#rv-acc", "{ACCOUNT}"],
+      ["#rv-amt", "{AMOUNT_SHOWN}"],
+      ["#am-acc", "{BANK}"]
+    ]
+  },
+  "done_amount": "#dn-amt"
+}

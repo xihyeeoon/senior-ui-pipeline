@@ -3,6 +3,22 @@ r"""In-page JavaScript probes used by senior_ui.audit.drive.
 Kept separate from the driver so each probe can be read and tested on its own.
 Every probe is scoped to the screen that is currently `.on`, except STATE_PAIRS
 which inspects the stylesheet as a whole.
+
+화면에 매인 probe 는 켜진 화면이 없으면 `[]` 가 아니라 `null` 을 돌려준다.
+빈 목록은 "쟀고 아무것도 없었다" 이고 null 은 "잴 수 없었다" 다. 둘을 같은
+값으로 돌려주면 아무것도 떠 있지 않은 빌드가 가장 깨끗한 빌드로 보인다 -
+검사 A 가 그 null 을 fatal 로 잡는다.
+"""
+
+# --- 켜진 화면이 스스로 말하는 이름 ------------------------------------------
+# window.__screen() 은 전환 스크립트의 기록이다. 기록이 바뀌었다는 것과 화면이
+# 바뀌었다는 것은 다른 일이므로, 화면 쪽 이름을 따로 읽어 둘을 맞춰 본다.
+# 켜진 화면이 없으면 null 이고, 그것은 "도착을 확인할 수 없다" 는 뜻이다.
+DOM_SCREEN = r"""
+() => {
+  const s = document.querySelector('.screen.on');
+  return s ? (s.dataset.screen || null) : null;
+}
 """
 
 # --- inventory: what the current screen contains -----------------------------
@@ -95,7 +111,7 @@ CONTRAST = r"""
 INHERITED_COLOUR = r"""
 () => {
   const s = document.querySelector('.screen.on');
-  if (!s) return [];
+  if (!s) return null;      /* 켜진 화면이 없다 - 잴 수 없었다는 뜻이다 */
   const out = [];
   s.querySelectorAll('*').forEach(el => {
     const own = Array.from(el.childNodes)
@@ -123,7 +139,7 @@ INHERITED_COLOUR = r"""
 OVERLAP = r"""
 () => {
   const s = document.querySelector('.screen.on');
-  if (!s) return [];
+  if (!s) return null;      /* 켜진 화면이 없다 - 잴 수 없었다는 뜻이다 */
   const cand = Array.from(s.querySelectorAll('*')).filter(el => {
     const cs = getComputedStyle(el);
     if (cs.display === 'none' || cs.visibility === 'hidden') return false;
@@ -163,7 +179,7 @@ OVERLAP = r"""
 OVERFLOW = r"""
 () => {
   const s = document.querySelector('.screen.on');
-  if (!s) return [];
+  if (!s) return null;      /* 켜진 화면이 없다 - 잴 수 없었다는 뜻이다 */
   const out = [];
   s.querySelectorAll('*').forEach(el => {
     const cs = getComputedStyle(el);
@@ -203,7 +219,7 @@ OVERFLOW = r"""
 WRAPPED = r"""
 () => {
   const s = document.querySelector('.screen.on');
-  if (!s) return [];
+  if (!s) return null;      /* 켜진 화면이 없다 - 잴 수 없었다는 뜻이다 */
   const out = [];
   s.querySelectorAll('*').forEach(el => {
     const own = Array.from(el.childNodes)

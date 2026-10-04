@@ -1,0 +1,16 @@
+{
+  "name": "arrival_lies",
+  "note": "__screen() 은 done 이라 하고 .screen.on 은 start 인 경우를 재현한다. expect 의 #amt 는 켜진 화면 안에 있고 값도 맞다 - 도착 판정만 걸리게.",
+  "derived_from_original": false,
+  "required_ids": ["start", "done"],
+  "steps": [
+    {"screen": "start"},
+    {"screen": "done", "click": "[data-action='go-done']"}
+  ],
+  "expect": {
+    "done": [
+      ["#amt", "{AMOUNT_SHOWN}"]
+    ]
+  },
+  "done_amount": "#amt"
+}

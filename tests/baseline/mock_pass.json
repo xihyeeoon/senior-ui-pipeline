@@ -11,7 +11,7 @@
       "flow": "<run>/attempt_1.flow.json",
       "stage": "audit",
       "passed": false,
-      "fatal": 1,
+      "fatal": 3,
       "warning": 0
     }
   ],
@@ -32,8 +32,8 @@
   "trend": [
     {
       "attempt": 1,
-      "fatal_total": 1,
-      "fatal_root": 1,
+      "fatal_total": 3,
+      "fatal_root": 3,
       "fatal_derived": 0,
       "screens": "9/9",
       "stopped_at": null

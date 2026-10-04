@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 I - 빌드 쪽: 같은 은행을 긴 이름으로 쓴다</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- 원본의 세 은행 중 둘을 긴 이름으로 들고 있다. 뒤에 말이 붙었을 뿐 같은
+     선택지이므로 남아 있는 것으로 세야 한다. 셋째 은행은 아예 없다 - 그것은
+     누락이다. (셋째 은행 이름을 이 주석에 적지 않는다. 적으면 주석이 그 값을
+     품어서 재현이 되지 않는다.) -->
+<section class="screen on" data-screen="start" id="start">
+  <p id="amt">10,000원</p>
+  <div class="banks">
+    <button data-action="pick-bank" data-bank="국민은행">국민은행</button>
+    <button data-action="pick-bank" data-bank="신한은행">신한은행</button>
+  </div>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'pick-bank') { /* 은행을 고른다 */ }
+});
+</script>
+</body>
+</html>

@@ -3,6 +3,7 @@
     "screens": {
       "home": {
         "landed_on": "home",
+        "dom_screen": "home",
         "actions": [
           "go-recipient"
         ],
@@ -122,16 +123,16 @@
             "0"
           ],
           "pw": [
-            "0",
-            "7",
-            "3",
-            "8",
-            "9",
-            "1",
             "6",
-            "5",
+            "8",
             "2",
-            "4"
+            "4",
+            "1",
+            "3",
+            "7",
+            "0",
+            "5",
+            "9"
           ]
         },
         "contrast": [
@@ -815,6 +816,7 @@
       },
       "recipient": {
         "landed_on": "recipient",
+        "dom_screen": "recipient",
         "actions": [
           "back-home",
           "back-home",
@@ -936,16 +938,16 @@
             "0"
           ],
           "pw": [
-            "0",
-            "7",
-            "3",
-            "8",
-            "9",
-            "1",
             "6",
-            "5",
+            "8",
             "2",
-            "4"
+            "4",
+            "1",
+            "3",
+            "7",
+            "0",
+            "5",
+            "9"
           ]
         },
         "contrast": [
@@ -1196,6 +1198,7 @@
       },
       "account": {
         "landed_on": "account",
+        "dom_screen": "account",
         "actions": [
           "back-recipient",
           "back-home",
@@ -1333,16 +1336,16 @@
             "0"
           ],
           "pw": [
-            "0",
-            "7",
-            "3",
-            "8",
-            "9",
-            "1",
             "6",
-            "5",
+            "8",
             "2",
-            "4"
+            "4",
+            "1",
+            "3",
+            "7",
+            "0",
+            "5",
+            "9"
           ]
         },
         "contrast": [
@@ -1483,6 +1486,7 @@
       },
       "bank": {
         "landed_on": "bank",
+        "dom_screen": "bank",
         "actions": [
           "back-recipient",
           "tab-bank",
@@ -1676,16 +1680,16 @@
             "0"
           ],
           "pw": [
-            "0",
-            "7",
-            "3",
-            "8",
-            "9",
-            "1",
             "6",
-            "5",
+            "8",
             "2",
-            "4"
+            "4",
+            "1",
+            "3",
+            "7",
+            "0",
+            "5",
+            "9"
           ]
         },
         "contrast": [
@@ -2814,6 +2818,7 @@
       },
       "amount": {
         "landed_on": "amount",
+        "dom_screen": "amount",
         "actions": [
           "back-account",
           "back-home",
@@ -2955,16 +2960,16 @@
             "0"
           ],
           "pw": [
-            "0",
-            "7",
-            "3",
-            "8",
-            "9",
-            "1",
             "6",
-            "5",
+            "8",
             "2",
-            "4"
+            "4",
+            "1",
+            "3",
+            "7",
+            "0",
+            "5",
+            "9"
           ]
         },
         "contrast": [
@@ -3162,6 +3167,7 @@
       },
       "confirm": {
         "landed_on": "confirm",
+        "dom_screen": "confirm",
         "actions": [
           "back-amount",
           "back-home",
@@ -3286,16 +3292,16 @@
             "0"
           ],
           "pw": [
-            "0",
-            "7",
-            "3",
-            "8",
-            "9",
-            "1",
             "6",
-            "5",
+            "8",
             "2",
-            "4"
+            "4",
+            "1",
+            "3",
+            "7",
+            "0",
+            "5",
+            "9"
           ]
         },
         "contrast": [
@@ -3441,6 +3447,7 @@
       },
       "password": {
         "landed_on": "password",
+        "dom_screen": "password",
         "actions": [
           "back-confirm",
           "pw",
@@ -3471,7 +3478,7 @@
           "done"
         ],
         "onclicks": [],
-        "text": "5:55\n5G 89\n✕\n계좌 비밀번호\n4\n7\n0\n1\n2\n9\n8\n5\n6\n재배열\n3\n⌫",
+        "text": "5:55\n5G 89\n✕\n계좌 비밀번호\n4\n2\n3\n8\n1\n0\n7\n9\n5\n재배열\n6\n⌫",
         "height": 844,
         "choices": {
           "pick-bank": [
@@ -3576,15 +3583,15 @@
           ],
           "pw": [
             "4",
-            "7",
-            "0",
-            "1",
             "2",
-            "9",
+            "3",
             "8",
+            "1",
+            "0",
+            "7",
+            "9",
             "5",
-            "6",
-            "3"
+            "6"
           ]
         },
         "contrast": [],
@@ -3618,31 +3625,13 @@
             "lines": 3
           },
           {
-            "text": "7",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "0",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "1",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
             "text": "2",
             "tag": "button",
             "cls": "",
             "lines": 3
           },
           {
-            "text": "9",
+            "text": "3",
             "tag": "button",
             "cls": "",
             "lines": 3
@@ -3654,13 +3643,31 @@
             "lines": 3
           },
           {
-            "text": "5",
+            "text": "1",
             "tag": "button",
             "cls": "",
             "lines": 3
           },
           {
-            "text": "6",
+            "text": "0",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "7",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "9",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "5",
             "tag": "button",
             "cls": "",
             "lines": 3
@@ -3672,7 +3679,7 @@
             "lines": 5
           },
           {
-            "text": "3",
+            "text": "6",
             "tag": "button",
             "cls": "",
             "lines": 3
@@ -3688,6 +3695,7 @@
       },
       "done": {
         "landed_on": "done",
+        "dom_screen": "done",
         "actions": [
           "finish"
         ],
@@ -3810,15 +3818,15 @@
           ],
           "pw": [
             "4",
-            "7",
-            "0",
-            "1",
             "2",
-            "9",
+            "3",
             "8",
+            "1",
+            "0",
+            "7",
+            "9",
             "5",
-            "6",
-            "3"
+            "6"
           ]
         },
         "contrast": [],
@@ -3979,6 +3987,7 @@
     "screens": {
       "start": {
         "landed_on": "start",
+        "dom_screen": "start",
         "actions": [
           "go-who",
           "noop"
@@ -4128,6 +4137,7 @@
       },
       "who": {
         "landed_on": "who",
+        "dom_screen": "who",
         "actions": [
           "back-start",
           "pick-person",
@@ -4334,6 +4344,7 @@
       },
       "account": {
         "landed_on": "account",
+        "dom_screen": "account",
         "actions": [
           "back-who",
           "bank-other",
@@ -4731,6 +4742,7 @@
       },
       "amount": {
         "landed_on": "amount",
+        "dom_screen": "amount",
         "actions": [
           "back-from-amount",
           "edit-who",
@@ -5117,6 +5129,7 @@
       },
       "review": {
         "landed_on": "review",
+        "dom_screen": "review",
         "actions": [
           "back-amount",
           "edit-who",
@@ -5323,6 +5336,7 @@
       },
       "auth": {
         "landed_on": "auth",
+        "dom_screen": "auth",
         "actions": [
           "back-review",
           "bio",
@@ -5571,6 +5585,7 @@
       },
       "done": {
         "landed_on": "done",
+        "dom_screen": "done",
         "actions": [
           "back-start",
           "finish"

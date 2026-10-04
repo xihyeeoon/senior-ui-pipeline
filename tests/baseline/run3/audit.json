@@ -4,6 +4,15 @@
     {
       "check": "I",
       "screen": null,
+      "detail": "원본의 num 선택지 11개 중 1개가 생성물에 없다 (예: 00). 화면에 모두 보일 필요는 없지만 값 자체는 모두 접근 가능해야 한다. 검색이나 단계적 선택으로 찾을 수 있게 포함하라.",
+      "action": "num",
+      "missing": [
+        "00"
+      ]
+    },
+    {
+      "check": "I",
+      "screen": null,
       "detail": "원본의 pick-bank 선택지 67개 중 58개가 생성물에 없다 (예: BNK투자증권, BNP파리바, BOA, DB증권, HSBC …). 화면에 모두 보일 필요는 없지만 값 자체는 모두 접근 가능해야 한다. 검색이나 단계적 선택으로 찾을 수 있게 포함하라.",
       "action": "pick-bank",
       "missing": [
@@ -66,6 +75,15 @@
         "현대차증권",
         "회원수협"
       ]
+    },
+    {
+      "check": "I",
+      "screen": null,
+      "detail": "원본의 quick 선택지 4개 중 1개가 생성물에 없다 (예: all). 화면에 모두 보일 필요는 없지만 값 자체는 모두 접근 가능해야 한다. 검색이나 단계적 선택으로 찾을 수 있게 포함하라.",
+      "action": "quick",
+      "missing": [
+        "all"
+      ]
     }
   ],
   "warning": [],
@@ -85,6 +103,41 @@
     "screens_comparable_to_original": [],
     "screens_expected": 8,
     "screens_reached": 8,
+    "screens_unlit": [],
+    "screens_landed_on": {
+      "start": {
+        "hook": "start",
+        "dom": "start"
+      },
+      "who": {
+        "hook": "who",
+        "dom": "who"
+      },
+      "accno": {
+        "hook": "accno",
+        "dom": "accno"
+      },
+      "bank": {
+        "hook": "bank",
+        "dom": "bank"
+      },
+      "whoconfirm": {
+        "hook": "whoconfirm",
+        "dom": "whoconfirm"
+      },
+      "amount": {
+        "hook": "amount",
+        "dom": "amount"
+      },
+      "review": {
+        "hook": "review",
+        "dom": "review"
+      },
+      "done": {
+        "hook": "done",
+        "dom": "done"
+      }
+    },
     "done_screen": "done",
     "done_amount": "10,000",
     "data-screen_original": 8,
@@ -98,6 +151,7 @@
     "onclick_added": 0,
     "dialogs_during_task": 0,
     "handled_actions": 31,
+    "dead_controls_unverifiable": [],
     "dead_controls_new": 0,
     "dead_controls_pre_existing": [],
     "low_contrast_before": 66,
@@ -121,11 +175,12 @@
       "num": 11,
       "pw": 10
     },
+    "choice_values_removed_by_design": {},
     "choice_values_kept": {
       "pick-bank": 9,
       "acc-num": 10,
-      "quick": 4,
-      "num": 11,
+      "quick": 3,
+      "num": 10,
       "pw": 10
     },
     "choice_values_missing": {
@@ -188,12 +243,18 @@
         "한화투자증권",
         "현대차증권",
         "회원수협"
+      ],
+      "quick": [
+        "all"
+      ],
+      "num": [
+        "00"
       ]
     },
     "fatal_duplicates_removed": 0,
-    "fatal_total": 1,
+    "fatal_total": 3,
     "fatal_derived": 0,
-    "fatal_root": 1,
+    "fatal_root": 3,
     "stopped_at": null,
     "js_error_details": [],
     "flow_notes": [],

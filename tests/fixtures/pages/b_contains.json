@@ -1,0 +1,30 @@
+{
+  "name": "b_contains",
+  "note": "검사 B 가 '포함' 으로 비교하는 것을 재현한다. 화면 하나, 걸음 없음.",
+  "derived_from_original": false,
+  "required_ids": [
+    "start"
+  ],
+  "steps": [
+    {
+      "screen": "start"
+    }
+  ],
+  "expect": {
+    "start": [
+      [
+        "#dn-amt",
+        "{AMOUNT_SHOWN}"
+      ],
+      [
+        "#acc",
+        "{ACCOUNT}"
+      ],
+      [
+        "#lab-amt",
+        "{AMOUNT_SHOWN}"
+      ]
+    ]
+  },
+  "done_amount": "#dn-amt"
+}

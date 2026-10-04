@@ -1,0 +1,30 @@
+{
+  "name": "i_declared",
+  "note": "i_substring 과 같은 두 페이지에, 뺀 선택지를 선언해 둔 흐름이다. 선언한 값은 fatal 로 세지 않고 지표와 생략 목록에 남긴다.",
+  "derived_from_original": false,
+  "required_ids": [
+    "start"
+  ],
+  "steps": [
+    {
+      "screen": "start"
+    }
+  ],
+  "expect": {
+    "start": [
+      [
+        "#amt",
+        "{AMOUNT_SHOWN}"
+      ]
+    ]
+  },
+  "done_amount": "#amt",
+  "choices_removed": {
+    "quick": {
+      "values": [
+        "all"
+      ],
+      "reason": "전액 버튼은 안전을 위해 일부러 뺐다 (changelog #15). 누르면 잔액 전부가 들어가서, 금액을 확인하지 않고 보내는 일이 생겼다."
+    }
+  }
+}

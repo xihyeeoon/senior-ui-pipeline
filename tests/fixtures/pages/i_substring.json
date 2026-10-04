@@ -1,0 +1,15 @@
+{
+  "name": "i_substring",
+  "note": "검사 I 가 '포함' 으로 찾아 짧은 값이 다른 글자 속에서 맞는 것을 재현한다. 원본 쪽은 i_orig.html, 빌드 쪽은 i_build.html 이고 흐름은 둘에 다 쓴다.",
+  "derived_from_original": false,
+  "required_ids": ["start"],
+  "steps": [
+    {"screen": "start"}
+  ],
+  "expect": {
+    "start": [
+      ["#amt", "{AMOUNT_SHOWN}"]
+    ]
+  },
+  "done_amount": "#amt"
+}

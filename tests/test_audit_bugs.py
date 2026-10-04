@@ -18,16 +18,27 @@ import _api
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# 검사 C 는 빌드에서 분기를 못 찾았을 때 원본 목록으로 대신하면 안 된다. 그것을
+# 확인하려면 "처리기가 있는 원본" 이 있어야 하므로, 원본 쪽 HTML 로 이것을 쓴다.
+ORIGINAL_WITH_HANDLERS = ("<html><script>"
+                          "if (a === 'pick-bank') {} else if (a === 'quick') {}"
+                          "</script></html>")
+
 
 # --------------------------------------------------------------------- #
 # drive() 스냅샷 만들기 - 검사들이 읽는 키를 전부 빈 값으로 채운다
 # --------------------------------------------------------------------- #
 def row(name, **kw):
-    """한 화면에 도착한 뒤 긁어 온 것. 기본값은 "아무 문제 없음" 이다."""
-    r = {"landed_on": name, "screens": [name], "actions": [], "ids": [],
-         "onclicks": [], "text": "", "height": 800, "choices": {},
-         "contrast": [], "inherited": [], "overlap": [], "overflow": [],
-         "wrapped": [], "shown": []}
+    """한 화면에 도착한 뒤 긁어 온 것. 기본값은 "아무 문제 없음" 이다.
+
+    `landed_on` 은 전환 스크립트의 기록이고 `dom_screen` 은 켜진 화면이 스스로
+    말하는 이름이다. 도착 판정은 둘이 같아야 통과이므로 기본값은 둘 다 그
+    화면이다 - 한쪽만 바꾸면 그 어긋남을 재현하는 입력이 된다.
+    """
+    r = {"landed_on": name, "dom_screen": name, "screens": [name],
+         "actions": [], "ids": [], "onclicks": [], "text": "", "height": 800,
+         "choices": {}, "contrast": [], "inherited": [], "overlap": [],
+         "overflow": [], "wrapped": [], "shown": []}
     r.update(kw)
     return r
 
@@ -534,3 +545,49 @@ def test_blocking_dialog_without_a_wrong_number_is_still_one_fatal():
     assert f["numbers"] == []
     assert "blocking confirm" in f["detail"]
     assert "while the task used" not in f["detail"]
+
+
+# --------------------------------------------------------------------- #
+# 8. 검사 C - 처리기를 빌드에서만 읽는다
+# --------------------------------------------------------------------- #
+def dead_controls(rep_html, actions, orig_html=ORIGINAL_WITH_HANDLERS):
+    """빌드 HTML 과 조작부 목록만 바꿔 검사 C 를 돌린다. orig_html 은 기본으로
+    처리기가 있는 문서를 쓴다 - "못 찾으면 원본 것으로 대신한다" 가 거짓 통과가
+    되는 상황을 재현하려면 둘이 달라야 한다."""
+    rep = snap({"start": done_row("start")})
+    rep["screens"]["start"]["actions"] = actions
+    report = _api.audit(snap({"start": done_row("start")}), rep,
+                        orig_html, rep_html, flow(["start"]))
+    return [f for f in report["fatal"] if f.get("check") == "C"], report["metrics"]
+
+
+def test_no_handler_in_the_build_is_fatal_even_if_the_original_had_one():
+    """고치기 전: 빌드에서 분기를 못 찾으면 원본의 분기 목록으로 대신했다.
+    이름이 겹치는 만큼 "처리된다" 로 읽혀, 처리기가 아예 없는 빌드가 통과했다."""
+    hit, m = dead_controls("<html><body></body></html>", ["pick-bank", "quick"])
+    assert len(hit) == 1
+    assert "처리기" in hit[0]["detail"]
+    assert m["handled_actions"] == 0
+    assert m["dead_controls_unverifiable"] == ["pick-bank", "quick"]
+    # 어느 조작부가 죽었는지 가릴 기준이 없다. 0 은 "죽은 것이 없다" 이므로
+    # null 로 둔다.
+    assert m["dead_controls_new"] is None
+
+
+def test_a_document_with_no_controls_at_all_says_nothing():
+    """조작부가 없으면 죽을 것이 없다. 조작부가 사라진 것 자체는 검사 A 가 본다
+    - 여기서 fatal 을 내면 조작부 없는 문서가 "죽은 조작부" 로 걸린다."""
+    hit, m = dead_controls("<html><body></body></html>", [])
+    assert hit == []
+    assert m["dead_controls_new"] == 0
+    assert m["dead_controls_unverifiable"] == []
+
+
+def test_switch_case_and_double_quotes_count_as_branches():
+    """검사 C 와 흐름 명세 검사가 같은 함수로 읽는다 (audit/handlers.py)."""
+    html = ('<html><script>switch (a) { case "pick-bank": break; }'
+            ' if (a === \'quick\') {} </script></html>')
+    hit, m = dead_controls(html, ["pick-bank", "quick"])
+    assert hit == []
+    assert m["handled_actions"] == 2
+    assert _api.validate_flow_handlers(html) == {"pick-bank", "quick"}

@@ -11,6 +11,8 @@ problems 목록의 순서이고, 그 순서는 재시도 프롬프트에 그대�
 import json
 import re
 
+from ..audit.handlers import handled_actions
+
 FENCE = re.compile(r"```(html|json)[ \t]*\r?\n(.*?)\r?\n[ \t]*```", re.S)
 
 
@@ -58,19 +60,23 @@ def _check_steps(flow, html, steps, screens):
 
 def _check_handlers(flow, html, steps, screens):
     """클릭 처리기가 검사기가 읽을 수 있는 모양인지, 분기 없는 data-action 이
-    있는지. 검사기는 아래 패턴 하나로만 처리기를 읽는다 - switch/case 나 다른
-    변수 이름을 쓰면 모든 data-action 이 죽은 것으로 보인다."""
+    있는지.
+
+    읽는 함수는 검사 C 와 같은 것이다 (audit/handlers.py). 두 곳이 각자 읽으면
+    "검사기가 읽는 모양" 이라고 모델에게 알려 주는 것과 검사기가 실제로 읽는
+    것이 갈라진다."""
     problems = []
-    handled = set(re.findall(r"a\s*===\s*'([a-z-]+)'", html))
+    handled = handled_actions(html)
     actions = set(re.findall(r'data-action="([^"]+)"', html))
     if not handled:
-        problems.append("클릭 처리기에 `a==='이름'` 분기가 하나도 없다. switch/case 나 다른 변수 "
-                        "이름은 검사기가 읽지 못한다. `const a = el.dataset.action;` 뒤에 "
-                        "`if(a==='이름'){…} else if(a==='이름'){…}` 형식으로 써라")
+        problems.append("클릭 처리기에 data-action 분기가 하나도 없다. 검사기가 읽는 모양은 "
+                        "`a === '이름'` 과 `switch(a){ case '이름': }` 두 가지다 (따옴표는 "
+                        "홑/쌍 둘 다 된다). 다른 변수 이름은 읽지 못한다 - "
+                        "`const a = el.dataset.action;` 뒤에 그 두 모양 중 하나로 써라")
     else:
         dead = sorted(actions - handled)
         if dead:
-            problems.append("data-action 이 있지만 `a==='…'` 분기가 없는 것: " + ", ".join(dead))
+            problems.append("data-action 이 있지만 분기가 없는 것: " + ", ".join(dead))
     return problems
 
 

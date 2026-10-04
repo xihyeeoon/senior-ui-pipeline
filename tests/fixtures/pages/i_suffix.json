@@ -1,0 +1,15 @@
+{
+  "name": "i_suffix",
+  "note": "원본의 짧은 한글 이름을 빌드가 긴 이름으로 쓰는 경우. 원본 쪽은 i_suffix_orig.html, 빌드 쪽은 i_suffix_build.html 이고 흐름은 둘에 다 쓴다.",
+  "derived_from_original": false,
+  "required_ids": ["start"],
+  "steps": [
+    {"screen": "start"}
+  ],
+  "expect": {
+    "start": [
+      ["#amt", "{AMOUNT_SHOWN}"]
+    ]
+  },
+  "done_amount": "#amt"
+}

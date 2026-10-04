@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 A - 켜진 화면이 하나도 없다</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- on 클래스가 어디에도 없다 - 사용자는 빈 화면을 본다. __screen() 은
+     여전히 'start' 를 돌려주므로, 그것만 믿는 검사기는 도착했다고 판정하고
+     화면에 매인 측정은 전부 "아무것도 없음" 을 통과로 읽는다. -->
+<section class="screen" data-screen="start" id="start">
+  <p id="amt">10,000원</p>
+  <button data-action="noop">확인</button>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'noop') { /* 이 페이지는 걷지 않는다 */ }
+});
+</script>
+</body>
+</html>
