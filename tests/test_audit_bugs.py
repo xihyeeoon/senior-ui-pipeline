@@ -8,6 +8,8 @@ r"""집계 버그 재현 테스트. 브라우저 없이, 손으로 만든 스냅
 실제 빌드를 쓰지 않는 이유는 두 가지다 - 브라우저가 필요 없어야 하고, 버그를
 드러내는 상황(엉뚱한 화면에 도착, 주입된 alert 등)이 네 빌드에는 없다.
 """
+import copy
+
 import _api
 
 
@@ -102,3 +104,63 @@ def test_check_I_fatal_is_deduplicated():
     assert len(report["fatal"]) == len(
         {(f.get("check"), f.get("screen"), f.get("detail"))
          for f in report["fatal"]})
+
+
+# --------------------------------------------------------------------- #
+# 2. apply_stage() 가 걸러낸 뒤 다시 센다
+# --------------------------------------------------------------------- #
+def staged_report(fatals):
+    """core.audit() 이 낸 모양의 리포트. 숫자는 걸러내기 전의 것이다."""
+    derived = len([f for f in fatals if f.get("derived_from")])
+    return {"passed": not fatals, "fatal": copy.deepcopy(fatals), "warning": [],
+            "metrics": {"fatal_duplicates_removed": 0,
+                        "fatal_total": len(fatals), "fatal_derived": derived,
+                        "fatal_root": len(fatals) - derived,
+                        "checks_stood_down": []}}
+
+
+# D 는 지금 warning 만 내지만, apply_stage 가 걸러내는 기준은 심각도가 아니라
+# 검사 글자다. 걸러낼 수 있는 자리에 fatal 을 두어 계약을 직접 확인한다.
+STAGE_FATALS = [
+    {"check": "A", "screen": "amount", "detail": "navigation failed"},
+    {"check": "A", "screen": "done", "detail": "never reached",
+     "derived_from": "amount"},
+    {"check": "D", "screen": "done", "detail": "대비가 낮다"},
+]
+
+
+def test_apply_stage_recounts_after_filtering():
+    """걸러낸 뒤의 숫자는 걸러낸 뒤의 목록과 맞아야 한다.
+
+    고치기 전: apply_stage 는 목록만 줄이고 fatal_total·fatal_derived·
+    fatal_root 는 core.audit() 이 센 값을 그대로 두었다.
+    """
+    report = _api.apply_stage(staged_report(STAGE_FATALS), "wireframe")
+    m = report["metrics"]
+    assert len(report["fatal"]) == 2            # D 가 빠졌다
+    assert m["fatal_total"] == 2
+    assert m["fatal_derived"] == 1
+    assert m["fatal_root"] == 1
+
+
+def test_apply_stage_keeps_counts_when_nothing_is_dropped():
+    """styled 는 A~I 를 다 보므로 걸러낼 것이 없고 숫자도 그대로다."""
+    report = _api.apply_stage(staged_report(STAGE_FATALS), "styled")
+    m = report["metrics"]
+    assert len(report["fatal"]) == 3
+    assert (m["fatal_total"], m["fatal_derived"], m["fatal_root"]) == (3, 1, 2)
+
+
+def test_core_and_stage_share_one_counting_function():
+    """계약: 집계는 한 곳에서만 정의한다. 두 곳이 따로 세면 규칙이 갈라진다."""
+    assert _api.audit_stage_module.count_fatals         is _api.audit_core_module.count_fatals
+
+
+def test_counts_match_the_list_at_every_stage():
+    """실제 리포트로도 같은 계약을 본다 - 단계를 거쳐도 숫자는 목록과 맞는다."""
+    report = one_missing_choice()
+    for stage in ("styled", "wireframe"):
+        staged = _api.apply_stage(copy.deepcopy(report), stage)
+        m = staged["metrics"]
+        assert m["fatal_total"] == len(staged["fatal"])
+        assert m["fatal_root"] + m["fatal_derived"] == m["fatal_total"]

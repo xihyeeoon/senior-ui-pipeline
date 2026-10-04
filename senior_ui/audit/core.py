@@ -43,6 +43,24 @@ CHECKS = (a_completion, b_display, c_dead_controls, d_contrast, e_layout,
           f_language, g_state, h_undefined_class, i_choices)
 
 
+def count_fatals(fatal):
+    """fatal 목록 하나에서 집계 세 값을 낸다.
+
+    여기서만 정의한다. 집계하는 곳이 두 곳이기 때문이다 - finalize_counts() 가
+    검사 직후에 세고, stage.apply_stage() 가 단계 밖 결과를 걷어낸 뒤 다시
+    센다. 두 곳이 각자 세면 규칙이 갈라지고, 걸러낸 리포트의 숫자가 그 리포트의
+    목록과 맞지 않게 된다.
+
+    파생(`derived_from`)은 한 번 멈춘 탓에 줄줄이 따라온 결함이다. 독립된 결함
+    (`fatal_root`)과 나누지 않으면 일찍 멈춘 실행일수록 숫자가 부풀려져 run
+    끼리 비교할 수 없다.
+    """
+    total = len(fatal)
+    derived = len([f for f in fatal if f.get("derived_from")])
+    return {"fatal_total": total, "fatal_derived": derived,
+            "fatal_root": total - derived}
+
+
 def finalize_counts(ctx):
     """중복 fatal 을 걷어내고 fatal 개수를 센다.
 
@@ -60,9 +78,7 @@ def finalize_counts(ctx):
     ctx.fatal[:] = deduped
     m = ctx.metrics
     m["fatal_duplicates_removed"] = dups
-    m["fatal_total"] = len(ctx.fatal)
-    m["fatal_derived"] = len([f for f in ctx.fatal if f.get("derived_from")])
-    m["fatal_root"] = m["fatal_total"] - m["fatal_derived"]
+    m.update(count_fatals(ctx.fatal))
     m["stopped_at"] = ctx.stopped_at
     m["js_error_details"] = ctx.rep.get("js_error_details") or []
     m["flow_notes"] = ctx.rep.get("notes") or []
