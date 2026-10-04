@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 E - 줄 수를 상자 높이로 센다 (빌드)</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; line-height:1.4; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  .padded{padding:14px 0;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- .padded 의 글은 한 줄이다. 위아래 여백만 붙었을 뿐인데, 상자 높이를
+     줄 높이로 나눠 줄 수를 세면 두 줄로 읽힌다.
+     .long 은 정말로 두 줄로 넘어가는 글이다 - 여백을 걷어내도 두 줄이어야 한다. -->
+<section class="screen on" data-screen="start" id="start">
+  <p class="padded" style="color:#111">여기는 한 줄입니다</p>
+  <p class="long" style="color:#111">이 문장은 한 줄에 다 들어가지 않아서 두 줄로 넘어갑니다</p>
+  <p style="color:#111">아래는 보낼 돈입니다</p>
+  <p style="color:#111">받는 분을 먼저 고르세요</p>
+  <p id="amt" style="color:#111">10,000원</p>
+  <div><button data-action="noop" style="color:#111">확인</button></div>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'noop') { /* 이 페이지는 걷지 않는다 */ }
+});
+</script>
+</body>
+</html>

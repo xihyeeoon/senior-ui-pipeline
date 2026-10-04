@@ -357,10 +357,30 @@ OVERFLOW = r"""
 # --- E3: text that now wraps onto more lines than it used to ------------------
 # The recipient navbar does not overlap by rect - it just wraps inside a bar of
 # fixed height, which is what makes it unreadable.
+#
+# 줄 수는 글이 실제로 그려진 줄 상자를 세어 얻는다. 상자 높이를 줄 높이로 나누면
+# 여백과 테두리가 그 높이에 들어 있으므로, 여백만 붙은 한 줄이 두 줄로 읽힌다 -
+# 위아래 여백 12px 인 버튼은 전부 두 줄이 된다. Range 로 텍스트 노드를 감싸면
+# getClientRects() 가 줄마다 사각형을 돌려주므로 그것을 센다.
 WRAPPED = r"""
 () => {
   const s = document.querySelector('.screen.on');
   if (!s) return null;      /* 켜진 화면이 없다 - 잴 수 없었다는 뜻이다 */
+  /* 한 줄이 여러 조각으로 쪼개져 올 수 있으므로 윗변이 같은 것끼리 묶는다.
+     자기 글만 센다 - 자식 요소의 줄은 그 자식의 줄이다. */
+  const range = document.createRange();
+  const lineCount = el => {
+    const tops = [];
+    for (const node of el.childNodes) {
+      if (node.nodeType !== 3 || !node.textContent.trim()) continue;
+      range.selectNodeContents(node);
+      for (const r of range.getClientRects()) {
+        if (r.width < 1 || r.height < 1) continue;
+        if (!tops.some(t => Math.abs(t - r.top) < 2)) tops.push(r.top);
+      }
+    }
+    return tops.length;
+  };
   const out = [];
   s.querySelectorAll('*').forEach(el => {
     const own = Array.from(el.childNodes)
@@ -368,9 +388,7 @@ WRAPPED = r"""
     if (!own) return;
     const cs = getComputedStyle(el);
     if (cs.display === 'none' || cs.visibility === 'hidden') return;
-    let lh = parseFloat(cs.lineHeight);
-    if (!lh || isNaN(lh)) lh = parseFloat(cs.fontSize) * 1.2;
-    const lines = Math.round(el.getBoundingClientRect().height / lh);
+    const lines = lineCount(el);
     if (lines >= 2) {
       out.push({
         text: own.slice(0, 30),

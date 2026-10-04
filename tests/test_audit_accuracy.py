@@ -791,3 +791,45 @@ def test_state_pairs_inside_nested_blocks_are_checked(hg_nested):
 def test_the_nested_page_has_nothing_else_wrong(hg_nested):
     assert hg_nested["fatal"] == [], details(hg_nested["fatal"])
     assert len(hg_nested["warning"]) == 1, details(hg_nested["warning"])
+
+
+# ===================================================================== #
+# 9. 검사 E 가 줄 수를 상자 높이로 센다
+# ===================================================================== #
+@pytest.fixture(scope="module")
+def e_lines(server):
+    return drive_and_audit("e_lines.json", "e_lines_build.html",
+                           orig_page="e_lines_orig.html")
+
+
+def wrapped_of(res, screen="start"):
+    return {x["cls"]: x["lines"] for x in res["rep"]["screens"][screen]["wrapped"]}
+
+
+def test_padding_does_not_make_a_second_line(e_lines):
+    """위아래 여백이 붙은 한 줄은 한 줄이다.
+
+    고치기 전: 상자 높이(getBoundingClientRect)를 줄 높이로 나눴다. 여백과
+    테두리가 그 높이에 들어 있으므로, 여백 14px 만 붙은 한 줄이 두 줄로 읽혀
+    "전에는 줄바꿈이 없었는데 이제 생겼다" 는 거짓 경보가 났다.
+    """
+    assert "padded" not in wrapped_of(e_lines)
+    assert [w for w in e_lines["report"]["warning"]
+            if w.get("check") == "E" and "padded" in (w["detail"] or "")] == []
+
+
+def test_text_that_really_wraps_is_still_counted(e_lines):
+    """정말로 넘어간 줄은 그대로 센다 - 여백을 빼기 시작했다고 진짜 줄바꿈까지
+    놓치면 검사를 끈 것이다."""
+    assert wrapped_of(e_lines)["long"] == 2
+    hit = [w for w in e_lines["report"]["warning"]
+           if w.get("check") == "E" and w.get("lines")]
+    assert len(hit) == 1, details(e_lines["report"]["warning"])
+    assert hit[0]["lines"] == 2
+    assert e_lines["report"]["metrics"]["newly_wrapped_text"] == 1
+
+
+def test_the_lines_page_has_nothing_else_wrong(e_lines):
+    assert e_lines["report"]["fatal"] == [], details(e_lines["report"]["fatal"])
+    assert len(e_lines["report"]["warning"]) == 1, \
+        details(e_lines["report"]["warning"])

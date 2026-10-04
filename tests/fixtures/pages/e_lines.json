@@ -1,0 +1,22 @@
+{
+  "name": "e_lines",
+  "note": "검사 E 가 상자 높이를 줄 높이로 나눠 줄 수를 세는 것을 재현한다. 여백만 붙은 한 줄이 두 줄로 읽힌다. 원본에서 파생된 빌드로 두는 이유는 줄바꿈 비교가 짝이 되는 원본 화면에서만 돌기 때문이다.",
+  "derived_from_original": true,
+  "required_ids": [
+    "start"
+  ],
+  "steps": [
+    {
+      "screen": "start"
+    }
+  ],
+  "expect": {
+    "start": [
+      [
+        "#amt",
+        "{AMOUNT_SHOWN}"
+      ]
+    ]
+  },
+  "done_amount": "#amt"
+}
