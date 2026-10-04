@@ -140,10 +140,21 @@ def test_a_longer_account_does_not_pass_as_the_task_account(b_contains):
     assert hit[0]["got"] == "33330000000009"
 
 
-def test_only_those_two_are_fatal(b_contains):
-    """재현 페이지는 그 둘 말고는 아무 결함도 없어야 한다. 다른 fatal 이 섞이면
-    위의 두 테스트가 무엇을 세고 있는지 알 수 없다."""
-    assert len(b_contains["fatal"]) == 2, details(b_contains["fatal"])
+def test_a_label_does_not_excuse_a_wrong_number(b_contains):
+    """라벨이 붙어 있다고 숫자가 봐주어지는 것은 아니다.
+
+    값이 아닌 글자는 함께 있어도 되지만, 그것은 숫자가 맞을 때의 이야기다.
+    "보낼 돈 110,000원" 은 라벨을 떼어도 열한 배 금액이다.
+    """
+    hit = [f for f in fatals(b_contains, "B") if f.get("selector") == "#lab-amt"]
+    assert len(hit) == 1, details(b_contains["fatal"])
+    assert hit[0]["got"] == "보낼 돈 110,000원"
+
+
+def test_only_those_three_are_fatal(b_contains):
+    """재현 페이지는 그 셋 말고는 아무 결함도 없어야 한다. 다른 fatal 이 섞이면
+    위의 세 테스트가 무엇을 세고 있는지 알 수 없다."""
+    assert len(b_contains["fatal"]) == 3, details(b_contains["fatal"])
     assert b_contains["warning"] == []
 
 
@@ -155,6 +166,29 @@ def test_decoration_only_differences_still_pass(b_decorated):
     """
     assert fatals(b_decorated, "B") == [], details(b_decorated["fatal"])
     assert b_decorated["passed"] is True, details(b_decorated["fatal"])
+
+
+# 한 요소가 라벨과 값을 같이 담는 것은 흔한 모양이고 결함이 아니다. 아래 셋은
+# Run1~3 에 실제로 있는 모양을 그대로 옮겨 놓은 것이다 - 요소 전체를 값으로
+# 보면 세 빌드가 전부 여기서 떨어진다.
+@pytest.mark.parametrize("sel,got", [
+    ("#rv-acc", "카카오뱅크 3333000000000"),      # 계좌 앞에 은행 이름
+    ("#rv-amt", "10,000원만 원"),                 # 금액 아래 한글 읽기(small)
+    ("#am-acc", "카카오뱅크 3333 0000 0000 0"),   # 은행 이름 뒤에 끊어 쓴 계좌
+])
+def test_a_value_shown_next_to_a_label_passes(b_decorated, sel, got):
+    assert [f for f in fatals(b_decorated, "B")
+            if f.get("selector") == sel] == [], details(b_decorated["fatal"])
+    assert dict(b_decorated["metrics"]["screens_landed_on"])          # 도착은 했다
+
+
+def test_digits_separated_inside_the_number_are_joined(b_decorated):
+    """숫자 사이의 하이픈·공백만 걷어낸다. "카카오뱅크 3333 0000 0000 0" 에서
+    은행 이름과 계좌를 가르는 공백은 그대로 두고, 계좌 안의 공백만 붙인다."""
+    from senior_ui.audit.checks.b_display import joined, shows
+    assert joined("카카오뱅크 3333 0000 0000 0") == "카카오뱅크 3333000000000"
+    assert shows("카카오뱅크 3333 0000 0000 0", "3333000000000")
+    assert not shows("카카오뱅크 33330000000009", "3333000000000")
 
 
 # ===================================================================== #
@@ -394,3 +428,4 @@ def test_declaring_a_removal_does_not_change_the_kept_count(i_declared):
     """선언한 값은 "남아 있다" 가 아니라 "일부러 뺐다" 다. 남은 개수는 실제로
     찾을 수 있는 값의 수 그대로여야 한다."""
     assert i_declared["metrics"]["choice_values_kept"] == {"quick": 2}
+
