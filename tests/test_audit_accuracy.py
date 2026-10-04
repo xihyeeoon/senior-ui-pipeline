@@ -981,3 +981,39 @@ def test_a_derived_build_is_unchanged(d_below_derived):
     assert d_below_derived["metrics"]["low_contrast_after"] == 2
     assert d_below_derived["metrics"]["new_inherited_colour"] == 0
     assert d_below_derived["fatal"] == [], details(d_below_derived["fatal"])
+
+
+# ===================================================================== #
+# 13. 검사 F 의 마크업 검사가 주석을 걷어내지 못한다
+# ===================================================================== #
+@pytest.fixture(scope="module")
+def f_comment(server):
+    return run_audit("f_comment.json", "f_comment_build.html",
+                     orig_page="f_comment_orig.html")
+
+
+def test_english_inside_a_comment_is_not_new_english(f_comment):
+    """주석은 파일에만 있는 글이 아니라 아예 글이 아니다 - 브라우저가 읽지 않는다.
+
+    고치기 전: markup_words() 가 `<[^>]+>` 로 태그를 걷어내는 것만 했다. 주석
+    안에 `>` 가 있으면 (`->` 처럼) 주석이 거기서 끊기고 그 뒤가 문서의 글로
+    남아, "마크업에만 있는 새 영어" 로 잡혔다 - Shuffle · Password · Reset.
+    """
+    assert warnings_of(f_comment, "F", "markup") == [], details(f_comment["warning"])
+    assert f_comment["metrics"]["new_english_words_markup_only"] == []
+
+
+def test_the_comment_page_raises_nothing_else(f_comment):
+    assert warnings_of(f_comment, "F") == [], details(f_comment["warning"])
+    assert f_comment["fatal"] == [], details(f_comment["fatal"])
+
+
+def test_markup_english_outside_a_comment_is_still_found():
+    """주석을 걷어내기 시작했다고 진짜 마크업의 영어까지 놓치면 검사를 끈 것이다.
+    브라우저가 필요 없는 규칙이므로 여기서 직접 본다."""
+    from senior_ui.audit.checks.f_language import markup_words
+    assert markup_words("<p>Shuffle</p>") == {"Shuffle"}
+    assert markup_words("<!-- a -> Shuffle -->") == set()
+    assert markup_words("<!-- <script>x</script> Shuffle -->") == set()
+    assert markup_words("<script>var Shuffle = 1;</script>") == set()
+    assert markup_words("<!-- a --> Shuffle") == {"Shuffle"}

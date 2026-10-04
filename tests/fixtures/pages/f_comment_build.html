@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 F - 주석 안의 꺾쇠 뒤 글자가 새어 나온다</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- 비밀번호 재배열 -> Shuffle Password Reset 로 옮긴 자리다. 화면에는 한 글자도
+     나타나지 않는다 - 주석이기 때문이다.
+
+     태그를 걷어내는 정규식은 `<` 부터 처음 만나는 `>` 까지를 지운다. 주석 안의
+     화살표에 꺾쇠가 들어 있으므로 주석은 거기서 끊기고, 그 뒤의 글자가 문서의
+     글로 남는다. 주석을 먼저 통째로 걷어내지 않으면 그것이 "마크업에만 있는 새
+     영어" 로 잡힌다. -->
+<section class="screen on" data-screen="start" id="start">
+  <p>보낼 돈을 고르세요</p>
+  <p id="amt">10,000원</p>
+  <div><button data-action="noop">확인</button></div>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'noop') { /* 이 페이지는 걷지 않는다 */ }
+});
+</script>
+</body>
+</html>
