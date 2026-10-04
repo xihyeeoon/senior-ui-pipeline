@@ -15,6 +15,9 @@ tmp_path 에만 쓴다.
 """
 import contextlib
 import http.client
+import io
+import json
+import os
 import socket
 import threading
 
@@ -122,3 +125,107 @@ def test_LAN_주소로는_접속되지_않는다():
 def test_LAN_에_여는_옵션은_없다():
     dests = {a.dest for a in _api.srv_parser()._actions}
     assert not dests & {"host", "bind", "lan", "address", "addr"}
+
+# --------------------------------------------------------------------- #
+# 정적 파일: 허용 목록만
+# --------------------------------------------------------------------- #
+# 프로젝트 루트 전체를 서빙하던 동안 밖으로 나갈 수 있던 것들. 하나라도
+# 200 이면 그 구멍이 다시 열린 것이다. 테스트는 이 파일들을 직접 열지 않고
+# 서버가 무엇을 돌려주는지만 본다.
+LEAKS = [
+    "/.envs",                      # OPENAI_API_KEY
+    "/.git/config",
+    "/.gitignore",
+    "/sessions/",                  # 피험자 기록
+    "/inputs/1.png",               # 실제 SOL 캡처 - 실명이 보인다
+    "/inputs/KakaoTalk_20260915_153359065.png",
+    "/requirements.txt",
+    "/pytest.ini",
+    "/senior_ui/config.py",
+    "/web/session.html",           # HTML 실험 장치는 쓰지 않는다
+]
+
+
+@pytest.mark.parametrize("path", LEAKS)
+def test_허용_목록_밖은_404(path):
+    with serving(**handler_kw()) as port:
+        status, _, _ = req(port, path)
+    assert status == 404
+
+
+# 디렉터리 목록이 켜져 있으면 폴더 이름만으로 나머지를 다 찾아낼 수 있다.
+@pytest.mark.parametrize("path", ["/", "/web/", "/inputs/", "/outputs/",
+                                 "/results/", "/sessions/", "/.git/"])
+def test_디렉터리_목록은_나가지_않는다(path):
+    with serving(**handler_kw()) as port:
+        status, body, _ = req(port, path)
+    assert status == 404
+    assert b"Directory listing" not in body
+
+
+# 경로를 거슬러 올라가는 요청. 허용 목록은 바로잡은 경로로 본다.
+@pytest.mark.parametrize("path", [
+    "/web/../.envs",
+    "/web/dashboard.html/../../.envs",
+    "/outputs/../.envs",
+    "/..%2f.envs",
+    "/web/%2e%2e/.envs",
+    "/outputs/shots/../../.envs",
+])
+def test_거슬러_올라가도_404(path):
+    with serving(**handler_kw()) as port:
+        status, _, _ = req(port, path)
+    assert status == 404
+
+
+# --------------------------------------------------------------------- #
+# 대시보드가 읽는 것은 다 나가야 한다
+# --------------------------------------------------------------------- #
+ALLOWED = [
+    "/web/dashboard.html",
+    "/web/dashboard.css",
+    "/web/dashboard.js",
+    "/outputs/index.json",
+    "/inputs/original_transfer.html",       # 화면 비교의 기준 빌드
+    "/results/restructured_run4.html",
+    "/results/shots/run4/audit_account.png",
+    "/outputs/shots/before_home.png",
+]
+
+
+@pytest.mark.parametrize("path", ALLOWED)
+def test_대시보드가_읽는_것은_200(path):
+    if not os.path.exists(os.path.join(_api.ROOT_DIR, path.lstrip("/"))):
+        pytest.skip("이 PC 에 없는 파일: %s" % path)
+    with serving(**handler_kw()) as port:
+        status, body, _ = req(port, path)
+    assert status == 200
+    assert body
+
+
+def test_index_가_가리키는_빌드와_스크린샷이_다_나간다():
+    """'화면 비교' 탭이 iframe 과 img 로 여는 경로. outputs/ 는 PC 마다
+    내용이 달라서 index.json 에 적힌 것을 그대로 따라간다."""
+    ix_path = os.path.join(_api.ROOT_DIR, "outputs", "index.json")
+    if not os.path.exists(ix_path):
+        pytest.skip("outputs/index.json 이 없다 - build_index 를 먼저 돌린다")
+    with io.open(ix_path, encoding="utf-8") as f:
+        ix = json.load(f)
+
+    builds = ([ix["baseline"]] if ix.get("baseline") else []) + (ix.get("builds") or [])
+    paths = []
+    for b in builds:
+        if b.get("html"):
+            paths.append(b["html"])
+        shots = sorted((b.get("shots") or {}).values())
+        paths.extend(shots[:1])
+    paths = [p for p in paths if os.path.exists(os.path.join(_api.ROOT_DIR, p))]
+    assert paths, "index.json 이 가리키는 파일이 이 PC 에 하나도 없다"
+
+    bad = []
+    with serving(**handler_kw()) as port:
+        for rel in paths:
+            status, _, _ = req(port, "/" + rel)
+            if status != 200:
+                bad.append((rel, status))
+    assert not bad, "대시보드가 읽는데 서버가 막는다: %r" % (bad,)

@@ -29,6 +29,7 @@ import os
 import re
 import socket
 import sys
+import urllib.parse
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 from senior_ui.config import CONDITIONS, OUTPUTS_DIR, PORT, ROOT
@@ -49,6 +50,50 @@ TASKS = [
 
 # 바인드 주소. 루프백만 - LAN 에 여는 옵션은 두지 않는다.
 HOST = "127.0.0.1"
+
+# 서빙하는 것의 전부. 루트 기준 경로가 이 중 하나와 정확히 맞지 않으면 404 다.
+#
+#   - 대시보드 자신(web/dashboard.html·css·js)과 그것이 읽는 색인
+#   - "화면 비교" 가 iframe 으로 여는 빌드 HTML. outputs/restructure_auto/
+#     <실행>/attempt_N.html 처럼 하위 폴더에 있는 것도 있어서 깊이를 제한하지
+#     않는다. 대신 확장자가 .html 인 파일만 나간다
+#   - 그 화면의 스크린샷 png
+#
+# 목록에 없는 것은 파일이 있어도 404 다. .envs(API 키) · .git/ · sessions/
+# (피험자 기록) · inputs/*.png(실제 앱 캡처 - 실명이 보인다) 가 그렇다.
+# 디렉터리는 끝이 파일 이름이어야 하는 이 목록에 걸릴 수 없으므로 목록도
+# 저절로 꺼지지만, list_directory() 를 따로 막아 두어 우연에 기대지 않는다.
+ALLOW = tuple(re.compile(x) for x in (
+    r"web/dashboard\.[A-Za-z0-9]+",
+    r"outputs/index\.json",
+    r"inputs/original_transfer\.html",
+    r"(?:outputs|results)/(?:[^/]+/)*[^/]+\.html",
+    r"(?:outputs|results)/shots/(?:[^/]+/)*[^/]+\.png",
+))
+
+
+def clean_path(path):
+    """요청 경로를 루트 기준 상대 경로로 바로잡는다. 질의와 %XX 를 풀고
+    '.' 과 '..' 을 접는다. 루트 위로 올라가려는 '..' 은 버린다.
+
+    허용 목록은 이 결과로 본다. 받은 그대로 보면
+    /web/dashboard.html/../../.envs 가 목록을 비켜 간다."""
+    path = urllib.parse.unquote(urllib.parse.urlsplit(path).path)
+    out = []
+    for seg in path.replace("\\", "/").split("/"):
+        if seg in ("", "."):
+            continue
+        if seg == "..":
+            if out:
+                out.pop()
+            continue
+        out.append(seg)
+    return "/".join(out)
+
+
+def allowed(rel):
+    """바로잡은 경로가 허용 목록에 있는가. 파일을 보지 않는다."""
+    return any(p.fullmatch(rel) for p in ALLOW)
 
 
 def make_server(port, handler):
@@ -92,6 +137,19 @@ def make_handler(sessions_dir, tasks):
             if isinstance(first, str) and "api/session" in first:
                 sys.stderr.write("  %s\n" % (fmt % args))
 
+        def _static(self):
+            """허용 목록에 있으면 바로잡은 경로를, 아니면 404 를 보내고
+            None 을 돌려준다."""
+            rel = clean_path(self.path)
+            if not allowed(rel):
+                self.send_error(404, "Not found")
+                return None
+            return "/" + rel
+
+        def list_directory(self, path):
+            self.send_error(404, "Not found")
+            return None
+
         def _json(self, code, payload):
             body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
             self.send_response(code)
@@ -112,7 +170,19 @@ def make_handler(sessions_dir, tasks):
             if self.path.split("?")[0] == "/api/sessions":
                 files = sorted(os.listdir(sessions_dir)) if os.path.isdir(sessions_dir) else []
                 return self._json(200, {"files": [f for f in files if f.endswith(".json")]})
+
+            p = self._static()
+            if p is None:
+                return
+            self.path = p
             return super().do_GET()
+
+        def do_HEAD(self):
+            p = self._static()
+            if p is None:
+                return
+            self.path = p
+            return super().do_HEAD()
 
         def do_POST(self):
             if self.path.split("?")[0] != "/api/session":
