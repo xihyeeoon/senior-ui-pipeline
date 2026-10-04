@@ -510,3 +510,25 @@ def test_the_alpha_page_has_nothing_else_wrong(d_alpha):
     글까지 잡으면 거짓 경보를 새로 만든 것이다."""
     assert texts_of(contrast_of(d_alpha)) == ["보낼 돈을 고르세요"]
     assert d_alpha["report"]["fatal"] == [], details(d_alpha["report"]["fatal"])
+
+
+@pytest.fixture(scope="module")
+def d_opacity(server):
+    return drive_and_audit("d_opacity.json", "d_opacity.html")
+
+
+def test_an_ancestors_opacity_reaches_the_text(d_opacity):
+    """opacity:0.3 인 상자 안의 #111 글자는 #b8b8b8 로 보인다 - 1.99:1 이다.
+
+    고치기 전: 요소 자신의 opacity 만 보았다. 글자 쪽은 opacity 1 이므로
+    #111 그대로 18.9:1 이 나왔다 - 흐려진 것을 보지 못했다.
+    """
+    rows = [x for x in contrast_of(d_opacity) if x["text"] == "보낼 돈을 고르세요"]
+    assert len(rows) == 1, texts_of(contrast_of(d_opacity))
+    assert rows[0]["ratio"] < 2.5
+    assert rows[0]["opacity"] == 0.3
+
+
+def test_the_opacity_page_has_nothing_else_wrong(d_opacity):
+    assert texts_of(contrast_of(d_opacity)) == ["보낼 돈을 고르세요"]
+    assert d_opacity["report"]["fatal"] == [], details(d_opacity["report"]["fatal"])

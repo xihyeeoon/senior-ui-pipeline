@@ -63,6 +63,17 @@ CONTRAST = r"""
   /* 알파가 든 색을 배경 위에 얹었을 때 눈에 닿는 색. */
   const over = (rgb, a, bg) =>
     [0, 1, 2].map(i => rgb[i] * a + bg[i] * (1 - a));
+  /* opacity 는 자손 전체에 곱해진다. 요소 자신의 것만 보면 opacity:.3 인 상자
+     안의 #111 글자가 #111 그대로 읽힌다 - 눈에는 #b8b8b8 로 보인다. */
+  const opacityOf = el => {
+    let o = 1;
+    for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
+      const v = parseFloat(getComputedStyle(n).opacity);
+      if (!isNaN(v)) o *= v;
+      if (o <= 0) return 0;
+    }
+    return o;
+  };
   const css = c => 'rgb(' + c.map(v => Math.round(v)).join(', ') + ')';
   /* Climb until an ancestor paints something opaque; body/html default to white. */
   const bgOf = el => {
@@ -86,7 +97,10 @@ CONTRAST = r"""
       .filter(n => n.nodeType === 3).map(n => n.textContent.trim()).join(' ').trim();
     if (!own) return;
     const cs = getComputedStyle(el);
-    if (cs.visibility === 'hidden' || cs.display === 'none' || +cs.opacity === 0) return;
+    if (cs.visibility === 'hidden' || cs.display === 'none') return;
+    /* 사실상 보이지 않는 글은 명암 결함이 아니다 - 글자색 알파와 같은 규칙. */
+    const op = opacityOf(el);
+    if (op < 0.05) return;
     const r = el.getBoundingClientRect();
     if (r.width < 1 || r.height < 1) return;
 
@@ -94,7 +108,7 @@ CONTRAST = r"""
     /* 완전히 투명한 글자는 명암 결함이 아니라 안 보이는 글이다 - 다른 일이다. */
     if (!fg || fg.a < 0.05) return;
     const bg = bgOf(el);
-    const seen = over(fg.rgb, fg.a, bg);
+    const seen = over(fg.rgb, fg.a * op, bg);
     const size = parseFloat(cs.fontSize);
     const weight = parseInt(cs.fontWeight, 10) || 400;
     const large = size >= 24 || (size >= 18.66 && weight >= 700);
@@ -106,6 +120,7 @@ CONTRAST = r"""
         tag: el.tagName.toLowerCase(),
         cls: (el.getAttribute('class') || '').slice(0, 40),
         color: cs.color, seen: css(seen), bg: css(bg),
+        opacity: Math.round(op * 1000) / 1000,
         fontSize: Math.round(size * 10) / 10,
         ratio: Math.round(cr * 100) / 100, need
       });

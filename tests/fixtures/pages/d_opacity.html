@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 D - 조상의 opacity 를 세지 않는다</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  .faded{opacity:0.3;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- 글자 자신의 색과 알파는 흠이 없다 (#111, 알파 1). 흐려지는 것은 조상
+     .faded 의 opacity:0.3 때문이고, 그것은 자손 전체에 곱해진다. 흰 배경에서
+     눈에 닿는 색은 #b8b8b8 이고 명암비는 1.99:1 이다.
+
+     자기 opacity 만 보면 이 글은 #111 그대로 18.9:1 로 통과한다. -->
+<section class="screen on" data-screen="start" id="start">
+  <div class="faded">
+    <p style="color:#111">보낼 돈을 고르세요</p>
+  </div>
+  <p id="amt" style="color:#111">10,000원</p>
+  <button data-action="noop" style="color:#111">확인</button>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'noop') { /* 이 페이지는 걷지 않는다 */ }
+});
+</script>
+</body>
+</html>
