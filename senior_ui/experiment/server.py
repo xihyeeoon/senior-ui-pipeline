@@ -149,6 +149,22 @@ def make_handler(sessions_dir, tasks, allow_session=False):
                 return None
             return "/" + rel
 
+        def _body(self):
+            """요청 본문을 다 읽어 돌려준다. 길이가 없거나 이상하면 빈
+            바이트열이다."""
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+            except ValueError:
+                return b""
+            out = []
+            while n > 0:
+                chunk = self.rfile.read(min(n, 65536))
+                if not chunk:
+                    break
+                out.append(chunk)
+                n -= len(chunk)
+            return b"".join(out)
+
         def list_directory(self, path):
             self.send_error(404, "Not found")
             return None
@@ -189,12 +205,19 @@ def make_handler(sessions_dir, tasks, allow_session=False):
             return super().do_HEAD()
 
         def do_POST(self):
-            if self.path.split("?")[0] == "/api/reindex":
+            # 본문은 무엇을 돌려주든 먼저 다 읽는다. 읽지 않고 응답하고
+            # 닫으면 받지 않은 바이트가 남아 연결이 RST 로 끊기고(Windows
+            # 10053), 이미 보낸 응답까지 같이 사라진다. 그러면 "꺼져
+            # 있습니다" 라는 404 가 서버가 죽은 것과 구별되지 않는다.
+            raw = self._body()
+            route = self.path.split("?")[0]
+
+            if route == "/api/reindex":
                 try:
                     return self._json(200, reindex())
                 except Exception as e:
                     return self._json(500, {"error": "%s: %s" % (type(e).__name__, e)})
-            if self.path.split("?")[0] != "/api/session":
+            if route != "/api/session":
                 return self._json(404, {"error": "unknown endpoint"})
             if not allow_session:
                 # 본실험은 Flutter 더미앱으로 한다. --session 없이는 세션을
@@ -203,8 +226,7 @@ def make_handler(sessions_dir, tasks, allow_session=False):
             if not is_local(self.client_address[0]):
                 return self._json(403, {"error": "127.0.0.1 에서만 받습니다"})
             try:
-                n = int(self.headers.get("Content-Length") or 0)
-                data = json.loads(self.rfile.read(n).decode("utf-8"))
+                data = json.loads(raw.decode("utf-8"))
             except Exception as e:
                 return self._json(400, {"error": "bad payload: %s" % e})
 

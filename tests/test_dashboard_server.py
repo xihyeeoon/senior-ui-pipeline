@@ -258,6 +258,22 @@ def test_기본으로는_세션을_받지_않는다(tmp_path):
     assert not sess.exists(), "꺼져 있는데 폴더를 만들었다"
 
 
+# 본문을 읽지 않고 응답하고 닫으면 받지 않은 바이트가 남아 연결이 RST 로
+# 끊기고(Windows 10053), 이미 보낸 404 까지 같이 사라진다. 보내는 쪽은
+# "꺼져 있습니다" 를 서버가 죽은 것과 구별할 수 없다.
+#
+# 본문이 소켓 버퍼(약 64KB)를 넘을 때만, 그것도 쉰 번에 한 번쯤 드러나는
+# 경합이다. 그래서 큰 본문으로 여러 번 본다 - 고친 뒤에는 한 번도 나지
+# 않으므로 횟수를 늘려도 괜히 깨지지 않는다. 세션 기록은 탭마다 사건이
+# 쌓여 실제로 이 크기를 넘는다.
+def test_꺼져_있을_때_404_가_사라지지_않는다(tmp_path):
+    big = dict(PAYLOAD, events=[{"t": i, "what": "tap"} for i in range(5000)])
+    assert len(json.dumps(big)) > 64 * 1024
+    with serving(**handler_kw(sessions_dir=str(tmp_path / "s"))) as port:
+        got = {post_session(port, big)[0] for _ in range(300)}
+    assert got == {404}
+
+
 @pytest.mark.parametrize("path", ["/api/config", "/api/sessions"])
 def test_실험_장치_전용_엔드포인트도_기본으로_꺼져_있다(path):
     with serving(**handler_kw()) as port:
