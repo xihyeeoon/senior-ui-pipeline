@@ -26,12 +26,12 @@ def run(ctx):
         # matching original screen exists.
         o = orig["screens"].get(n, {}) if (ctx.derived or n in shared) else {}
         r = rep["screens"].get(n, {})
-        ob = {(x["a"], x["b"]) for x in o.get("overlap", [])}
-        for x in r.get("overlap", []):
+        ob = {(x["a"], x["b"]) for x in o.get("overlap") or []}
+        for x in r.get("overlap") or []:
             if (x["a"], x["b"]) not in ob:
                 ov_new.append(dict(x, screen=n))
-        of = {(x["cls"], x["text"]) for x in o.get("overflow", [])}
-        for x in r.get("overflow", []):
+        of = {(x["cls"], x["text"]) for x in o.get("overflow") or []}
+        for x in r.get("overflow") or []:
             if (x["cls"], x["text"]) not in of:
                 of_new.append(dict(x, screen=n))
         if o.get("height") and r.get("height") and (ctx.derived or n in shared):
@@ -57,7 +57,7 @@ def run(ctx):
     wrap_new = []
     for n in (want if ctx.derived else shared):
         ob = tally(orig["screens"].get(n, {}).get("wrapped"))
-        for x in rep["screens"].get(n, {}).get("wrapped", []) or []:
+        for x in rep["screens"].get(n, {}).get("wrapped") or []:
             k = (x["tag"], x["cls"])
             if ob.get(k, 0) > 0:
                 ob[k] -= 1

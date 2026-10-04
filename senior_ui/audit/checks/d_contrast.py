@@ -34,8 +34,9 @@ def run(ctx):
 
     new_inherited = []
     for n in (want if ctx.derived else shared):
-        o = {(x["text"], x["cls"]) for x in orig["screens"].get(n, {}).get("inherited", [])}
-        for x in rep["screens"].get(n, {}).get("inherited", []):
+        o = {(x["text"], x["cls"])
+             for x in orig["screens"].get(n, {}).get("inherited") or []}
+        for x in rep["screens"].get(n, {}).get("inherited") or []:
             if (x["text"], x["cls"]) not in o:
                 new_inherited.append(dict(x, screen=n))
     metrics["new_inherited_colour"] = len(new_inherited)

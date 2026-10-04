@@ -1,14 +1,34 @@
 r"""검사 A - 과제 완수. fatal.
 
 흐름이 적은 화면에 모두 도달했는지, 금액이 완료 화면까지 왕복했는지,
-data-screen · data-action · id 가 사라지지 않았는지를 본다. 멈춘 뒤의 "도달 못
-함" 은 파생 결함으로 표시해 한 원인을 여러 번 세지 않는다. 금액 왕복도 같은
+data-screen · data-action · id 가 사라지지 않았는지를 본다.
+
+도달은 두 가지가 같아야 인정한다 - 전환 스크립트의 기록(window.__screen())과
+켜진 화면이 스스로 말하는 이름(`.screen.on` 의 data-screen). 기록만 바꾸고
+on 클래스를 옮기지 않으면 사용자는 앞 화면에 그대로 서 있으므로, 기록 하나만
+믿으면 그 빌드가 과제를 완주한 것으로 보인다.
+
+멈춘 뒤의 "도달 못 함" 은 파생 결함으로 표시해 한 원인을 여러 번 세지 않는다. 금액 왕복도 같은
 규칙을 따른다 - 도달하지 못한 화면에는 묻지 않고, 흐름의 expect 에 적혀 검사 B
 가 이미 보는 선택자는 다시 보지 않는다. 화면 이름으로 짝을 맞추는 부분은
 원본에서 파생된 빌드에서만 돈다 - 새 설계에는 지킬 원본이 없다.
 """
 from ..context import union
 from ..flow import AMOUNT_SHOWN, fill
+
+# 켜진 화면 안에서만 잴 수 있는 것들. probes.py 가 켜진 화면이 없을 때 이
+# 값들을 [] 가 아니라 null 로 돌려주므로, null 하나로 "아무것도 떠 있지
+# 않았다" 를 알 수 있다 (probes.py 머리말 참고).
+SCREEN_SCOPED = ("inherited", "overlap", "overflow", "wrapped", "shown")
+
+
+def _unlit(row):
+    """켜진 화면이 하나도 없었는가.
+
+    키가 있으면서 값이 null 인 것만 본다. 키가 아예 없는 것은 옛 스냅샷이거나
+    아직 긁지 않은 것이고, 그것은 "꺼져 있었다" 와 다른 일이다.
+    """
+    return any(k in row and row[k] is None for k in SCREEN_SCOPED)
 
 
 def _screens_reached(ctx):
@@ -18,6 +38,12 @@ def _screens_reached(ctx):
 
     metrics["screens_expected"] = len(want)
     metrics["screens_reached"] = len(rep["reached"])
+    metrics["screens_unlit"] = [n for n in want
+                                if _unlit(rep["screens"].get(n) or {})]
+    metrics["screens_landed_on"] = {
+        n: {"hook": (rep["screens"].get(n) or {}).get("landed_on"),
+            "dom": (rep["screens"].get(n) or {}).get("dom_screen")}
+        for n in want if n in rep["screens"]}
     # 과제가 한 번 멈추면 그 뒤의 모든 화면이 "도달 못 함" 으로 걸린다. 그것들은
     # 독립된 결함이 아니라 한 원인의 결과다. 나누지 않으면 일찍 멈춘 실행일수록
     # fatal 이 부풀려져 run 끼리 숫자를 비교할 수 없다.
@@ -35,6 +61,18 @@ def _screens_reached(ctx):
             F("A", name, "navigation failed: " + row["error"])
             if not ctx.stopped_at:
                 ctx.stopped_at = name
+        elif _unlit(row):
+            # 켜진 화면이 없다. 화면에 매인 probe 가 전부 null 로 돌아왔다는
+            # 뜻이고, 그 상태로는 무엇이 보이는지 하나도 잴 수 없다. 빈 목록을
+            # 통과로 읽으면 아무것도 떠 있지 않은 빌드가 가장 깨끗해 보인다.
+            F("A", name, "켜진 화면이 없다 - `.screen.on` 인 요소가 문서에 "
+                         "하나도 없다. window.__screen() 은 %r 을 돌려주지만 "
+                         "사용자에게는 아무것도 떠 있지 않으므로, 이 화면에서 "
+                         "재야 할 것을 하나도 잴 수 없다. 화면을 넘길 때 on "
+                         "클래스를 다음 화면으로 옮겨라."
+              % row.get("landed_on"), dom_screen=None)
+            if not ctx.stopped_at:
+                ctx.stopped_at = name
         elif row["landed_on"] is None:
             # __screen() 이 없거나 null 을 돌려준 것이다. "landed on None" 만으로는
             # 어디를 고쳐야 할지 알 수 없으므로 무엇이 깨졌는지 적는다.
@@ -49,6 +87,19 @@ def _screens_reached(ctx):
             F("A", name, "landed on %r instead" % row["landed_on"])
             if not ctx.stopped_at:
                 ctx.stopped_at = name
+        elif row.get("dom_screen") != name:
+            # 기록은 넘어갔는데 화면은 넘어가지 않았다. 예외도 나지 않고
+            # __screen() 도 맞는 이름을 돌려주므로, 기록 하나만 보면 완주한
+            # 것으로 보인다 - 사용자는 앞 화면에 그대로 서 있다. 엉뚱한 화면에
+            # 도착한 것과 같은 멈춤이므로 뒤의 화면들은 파생으로 묶인다.
+            F("A", name, "window.__screen() 은 %r 을 돌려주는데 켜진 화면"
+                         "(`.screen.on`)의 data-screen 은 %r 이다. 기록만 "
+                         "바뀌고 화면은 넘어가지 않았으므로 사용자는 아직 %r "
+                         "을 보고 있다. 화면을 넘길 때 on 클래스를 함께 옮겨라."
+              % (name, row.get("dom_screen"), row.get("dom_screen")),
+              dom_screen=row.get("dom_screen"))
+            if not ctx.stopped_at:
+                ctx.stopped_at = name
 
 
 def _transition_ids(ctx):
@@ -61,8 +112,13 @@ def _transition_ids(ctx):
 
 def _arrived(row, name):
     """그 화면에 실제로 도착했는지. 도착하지 못한 화면에 무엇이 보이는지는
-    물을 수 없다 - 물으면 한 번의 실패가 두 건이 된다."""
-    return bool(row) and "error" not in row and row.get("landed_on") == name
+    물을 수 없다 - 물으면 한 번의 실패가 두 건이 된다.
+
+    기록과 화면이 둘 다 그 이름이어야 도착이다. _screens_reached 의 판정과
+    같은 규칙이어야 하므로 여기도 같이 본다."""
+    return (bool(row) and "error" not in row
+            and row.get("landed_on") == name
+            and row.get("dom_screen") == name)
 
 
 def _amount_round_trip(ctx):

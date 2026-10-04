@@ -111,10 +111,33 @@ async def where_is(page, error_text):
     return None
 
 
-SHOWN = """sels => sels.map(s => {
-                 const e = document.querySelector(s);
-                 return [s, e ? e.textContent.trim() : null];
-               })"""
+# 검사 B 가 읽는 값. 켜진 화면 안에서, 보이는 요소에서만 읽는다.
+#
+# document.querySelector 로 문서 전체에서 집으면 사용자가 볼 수 없는 값이
+# 잡힌다 - 꺼진 화면에 남아 있는 옛 값이나 display:none 으로 숨긴 요소가
+# 문서 순서에서 먼저 나오면 그것이 집히고, 화면에는 틀린 값이 떠 있는데도
+# 검사 B 는 통과한다. 켜진 화면이 없으면 읽을 곳이 없으므로 null 이고,
+# 검사 B 는 그때 물러난다 (도착하지 못한 것은 검사 A 가 적는다).
+SHOWN = """sels => {
+  const s = document.querySelector('.screen.on');
+  if (!s) return null;
+  const visible = (e) => {
+    const cs = getComputedStyle(e);
+    if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+    if (+cs.opacity === 0) return false;
+    const r = e.getBoundingClientRect();
+    return r.width >= 1 && r.height >= 1;
+  };
+  return sels.map(sel => {
+    let hit = null;
+    try {
+      for (const e of s.querySelectorAll(sel)) {
+        if (visible(e)) { hit = e; break; }
+      }
+    } catch (err) { return [sel, null]; }
+    return [sel, hit ? hit.textContent.trim() : null];
+  });
+}"""
 
 
 def attach_listeners(page, data):
@@ -144,11 +167,18 @@ async def collect_screen(page, flow, name, reached=None):
     `reached` 를 주면 __screen() 의 답을 긁기 직전에 거기에 먼저 적는다. 걷는
     중에 뜬 dialog 는 `reached` 의 마지막 이름으로 기록되므로, 이 순서가 dialog
     가 어느 화면에 붙는지를 정한다.
+
+    화면에 매인 값들(`inherited` · `overlap` · `overflow` · `wrapped` ·
+    `shown`)은 켜진 화면이 없으면 null 이다 - 빈 목록이 아니다. probes.py 의
+    머리말과 검사 A 의 _unlit() 참고.
     """
     at = await page.evaluate("() => window.__screen && window.__screen()")
     if reached is not None:
         reached.append(at)
-    row = {"landed_on": at}
+    # 기록(__screen)과 화면(.screen.on)을 따로 적는다. 둘이 어긋나면 기록만
+    # 넘어가고 사용자는 앞 화면에 서 있는 것이므로, 검사 A 가 둘을 맞춰 본다.
+    row = {"landed_on": at,
+           "dom_screen": await page.evaluate(P.DOM_SCREEN)}
     row.update(await page.evaluate(P.INVENTORY))
     row["choices"] = await page.evaluate(P.CHOICE_GROUPS)
     row["contrast"] = await page.evaluate(P.CONTRAST)

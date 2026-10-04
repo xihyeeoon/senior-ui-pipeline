@@ -1,0 +1,15 @@
+{
+  "name": "arrival_dark",
+  "note": "켜진 화면(.screen.on)이 하나도 없는 경우를 재현한다.",
+  "derived_from_original": false,
+  "required_ids": ["start"],
+  "steps": [
+    {"screen": "start"}
+  ],
+  "expect": {
+    "start": [
+      ["#amt", "{AMOUNT_SHOWN}"]
+    ]
+  },
+  "done_amount": "#amt"
+}

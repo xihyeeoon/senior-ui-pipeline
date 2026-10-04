@@ -155,3 +155,94 @@ def test_decoration_only_differences_still_pass(b_decorated):
     """
     assert fatals(b_decorated, "B") == [], details(b_decorated["fatal"])
     assert b_decorated["passed"] is True, details(b_decorated["fatal"])
+
+
+# ===================================================================== #
+# 2. 화면 도착 판정이 window.__screen() 하나만 믿는다
+# ===================================================================== #
+# window.__screen() 은 전환 스크립트의 기록이다 (원본은
+# `window.__screen = () => window.__task.screen`). 기록이 바뀌었다는 것은
+# 화면이 바뀌었다는 것과 다른 일이다 - 기록만 바꾸고 on 클래스를 옮기지 않으면
+# 사용자는 앞 화면에 그대로 서 있다. 그래서 켜진 화면의 data-screen 도 함께
+# 본다.
+@pytest.fixture(scope="module")
+def arrival_lies(server):
+    return run_audit("arrival_lies.json", "arrival_lies.html")
+
+
+@pytest.fixture(scope="module")
+def arrival_dark(server):
+    return run_audit("arrival_dark.json", "arrival_dark.html")
+
+
+@pytest.fixture(scope="module")
+def b_scope(server):
+    return run_audit("b_scope.json", "b_scope.html")
+
+
+def test_bookkeeping_alone_does_not_count_as_arriving(arrival_lies):
+    """기록만 'done' 이 되고 화면은 start 에 그대로 있으면 도착이 아니다.
+
+    고치기 전: fatal 0건. __screen() 이 'done' 이라 했으므로 검사기는 완료
+    화면에 도착했다고 보고, 거기서 재는 모든 것을 start 화면에서 재었다.
+    """
+    hit = [f for f in fatals(arrival_lies, "A") if f.get("screen") == "done"]
+    assert len(hit) == 1, details(arrival_lies["fatal"])
+    assert ".screen.on" in hit[0]["detail"]
+    assert hit[0]["dom_screen"] == "start"
+
+
+def test_a_wrong_landing_by_dom_is_where_it_stopped(arrival_lies):
+    """도착하지 못한 것이므로 멈춘 곳으로 적힌다 - 엉뚱한 화면에 도착한 것과
+    같은 취급이다."""
+    assert arrival_lies["metrics"]["stopped_at"] == "done"
+
+
+def test_the_arrival_mismatch_is_the_only_fatal(arrival_lies):
+    """켜진 화면 안의 #amt 는 값이 맞다. 도착 판정 하나만 걸려야 한다."""
+    assert len(arrival_lies["fatal"]) == 1, details(arrival_lies["fatal"])
+
+
+def test_no_lit_screen_is_fatal(arrival_dark):
+    """켜진 화면이 하나도 없으면 무엇이 보이는지 잴 수 없다.
+
+    고치기 전: fatal 0건. 화면에 매인 probe 들이 빈 목록을 돌려주고, 빈 목록은
+    "결함 없음" 과 구분되지 않았다 - 빈 화면이 가장 깨끗한 빌드로 보였다.
+    """
+    hit = [f for f in fatals(arrival_dark, "A") if "screen.on" in f["detail"]]
+    assert len(hit) == 1, details(arrival_dark["fatal"])
+    assert len(arrival_dark["fatal"]) == 1, details(arrival_dark["fatal"])
+
+
+def test_screen_scoped_probes_return_null_when_nothing_is_lit(arrival_dark):
+    """계약: 화면에 매인 probe 는 켜진 화면이 없을 때 [] 가 아니라 null 이다.
+    빈 목록은 "쟀고 아무것도 없었다" 이고 null 은 "잴 수 없었다" 다."""
+    row = arrival_dark["metrics"]["screens_unlit"]
+    assert row == ["start"]
+
+
+def test_b_does_not_read_values_from_a_screen_that_is_off(b_scope):
+    """꺼진 화면에 남아 있는 옛 값은 사용자가 볼 수 없다.
+
+    고치기 전: document.querySelector 가 문서 전체에서 첫 요소를 집었다.
+    꺼진 화면의 '10,000원' 이 집혀, 켜진 화면이 '9,000원' 을 보여 주는데도
+    통과했다.
+    """
+    hit = [f for f in fatals(b_scope, "B")
+           if f.get("selector") == "[data-field='amt']"]
+    assert len(hit) == 1, details(b_scope["fatal"])
+    assert hit[0]["got"] == "9,000원"
+
+
+def test_b_does_not_read_values_from_a_hidden_element(b_scope):
+    """display:none 인 요소의 값도 사용자가 볼 수 없다. 켜진 화면 안이어도
+    마찬가지다 - '김시현' 이 숨어 있고 '박철수' 가 보인다."""
+    hit = [f for f in fatals(b_scope, "B")
+           if f.get("selector") == "[data-field='name']"]
+    assert len(hit) == 1, details(b_scope["fatal"])
+    assert hit[0]["got"] == "박철수"
+
+
+def test_b_scope_has_no_other_fatal(b_scope):
+    assert len(b_scope["fatal"]) == 2, details(b_scope["fatal"])
+

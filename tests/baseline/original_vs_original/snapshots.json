@@ -3,6 +3,7 @@
     "screens": {
       "home": {
         "landed_on": "home",
+        "dom_screen": "home",
         "actions": [
           "go-recipient"
         ],
@@ -122,16 +123,16 @@
             "0"
           ],
           "pw": [
-            "6",
             "5",
-            "8",
-            "0",
             "3",
-            "4",
-            "7",
             "1",
+            "6",
             "9",
-            "2"
+            "0",
+            "7",
+            "2",
+            "8",
+            "4"
           ]
         },
         "contrast": [
@@ -815,6 +816,7 @@
       },
       "recipient": {
         "landed_on": "recipient",
+        "dom_screen": "recipient",
         "actions": [
           "back-home",
           "back-home",
@@ -936,16 +938,16 @@
             "0"
           ],
           "pw": [
-            "6",
             "5",
-            "8",
-            "0",
             "3",
-            "4",
-            "7",
             "1",
+            "6",
             "9",
-            "2"
+            "0",
+            "7",
+            "2",
+            "8",
+            "4"
           ]
         },
         "contrast": [
@@ -1196,6 +1198,7 @@
       },
       "account": {
         "landed_on": "account",
+        "dom_screen": "account",
         "actions": [
           "back-recipient",
           "back-home",
@@ -1333,16 +1336,16 @@
             "0"
           ],
           "pw": [
-            "6",
             "5",
-            "8",
-            "0",
             "3",
-            "4",
-            "7",
             "1",
+            "6",
             "9",
-            "2"
+            "0",
+            "7",
+            "2",
+            "8",
+            "4"
           ]
         },
         "contrast": [
@@ -1483,6 +1486,7 @@
       },
       "bank": {
         "landed_on": "bank",
+        "dom_screen": "bank",
         "actions": [
           "back-recipient",
           "tab-bank",
@@ -1676,16 +1680,16 @@
             "0"
           ],
           "pw": [
-            "6",
             "5",
-            "8",
-            "0",
             "3",
-            "4",
-            "7",
             "1",
+            "6",
             "9",
-            "2"
+            "0",
+            "7",
+            "2",
+            "8",
+            "4"
           ]
         },
         "contrast": [
@@ -2814,6 +2818,7 @@
       },
       "amount": {
         "landed_on": "amount",
+        "dom_screen": "amount",
         "actions": [
           "back-account",
           "back-home",
@@ -2955,16 +2960,16 @@
             "0"
           ],
           "pw": [
-            "6",
             "5",
-            "8",
-            "0",
             "3",
-            "4",
-            "7",
             "1",
+            "6",
             "9",
-            "2"
+            "0",
+            "7",
+            "2",
+            "8",
+            "4"
           ]
         },
         "contrast": [
@@ -3162,6 +3167,7 @@
       },
       "confirm": {
         "landed_on": "confirm",
+        "dom_screen": "confirm",
         "actions": [
           "back-amount",
           "back-home",
@@ -3286,16 +3292,16 @@
             "0"
           ],
           "pw": [
-            "6",
             "5",
-            "8",
-            "0",
             "3",
-            "4",
-            "7",
             "1",
+            "6",
             "9",
-            "2"
+            "0",
+            "7",
+            "2",
+            "8",
+            "4"
           ]
         },
         "contrast": [
@@ -3441,6 +3447,7 @@
       },
       "password": {
         "landed_on": "password",
+        "dom_screen": "password",
         "actions": [
           "back-confirm",
           "pw",
@@ -3471,7 +3478,7 @@
           "done"
         ],
         "onclicks": [],
-        "text": "5:55\n5G 89\n✕\n계좌 비밀번호\n1\n4\n5\n6\n2\n0\n7\n8\n3\n재배열\n9\n⌫",
+        "text": "5:55\n5G 89\n✕\n계좌 비밀번호\n4\n8\n1\n7\n3\n0\n9\n5\n2\n재배열\n6\n⌫",
         "height": 844,
         "choices": {
           "pick-bank": [
@@ -3575,16 +3582,16 @@
             "0"
           ],
           "pw": [
-            "1",
             "4",
-            "5",
-            "6",
-            "2",
-            "0",
-            "7",
             "8",
+            "1",
+            "7",
             "3",
-            "9"
+            "0",
+            "9",
+            "5",
+            "2",
+            "6"
           ]
         },
         "contrast": [],
@@ -3612,43 +3619,7 @@
         "overflow": [],
         "wrapped": [
           {
-            "text": "1",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
             "text": "4",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "5",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "6",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "2",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "0",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "7",
             "tag": "button",
             "cls": "",
             "lines": 3
@@ -3660,7 +3631,43 @@
             "lines": 3
           },
           {
+            "text": "1",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "7",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
             "text": "3",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "0",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "9",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "5",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "2",
             "tag": "button",
             "cls": "",
             "lines": 3
@@ -3672,7 +3679,7 @@
             "lines": 5
           },
           {
-            "text": "9",
+            "text": "6",
             "tag": "button",
             "cls": "",
             "lines": 3
@@ -3688,6 +3695,7 @@
       },
       "done": {
         "landed_on": "done",
+        "dom_screen": "done",
         "actions": [
           "finish"
         ],
@@ -3809,16 +3817,16 @@
             "0"
           ],
           "pw": [
-            "1",
             "4",
-            "5",
-            "6",
-            "2",
-            "0",
-            "7",
             "8",
+            "1",
+            "7",
             "3",
-            "9"
+            "0",
+            "9",
+            "5",
+            "2",
+            "6"
           ]
         },
         "contrast": [],
@@ -3979,6 +3987,7 @@
     "screens": {
       "home": {
         "landed_on": "home",
+        "dom_screen": "home",
         "actions": [
           "go-recipient"
         ],
@@ -4098,16 +4107,16 @@
             "0"
           ],
           "pw": [
+            "2",
             "0",
             "1",
+            "7",
+            "8",
+            "4",
+            "9",
             "5",
             "6",
-            "2",
-            "3",
-            "7",
-            "9",
-            "8",
-            "4"
+            "3"
           ]
         },
         "contrast": [
@@ -4791,6 +4800,7 @@
       },
       "recipient": {
         "landed_on": "recipient",
+        "dom_screen": "recipient",
         "actions": [
           "back-home",
           "back-home",
@@ -4912,16 +4922,16 @@
             "0"
           ],
           "pw": [
+            "2",
             "0",
             "1",
+            "7",
+            "8",
+            "4",
+            "9",
             "5",
             "6",
-            "2",
-            "3",
-            "7",
-            "9",
-            "8",
-            "4"
+            "3"
           ]
         },
         "contrast": [
@@ -5172,6 +5182,7 @@
       },
       "account": {
         "landed_on": "account",
+        "dom_screen": "account",
         "actions": [
           "back-recipient",
           "back-home",
@@ -5309,16 +5320,16 @@
             "0"
           ],
           "pw": [
+            "2",
             "0",
             "1",
+            "7",
+            "8",
+            "4",
+            "9",
             "5",
             "6",
-            "2",
-            "3",
-            "7",
-            "9",
-            "8",
-            "4"
+            "3"
           ]
         },
         "contrast": [
@@ -5459,6 +5470,7 @@
       },
       "bank": {
         "landed_on": "bank",
+        "dom_screen": "bank",
         "actions": [
           "back-recipient",
           "tab-bank",
@@ -5652,16 +5664,16 @@
             "0"
           ],
           "pw": [
+            "2",
             "0",
             "1",
+            "7",
+            "8",
+            "4",
+            "9",
             "5",
             "6",
-            "2",
-            "3",
-            "7",
-            "9",
-            "8",
-            "4"
+            "3"
           ]
         },
         "contrast": [
@@ -6790,6 +6802,7 @@
       },
       "amount": {
         "landed_on": "amount",
+        "dom_screen": "amount",
         "actions": [
           "back-account",
           "back-home",
@@ -6931,16 +6944,16 @@
             "0"
           ],
           "pw": [
+            "2",
             "0",
             "1",
+            "7",
+            "8",
+            "4",
+            "9",
             "5",
             "6",
-            "2",
-            "3",
-            "7",
-            "9",
-            "8",
-            "4"
+            "3"
           ]
         },
         "contrast": [
@@ -7138,6 +7151,7 @@
       },
       "confirm": {
         "landed_on": "confirm",
+        "dom_screen": "confirm",
         "actions": [
           "back-amount",
           "back-home",
@@ -7262,16 +7276,16 @@
             "0"
           ],
           "pw": [
+            "2",
             "0",
             "1",
+            "7",
+            "8",
+            "4",
+            "9",
             "5",
             "6",
-            "2",
-            "3",
-            "7",
-            "9",
-            "8",
-            "4"
+            "3"
           ]
         },
         "contrast": [
@@ -7417,6 +7431,7 @@
       },
       "password": {
         "landed_on": "password",
+        "dom_screen": "password",
         "actions": [
           "back-confirm",
           "pw",
@@ -7447,7 +7462,7 @@
           "done"
         ],
         "onclicks": [],
-        "text": "5:55\n5G 89\n✕\n계좌 비밀번호\n0\n8\n1\n2\n7\n3\n6\n4\n9\n재배열\n5\n⌫",
+        "text": "5:55\n5G 89\n✕\n계좌 비밀번호\n2\n7\n9\n8\n0\n3\n4\n1\n6\n재배열\n5\n⌫",
         "height": 844,
         "choices": {
           "pick-bank": [
@@ -7551,15 +7566,15 @@
             "0"
           ],
           "pw": [
-            "0",
-            "8",
-            "1",
             "2",
             "7",
-            "3",
-            "6",
-            "4",
             "9",
+            "8",
+            "0",
+            "3",
+            "4",
+            "1",
+            "6",
             "5"
           ]
         },
@@ -7588,24 +7603,6 @@
         "overflow": [],
         "wrapped": [
           {
-            "text": "0",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "8",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "1",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
             "text": "2",
             "tag": "button",
             "cls": "",
@@ -7618,13 +7615,25 @@
             "lines": 3
           },
           {
-            "text": "3",
+            "text": "9",
             "tag": "button",
             "cls": "",
             "lines": 3
           },
           {
-            "text": "6",
+            "text": "8",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "0",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "3",
             "tag": "button",
             "cls": "",
             "lines": 3
@@ -7636,7 +7645,13 @@
             "lines": 3
           },
           {
-            "text": "9",
+            "text": "1",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "6",
             "tag": "button",
             "cls": "",
             "lines": 3
@@ -7664,6 +7679,7 @@
       },
       "done": {
         "landed_on": "done",
+        "dom_screen": "done",
         "actions": [
           "finish"
         ],
@@ -7785,15 +7801,15 @@
             "0"
           ],
           "pw": [
-            "0",
-            "8",
-            "1",
             "2",
             "7",
-            "3",
-            "6",
-            "4",
             "9",
+            "8",
+            "0",
+            "3",
+            "4",
+            "1",
+            "6",
             "5"
           ]
         },

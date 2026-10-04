@@ -27,6 +27,41 @@
     ],
     "screens_expected": 8,
     "screens_reached": 8,
+    "screens_unlit": [],
+    "screens_landed_on": {
+      "home": {
+        "hook": "home",
+        "dom": "home"
+      },
+      "recipient": {
+        "hook": "recipient",
+        "dom": "recipient"
+      },
+      "account": {
+        "hook": "account",
+        "dom": "account"
+      },
+      "bank": {
+        "hook": "bank",
+        "dom": "bank"
+      },
+      "amount": {
+        "hook": "amount",
+        "dom": "amount"
+      },
+      "confirm": {
+        "hook": "confirm",
+        "dom": "confirm"
+      },
+      "password": {
+        "hook": "password",
+        "dom": "password"
+      },
+      "done": {
+        "hook": "done",
+        "dom": "done"
+      }
+    },
     "done_screen": "done",
     "done_amount": "10,000",
     "data-screen_original": 8,

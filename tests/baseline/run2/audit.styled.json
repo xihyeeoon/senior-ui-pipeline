@@ -108,6 +108,37 @@
     "screens_comparable_to_original": [],
     "screens_expected": 7,
     "screens_reached": 7,
+    "screens_unlit": [],
+    "screens_landed_on": {
+      "start": {
+        "hook": "start",
+        "dom": "start"
+      },
+      "who": {
+        "hook": "who",
+        "dom": "who"
+      },
+      "account": {
+        "hook": "account",
+        "dom": "account"
+      },
+      "amount": {
+        "hook": "amount",
+        "dom": "amount"
+      },
+      "review": {
+        "hook": "review",
+        "dom": "review"
+      },
+      "auth": {
+        "hook": "auth",
+        "dom": "auth"
+      },
+      "done": {
+        "hook": "done",
+        "dom": "done"
+      }
+    },
     "done_screen": "done",
     "done_amount": "10,000",
     "data-screen_original": 8,

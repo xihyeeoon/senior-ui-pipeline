@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 B - 꺼진 화면과 숨은 요소에서 값을 읽는다</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  .gone{display:none;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- 맞는 값은 둘 다 사용자가 볼 수 없는 곳에 있고, 보이는 곳에는 틀린 값이
+     있다. document.querySelector 는 문서 순서로 첫 요소를 집으므로, 맞는 값이
+     먼저 나오게 두면 검사 B 는 통과한다 - 화면에 틀린 금액과 틀린 이름이
+     떠 있는데도.
+
+       [data-field='amt']   꺼진 화면 안   10,000 (맞음) <- 먼저
+                            켜진 화면 안    9,000 (틀림)
+       [data-field='name']  켜진 화면 안, display:none  김시현 (맞음) <- 먼저
+                            켜진 화면 안, 보임          박철수 (틀림)
+-->
+<section class="screen" data-screen="old" id="old">
+  <p data-field="amt">10,000원</p>
+</section>
+<section class="screen on" data-screen="start" id="start">
+  <p class="gone" data-field="name">김시현</p>
+  <p data-field="amt">9,000원</p>
+  <p data-field="name">박철수</p>
+  <button data-action="noop">확인</button>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'noop') { /* 이 페이지는 걷지 않는다 */ }
+});
+</script>
+</body>
+</html>

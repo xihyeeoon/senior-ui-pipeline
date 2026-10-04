@@ -23,11 +23,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # drive() 스냅샷 만들기 - 검사들이 읽는 키를 전부 빈 값으로 채운다
 # --------------------------------------------------------------------- #
 def row(name, **kw):
-    """한 화면에 도착한 뒤 긁어 온 것. 기본값은 "아무 문제 없음" 이다."""
-    r = {"landed_on": name, "screens": [name], "actions": [], "ids": [],
-         "onclicks": [], "text": "", "height": 800, "choices": {},
-         "contrast": [], "inherited": [], "overlap": [], "overflow": [],
-         "wrapped": [], "shown": []}
+    """한 화면에 도착한 뒤 긁어 온 것. 기본값은 "아무 문제 없음" 이다.
+
+    `landed_on` 은 전환 스크립트의 기록이고 `dom_screen` 은 켜진 화면이 스스로
+    말하는 이름이다. 도착 판정은 둘이 같아야 통과이므로 기본값은 둘 다 그
+    화면이다 - 한쪽만 바꾸면 그 어긋남을 재현하는 입력이 된다.
+    """
+    r = {"landed_on": name, "dom_screen": name, "screens": [name],
+         "actions": [], "ids": [], "onclicks": [], "text": "", "height": 800,
+         "choices": {}, "contrast": [], "inherited": [], "overlap": [],
+         "overflow": [], "wrapped": [], "shown": []}
     r.update(kw)
     return r
 

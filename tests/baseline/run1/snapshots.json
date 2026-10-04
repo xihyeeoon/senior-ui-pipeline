@@ -3,6 +3,7 @@
     "screens": {
       "home": {
         "landed_on": "home",
+        "dom_screen": "home",
         "actions": [
           "go-recipient"
         ],
@@ -122,16 +123,16 @@
             "0"
           ],
           "pw": [
+            "9",
+            "7",
+            "5",
+            "6",
             "2",
             "1",
-            "7",
-            "6",
-            "5",
-            "3",
-            "8",
             "0",
-            "9",
-            "4"
+            "8",
+            "4",
+            "3"
           ]
         },
         "contrast": [
@@ -815,6 +816,7 @@
       },
       "recipient": {
         "landed_on": "recipient",
+        "dom_screen": "recipient",
         "actions": [
           "back-home",
           "back-home",
@@ -936,16 +938,16 @@
             "0"
           ],
           "pw": [
+            "9",
+            "7",
+            "5",
+            "6",
             "2",
             "1",
-            "7",
-            "6",
-            "5",
-            "3",
-            "8",
             "0",
-            "9",
-            "4"
+            "8",
+            "4",
+            "3"
           ]
         },
         "contrast": [
@@ -1196,6 +1198,7 @@
       },
       "account": {
         "landed_on": "account",
+        "dom_screen": "account",
         "actions": [
           "back-recipient",
           "back-home",
@@ -1333,16 +1336,16 @@
             "0"
           ],
           "pw": [
+            "9",
+            "7",
+            "5",
+            "6",
             "2",
             "1",
-            "7",
-            "6",
-            "5",
-            "3",
-            "8",
             "0",
-            "9",
-            "4"
+            "8",
+            "4",
+            "3"
           ]
         },
         "contrast": [
@@ -1483,6 +1486,7 @@
       },
       "bank": {
         "landed_on": "bank",
+        "dom_screen": "bank",
         "actions": [
           "back-recipient",
           "tab-bank",
@@ -1676,16 +1680,16 @@
             "0"
           ],
           "pw": [
+            "9",
+            "7",
+            "5",
+            "6",
             "2",
             "1",
-            "7",
-            "6",
-            "5",
-            "3",
-            "8",
             "0",
-            "9",
-            "4"
+            "8",
+            "4",
+            "3"
           ]
         },
         "contrast": [
@@ -2814,6 +2818,7 @@
       },
       "amount": {
         "landed_on": "amount",
+        "dom_screen": "amount",
         "actions": [
           "back-account",
           "back-home",
@@ -2955,16 +2960,16 @@
             "0"
           ],
           "pw": [
+            "9",
+            "7",
+            "5",
+            "6",
             "2",
             "1",
-            "7",
-            "6",
-            "5",
-            "3",
-            "8",
             "0",
-            "9",
-            "4"
+            "8",
+            "4",
+            "3"
           ]
         },
         "contrast": [
@@ -3162,6 +3167,7 @@
       },
       "confirm": {
         "landed_on": "confirm",
+        "dom_screen": "confirm",
         "actions": [
           "back-amount",
           "back-home",
@@ -3286,16 +3292,16 @@
             "0"
           ],
           "pw": [
+            "9",
+            "7",
+            "5",
+            "6",
             "2",
             "1",
-            "7",
-            "6",
-            "5",
-            "3",
-            "8",
             "0",
-            "9",
-            "4"
+            "8",
+            "4",
+            "3"
           ]
         },
         "contrast": [
@@ -3441,6 +3447,7 @@
       },
       "password": {
         "landed_on": "password",
+        "dom_screen": "password",
         "actions": [
           "back-confirm",
           "pw",
@@ -3471,7 +3478,7 @@
           "done"
         ],
         "onclicks": [],
-        "text": "5:55\n5G 89\n✕\n계좌 비밀번호\n0\n1\n2\n9\n6\n3\n8\n4\n7\n재배열\n5\n⌫",
+        "text": "5:55\n5G 89\n✕\n계좌 비밀번호\n5\n9\n6\n7\n8\n0\n1\n4\n3\n재배열\n2\n⌫",
         "height": 844,
         "choices": {
           "pick-bank": [
@@ -3575,16 +3582,16 @@
             "0"
           ],
           "pw": [
-            "0",
-            "1",
-            "2",
+            "5",
             "9",
             "6",
-            "3",
-            "8",
-            "4",
             "7",
-            "5"
+            "8",
+            "0",
+            "1",
+            "4",
+            "3",
+            "2"
           ]
         },
         "contrast": [],
@@ -3612,19 +3619,7 @@
         "overflow": [],
         "wrapped": [
           {
-            "text": "0",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "1",
-            "tag": "button",
-            "cls": "",
-            "lines": 3
-          },
-          {
-            "text": "2",
+            "text": "5",
             "tag": "button",
             "cls": "",
             "lines": 3
@@ -3642,7 +3637,7 @@
             "lines": 3
           },
           {
-            "text": "3",
+            "text": "7",
             "tag": "button",
             "cls": "",
             "lines": 3
@@ -3654,13 +3649,25 @@
             "lines": 3
           },
           {
+            "text": "0",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
+            "text": "1",
+            "tag": "button",
+            "cls": "",
+            "lines": 3
+          },
+          {
             "text": "4",
             "tag": "button",
             "cls": "",
             "lines": 3
           },
           {
-            "text": "7",
+            "text": "3",
             "tag": "button",
             "cls": "",
             "lines": 3
@@ -3672,7 +3679,7 @@
             "lines": 5
           },
           {
-            "text": "5",
+            "text": "2",
             "tag": "button",
             "cls": "",
             "lines": 3
@@ -3688,6 +3695,7 @@
       },
       "done": {
         "landed_on": "done",
+        "dom_screen": "done",
         "actions": [
           "finish"
         ],
@@ -3809,16 +3817,16 @@
             "0"
           ],
           "pw": [
-            "0",
-            "1",
-            "2",
+            "5",
             "9",
             "6",
-            "3",
-            "8",
-            "4",
             "7",
-            "5"
+            "8",
+            "0",
+            "1",
+            "4",
+            "3",
+            "2"
           ]
         },
         "contrast": [],
@@ -3979,6 +3987,7 @@
     "screens": {
       "start": {
         "landed_on": "start",
+        "dom_screen": "start",
         "actions": [
           "go-who",
           "noop"
@@ -4126,6 +4135,7 @@
       },
       "who": {
         "landed_on": "who",
+        "dom_screen": "who",
         "actions": [
           "back-start",
           "pick-person",
@@ -4330,6 +4340,7 @@
       },
       "accno": {
         "landed_on": "accno",
+        "dom_screen": "accno",
         "actions": [
           "back-who",
           "acc-num",
@@ -4621,6 +4632,7 @@
       },
       "bank": {
         "landed_on": "bank",
+        "dom_screen": "bank",
         "actions": [
           "back-accno",
           "bank-yes",
@@ -4854,6 +4866,7 @@
       },
       "whoconfirm": {
         "landed_on": "whoconfirm",
+        "dom_screen": "whoconfirm",
         "actions": [
           "back-bank",
           "who-yes",
@@ -5026,6 +5039,7 @@
       },
       "amount": {
         "landed_on": "amount",
+        "dom_screen": "amount",
         "actions": [
           "back-from-amount",
           "amt-set",
@@ -5374,6 +5388,7 @@
       },
       "review": {
         "landed_on": "review",
+        "dom_screen": "review",
         "actions": [
           "back-amount",
           "edit-who",
@@ -5578,6 +5593,7 @@
       },
       "auth": {
         "landed_on": "auth",
+        "dom_screen": "auth",
         "actions": [
           "back-review",
           "bio",
@@ -5824,6 +5840,7 @@
       },
       "done": {
         "landed_on": "done",
+        "dom_screen": "done",
         "actions": [
           "back-start",
           "finish"
