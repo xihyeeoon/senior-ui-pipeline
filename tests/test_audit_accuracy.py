@@ -532,3 +532,37 @@ def test_an_ancestors_opacity_reaches_the_text(d_opacity):
 def test_the_opacity_page_has_nothing_else_wrong(d_opacity):
     assert texts_of(contrast_of(d_opacity)) == ["보낼 돈을 고르세요"]
     assert d_opacity["report"]["fatal"] == [], details(d_opacity["report"]["fatal"])
+
+
+@pytest.fixture(scope="module")
+def d_modern_colour(server):
+    return drive_and_audit("d_modern_colour.json", "d_modern_colour.html")
+
+
+def test_an_oklch_colour_is_measured(d_modern_colour):
+    """oklch(0.85 0.03 250) 은 rgb(192, 208, 225) 다 - 흰 배경에서 1.57:1.
+
+    고치기 전: getComputedStyle 이 적힌 모양 그대로 돌려주고 rgba?() 글자만
+    읽었으므로 "색을 알 수 없다" 가 되어 요소째로 검사에서 빠졌다.
+    """
+    rows = [x for x in contrast_of(d_modern_colour)
+            if x["text"] == "보낼 돈을 고르세요"]
+    assert len(rows) == 1, texts_of(contrast_of(d_modern_colour))
+    assert rows[0]["ratio"] < 2.0
+    assert rows[0]["seen"] == "rgb(192, 208, 225)"
+
+
+def test_a_color_srgb_colour_is_measured(d_modern_colour):
+    """color(srgb 0.8 0.82 0.85) 도 같은 길로 숫자가 된다."""
+    rows = [x for x in contrast_of(d_modern_colour)
+            if x["text"] == "받는 분을 고르세요"]
+    assert len(rows) == 1, texts_of(contrast_of(d_modern_colour))
+    assert rows[0]["ratio"] < 2.0
+    assert rows[0]["seen"] == "rgb(204, 209, 217)"
+
+
+def test_the_modern_colour_page_has_nothing_else_wrong(d_modern_colour):
+    assert texts_of(contrast_of(d_modern_colour)) == ["받는 분을 고르세요",
+                                                      "보낼 돈을 고르세요"]
+    assert d_modern_colour["report"]["fatal"] == [], \
+        details(d_modern_colour["report"]["fatal"])

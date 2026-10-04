@@ -54,11 +54,47 @@ CONTRAST = r"""
     const f = v => { v /= 255; return v <= 0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4); };
     return 0.2126*f(c[0]) + 0.7152*f(c[1]) + 0.0722*f(c[2]);
   };
+  /* 색 하나를 sRGB 숫자로 바꾼다.
+
+     rgb()/rgba() 는 글자에서 바로 읽는다. 그 밖의 표기 - oklch() · lab() ·
+     color(srgb …) · color-mix() - 는 getComputedStyle 이 rgb 로 바꾸지 않고
+     적힌 모양 그대로 돌려주므로, canvas 에 1픽셀 찍어 읽는다. 브라우저가
+     칠할 수 있는 색이면 무엇이든 같은 길로 숫자가 된다.
+
+     흰 바탕과 검은 바탕에 각각 찍어 비교하면 알파까지 되돌릴 수 있다.
+     w = C*a + 255*(1-a), b = C*a 이므로 a = 1 - (w-b)/255, C = b/a 다.
+     한 바탕에만 찍고 getImageData 로 읽으면 알파를 곱해 저장한 값을 되돌리는
+     과정에서 옅은 색의 자리수가 깎인다. */
+  const cvs = document.createElement('canvas');
+  cvs.width = cvs.height = 1;
+  const cx = cvs.getContext('2d', { willReadFrequently: true });
+  const paint = (s, backdrop) => {
+    cx.fillStyle = backdrop; cx.fillRect(0, 0, 1, 1);
+    cx.fillStyle = s;        cx.fillRect(0, 0, 1, 1);
+    const d = cx.getImageData(0, 0, 1, 1).data;
+    return [d[0], d[1], d[2]];
+  };
+  const rasterise = s => {
+    /* 칠할 수 없는 값은 fillStyle 이 앞 값을 그대로 둔다. 서로 다른 두 값에서
+       출발해 두 번 넣어 보면, 끝 값이 갈리는 것으로 걸러진다. */
+    cx.fillStyle = '#000000'; cx.fillStyle = s; const one = cx.fillStyle;
+    cx.fillStyle = '#ffffff'; cx.fillStyle = s;
+    if (one !== cx.fillStyle) return null;
+    const w = paint(s, '#ffffff'), b = paint(s, '#000000');
+    let a = 0;
+    for (let i = 0; i < 3; i++) a += 1 - (w[i] - b[i]) / 255;
+    a = Math.min(1, Math.max(0, a / 3));
+    if (a < 0.004) return { rgb: [0, 0, 0], a: 0 };
+    return { rgb: b.map(v => Math.min(255, v / a)), a: a };
+  };
   const parse = s => {
-    const m = (s||'').match(/rgba?\(([^)]+)\)/);
-    if (!m) return null;
-    const p = m[1].split(',').map(x => parseFloat(x.trim()));
-    return { rgb: [p[0], p[1], p[2]], a: p.length > 3 ? p[3] : 1 };
+    const m = (s || '').match(/^rgba?\(([^)]+)\)$/);
+    if (m) {
+      const p = m[1].split(',').map(x => parseFloat(x.trim()));
+      if (p.length >= 3 && !p.some(isNaN))
+        return { rgb: [p[0], p[1], p[2]], a: p.length > 3 ? p[3] : 1 };
+    }
+    return rasterise(s);
   };
   /* 알파가 든 색을 배경 위에 얹었을 때 눈에 닿는 색. */
   const over = (rgb, a, bg) =>
