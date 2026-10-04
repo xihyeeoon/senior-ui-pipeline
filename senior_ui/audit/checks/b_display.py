@@ -1,8 +1,9 @@
 r"""검사 B - 표시 정확도. fatal.
 
 각 화면이 과제가 넣은 값을 그대로 보여 주는지, 원본에 없던
-alert/confirm/prompt 나 onclick 이 끼어들었는지, 끼어든 쪽이 숫자를 박아
-넣었는지를 본다. 흐름 파일의 expect 에 적힌 선택자만 본다 - 적히지 않은 곳이
+alert/confirm/prompt 나 onclick 이 끼어들었는지를 본다. 끼어든 쪽이 숫자를 박아
+넣었는지는 그 주입 finding 의 속성(`numbers`)으로 남긴다 - 결함 하나가 두 번
+세지지 않게. 흐름 파일의 expect 에 적힌 선택자만 본다 - 적히지 않은 곳이
 무엇을 보여 주는지는 보지 않는다.
 """
 import re
@@ -38,17 +39,21 @@ def run(ctx):
             W("B", name, "recipient name %r no longer appears on this screen" % NAME)
 
     # injected dialogs / handlers, by diffing the two documents
+    #
+    # 박아 넣은 숫자는 그 주입의 성질이지 별개의 결함이 아니다. 따로 적으면
+    # alert 한 개가 fatal 두 건이 되어, 결함 수가 결함 수를 세지 않게 된다.
+    # 숫자는 finding 의 `numbers` 속성으로 남고 내용에도 한 줄 덧붙는다.
     for fn in ("alert", "confirm", "prompt"):
         new = calls(ctx.rep_html, fn) - calls(ctx.orig_html, fn)
         for _q, msg in sorted(new):
             digits = re.findall(r"\d[\d,]*", msg)
-            F("B", None, "%s() injected that the original never had: %r"
-              % (fn, msg), injected=msg, numbers=digits)
+            hard = ""
             if digits:
-                F("B", None,
-                  "injected %s() hardcodes %s - the value is dynamic, so it will "
-                  "be wrong for any other amount" % (fn, ", ".join(digits)),
-                  injected=msg, numbers=digits)
+                hard = (" - it also hardcodes %s, and the value is dynamic, so "
+                        "it will be wrong for any other amount"
+                        % ", ".join(digits))
+            F("B", None, "%s() injected that the original never had: %r%s"
+              % (fn, msg, hard), injected=msg, numbers=digits)
     metrics["injected_dialog_calls"] = sum(
         len(calls(ctx.rep_html, f) - calls(ctx.orig_html, f))
         for f in ("alert", "confirm", "prompt"))

@@ -270,3 +270,38 @@ def test_a_still_checks_the_amount_when_the_flow_does_not():
     assert len(report["fatal"]) == 1
     assert report["fatal"][0]["check"] == "A"
     assert DONE_AMOUNT_MARK in report["fatal"][0]["detail"]
+
+
+# --------------------------------------------------------------------- #
+# 3-3. 주입된 alert() 의 "숫자 하드코딩" 은 속성이지 별도 fatal 이 아니다
+# --------------------------------------------------------------------- #
+def injected_alert(msg):
+    plain = snap({"start": done_row("start")})
+    return _api.audit(plain, snap({"start": done_row("start")}),
+                      "<html></html>",
+                      "<html><script>alert('%s')</script></html>" % msg,
+                      flow(["start"]))
+
+
+def test_injected_dialog_with_a_number_is_one_fatal():
+    """주입된 alert 하나는 결함 하나다.
+
+    고치기 전: "alert() injected …" 와 "injected alert() hardcodes 10,000 …"
+    가 따로 나서 alert 한 개가 fatal 2건이 되었다. 숫자를 박아 넣은 것은 그
+    alert 의 성질이지 별개의 결함이 아니다.
+    """
+    report = injected_alert("10,000원을 보냈습니다")
+    assert len(report["fatal"]) == 1
+    f = report["fatal"][0]
+    assert f["check"] == "B"
+    assert f["numbers"] == ["10,000"]            # 속성으로 남는다
+    assert "hardcode" in f["detail"]             # 내용에도 적힌다
+    assert report["metrics"]["injected_dialog_calls"] == 1
+    assert report["metrics"]["fatal_total"] == 1
+
+
+def test_injected_dialog_without_a_number_is_still_one_fatal():
+    report = injected_alert("보냈습니다")
+    assert len(report["fatal"]) == 1
+    assert report["fatal"][0]["numbers"] == []
+    assert "hardcode" not in report["fatal"][0]["detail"]
