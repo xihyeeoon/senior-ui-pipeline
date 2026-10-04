@@ -32,8 +32,8 @@
   "trend": [
     {
       "attempt": 1,
-      "fatal_total": 0,
-      "fatal_root": 0,
+      "fatal_total": 1,
+      "fatal_root": 1,
       "fatal_derived": 0,
       "screens": "9/9",
       "stopped_at": null

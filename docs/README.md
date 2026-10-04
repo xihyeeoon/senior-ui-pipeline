@@ -101,6 +101,12 @@ $env:PYTHONUTF8 = "1"
 the same 8-screen task and diffs them. It prints machine-readable JSON and exits
 0 only when nothing fatal fired, so it can gate a regenerate-on-failure loop.
 
+Exit 1 means it audited the build and the build failed. Exit 2 means the audit
+itself could not run - inputs or flow unreadable, no browser, anything that
+stops the drive - and the JSON then carries that reason as its single fatal.
+The caller has to tell those two apart: a build that failed gets regenerated, an
+auditor that could not run does not.
+
 ### Counting fatals across runs
 
 A task that stops early fails every screen after the stop, so a raw fatal count

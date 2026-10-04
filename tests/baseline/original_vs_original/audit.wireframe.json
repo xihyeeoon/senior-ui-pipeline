@@ -89,13 +89,6 @@
     "state_pairs_checked": 3,
     "state_pairs_collapsed": 0,
     "undefined_classes_new": [],
-    "fatal_duplicates_removed": 0,
-    "fatal_total": 0,
-    "fatal_derived": 0,
-    "fatal_root": 0,
-    "stopped_at": null,
-    "js_error_details": [],
-    "flow_notes": [],
     "choice_groups_original": {
       "pick-bank": 67,
       "acc-num": 10,
@@ -103,7 +96,21 @@
       "num": 11,
       "pw": 10
     },
+    "choice_values_kept": {
+      "pick-bank": 67,
+      "acc-num": 10,
+      "quick": 4,
+      "num": 11,
+      "pw": 10
+    },
     "choice_values_missing": {},
+    "fatal_duplicates_removed": 0,
+    "fatal_total": 0,
+    "fatal_derived": 0,
+    "fatal_root": 0,
+    "stopped_at": null,
+    "js_error_details": [],
+    "flow_notes": [],
     "checks_stood_down": [
       "D/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다.",
       "E/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다.",
