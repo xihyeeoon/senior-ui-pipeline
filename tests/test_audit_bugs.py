@@ -469,3 +469,28 @@ def test_key_metrics_has_a_row_for_check_I():
 def test_key_metrics_I_row_with_nothing_missing():
     md = _api.ar_render([report_build(choice_values_missing={})], False, 10, "t")
     assert md_row(md, "I", "핵심 지표").endswith("| 0 |")
+
+
+# --------------------------------------------------------------------- #
+# 6. i_choices 의 kept 를 metrics 로 내보낸다
+# --------------------------------------------------------------------- #
+def test_kept_choices_are_reported():
+    """고치기 전: i_choices 는 선택지 몇 개가 남았는지 세 놓고 그 값을 쓰지
+    않고 버렸다. 없는 값만 보면 "67개 중 58개 없음" 과 "3개 중 2개 없음" 의
+    차이를 리포트에서 알 수 없다."""
+    report = one_missing_choice()
+    m = report["metrics"]
+    assert m["choice_groups_original"] == {"pick-bank": 3}
+    assert m["choice_values_kept"] == {"pick-bank": 1}
+    assert m["choice_values_missing"] == {"pick-bank": ["나은행", "다은행"]}
+
+
+def test_kept_choices_when_nothing_is_missing():
+    orig = snap({"start": row("start", choices={"pick-bank": ["가은행", "나은행"]})})
+    rep = snap({"start": done_row("start")})
+    report = _api.audit(orig, rep, "", "<html>가은행 나은행</html>",
+                        flow(["start"]))
+    m = report["metrics"]
+    assert m["choice_values_kept"] == {"pick-bank": 2}
+    assert m["choice_values_missing"] == {}
+    assert report["fatal"] == []

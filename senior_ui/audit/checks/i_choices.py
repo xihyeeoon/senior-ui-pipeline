@@ -32,6 +32,9 @@ def run(ctx):
 
     metrics["choice_groups_original"] = {a: len(v) for a, v in orig_choices.items()
                                          if len(v) >= 2}
+    # 남은 개수도 내보낸다. 없는 값만 보면 "67개 중 58개 없음" 과 "3개 중 2개
+    # 없음" 이 리포트에서 같은 모양이 된다 - 둘은 전혀 다른 상태다.
+    metrics["choice_values_kept"] = kept
     metrics["choice_values_missing"] = {a: d["missing"]
                                         for a, d in missing_by_action.items()}
     for action, d in sorted(missing_by_action.items()):
