@@ -494,3 +494,43 @@ def test_kept_choices_when_nothing_is_missing():
     assert m["choice_values_kept"] == {"pick-bank": 2}
     assert m["choice_values_missing"] == {}
     assert report["fatal"] == []
+
+
+# --------------------------------------------------------------------- #
+# 7. 과업 중 뜬 대화상자도 fatal 하나다
+# --------------------------------------------------------------------- #
+def dialog_during_task(message, type_="alert"):
+    rep = snap({"start": done_row("start")},
+               dialogs=[{"screen": "start", "type": type_, "message": message}])
+    return _api.audit(snap({"start": done_row("start")}), rep, "", "",
+                      flow(["start"]))
+
+
+def test_blocking_dialog_with_a_wrong_number_is_one_fatal():
+    """과업을 막은 대화상자 하나는 결함 하나다.
+
+    고치기 전: "blocking alert during the task …" 와 "dialog states 50,000
+    while the task used 10,000" 이 따로 나서 대화상자 한 개가 fatal 2건이
+    되었다. 주입된 alert 를 고친 것과 같은 모양으로, 과제가 쓰지 않은 숫자는
+    그 대화상자 finding 의 속성으로 둔다.
+    """
+    report = dialog_during_task("10,000원이 아니라 50,000원을 보냅니다")
+    assert len(report["fatal"]) == 1
+    f = report["fatal"][0]
+    assert f["check"] == "B" and f["screen"] == "start"
+    assert f["numbers"] == ["50,000"]              # 과제가 쓴 값은 빠진다
+    assert "blocking alert" in f["detail"]
+    assert "50,000" in f["detail"]                 # 내용에도 적힌다
+    assert report["metrics"]["dialogs_during_task"] == 1
+    assert report["metrics"]["fatal_total"] == 1
+
+
+def test_blocking_dialog_without_a_wrong_number_is_still_one_fatal():
+    """과제가 쓴 값만 말하는 대화상자도 막은 것 자체가 결함이다. 속성은 빈
+    목록이고, 내용에는 숫자 이야기가 붙지 않는다."""
+    report = dialog_during_task("10,000원을 보냅니다", "confirm")
+    assert len(report["fatal"]) == 1
+    f = report["fatal"][0]
+    assert f["numbers"] == []
+    assert "blocking confirm" in f["detail"]
+    assert "while the task used" not in f["detail"]

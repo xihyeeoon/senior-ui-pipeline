@@ -67,13 +67,18 @@ def run(ctx):
           + h[:120], handler=h)
 
     # dialogs actually raised while driving the task
+    #
+    # 주입된 alert 와 같은 규칙이다 (위 참고): 막은 대화상자 하나가 결함
+    # 하나고, 그것이 과제가 쓰지 않은 숫자를 말한다는 것은 그 대화상자의
+    # 성질이므로 finding 의 `numbers` 속성으로 둔다. 따로 적으면 대화상자
+    # 한 개가 fatal 두 건이 된다.
     metrics["dialogs_during_task"] = len(rep["dialogs"])
     for d in rep["dialogs"]:
         nums = [n for n in re.findall(r"\d[\d,]*", d["message"])
                 if n not in (AMOUNT_SHOWN, AMOUNT, ACCOUNT)]
-        F("B", d["screen"], "blocking %s during the task: %r"
-          % (d["type"], d["message"]))
+        wrong = ""
         if nums:
-            F("B", d["screen"],
-              "dialog states %s while the task used %s"
-              % (", ".join(nums), AMOUNT_SHOWN), numbers=nums)
+            wrong = (" - it states %s while the task used %s"
+                     % (", ".join(nums), AMOUNT_SHOWN))
+        F("B", d["screen"], "blocking %s during the task: %r%s"
+          % (d["type"], d["message"], wrong), numbers=nums)
