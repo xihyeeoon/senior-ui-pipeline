@@ -169,9 +169,11 @@ def make_handler(sessions_dir, tasks, allow_session=False):
             self.send_error(404, "Not found")
             return None
 
-        def _json(self, code, payload):
+        def _json(self, code, payload, headers=()):
             body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
             self.send_response(code)
+            for k, v in headers:
+                self.send_header(k, v)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
             self.send_header("Cache-Control", "no-store")
@@ -185,10 +187,10 @@ def make_handler(sessions_dir, tasks, allow_session=False):
                 files = sorted(os.listdir(sessions_dir)) if os.path.isdir(sessions_dir) else []
                 return self._json(200, {"files": [f for f in files if f.endswith(".json")]})
             if self.path.split("?")[0] == "/api/reindex":
-                try:
-                    return self._json(200, reindex())
-                except Exception as e:
-                    return self._json(500, {"error": "%s: %s" % (type(e).__name__, e)})
+                # 색인을 새로 쓰는 일이다. GET 으로 받으면 주소창에 한 번
+                # 넣는 것으로도, 브라우저의 선읽기로도 돌아간다.
+                return self._json(405, {"error": "POST 로 보내세요"},
+                                  [("Allow", "POST")])
             p = self._static()
             if p is None:
                 return
@@ -203,6 +205,11 @@ def make_handler(sessions_dir, tasks, allow_session=False):
             return super().do_HEAD()
 
         def do_POST(self):
+            if self.path.split("?")[0] == "/api/reindex":
+                try:
+                    return self._json(200, reindex())
+                except Exception as e:
+                    return self._json(500, {"error": "%s: %s" % (type(e).__name__, e)})
             if self.path.split("?")[0] != "/api/session":
                 return self._json(404, {"error": "unknown endpoint"})
             if not allow_session:

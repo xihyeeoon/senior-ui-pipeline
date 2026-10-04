@@ -449,7 +449,8 @@ $$('nav button').forEach(b => b.onclick = () => go(b.dataset.page));
 $('#reload').onclick = async () => {
   const btn = $('#reload'), was = btn.textContent;
   btn.textContent = '읽는 중…'; btn.disabled = true;
-  try { await fetch('/api/reindex'); } catch (e) { /* 정적으로 열었을 때 */ }
+  try { await fetch('/api/reindex', { method: 'POST' }); }
+  catch (e) { /* 정적으로 열었을 때 */ }
   try { await load(); } catch (e) { showErr(e); }
   btn.textContent = was; btn.disabled = false;
 };

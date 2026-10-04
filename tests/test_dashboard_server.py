@@ -302,3 +302,44 @@ def test_session_을_켜도_밖에서_온_요청은_거절한다(tmp_path, monke
         status, _, _ = post_session(port)
     assert status == 403
     assert not sess.exists()
+
+# --------------------------------------------------------------------- #
+# /api/reindex: POST 로만
+# --------------------------------------------------------------------- #
+# '다시 읽기' 는 outputs/index.json 을 새로 쓴다. GET 으로 받으면 주소창에
+# 한 번 넣는 것으로도, 브라우저의 선읽기로도 돌아간다. 여기서는 실제로
+# 색인을 다시 만들지 않고 불렸는지만 본다 - outputs/ 를 건드리지 않는다.
+@pytest.fixture
+def reindex_calls(monkeypatch):
+    calls = []
+
+    def fake():
+        calls.append(1)
+        return {"ok": True, "builds": 0, "changes": 0, "generated": "2026-10-04T00:00:00"}
+
+    monkeypatch.setattr(_api.srv_module, "reindex", fake)
+    return calls
+
+
+def test_reindex_는_GET_으로는_돌지_않는다(reindex_calls):
+    with serving(**handler_kw()) as port:
+        status, _, headers = req(port, "/api/reindex")
+    assert status == 405
+    assert headers.get("Allow") == "POST"
+    assert reindex_calls == [], "GET 으로 색인을 다시 만들었다"
+
+
+def test_reindex_는_POST_로_돈다(reindex_calls):
+    with serving(**handler_kw()) as port:
+        status, body, _ = req(port, "/api/reindex", method="POST")
+    assert status == 200, body
+    assert json.loads(body)["ok"] is True
+    assert reindex_calls == [1]
+
+
+def test_대시보드의_다시_읽기는_POST_로_보낸다():
+    js = io.open(os.path.join(_api.ROOT_DIR, "web", "dashboard.js"),
+                 encoding="utf-8").read()
+    i = js.index("/api/reindex")
+    call = js[i:i + 120]
+    assert "POST" in call, "dashboard.js 가 아직 GET 으로 부른다: %r" % call
