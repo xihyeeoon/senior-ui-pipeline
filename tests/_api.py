@@ -27,6 +27,7 @@ from senior_ui.restructure import model as _model            # noqa: E402
 from senior_ui.restructure import prompt as _prompt          # noqa: E402
 from senior_ui.restructure import reply as _reply            # noqa: E402
 from senior_ui.experiment import report as _session_report    # noqa: E402
+from senior_ui.experiment import server as _exp_server        # noqa: E402
 # ======================================================================= #
 
 # ---- senior_ui/audit (core.audit · drive.drive · flow.load_flow) ------- #
@@ -63,6 +64,9 @@ mock_reply = _model.mock_reply
 # ---- senior_ui/devserver.py · senior_ui/config.py ---------------------- #
 listening = _devserver.listening
 PORT = _config.PORT
+
+# ---- senior_ui/experiment/server.py (대시보드 서버) --------------------- #
+srv_make_handler = _exp_server.make_handler
 
 # ---- senior_ui/experiment/report.py (집계 함수) ------------------------- #
 sr_load = _session_report.load

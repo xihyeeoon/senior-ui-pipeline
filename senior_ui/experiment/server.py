@@ -76,8 +76,12 @@ def make_handler(sessions_dir, tasks):
             super().__init__(*a, directory=ROOT, **kw)
 
         def log_message(self, fmt, *args):
-            # keep the console readable: only note saves and errors
-            if "api/session" in (args[0] if args else ""):
+            # 콘솔은 저장된 세션만 적는다. args[0] 은 요청 줄일 때도 있고
+            # send_error() 가 부를 때는 HTTPStatus 다 - 문자열인지 먼저 본다.
+            # 보지 않으면 in 이 TypeError 를 내고, 응답을 쓰기도 전에
+            # 연결이 끊어져 모든 404 가 빈 응답이 된다.
+            first = args[0] if args else ""
+            if isinstance(first, str) and "api/session" in first:
                 sys.stderr.write("  %s\n" % (fmt % args))
 
         def _json(self, code, payload):
