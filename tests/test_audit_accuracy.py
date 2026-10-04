@@ -854,3 +854,25 @@ def test_a_slow_transition_is_waited_for(drive_slow):
     assert drive_slow["passed"] is True
     assert drive_slow["metrics"]["screens_landed_on"]["done"] == {
         "hook": "done", "dom": "done"}
+
+
+@pytest.fixture(scope="module")
+def drive_dialog_late(server):
+    return run_audit("drive_dialog_late.json", "drive_dialog_late.html")
+
+
+def test_a_dialog_raised_as_the_walk_ends_is_still_caught(drive_dialog_late):
+    """마지막 화면에 도착한 뒤 0.12초 늦게 뜨는 alert 도 길을 막는 대화상자다.
+
+    고치기 전: fatal 0건. 걷기가 끝나자마자 브라우저를 닫으므로 대화상자가
+    아예 뜨지 못했다. 닫는 동안에는 타이머가 돌지 않는다 - 노출된 틈은 마지막
+    화면을 긁은 뒤 20ms 쯤이다 (측정).
+
+    걷는 중에 뜨는 대화상자는 전에도 잡혔다. 대화상자가 뜨면 페이지의 JS 가
+    멈추므로 다음 evaluate 가 끝나지 않고 그 사이에 처리기가 돈다.
+    """
+    hit = [f for f in fatals(drive_dialog_late, "B") if "blocking" in f["detail"]]
+    assert len(hit) == 1, details(drive_dialog_late["fatal"])
+    assert hit[0]["screen"] == "done"
+    assert "보내기 결과를 확인하세요" in hit[0]["detail"]
+    assert drive_dialog_late["metrics"]["dialogs_during_task"] == 1
