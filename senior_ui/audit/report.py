@@ -194,6 +194,10 @@ def key_metrics(builds):
     m("C", "처리기 없는 data-action (새로)", "dead_controls_new")
     m("C", "원래부터 죽어 있던 것", "dead_controls_pre_existing", count_or_list)
     m("D", "색을 상속에만 의존하는 새 텍스트", "new_inherited_colour")
+    # 새 설계에는 "새 텍스트" 를 가릴 원본이 없다. 그 자리에 들어가는 지표가
+    # 아래 둘이다 - 위 칸은 그때 "–" 로 찍힌다.
+    m("D", "상속받은 색이 읽히지 않는 텍스트", "inherited_colour_unreadable")
+    m("D", "명암비 판정 불가 (그라디언트·이미지 위)", "contrast_undetermined")
     m("D", "저대비 요소에 글이 늘어남", "low_contrast_gained_text")
     m("E", "새 겹침", "overlaps_new")
     m("E", "새 넘침", "overflows_new")

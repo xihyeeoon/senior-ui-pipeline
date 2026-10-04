@@ -698,3 +698,58 @@ def test_the_modal_page_raises_nothing_else(f_modal):
     assert warnings_of(f_modal, "F", "runtime") == []
     assert warnings_of(f_modal, "F", "markup") == []
     assert f_modal["fatal"] == [], details(f_modal["fatal"])
+
+
+# ===================================================================== #
+# 7. 검사 D 가 새 설계에서 이름만 같은 화면과 견준다
+# ===================================================================== #
+@pytest.fixture(scope="module")
+def d_newdesign(server):
+    return run_audit("d_newdesign.json", "d_newdesign.html",
+                     orig_page="d_newdesign_orig.html")
+
+
+def stood_down(report, letter):
+    return [s for s in report["metrics"]["checks_stood_down"]
+            if s.startswith(letter + "/")]
+
+
+def test_inherited_colour_runs_on_a_new_design(d_newdesign):
+    """자기 색이 없어서 읽히지 않는 라벨은 새 설계에서도 걸려야 한다.
+
+    고치기 전: 상속 색 검사가 shared 화면에서만 돌았다. 새 설계에서는 shared 가
+    늘 비어 있으므로 아예 돌지 않았다 - 색이 없어 사라진 라벨이 통과했다.
+    """
+    hit = [w for w in warnings_of(d_newdesign, "D") if "상속" in w["detail"]]
+    assert len(hit) == 1, details(d_newdesign["warning"])
+    assert hit[0]["screen"] == "start"
+    assert hit[0]["cls"] == ""
+    assert hit[0]["tag"] == "span"
+    assert d_newdesign["metrics"]["inherited_colour_unreadable"] == 1
+
+
+def test_gained_text_does_not_compare_unrelated_screens(d_newdesign):
+    """'start' 라는 이름이 같다고 같은 화면이 아니다.
+
+    고치기 전: gained-text 비교가 want 전체에서 돌아, 원본의 .st(장식 ☆)와
+    빌드의 .st(선택됨)를 견주고 "저대비 요소에 글이 늘었다" 고 했다 - 두
+    설계의 .st 는 아무 관계가 없다.
+    """
+    assert d_newdesign["metrics"]["low_contrast_gained_text"] == 0
+    assert [w for w in warnings_of(d_newdesign, "D")
+            if "gained" in w["detail"]] == [], details(d_newdesign["warning"])
+
+
+def test_the_count_comparison_stands_down_with_its_reason(d_newdesign):
+    """하지 않은 비교는 조용히 사라지면 안 된다 - 이유를 적는다."""
+    down = stood_down(d_newdesign, "D")
+    assert len(down) == 2, down
+    assert any("저명암 개수" in s for s in down)
+    assert any("gained-text" in s for s in down)
+    assert d_newdesign["metrics"]["low_contrast_before"] is None
+    assert d_newdesign["metrics"]["low_contrast_after"] == 2
+
+
+def test_the_new_design_page_has_nothing_else_wrong(d_newdesign):
+    assert len(warnings_of(d_newdesign, "D")) == 1, details(d_newdesign["warning"])
+    assert d_newdesign["fatal"] == [], details(d_newdesign["fatal"])
