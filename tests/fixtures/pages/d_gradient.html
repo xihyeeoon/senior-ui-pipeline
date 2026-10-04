@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 D - 그라디언트·이미지 위의 글자를 통과로 센다</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  .band{background:linear-gradient(90deg, #fff, #000); padding:12px;}
+  .photo{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10'><rect width='10' height='10' fill='%23888888'/></svg>"); padding:12px;}
+  .chip{background:#fff; padding:8px;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- 글자 뒤가 색 하나가 아니다. 그라디언트는 왼쪽에서는 흰 바탕이고 오른쪽에서는
+     검은 바탕이므로 #111 글자는 왼쪽에서만 읽힌다. 이미지도 마찬가지로 무슨
+     색이 깔렸는지 알 수 없다.
+
+     backgroundColor 만 보면 둘 다 rgba(0,0,0,0) 이라 투명으로 읽히고, 배경은
+     흰색으로 올라가 #111 글자가 18.9:1 로 통과한다. 통과가 아니라 "판정 불가"
+     여야 한다.
+
+     .chip 은 그 그라디언트 위에 불투명한 흰색을 덮은 것이다 - 아래에 무엇이
+     있든 가려지므로 판정할 수 있다. -->
+<section class="screen on" data-screen="start" id="start">
+  <div class="band">
+    <p style="color:#111">보낼 돈을 고르세요</p>
+    <div class="chip"><p style="color:#111">가린 글자는 잴 수 있다</p></div>
+  </div>
+  <div class="photo">
+    <p style="color:#111">받는 분을 고르세요</p>
+  </div>
+  <p id="amt" style="color:#111">10,000원</p>
+  <button data-action="noop" style="color:#111">확인</button>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'noop') { /* 이 페이지는 걷지 않는다 */ }
+});
+</script>
+</body>
+</html>

@@ -4,6 +4,11 @@ r"""검사 D - 명암비. warning.
 저명암이던 요소에 읽을 글이 들어왔는지를 본다. 개수 비교만으로는 마지막 경우를
 놓친다 - 개수는 그대로인데 읽어야 할 글이 늘기 때문이다. 명암비 계산 자체는
 probes.CONTRAST 가 페이지 안에서 한다.
+
+그라디언트나 이미지 위의 글자는 뒤에 깔린 색이 하나가 아니라 잴 수 없다. 그것은
+통과가 아니라 판정 불가이므로 저명암과 따로 센다 - 통과로 세면 배경을 그림으로
+깐 빌드가 가장 선명한 빌드가 된다. 전후 비교가 아니라 이 빌드에 대한 사실이므로
+원본과 견주지 않고 그대로 적는다.
 """
 import re
 
@@ -44,6 +49,30 @@ def run(ctx):
         W("D", x["screen"], "new text %r takes its colour purely by inheritance "
           "(%s) - nothing sets a colour for it" % (x["text"], x["color"]),
           cls=x["cls"], tag=x["tag"])
+
+    # 판정 불가. 통과도 저명암도 아니므로 따로 센다. 비교가 아니라 "이 글자는
+    # 잴 수 없었다" 는 사실이므로 원본에 같은 것이 있는지는 묻지 않는다.
+    undet = []
+    for n in want:
+        for x in rep["screens"].get(n, {}).get("contrast_undetermined") or []:
+            undet.append(dict(x, screen=n))
+    metrics["contrast_undetermined"] = len(undet)
+    metrics["contrast_undetermined_before"] = sum(
+        len(r.get("contrast_undetermined") or [])
+        for r in orig["screens"].values())
+    seen_u = set()
+    for x in undet:
+        k = (x["screen"], x["cls"], x["text"])
+        if k in seen_u:
+            continue
+        seen_u.add(k)
+        if len(seen_u) > 20:
+            break
+        W("D", x["screen"], "%r 뒤에 깔린 색이 하나가 아니라 명암비를 판정할 수 "
+          "없다 (%s 의 %s). 통과로 세지 않는다 - 글자색은 %s 다."
+          % (x["text"], x["behind"], x["background"], x["color"]),
+          cls=x["cls"], tag=x["tag"], color=x["color"],
+          background=x["background"], behind=x["behind"], need=x["need"])
 
     # An element that was already below threshold does not change the count when
     # a repair puts words into it, and it is not inheriting either - its class

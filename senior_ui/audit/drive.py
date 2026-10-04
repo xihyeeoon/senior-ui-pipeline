@@ -181,7 +181,11 @@ async def collect_screen(page, flow, name, reached=None):
            "dom_screen": await page.evaluate(P.DOM_SCREEN)}
     row.update(await page.evaluate(P.INVENTORY))
     row["choices"] = await page.evaluate(P.CHOICE_GROUPS)
-    row["contrast"] = await page.evaluate(P.CONTRAST)
+    # CONTRAST 는 두 칸으로 돌려준다 - 잰 것과 잴 수 없었던 것. 한 칸으로
+    # 합치면 그라디언트 위의 글자가 "저명암 아님" 과 구분되지 않는다.
+    contrast = await page.evaluate(P.CONTRAST)
+    row["contrast"] = contrast["low"]
+    row["contrast_undetermined"] = contrast["undetermined"]
     row["inherited"] = await page.evaluate(P.INHERITED_COLOUR)
     row["overlap"] = await page.evaluate(P.OVERLAP)
     row["overflow"] = await page.evaluate(P.OVERFLOW)

@@ -484,6 +484,10 @@ def contrast_of(res, screen="start"):
     return res["rep"]["screens"][screen]["contrast"]
 
 
+def undetermined_of(res, screen="start"):
+    return res["rep"]["screens"][screen]["contrast_undetermined"]
+
+
 def texts_of(rows):
     return sorted(x["text"] for x in rows)
 
@@ -589,3 +593,47 @@ def test_a_translucent_background_is_mixed_in(d_bg_alpha):
 def test_the_bg_alpha_page_has_nothing_else_wrong(d_bg_alpha):
     assert texts_of(contrast_of(d_bg_alpha)) == ["보낼 돈을 고르세요"]
     assert d_bg_alpha["report"]["fatal"] == [], details(d_bg_alpha["report"]["fatal"])
+
+
+@pytest.fixture(scope="module")
+def d_gradient(server):
+    return drive_and_audit("d_gradient.json", "d_gradient.html")
+
+
+def test_text_on_a_gradient_is_undetermined_not_passing(d_gradient):
+    """그라디언트 위의 글자는 잴 수 없다 - 왼쪽과 오른쪽의 바탕이 다르다.
+
+    고치기 전: backgroundColor 가 rgba(0,0,0,0) 이라 투명으로 읽히고 배경이
+    흰색으로 올라가, 검은 글자가 18.9:1 로 통과했다.
+    """
+    rows = [x for x in undetermined_of(d_gradient)
+            if x["text"] == "보낼 돈을 고르세요"]
+    assert len(rows) == 1, undetermined_of(d_gradient)
+    assert "gradient" in rows[0]["background"]
+    assert texts_of(contrast_of(d_gradient)) == []
+
+
+def test_text_on_a_background_image_is_undetermined(d_gradient):
+    """이미지 위도 같다 - 무슨 색이 깔렸는지 알 수 없다."""
+    rows = [x for x in undetermined_of(d_gradient)
+            if x["text"] == "받는 분을 고르세요"]
+    assert len(rows) == 1, undetermined_of(d_gradient)
+    assert "url(" in rows[0]["background"]
+
+
+def test_an_opaque_layer_over_a_gradient_can_be_judged(d_gradient):
+    """그라디언트를 불투명한 색으로 덮으면 아래가 무엇이든 가려진다 -
+    판정 불가가 아니라 그 색으로 잰다. 넓게 포기하면 판정 불가가 통과의 새
+    이름이 될 뿐이다."""
+    assert texts_of(undetermined_of(d_gradient)) == ["받는 분을 고르세요",
+                                                     "보낼 돈을 고르세요"]
+
+
+def test_undetermined_is_counted_apart_from_low_contrast(d_gradient):
+    """통과도 저명암도 아닌 세 번째 칸으로 센다."""
+    m = d_gradient["report"]["metrics"]
+    assert m["contrast_undetermined"] == 2
+    assert m["low_contrast_after"] == 0
+    hit = [w for w in d_gradient["report"]["warning"]
+           if w["check"] == "D" and "판정할 수 없다" in w["detail"]]
+    assert len(hit) == 2, details(d_gradient["report"]["warning"])

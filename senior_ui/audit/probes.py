@@ -118,22 +118,40 @@ CONTRAST = r"""
   /* 글자 뒤에 실제로 깔린 색. 반투명 층을 건너뛰지 않고 뿌리에서부터 차례로
      섞는다. 건너뛰고 "불투명한 조상" 을 찾으면 어두운 상자에 덮인 흰 베일이
      없는 것처럼 되어, 그 위의 흰 글자가 "어두운 바탕 위의 흰 글자" 로 읽힌다.
-     바탕은 흰색이다 - 아무도 칠하지 않은 캔버스의 색. */
+     바탕은 흰색이다 - 아무도 칠하지 않은 캔버스의 색.
+
+     배경이 색 하나가 아닌 층(그라디언트·이미지)을 만나면 뒤에 무슨 색이
+     깔렸는지 알 수 없다. 그때는 색을 돌려주지 않고 `unknown` 을 세운다 -
+     통과도 저명암도 아닌 "판정 불가" 다. CSS 는 한 요소에서 배경색을 먼저
+     칠하고 그 위에 이미지를 얹으므로, 이미지가 있으면 그 층의 색은 가려진다.
+     반대로 불투명한 색을 칠한 층은 아래에 무엇이 있든 덮으므로 거기서 다시
+     판정할 수 있게 된다. */
   const bgOf = chain => {
-    let acc = [255, 255, 255];
+    let acc = [255, 255, 255], unknown = null;
     for (const n of chain) {
       const c = parse(n.cs.backgroundColor);
-      if (!c || c.a <= 0) continue;
-      acc = over(c.rgb, Math.min(1, c.a * n.opacity), acc);
+      if (c && c.a > 0) {
+        const a = Math.min(1, c.a * n.opacity);
+        if (a > 0.999) { acc = c.rgb; unknown = null; }   /* 아래를 덮었다 */
+        else acc = over(c.rgb, a, acc);
+      }
+      const img = n.cs.backgroundImage;
+      if (img && img !== 'none') {
+        unknown = { background: img.slice(0, 80),
+                    behind: n.el.tagName.toLowerCase()
+                            + (n.el.getAttribute('class')
+                               ? '.' + n.el.getAttribute('class').split(/\s+/)[0]
+                               : '') };
+      }
     }
-    return acc;
+    return { rgb: acc, unknown: unknown };
   };
   const ratio = (a, b) => {
     const l1 = lum(a), l2 = lum(b);
     return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
   };
 
-  const out = [];
+  const out = [], undet = [];
   document.querySelectorAll('*').forEach(el => {
     /* only elements holding their own text */
     const own = Array.from(el.childNodes)
@@ -151,12 +169,24 @@ CONTRAST = r"""
     /* 사실상 보이지 않는 글은 명암 결함이 아니다 - 글자색 알파와 같은 규칙. */
     const op = chain[chain.length - 1].opacity;
     if (op < 0.05) return;
-    const bg = bgOf(chain);
-    const seen = over(fg.rgb, fg.a * op, bg);
+    const back = bgOf(chain);
     const size = parseFloat(cs.fontSize);
     const weight = parseInt(cs.fontWeight, 10) || 400;
     const large = size >= 24 || (size >= 18.66 && weight >= 700);
     const need = large ? 3.0 : 4.5;
+    if (back.unknown) {
+      undet.push({
+        text: own.slice(0, 40),
+        tag: el.tagName.toLowerCase(),
+        cls: (el.getAttribute('class') || '').slice(0, 40),
+        color: cs.color,
+        fontSize: Math.round(size * 10) / 10, need,
+        background: back.unknown.background, behind: back.unknown.behind
+      });
+      return;
+    }
+    const bg = back.rgb;
+    const seen = over(fg.rgb, fg.a * op, bg);
     const cr = ratio(seen, bg);
     if (cr < need) {
       out.push({
@@ -170,7 +200,8 @@ CONTRAST = r"""
       });
     }
   });
-  return out;
+  /* 두 칸으로 나눠 돌려준다. 판정 불가를 빈 자리로 돌려주면 통과와 같아진다. */
+  return { low: out, undetermined: undet };
 }
 """
 
