@@ -72,9 +72,9 @@ def read_page(name):
     return io.open(page_path(name), encoding="utf-8").read()
 
 
-def run_audit(flow_file, rep_page, orig_page=None, orig_flow_file=None,
-              orig_html=None):
-    """fixture 페이지를 실제로 걷고 audit() 을 돌려 리포트를 돌려준다.
+def drive_and_audit(flow_file, rep_page, orig_page=None, orig_flow_file=None,
+                    orig_html=None):
+    """fixture 페이지를 실제로 걷고, 긁어 온 것과 리포트를 함께 돌려준다.
 
     `orig_page` 를 주지 않으면 생성물 페이지를 원본으로도 쓴다. 그러면 원본
     대비 비교(D·E·F·G·H·I)가 전부 빈 결과가 되어, 재현하려는 검사의 fatal 만
@@ -94,9 +94,15 @@ def run_audit(flow_file, rep_page, orig_page=None, orig_flow_file=None,
             page_url(orig_page), _api.load_flow(page_path(orig_flow_file
                                                           or flow_file))))
         html_of_orig = read_page(orig_page)
-    return _api.audit(orig, rep,
-                      html_of_orig if orig_html is None else orig_html,
-                      rep_html, flow)
+    report = _api.audit(orig, rep,
+                        html_of_orig if orig_html is None else orig_html,
+                        rep_html, flow)
+    return {"orig": orig, "rep": rep, "report": report}
+
+
+def run_audit(*a, **kw):
+    """리포트만 보면 되는 검사용. 대부분의 테스트가 이것을 쓴다."""
+    return drive_and_audit(*a, **kw)["report"]
 
 
 def fatals(report, check=None):
@@ -467,3 +473,40 @@ def test_the_boundary_rule_follows_the_characters_in_the_value():
     # 숫자 - 영문 글자가 붙은 것은 다른 토막이다 (색 코드의 00 은 숫자판이 아니다)
     assert not present("00", "<script>'#6B5B00'</script>")
     assert present("00", '<b data-v="00">')
+
+
+# ===================================================================== #
+# 5. 명암비가 눈에 보이는 색이 아니라 선언된 색을 잰다
+# ===================================================================== #
+# probes.CONTRAST 는 화면에 매이지 않고 문서 전체를 훑으므로, 꺼진 화면의 글은
+# 사각형이 0 이어서 저절로 빠진다. 아래 페이지들은 켜진 화면 하나만 둔다.
+def contrast_of(res, screen="start"):
+    return res["rep"]["screens"][screen]["contrast"]
+
+
+def texts_of(rows):
+    return sorted(x["text"] for x in rows)
+
+
+@pytest.fixture(scope="module")
+def d_alpha(server):
+    return drive_and_audit("d_alpha.json", "d_alpha.html")
+
+
+def test_a_translucent_text_colour_is_measured_as_it_looks(d_alpha):
+    """rgba(17,17,17,0.25) 는 흰 배경에서 #c4c4c4 로 보인다 - 1.75:1 이다.
+
+    고치기 전: 알파를 버리고 #111 로 재어 18.9:1 이 나왔다. 글자가 거의
+    보이지 않는데 가장 선명한 글로 세졌다.
+    """
+    rows = [x for x in contrast_of(d_alpha) if x["text"] == "보낼 돈을 고르세요"]
+    assert len(rows) == 1, texts_of(contrast_of(d_alpha))
+    assert rows[0]["ratio"] < 2.0
+    assert rows[0]["need"] == 4.5
+
+
+def test_the_alpha_page_has_nothing_else_wrong(d_alpha):
+    """같은 페이지의 읽히는 글은 걸리지 않는다 - 알파를 세기 시작했다고 멀쩡한
+    글까지 잡으면 거짓 경보를 새로 만든 것이다."""
+    assert texts_of(contrast_of(d_alpha)) == ["보낼 돈을 고르세요"]
+    assert d_alpha["report"]["fatal"] == [], details(d_alpha["report"]["fatal"])

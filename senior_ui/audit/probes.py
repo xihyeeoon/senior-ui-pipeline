@@ -44,6 +44,10 @@ INVENTORY = r"""
 # Walks every element holding its own text, resolves the effective background by
 # climbing ancestors until something is opaque, and flags anything under
 # threshold - 3.0 for large text (>=24px, or >=18.66px bold), 4.5 otherwise.
+#
+# 재는 것은 선언된 색이 아니라 눈에 닿는 색이다. 글자색에 알파가 있으면 그
+# 알파만큼만 배경 위에 얹히므로, 선언된 색 그대로 재면 rgba(17,17,17,.25) 가
+# #111 로 읽혀 18.9:1 이 된다 - 실제로는 #c4c4c4 이고 1.75:1 이다.
 CONTRAST = r"""
 () => {
   const lum = c => {
@@ -56,6 +60,10 @@ CONTRAST = r"""
     const p = m[1].split(',').map(x => parseFloat(x.trim()));
     return { rgb: [p[0], p[1], p[2]], a: p.length > 3 ? p[3] : 1 };
   };
+  /* 알파가 든 색을 배경 위에 얹었을 때 눈에 닿는 색. */
+  const over = (rgb, a, bg) =>
+    [0, 1, 2].map(i => rgb[i] * a + bg[i] * (1 - a));
+  const css = c => 'rgb(' + c.map(v => Math.round(v)).join(', ') + ')';
   /* Climb until an ancestor paints something opaque; body/html default to white. */
   const bgOf = el => {
     let n = el;
@@ -83,19 +91,21 @@ CONTRAST = r"""
     if (r.width < 1 || r.height < 1) return;
 
     const fg = parse(cs.color);
-    if (!fg || fg.a < 0.1) return;
+    /* 완전히 투명한 글자는 명암 결함이 아니라 안 보이는 글이다 - 다른 일이다. */
+    if (!fg || fg.a < 0.05) return;
     const bg = bgOf(el);
+    const seen = over(fg.rgb, fg.a, bg);
     const size = parseFloat(cs.fontSize);
     const weight = parseInt(cs.fontWeight, 10) || 400;
     const large = size >= 24 || (size >= 18.66 && weight >= 700);
     const need = large ? 3.0 : 4.5;
-    const cr = ratio(fg.rgb, bg);
+    const cr = ratio(seen, bg);
     if (cr < need) {
       out.push({
         text: own.slice(0, 40),
         tag: el.tagName.toLowerCase(),
         cls: (el.getAttribute('class') || '').slice(0, 40),
-        color: cs.color, bg: 'rgb(' + bg.join(', ') + ')',
+        color: cs.color, seen: css(seen), bg: css(bg),
         fontSize: Math.round(size * 10) / 10,
         ratio: Math.round(cr * 100) / 100, need
       });
