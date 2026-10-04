@@ -232,3 +232,41 @@ def test_missing_screen_hook_does_not_also_fail_the_amount():
     assert amount_fatals(report) == []
     assert len(report["fatal"]) == 1
     assert "__screen()" in report["fatal"][0]["detail"]
+
+
+# --------------------------------------------------------------------- #
+# 3-2. 완료 금액이 틀릴 때 A 와 B 가 같은 값을 두 번 잡지 않는다
+# --------------------------------------------------------------------- #
+DONE_EXPECT = {"done": [["#dn-amt", "{AMOUNT_SHOWN}"]]}
+
+
+def wrong_done_amount(expect):
+    rep = snap({"start": row("start"), "done": done_row("done", "9,000")})
+    return _api.audit(snap({"start": row("start")}), rep, "", "",
+                      flow(["start", "done"], expect=expect))
+
+
+def test_wrong_done_amount_is_one_finding_not_two():
+    """흐름의 expect 에 #dn-amt 가 적혀 있으면 B 가 그 값을 본다. A 의 금액
+    왕복 검사는 같은 선택자의 같은 값을 다시 본다.
+
+    고치기 전: fatal 2건 (A "완료 화면의 #dn-amt 가 '9,000' …" + B "#dn-amt
+    shows '9,000' but the task used '10,000'"). 네 흐름 파일 모두 완료 화면의
+    #dn-amt 를 expect 에 적고 있으므로 늘 두 번 세졌다.
+    """
+    report = wrong_done_amount(DONE_EXPECT)
+    assert len(report["fatal"]) == 1
+    assert report["fatal"][0]["check"] == "B"
+    assert "#dn-amt" in report["fatal"][0]["detail"]
+    assert report["metrics"]["fatal_total"] == 1
+    # 지표는 여전히 A 가 남긴다.
+    assert report["metrics"]["done_amount"] == "9,000"
+
+
+def test_a_still_checks_the_amount_when_the_flow_does_not():
+    """expect 에 적히지 않은 흐름에서는 A 가 유일한 검사다. 줄이는 것은 겹치는
+    경우뿐이고, 검사가 사라지는 경우는 없어야 한다."""
+    report = wrong_done_amount({})
+    assert len(report["fatal"]) == 1
+    assert report["fatal"][0]["check"] == "A"
+    assert DONE_AMOUNT_MARK in report["fatal"][0]["detail"]

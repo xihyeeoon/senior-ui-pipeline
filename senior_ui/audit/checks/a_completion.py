@@ -2,11 +2,13 @@ r"""검사 A - 과제 완수. fatal.
 
 흐름이 적은 화면에 모두 도달했는지, 금액이 완료 화면까지 왕복했는지,
 data-screen · data-action · id 가 사라지지 않았는지를 본다. 멈춘 뒤의 "도달 못
-함" 은 파생 결함으로 표시해 한 원인을 여러 번 세지 않는다. 화면 이름으로 짝을
-맞추는 부분은 원본에서 파생된 빌드에서만 돈다 - 새 설계에는 지킬 원본이 없다.
+함" 은 파생 결함으로 표시해 한 원인을 여러 번 세지 않는다. 금액 왕복도 같은
+규칙을 따른다 - 도달하지 못한 화면에는 묻지 않고, 흐름의 expect 에 적혀 검사 B
+가 이미 보는 선택자는 다시 보지 않는다. 화면 이름으로 짝을 맞추는 부분은
+원본에서 파생된 빌드에서만 돈다 - 새 설계에는 지킬 원본이 없다.
 """
 from ..context import union
-from ..flow import AMOUNT_SHOWN
+from ..flow import AMOUNT_SHOWN, fill
 
 
 def _screens_reached(ctx):
@@ -75,7 +77,13 @@ def _amount_round_trip(ctx):
     # 적으면 결함 하나가 두 번 세진다. 지표(done_amount)는 그대로 남긴다.
     if not _arrived(done, last_screen):
         return
-    if shown_done != AMOUNT_SHOWN:
+    # 흐름의 expect 에 같은 선택자가 적혀 있으면 검사 B 가 같은 값을 같은 기준
+    # 으로 이미 본다. 결함은 하나이므로 거기에 맡기고 여기서는 지표만 남긴다.
+    # (네 흐름 파일 모두 완료 화면의 금액을 expect 에 적고 있다.) expect 에
+    # 없으면 B 는 그 선택자를 보지 않으므로 A 가 유일한 검사다.
+    covered = any(fill(sel) == done_sel
+                  for sel, _ in (ctx.flow["expect"].get(last_screen) or []))
+    if shown_done != AMOUNT_SHOWN and not covered:
         F("A", last_screen, "완료 화면의 %s 가 %r 을 보여 준다. 과제가 넣은 값은 %r 이다."
           % (done_sel, shown_done, AMOUNT_SHOWN))
 
