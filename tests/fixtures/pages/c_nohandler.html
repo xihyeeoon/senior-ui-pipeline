@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 C - 처리기가 아예 없는데 원본 목록으로 통과한다</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- 클릭 처리기가 없다. 두 버튼은 눌러도 아무 일도 일어나지 않는다. 그런데
+     data-action 이름은 원본이 다루던 것들이라, 못 찾았을 때 원본 목록으로
+     대신하는 검사기는 "둘 다 처리된다" 고 읽고 통과시킨다. -->
+<section class="screen on" data-screen="start" id="start">
+  <p id="amt">10,000원</p>
+  <button data-action="pick-bank" data-bank="카카오뱅크">카카오뱅크</button>
+  <button data-action="quick" data-v="10000">+1만</button>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+</script>
+</body>
+</html>

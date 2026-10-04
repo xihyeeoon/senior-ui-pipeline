@@ -61,6 +61,8 @@ ar_SEVERITY = _audit_report.SEVERITY
 # ---- senior_ui/restructure/reply.py (답 가르기 · 흐름 명세 모양) -------- #
 validate_flow = _reply.validate_flow
 parse_reply = _reply.parse_reply
+# 흐름 명세 검사가 처리기를 읽을 때 쓰는 함수. 검사 C 와 같은 것이어야 한다.
+validate_flow_handlers = _reply.handled_actions
 
 # ---- senior_ui/restructure/prompt.py ----------------------------------- #
 # 프롬프트 조립 - 템플릿 읽기 / 선택지 블록 / 슬롯 채우기 / 재시도 블록

@@ -149,6 +149,7 @@
     "onclick_added": 0,
     "dialogs_during_task": 0,
     "handled_actions": 31,
+    "dead_controls_unverifiable": [],
     "dead_controls_new": 0,
     "dead_controls_pre_existing": [],
     "low_contrast_before": 66,

@@ -246,3 +246,75 @@ def test_b_does_not_read_values_from_a_hidden_element(b_scope):
 def test_b_scope_has_no_other_fatal(b_scope):
     assert len(b_scope["fatal"]) == 2, details(b_scope["fatal"])
 
+# ===================================================================== #
+# 3. 검사 C 가 처리기를 한 가지 모양으로만 읽는다
+# ===================================================================== #
+@pytest.fixture(scope="module")
+def c_switch(server):
+    return run_audit("c_switch.json", "c_switch.html")
+
+
+@pytest.fixture(scope="module")
+def c_nohandler(server):
+    """처리기가 없는 빌드에, 처리기가 있는 진짜 원본을 orig_html 로 준다.
+    "못 찾으면 원본 목록으로 대신한다" 가 거짓 통과가 되는 상황이다."""
+    return run_audit("c_nohandler.json", "c_nohandler.html",
+                     orig_html=io.open(os.path.join(ROOT, "inputs",
+                                                    "original_transfer.html"),
+                                       encoding="utf-8").read())
+
+
+def test_switch_case_branches_are_read(c_switch):
+    """`case '이름'` 도 분기다 - 눌리면 일이 일어난다.
+
+    고치기 전: `a === '이름'` 홑따옴표 하나만 찾았다. 분기를 하나도 못 찾으면
+    원본 목록으로 대신하는데 이 페이지의 원본은 자기 자신이라 그 목록도 비어,
+    분기가 있는 조작부 세 개가 전부 "죽은 조작부" 로 걸렸다.
+    """
+    assert fatals(c_switch, "C") == [], details(c_switch["fatal"])
+    assert c_switch["metrics"]["handled_actions"] == 3
+
+
+def test_a_branch_written_only_in_a_korean_comment_is_not_a_branch(c_switch):
+    """주석에 적힌 설명은 분기가 아니다.
+
+    이 페이지의 주석에는 `a === '이름'` 이라는 설명이 그대로 들어 있다. 이름
+    자리의 글자까지 받아 주면(유니코드 단어 글자) 그 설명이 분기로 잡히고, 처리기가
+    주석뿐인 빌드가 "분기가 있다" 로 읽혀 검사 C 를 통과한다. 그래서 이름은
+    ASCII 로만 읽는다.
+    """
+    assert c_switch["metrics"]["handled_actions"] == 3
+
+
+def test_double_quoted_branches_are_read(c_switch):
+    """`a === "이름"` 쌍따옴표도 같은 분기다. 위 테스트의 3 에 reset 이
+    들어 있다는 것이 그 확인이고, 죽은 조작부가 없다는 것도 같은 말이다."""
+    assert c_switch["metrics"]["dead_controls_new"] == 0
+
+
+def test_c_switch_has_no_other_fatal(c_switch):
+    assert c_switch["fatal"] == [], details(c_switch["fatal"])
+
+
+def test_a_build_with_no_handler_at_all_is_fatal(c_nohandler):
+    """처리기가 없으면 모든 조작부가 죽어 있다. 그것을 원본 목록으로 덮으면
+    가장 깨진 빌드가 통과한다.
+
+    고치기 전: fatal 0건. 빌드에서 분기를 못 찾자 원본의 분기 목록으로
+    대신했고, 이 페이지의 data-action 이름(pick-bank · quick)은 원본이 다루는
+    것들이라 "둘 다 처리된다" 로 읽혔다.
+    """
+    hit = fatals(c_nohandler, "C")
+    assert len(hit) == 1, details(c_nohandler["fatal"])
+    assert "처리기" in hit[0]["detail"]
+    assert c_nohandler["metrics"]["handled_actions"] == 0
+
+
+def test_the_original_handler_list_is_not_substituted(c_nohandler):
+    """계약: 빌드의 처리기는 빌드에서만 읽는다. 원본 것으로 대신하지 않는다.
+    대신했다면 pick-bank · quick 이 처리된 것으로 세졌을 것이다."""
+    m = c_nohandler["metrics"]
+    assert m["handled_actions"] == 0
+    assert sorted(m["dead_controls_unverifiable"]) == ["pick-bank", "quick"]
+    assert any(s.startswith("C/") for s in m["checks_stood_down"])
+
