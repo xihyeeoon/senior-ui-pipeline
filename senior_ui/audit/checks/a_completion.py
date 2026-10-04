@@ -51,6 +51,12 @@ def _transition_ids(ctx):
           + ", ".join(rep["missing_ids"]), lost=rep["missing_ids"])
 
 
+def _arrived(row, name):
+    """그 화면에 실제로 도착했는지. 도착하지 못한 화면에 무엇이 보이는지는
+    물을 수 없다 - 물으면 한 번의 실패가 두 건이 된다."""
+    return bool(row) and "error" not in row and row.get("landed_on") == name
+
+
 def _amount_round_trip(ctx):
     """과제가 넣은 금액이 완료 화면까지 그대로 왕복했는지."""
     rep, want = ctx.rep, ctx.want
@@ -64,7 +70,12 @@ def _amount_round_trip(ctx):
     shown_done = dict(done.get("shown") or []).get(done_sel)
     metrics["done_screen"] = last_screen
     metrics["done_amount"] = shown_done
-    if done and shown_done != AMOUNT_SHOWN:
+    # 도착하지 못했으면(멈춤·오류·엉뚱한 화면) 금액은 애초에 볼 수 없다.
+    # _screens_reached 가 그 도착 실패를 이미 fatal 로 적었으므로, 여기서 또
+    # 적으면 결함 하나가 두 번 세진다. 지표(done_amount)는 그대로 남긴다.
+    if not _arrived(done, last_screen):
+        return
+    if shown_done != AMOUNT_SHOWN:
         F("A", last_screen, "완료 화면의 %s 가 %r 을 보여 준다. 과제가 넣은 값은 %r 이다."
           % (done_sel, shown_done, AMOUNT_SHOWN))
 

@@ -164,3 +164,71 @@ def test_counts_match_the_list_at_every_stage():
         m = staged["metrics"]
         assert m["fatal_total"] == len(staged["fatal"])
         assert m["fatal_root"] + m["fatal_derived"] == m["fatal_total"]
+
+
+# --------------------------------------------------------------------- #
+# 3-1. 마지막 화면에 못 갔으면 완료 금액 검사(A)를 건너뛴다
+# --------------------------------------------------------------------- #
+DONE_AMOUNT_MARK = "완료 화면의"
+
+
+def amount_fatals(report):
+    return [d for d in details_of(report["fatal"]) if DONE_AMOUNT_MARK in d]
+
+
+def test_navigation_failure_does_not_also_fail_the_amount():
+    """완료 화면으로 가다 멈췄으면 금액이 없는 것은 그 멈춤의 결과다.
+
+    고치기 전: "navigation failed" 와 "완료 화면의 #dn-amt 가 None 을 보여
+    준다" 가 같은 한 번의 실패로 fatal 두 건이 되었다.
+    """
+    rep = snap({"start": row("start"),
+                "done": {"error": "TimeoutError: Locator.click: Timeout 30000ms"}})
+    report = _api.audit(snap({"start": row("start")}), rep, "", "",
+                        flow(["start", "done"]))
+    assert amount_fatals(report) == []
+    assert len(report["fatal"]) == 1
+    assert "navigation failed" in report["fatal"][0]["detail"]
+    # 지표는 그대로 남는다 - 검사를 건너뛰는 것이지 측정을 지우는 것이 아니다.
+    assert report["metrics"]["done_screen"] == "done"
+    assert report["metrics"]["done_amount"] is None
+
+
+def test_landing_on_the_wrong_screen_does_not_also_fail_the_amount():
+    """엉뚱한 화면에 서 있으면 완료 화면의 금액을 물을 수 없다."""
+    rep = snap({"start": row("start"), "done": row("done", landed_on="amount")})
+    report = _api.audit(snap({"start": row("start")}), rep, "", "",
+                        flow(["start", "done"]))
+    assert amount_fatals(report) == []
+    assert details_of(report["fatal"]) == ["landed on 'amount' instead"]
+
+
+def test_unreached_last_screen_does_not_also_fail_the_amount():
+    rep = snap({"start": row("start")})
+    report = _api.audit(snap({"start": row("start")}), rep, "", "",
+                        flow(["start", "done"]))
+    assert amount_fatals(report) == []
+    assert len(report["fatal"]) == 1
+    assert "never reached" in report["fatal"][0]["detail"]
+
+
+def test_wrong_amount_on_a_screen_that_was_reached_is_still_fatal():
+    """건너뛰는 것은 "못 갔을 때" 뿐이다. 제대로 도착했는데 금액이 틀리면 잡는다."""
+    rep = snap({"start": row("start"), "done": done_row("done", "9,000")})
+    report = _api.audit(snap({"start": row("start")}), rep, "", "",
+                        flow(["start", "done"]))
+    assert len(amount_fatals(report)) == 1
+    assert report["metrics"]["done_amount"] == "9,000"
+
+
+def test_missing_screen_hook_does_not_also_fail_the_amount():
+    """__screen() 이 null 을 주면 어느 화면에 서 있는지 알 수 없다. 도달을 확인
+    하지 못한 것이므로 금액도 묻지 않는다 - 훅이 없다는 fatal 이 이미 있다."""
+    rep = snap({"start": row("start"),
+                "done": done_row("done", "10,000")})
+    rep["screens"]["done"]["landed_on"] = None
+    report = _api.audit(snap({"start": row("start")}), rep, "", "",
+                        flow(["start", "done"]))
+    assert amount_fatals(report) == []
+    assert len(report["fatal"]) == 1
+    assert "__screen()" in report["fatal"][0]["detail"]
