@@ -18,6 +18,7 @@ import http.client
 import io
 import json
 import os
+import re
 import socket
 import threading
 
@@ -343,3 +344,36 @@ def test_대시보드의_다시_읽기는_POST_로_보낸다():
     i = js.index("/api/reindex")
     call = js[i:i + 120]
     assert "POST" in call, "dashboard.js 가 아직 GET 으로 부른다: %r" % call
+
+# --------------------------------------------------------------------- #
+# 안내 문구: 폰 주소와 방화벽 안내는 없다
+# --------------------------------------------------------------------- #
+# 폰에서 여는 주소를 띄우고 방화벽을 열라고 안내하던 것은 LAN 에 서빙할
+# 때의 안내다. 그 주소와 안내가 남아 있으면, 서버를 고쳐도 사람이 다시
+# 구멍을 낸다.
+BAD = ["New-NetFirewallRule", "방화벽", "폰에서", "같은 Wi-Fi", "session.html"]
+
+
+def test_서버_안내에는_대시보드_주소만_있다():
+    out = _api.srv_banner(3003, "sessions", [], allow_session=False)
+    assert "http://localhost:3003/web/dashboard.html" in out
+    for bad in BAD:
+        assert bad not in out, "안내에 아직 %r 가 있다" % bad
+    assert not re.search(r"(?:\d{1,3}\.){3}\d{1,3}",
+                         out.replace("127.0.0.1", "")), "LAN 주소가 보인다"
+
+
+def test_시작bat_은_대시보드만_안내한다():
+    bat = io.open(os.path.join(_api.ROOT_DIR, "시작.bat"), encoding="utf-8").read()
+    assert "http://localhost:3003/web/dashboard.html" in bat
+    for bad in BAD:
+        assert bad not in bat, "시작.bat 에 아직 %r 가 있다" % bad
+
+
+# 설명문은 전에 어떤 구멍이 있었는지를 적고 있으므로 단어로 걸러서는 안 된다.
+# 코드로 남아 있으면 안 되는 것만 본다 - LAN 주소를 구하는 함수와 방화벽 명령.
+def test_서버_모듈에_LAN_주소를_구하는_코드가_없다():
+    src = io.open(_api.srv_module.__file__, encoding="utf-8").read()
+    assert "local_ip" not in src
+    assert "New-NetFirewallRule" not in src
+    assert '"0.0.0.0"' not in src

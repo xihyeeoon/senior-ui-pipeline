@@ -72,6 +72,7 @@ srv_make_server = _exp_server.make_server
 srv_parser = _exp_server.build_parser
 srv_is_local = _exp_server.is_local
 srv_module = _exp_server
+srv_banner = _exp_server.banner
 
 # ---- senior_ui/experiment/report.py (집계 함수) ------------------------- #
 sr_load = _session_report.load

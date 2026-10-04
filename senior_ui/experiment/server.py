@@ -1,33 +1,29 @@
-r"""Run the elderly-participant sessions from a phone, collect the logs on the PC.
+r"""대시보드를 보기 위한 서버. 127.0.0.1 에서만 열린다.
 
-The prototypes already record every tap; what was missing was a way to run a
-session on a real device and get the data back. This serves the project root
-over the local network, hands web/session.html the condition and task
-definitions, and writes one JSON file per participant x condition.
+내부 확인용 대시보드(web/dashboard.html)와 그것이 읽는 것 - 색인, "화면
+비교" 가 iframe 으로 여는 빌드 HTML, 그 화면의 스크린샷 - 만 서빙한다.
+허용 목록은 ALLOW 에 있고, 거기 없는 것은 파일이 있어도 404 다. 전에는
+프로젝트 루트 전체를 디렉터리 목록과 함께 LAN 에 서빙해서, 같은 Wi-Fi 의
+누구나 .envs(API 키)·.git/·sessions/ 를 받아 갈 수 있었다.
 
-  1. PC and phone on the same Wi-Fi
-  2. python -m senior_ui.experiment.server
-  3. open the printed http://<PC ip>:3003/web/session.html on the phone
+  python -m senior_ui.experiment.server      (또는 시작.bat)
+  http://localhost:3003/web/dashboard.html
 
-Saved to sessions/P01_1_original.json:
-  participant, condition, order_index, task, completed, elapsed_ms,
-  metrics (seconds / taps / misses / backs / deletes / dwell per screen)
-  and the full event log, so anything not summarised can still be recovered.
+본실험은 Flutter 더미앱(senior-ui-dummy-app)으로 한다. 여기 있는 HTML 실험
+장치(web/session.html + POST /api/session)는 본실험에 쓰지 않으므로 기본으로
+꺼져 있고, --session 을 줄 때만 켜진다. 기록 보관용이다.
 
 Options:
   --port 3003          the port to serve on
-  --sessions <dir>     where to write (default: sessions/)
+  --session            HTML 실험 장치를 켠다 (기본 꺼짐)
+  --sessions <dir>     --session 일 때 쓸 곳 (default: sessions/)
   --task-file <json>   replace the built-in task list
-
-Task and condition definitions live in CONDITIONS / TASKS below. Changing the
-task wording is a one-line edit there - it is read by the phone at page load.
 """
 import argparse
 import io
 import json
 import os
 import re
-import socket
 import sys
 import urllib.parse
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -125,18 +121,6 @@ def reindex():
         json.dump(idx, f, ensure_ascii=False, indent=1)
     return {"ok": True, "builds": len(idx["builds"]), "changes": len(idx["changes"]),
             "generated": idx["generated"]}
-
-
-def local_ip():
-    """The address the phone should use. Needs no reachable network."""
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        s.connect(("10.255.255.255", 1))
-        return s.getsockname()[0]
-    except Exception:
-        return "127.0.0.1"
-    finally:
-        s.close()
 
 
 def make_handler(sessions_dir, tasks, allow_session=False):
@@ -259,6 +243,31 @@ def build_parser():
     return ap
 
 
+def banner(port, sessions_dir, tasks, allow_session=False):
+    """서버가 띄우는 안내. 테스트가 이것을 그대로 본다.
+
+    폰에서 여는 주소와 방화벽 안내는 LAN 에 서빙할 때의 안내였다. 서버를
+    루프백으로 돌린 뒤에도 그 안내가 남아 있으면 사람이 다시 구멍을 낸다."""
+    L = ["=" * 62,
+         " 대시보드",
+         "=" * 62,
+         " 이 PC 의 브라우저에서 엽니다 (다른 기기에서는 열리지 않습니다):",
+         "",
+         "     http://localhost:%d/web/dashboard.html" % port,
+         ""]
+    if allow_session:
+        L += [" HTML 실험 장치 (--session) - 기록 보관용. 본실험은 Flutter 더미앱입니다:",
+              "",
+              "     http://localhost:%d/web/session.html" % port,
+              "",
+              " 조건 : " + " / ".join(c["label"] for c in CONDITIONS),
+              " 과업 : " + " / ".join(t["name"] for t in tasks),
+              " 저장 : %s" % sessions_dir,
+              ""]
+    L += ["=" * 62, " Ctrl+C 로 종료", ""]
+    return "\n".join(L)
+
+
 def main():
     args = build_parser().parse_args()
 
@@ -273,30 +282,8 @@ def main():
         print(" 인덱스: 빌드 %d개 · 변경 %d건" % (r["builds"], r["changes"]))
     except Exception as e:
         print(" 인덱스를 만들지 못했습니다: %s" % e)
-    ip = local_ip()
     handler = make_handler(args.sessions, tasks, allow_session=args.session)
-
-    print("=" * 62)
-    print(" 실험 진행 서버")
-    print("=" * 62)
-    print(" 폰에서 열 주소 — 실험 진행 (PC 와 같은 Wi-Fi 여야 합니다):")
-    print()
-    print("     http://%s:%d/web/session.html" % (ip, args.port))
-    print()
-    print(" PC 브라우저에서 열 주소 — 파이프라인 확인:")
-    print()
-    print("     http://localhost:%d/web/dashboard.html" % args.port)
-    print()
-    print(" 조건 : " + " / ".join(c["label"] for c in CONDITIONS))
-    print(" 과업 : " + " / ".join(t["name"] for t in tasks))
-    print(" 저장 : %s" % args.sessions)
-    print()
-    print(" 연결이 안 되면 PC 방화벽에서 이 포트를 열어야 합니다:")
-    print('   New-NetFirewallRule -DisplayName "senior-ui 실험" -Direction Inbound '
-          "-LocalPort %d -Protocol TCP -Action Allow" % args.port)
-    print("=" * 62)
-    print(" Ctrl+C 로 종료")
-    print()
+    print(banner(args.port, args.sessions, tasks, allow_session=args.session))
 
     srv = make_server(args.port, handler)
     try:
