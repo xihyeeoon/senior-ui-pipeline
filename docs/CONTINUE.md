@@ -46,7 +46,10 @@
 검사 I(선택지 보존, `b2db795`)가 생기기 전의 값이다. 지금 검사기로 다시 걸으면
 셋 다 I 에서 fatal 1건이 난다 (원본 `pick-bank` 67개 중 58개 누락) — 측정값은
 `tests/baseline/` 에 있고 근거는 `tests/README.md` 에 적혀 있다. Run 4 의 두 수치는
-`results/audit_run4.json`(당시)과 `results/audit_run4.recheck.json`(현재)이다.
+`results/audit_run4.json`(당시)과 `results/audit_run4.recheck.json`(집계 버그를
+고치기 전의 재검사)이다. 네 run 의 지금 수치는 `results/audit_*.v2.json` 에 있다 —
+fatal 목록은 그 전과 같고 `fatal_total`·`fatal_root` 만 맞게 세어졌다
+(Run 1·2·3 은 1, Run 4 는 2).
 
 마지막 코드 변경: **2026-10-01 코드 정리** — DesignRepair 시기 파일 삭제, `tools/`
 를 `senior_ui/` 패키지와 `web/`·`flows/` 로 이동, 큰 함수 분리. 동작은 바꾸지
@@ -155,11 +158,15 @@ git log --oneline -3
 .\.venv\Scripts\python.exe -m senior_ui.audit --flow flows\restructured.json `
    --build http://localhost:3003/results/restructured_transfer.html `
    --build-file results\restructured_transfer.html
-# 지금 기준의 기대값: fatal 1 (검사 I 선택지 보존), warning 0, exit 1
+# 지금 기준의 기대값: fatal 1 (검사 I 선택지 보존), fatal_total 1, warning 0, exit 1
 
 # 네 빌드를 한 표로 (JSON 은 사람이 못 읽는다)
 .\.venv\Scripts\python.exe -m senior_ui.audit.report `
-   Run1=results\audit_restructured.json Run2=results\audit_run2.json `
-   Run3=results\audit_run3.json Run4=results\audit_run4.recheck.json `
+   Run1=results\audit_restructured.v2.json Run2=results\audit_run2.v2.json `
+   Run3=results\audit_run3.v2.json Run4=results\audit_run4.v2.json `
    --details --out results\audit-report.md
 ```
+
+`.v2.json` 은 집계 버그를 고친 뒤(`fix/audit-counting`) 네 run 을 다시 검사한
+것이다. `.v2` 가 없는 파일은 고치기 전 검사기가 낸 것이고 그대로 남겨 둔다 -
+fatal 목록은 비어 있지 않은데 `fatal_total` 이 0 인, 그 버그 자체의 기록이다.
