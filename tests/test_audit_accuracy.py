@@ -833,3 +833,24 @@ def test_the_lines_page_has_nothing_else_wrong(e_lines):
     assert e_lines["report"]["fatal"] == [], details(e_lines["report"]["fatal"])
     assert len(e_lines["report"]["warning"]) == 1, \
         details(e_lines["report"]["warning"])
+
+
+# ===================================================================== #
+# 10. 걷기가 전환을 고정 시간만 기다린다
+# ===================================================================== #
+@pytest.fixture(scope="module")
+def drive_slow(server):
+    return run_audit("drive_slow.json", "drive_slow.html")
+
+
+def test_a_slow_transition_is_waited_for(drive_slow):
+    """1.2초 걸리는 전환은 결함이 아니다 - 조회를 기다리는 설계에 흔한 일이다.
+
+    고치기 전: 누른 뒤 0.45초만 기다리고 긁었다. 아직 앞 화면에 서 있으므로
+    "landed on 'start' instead" 와 "#amt is missing" 두 건이 났다 - 둘 다
+    거짓 경보다.
+    """
+    assert drive_slow["fatal"] == [], details(drive_slow["fatal"])
+    assert drive_slow["passed"] is True
+    assert drive_slow["metrics"]["screens_landed_on"]["done"] == {
+        "hook": "done", "dom": "done"}

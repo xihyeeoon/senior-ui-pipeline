@@ -7,6 +7,7 @@ import asyncio
 import os
 import re
 
+from playwright.async_api import TimeoutError as PlaywrightTimeout
 from playwright.async_api import async_playwright
 
 from . import probes as P
@@ -71,6 +72,38 @@ async def run_actions(page, spec, notes=None):
             await page.click(fill(item["click"]))
             if item.get("wait"):
                 await asyncio.sleep(float(item["wait"]))
+
+
+# 한 걸음 뒤 기대 화면이 켜지기를 기다리는 최대 시간.
+#
+# 전에는 걸음마다 0.45초를 고정으로 쉬었다. 그 수는 두 가지를 한꺼번에 틀린다 -
+# 전환이 그보다 느린 설계(조회를 기다리거나 전환을 천천히 보여 주는 것)에서는
+# 아직 앞 화면에 서 있는 것을 긁어 "엉뚱한 화면에 도착했다" 는 거짓 경보가 나고,
+# 전환이 즉시 끝나는 설계에서는 화면 수만큼 그냥 기다린다.
+#
+# 이제 기대 화면이 켜지는 것을 보고 넘어간다. 이 값은 그러므로 "이만큼 기다려도
+# 안 켜지면 안 켜지는 것이다" 이고, 다 되면 그대로 긁는다 - 못 켜진 것은 검사 A
+# 가 적을 일이고, 여기서 예외를 내면 "검사하지 못했다" 가 되어 결함을 감춘다.
+SETTLE_TIMEOUT_MS = 3000
+
+# 기록(window.__screen())과 화면(`.screen.on`)이 둘 다 그 이름이어야 켜진 것이다.
+# 화면만 보고 넘어가면 기록이 늦게 따라오는 설계에서 옛 이름을 긁는다. 기록 훅이
+# 아예 없는 빌드는 화면만 본다 - 훅이 없다는 것 자체는 검사 A 가 적는다.
+SCREEN_IS = """name => {
+  const s = document.querySelector('.screen.on');
+  if (!s || (s.dataset.screen || null) !== name) return false;
+  if (typeof window.__screen !== 'function') return true;
+  return window.__screen() === name;
+}"""
+
+
+async def settle(page, name, timeout_ms=SETTLE_TIMEOUT_MS):
+    """기대 화면이 켜질 때까지 기다린다. 켜졌으면 True, 시간이 다 되면 False."""
+    try:
+        await page.wait_for_function(SCREEN_IS, arg=name, timeout=timeout_ms)
+        return True
+    except PlaywrightTimeout:
+        return False
 
 
 SELECTOR_IN_ERROR = re.compile(r'waiting for locator\("([^"]+)"\)')
@@ -233,7 +266,11 @@ async def drive(url, flow, want_shots=None):
                     msg += " || " + hint
                 data["screens"][name] = {"error": msg}
                 break
-            await asyncio.sleep(0.45)
+            if not await settle(page, name):
+                data["notes"].append(
+                    "flow: %r 화면이 %dms 안에 켜지지 않았다. 그 상태로 긁는다 - "
+                    "무엇이 켜져 있었는지는 검사 A 가 적는다."
+                    % (name, SETTLE_TIMEOUT_MS))
 
             data["screens"][name] = await collect_screen(
                 page, flow, name, data["reached"])

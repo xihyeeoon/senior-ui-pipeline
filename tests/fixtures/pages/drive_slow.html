@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>걷기 - 전환이 늦는 화면</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- '다음' 을 누르면 1.2초 뒤에 화면이 넘어간다. 조회를 기다리거나 전환을
+     천천히 보여 주는 설계에서 흔한 일이고, 결함이 아니다.
+     고정으로 0.45초만 기다리고 긁으면 아직 앞 화면에 서 있는 것을 보게 된다. -->
+<section class="screen on" data-screen="start" id="start">
+  <p>보낼 돈을 고르세요</p>
+  <div><button data-action="go-next">다음</button></div>
+</section>
+<section class="screen" data-screen="done" id="done">
+  <p id="amt">10,000원</p>
+  <div><button data-action="noop">확인</button></div>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'go-next') {
+    setTimeout(() => {
+      document.getElementById('start').classList.remove('on');
+      document.getElementById('done').classList.add('on');
+      window.__task.screen = 'done';
+    }, 1200);
+  }
+  if (a === 'noop') { /* 아무것도 안 한다 */ }
+});
+</script>
+</body>
+</html>
