@@ -70,34 +70,33 @@
   ],
   "warning": [],
   "metrics": {
-    "flow": "run3",
+    "flow": "run2",
     "derived_from_original": false,
     "screens_in_flow": [
       "start",
       "who",
-      "accno",
-      "bank",
-      "whoconfirm",
+      "account",
       "amount",
       "review",
+      "auth",
       "done"
     ],
     "screens_comparable_to_original": [],
-    "screens_expected": 8,
-    "screens_reached": 8,
+    "screens_expected": 7,
+    "screens_reached": 7,
     "done_screen": "done",
     "done_amount": "10,000",
     "data-screen_original": 8,
-    "data-screen_repaired": 8,
+    "data-screen_repaired": 7,
     "data-action_original": 23,
-    "data-action_repaired": 31,
+    "data-action_repaired": 27,
     "id_original": 15,
-    "id_repaired": 30,
+    "id_repaired": 32,
     "per_screen_attr_loss": {},
     "injected_dialog_calls": 0,
     "onclick_added": 0,
     "dialogs_during_task": 0,
-    "handled_actions": 31,
+    "handled_actions": 27,
     "dead_controls_new": 0,
     "dead_controls_pre_existing": [],
     "low_contrast_before": 66,
@@ -200,19 +199,14 @@
     "checks_stood_down": [
       "A/preservation (new design, nothing to preserve)",
       "A/per-screen attribute loss",
-      "E/newly-wrapped text and height growth (no shared screens)",
-      "D/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다.",
-      "E/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다.",
-      "G/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다.",
-      "H/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다."
+      "E/newly-wrapped text and height growth (no shared screens)"
     ],
-    "stage": "wireframe",
-    "stage_checks": [
-      "A",
-      "B",
-      "C",
-      "F",
-      "I"
-    ]
+    "stage": "styled"
+  },
+  "inputs": {
+    "original": "http://localhost:3003/inputs/original_transfer.html",
+    "repaired": "http://localhost:3003/results/restructured_run2.html",
+    "flow": "flows/run2.json",
+    "stage": "styled"
   }
 }

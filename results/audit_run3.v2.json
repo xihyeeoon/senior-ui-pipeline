@@ -200,19 +200,14 @@
     "checks_stood_down": [
       "A/preservation (new design, nothing to preserve)",
       "A/per-screen attribute loss",
-      "E/newly-wrapped text and height growth (no shared screens)",
-      "D/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다.",
-      "E/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다.",
-      "G/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다.",
-      "H/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다."
+      "E/newly-wrapped text and height growth (no shared screens)"
     ],
-    "stage": "wireframe",
-    "stage_checks": [
-      "A",
-      "B",
-      "C",
-      "F",
-      "I"
-    ]
+    "stage": "styled"
+  },
+  "inputs": {
+    "original": "http://localhost:3003/inputs/original_transfer.html",
+    "repaired": "http://localhost:3003/results/restructured_run3.html",
+    "flow": "flows/run3.json",
+    "stage": "styled"
   }
 }

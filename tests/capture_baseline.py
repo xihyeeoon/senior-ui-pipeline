@@ -54,14 +54,22 @@ CASES = [
 ]
 ORIGINAL_REL = "inputs/original_transfer.html"
 
-# [7] senior_ui.audit.report 의 입력. 브라우저가 필요 없고 results/ 의 audit JSON
-# 세 개만 읽는다. 테스트도 이 값을 그대로 쓴다 (한곳에만 적는다).
-REPORT_ARGS = ["Run1=results/audit_restructured.json",
-               "Run2=results/audit_run2.json",
-               "Run3=results/audit_run3.json"]
+# [7] senior_ui.audit.report 의 입력. 브라우저가 필요 없고 audit JSON 네 개만
+# 읽는다. 테스트도 이 값을 그대로 쓴다 (한곳에만 적는다).
+#
+# 입력은 tests/fixtures/report/ 에 있다. results/ 를 직접 읽지 않는 이유는 그
+# 폴더가 파이프라인의 산출물이어서다 - 다시 검사하면 내용이 바뀌고, 그러면
+# 리포트 기준값이 "report.py 가 달라졌는지" 가 아니라 "검사 결과가 달라졌는지"
+# 를 따라 흔들린다. 여기 있는 사본은 집계 버그를 고친 뒤의 Run 1~4
+# (results/audit_*.v2.json) 이고, 고정물이므로 손으로만 바꾼다.
+FIXTURE_REPORT = "tests/fixtures/report"
+REPORT_ARGS = ["Run1=%s/audit_restructured.v2.json" % FIXTURE_REPORT,
+               "Run2=%s/audit_run2.v2.json" % FIXTURE_REPORT,
+               "Run3=%s/audit_run3.v2.json" % FIXTURE_REPORT,
+               "Run4=%s/audit_run4.v2.json" % FIXTURE_REPORT]
 # (기준값 파일 이름, 덧붙일 인자)
-REPORT_OUTPUTS = [("three_runs.md", []),
-                  ("three_runs.details.md", ["--details"])]
+REPORT_OUTPUTS = [("four_runs.md", []),
+                  ("four_runs.details.md", ["--details"])]
 
 
 def say(msg):

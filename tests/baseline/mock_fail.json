@@ -43,16 +43,16 @@
   "trend": [
     {
       "attempt": 1,
-      "fatal_total": 8,
-      "fatal_root": 1,
+      "fatal_total": 9,
+      "fatal_root": 2,
       "fatal_derived": 7,
       "screens": "1/9",
       "stopped_at": "who"
     },
     {
       "attempt": 2,
-      "fatal_total": 8,
-      "fatal_root": 1,
+      "fatal_total": 9,
+      "fatal_root": 2,
       "fatal_derived": 7,
       "screens": "1/9",
       "stopped_at": "who"

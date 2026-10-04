@@ -21,6 +21,8 @@ if ROOT not in sys.path:
 from senior_ui import audit as _audit                        # noqa: E402
 from senior_ui import config as _config                      # noqa: E402
 from senior_ui import devserver as _devserver                # noqa: E402
+from senior_ui.audit import core as _audit_core              # noqa: E402
+from senior_ui.audit import __main__ as _audit_cli           # noqa: E402
 from senior_ui.audit import stage as _audit_stage            # noqa: E402
 from senior_ui.audit import report as _audit_report          # noqa: E402
 from senior_ui.restructure import model as _model            # noqa: E402
@@ -38,6 +40,16 @@ load_flow = _audit.load_flow
 # ---- senior_ui/audit/stage.py ------------------------------------------ #
 apply_stage = _audit_stage.apply_stage
 STAGES = _audit_stage.STAGES
+
+# 집계 함수는 core 와 stage 가 같은 것을 써야 한다. 그 "같은 것" 을 확인하려면
+# 테스트가 두 모듈을 볼 수 있어야 하므로 모듈째로 내보낸다.
+count_fatals = _audit_core.count_fatals
+audit_core_module = _audit_core
+audit_stage_module = _audit_stage
+
+# ---- senior_ui/audit/__main__.py (CLI - 종료 코드까지) ----------------- #
+audit_cli_main = _audit_cli.main
+audit_cli_module = _audit_cli
 
 # ---- senior_ui/audit/report.py (여러 audit 를 나란히 놓는 md) ----------- #
 ar_main = _audit_report.main

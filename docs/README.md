@@ -101,6 +101,12 @@ $env:PYTHONUTF8 = "1"
 the same 8-screen task and diffs them. It prints machine-readable JSON and exits
 0 only when nothing fatal fired, so it can gate a regenerate-on-failure loop.
 
+Exit 1 means it audited the build and the build failed. Exit 2 means the audit
+itself could not run - inputs or flow unreadable, no browser, anything that
+stops the drive - and the JSON then carries that reason as its single fatal.
+The caller has to tell those two apart: a build that failed gets regenerated, an
+auditor that could not run does not.
+
 ### Counting fatals across runs
 
 A task that stops early fails every screen after the stop, so a raw fatal count
@@ -167,10 +173,15 @@ finding):
 
 ```powershell
 .\.venv\Scripts\python.exe -m senior_ui.audit.report `
-   Run1=results\audit_restructured.json Run2=results\audit_run2.json `
-   Run3=results\audit_run3.json Run4=results\audit_run4.recheck.json `
+   Run1=results\audit_restructured.v2.json Run2=results\audit_run2.v2.json `
+   Run3=results\audit_run3.v2.json Run4=results\audit_run4.v2.json `
    --details --out results\audit-report.md
 ```
+
+The `.v2.json` reports are the four runs re-audited after the counting fixes
+(`fix/audit-counting`). The files without `.v2` are what the auditor said before
+those fixes and are kept as they were - their `fatal_total` is 0 even where the
+fatal list is not empty, which is the bug the fixes removed.
 
 Known gaps, both real: it cannot tell that `☆` labelled "선택됨" is factually
 inverted (that needs a declared class↔label mapping), and it has no

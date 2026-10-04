@@ -2,11 +2,13 @@ r"""검사 A - 과제 완수. fatal.
 
 흐름이 적은 화면에 모두 도달했는지, 금액이 완료 화면까지 왕복했는지,
 data-screen · data-action · id 가 사라지지 않았는지를 본다. 멈춘 뒤의 "도달 못
-함" 은 파생 결함으로 표시해 한 원인을 여러 번 세지 않는다. 화면 이름으로 짝을
-맞추는 부분은 원본에서 파생된 빌드에서만 돈다 - 새 설계에는 지킬 원본이 없다.
+함" 은 파생 결함으로 표시해 한 원인을 여러 번 세지 않는다. 금액 왕복도 같은
+규칙을 따른다 - 도달하지 못한 화면에는 묻지 않고, 흐름의 expect 에 적혀 검사 B
+가 이미 보는 선택자는 다시 보지 않는다. 화면 이름으로 짝을 맞추는 부분은
+원본에서 파생된 빌드에서만 돈다 - 새 설계에는 지킬 원본이 없다.
 """
 from ..context import union
-from ..flow import AMOUNT_SHOWN
+from ..flow import AMOUNT_SHOWN, fill
 
 
 def _screens_reached(ctx):
@@ -40,7 +42,13 @@ def _screens_reached(ctx):
                          "기록 훅 __screen() 은 현재 화면의 id 를 반환해야 한다. "
                          "원본 HTML 의 __screen() · __startTask() · __dump() 를 유지하라.")
         elif row["landed_on"] != name:
+            # 예외는 나지 않았지만 과제는 여기서 더 나아가지 못했다. 뒤의 화면
+            # 들은 그 결과이므로, 멈춘 곳으로 적어 파생으로 묶이게 한다.
+            # 적지 않으면 첫 "도달 못 함" 이 stopped_at 을 자기 이름으로 채워,
+            # 멈춤의 결과가 원인으로 기록된다.
             F("A", name, "landed on %r instead" % row["landed_on"])
+            if not ctx.stopped_at:
+                ctx.stopped_at = name
 
 
 def _transition_ids(ctx):
@@ -49,6 +57,12 @@ def _transition_ids(ctx):
     if rep["missing_ids"]:
         F("A", None, "ids the transition script needs are gone: "
           + ", ".join(rep["missing_ids"]), lost=rep["missing_ids"])
+
+
+def _arrived(row, name):
+    """그 화면에 실제로 도착했는지. 도착하지 못한 화면에 무엇이 보이는지는
+    물을 수 없다 - 물으면 한 번의 실패가 두 건이 된다."""
+    return bool(row) and "error" not in row and row.get("landed_on") == name
 
 
 def _amount_round_trip(ctx):
@@ -64,7 +78,18 @@ def _amount_round_trip(ctx):
     shown_done = dict(done.get("shown") or []).get(done_sel)
     metrics["done_screen"] = last_screen
     metrics["done_amount"] = shown_done
-    if done and shown_done != AMOUNT_SHOWN:
+    # 도착하지 못했으면(멈춤·오류·엉뚱한 화면) 금액은 애초에 볼 수 없다.
+    # _screens_reached 가 그 도착 실패를 이미 fatal 로 적었으므로, 여기서 또
+    # 적으면 결함 하나가 두 번 세진다. 지표(done_amount)는 그대로 남긴다.
+    if not _arrived(done, last_screen):
+        return
+    # 흐름의 expect 에 같은 선택자가 적혀 있으면 검사 B 가 같은 값을 같은 기준
+    # 으로 이미 본다. 결함은 하나이므로 거기에 맡기고 여기서는 지표만 남긴다.
+    # (네 흐름 파일 모두 완료 화면의 금액을 expect 에 적고 있다.) expect 에
+    # 없으면 B 는 그 선택자를 보지 않으므로 A 가 유일한 검사다.
+    covered = any(fill(sel) == done_sel
+                  for sel, _ in (ctx.flow["expect"].get(last_screen) or []))
+    if shown_done != AMOUNT_SHOWN and not covered:
         F("A", last_screen, "완료 화면의 %s 가 %r 을 보여 준다. 과제가 넣은 값은 %r 이다."
           % (done_sel, shown_done, AMOUNT_SHOWN))
 

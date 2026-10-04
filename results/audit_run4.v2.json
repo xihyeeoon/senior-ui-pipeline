@@ -4,7 +4,7 @@
     {
       "check": "I",
       "screen": null,
-      "detail": "원본의 pick-bank 선택지 67개 중 58개가 생성물에 없다 (예: BNK투자증권, BNP파리바, BOA, DB증권, HSBC …). 화면에 모두 보일 필요는 없지만 값 자체는 모두 접근 가능해야 한다. 검색이나 단계적 선택으로 찾을 수 있게 포함하라.",
+      "detail": "원본의 pick-bank 선택지 67개 중 64개가 생성물에 없다 (예: BNK투자증권, BNP파리바, BOA, DB증권, HSBC …). 화면에 모두 보일 필요는 없지만 값 자체는 모두 접근 가능해야 한다. 검색이나 단계적 선택으로 찾을 수 있게 포함하라.",
       "action": "pick-bank",
       "missing": [
         "BNK투자증권",
@@ -24,6 +24,8 @@
         "교보증권",
         "국고금",
         "국세",
+        "기업",
+        "농협",
         "다올투자증권",
         "대신증권",
         "도이치",
@@ -43,6 +45,7 @@
         "아이엠뱅크(대구)",
         "아이엠증권",
         "에스케이증권",
+        "우리",
         "우리투자증권",
         "우체국",
         "유안타증권",
@@ -56,9 +59,12 @@
         "지방세",
         "지역농.축협",
         "카카오페이증권",
+        "케이뱅크",
         "케이프투자증권",
         "키움증권",
+        "토스뱅크",
         "토스증권",
+        "하나",
         "하나증권",
         "한국씨티",
         "한국투자증권",
@@ -66,20 +72,105 @@
         "현대차증권",
         "회원수협"
       ]
+    },
+    {
+      "check": "I",
+      "screen": null,
+      "detail": "원본의 quick 선택지 4개 중 4개가 생성물에 없다 (예: 10000, 100000, 50000, all). 화면에 모두 보일 필요는 없지만 값 자체는 모두 접근 가능해야 한다. 검색이나 단계적 선택으로 찾을 수 있게 포함하라.",
+      "action": "quick",
+      "missing": [
+        "10000",
+        "100000",
+        "50000",
+        "all"
+      ]
     }
   ],
-  "warning": [],
+  "warning": [
+    {
+      "check": "F",
+      "screen": "start",
+      "detail": "English text not present in the original: LTE",
+      "words": [
+        "LTE"
+      ],
+      "source": "runtime"
+    },
+    {
+      "check": "F",
+      "screen": "account",
+      "detail": "English text not present in the original: LTE",
+      "words": [
+        "LTE"
+      ],
+      "source": "runtime"
+    },
+    {
+      "check": "F",
+      "screen": "bank",
+      "detail": "English text not present in the original: LTE",
+      "words": [
+        "LTE"
+      ],
+      "source": "runtime"
+    },
+    {
+      "check": "F",
+      "screen": "account",
+      "detail": "English text not present in the original: LTE",
+      "words": [
+        "LTE"
+      ],
+      "source": "runtime"
+    },
+    {
+      "check": "F",
+      "screen": "amount",
+      "detail": "English text not present in the original: LTE",
+      "words": [
+        "LTE"
+      ],
+      "source": "runtime"
+    },
+    {
+      "check": "F",
+      "screen": "confirm",
+      "detail": "English text not present in the original: LTE",
+      "words": [
+        "LTE"
+      ],
+      "source": "runtime"
+    },
+    {
+      "check": "F",
+      "screen": "password",
+      "detail": "English text not present in the original: LTE",
+      "words": [
+        "LTE"
+      ],
+      "source": "runtime"
+    },
+    {
+      "check": "F",
+      "screen": "done",
+      "detail": "English text not present in the original: LTE",
+      "words": [
+        "LTE"
+      ],
+      "source": "runtime"
+    }
+  ],
   "metrics": {
-    "flow": "run3",
+    "flow": "run4",
     "derived_from_original": false,
     "screens_in_flow": [
       "start",
-      "who",
-      "accno",
+      "account",
       "bank",
-      "whoconfirm",
+      "account",
       "amount",
-      "review",
+      "confirm",
+      "password",
       "done"
     ],
     "screens_comparable_to_original": [],
@@ -88,20 +179,20 @@
     "done_screen": "done",
     "done_amount": "10,000",
     "data-screen_original": 8,
-    "data-screen_repaired": 8,
+    "data-screen_repaired": 7,
     "data-action_original": 23,
-    "data-action_repaired": 31,
+    "data-action_repaired": 13,
     "id_original": 15,
-    "id_repaired": 30,
+    "id_repaired": 11,
     "per_screen_attr_loss": {},
     "injected_dialog_calls": 0,
     "onclick_added": 0,
     "dialogs_during_task": 0,
-    "handled_actions": 31,
+    "handled_actions": 13,
     "dead_controls_new": 0,
     "dead_controls_pre_existing": [],
     "low_contrast_before": 66,
-    "low_contrast_after": 3,
+    "low_contrast_after": 0,
     "low_contrast_by_screen": {},
     "new_inherited_colour": 0,
     "low_contrast_gained_text": 0,
@@ -109,11 +200,20 @@
     "overflows_new": 0,
     "screens_much_taller": 0,
     "newly_wrapped_text": 0,
-    "new_english_words": [],
+    "new_english_words": [
+      "LTE"
+    ],
     "new_english_words_markup_only": [],
     "state_pairs_checked": 1,
     "state_pairs_collapsed": 0,
-    "undefined_classes_new": [],
+    "undefined_classes_new": [
+      "blank",
+      "cur",
+      "dots",
+      "okc",
+      "okwrap",
+      "q2"
+    ],
     "choice_groups_original": {
       "pick-bank": 67,
       "acc-num": 10,
@@ -122,9 +222,9 @@
       "pw": 10
     },
     "choice_values_kept": {
-      "pick-bank": 9,
+      "pick-bank": 3,
       "acc-num": 10,
-      "quick": 4,
+      "quick": 0,
       "num": 11,
       "pw": 10
     },
@@ -147,6 +247,8 @@
         "교보증권",
         "국고금",
         "국세",
+        "기업",
+        "농협",
         "다올투자증권",
         "대신증권",
         "도이치",
@@ -166,6 +268,7 @@
         "아이엠뱅크(대구)",
         "아이엠증권",
         "에스케이증권",
+        "우리",
         "우리투자증권",
         "우체국",
         "유안타증권",
@@ -179,21 +282,30 @@
         "지방세",
         "지역농.축협",
         "카카오페이증권",
+        "케이뱅크",
         "케이프투자증권",
         "키움증권",
+        "토스뱅크",
         "토스증권",
+        "하나",
         "하나증권",
         "한국씨티",
         "한국투자증권",
         "한화투자증권",
         "현대차증권",
         "회원수협"
+      ],
+      "quick": [
+        "10000",
+        "100000",
+        "50000",
+        "all"
       ]
     },
     "fatal_duplicates_removed": 0,
-    "fatal_total": 1,
+    "fatal_total": 2,
     "fatal_derived": 0,
-    "fatal_root": 1,
+    "fatal_root": 2,
     "stopped_at": null,
     "js_error_details": [],
     "flow_notes": [],
@@ -214,5 +326,11 @@
       "F",
       "I"
     ]
+  },
+  "inputs": {
+    "original": "http://localhost:3003/inputs/original_transfer.html",
+    "repaired": "http://localhost:3003/results/restructured_run4.html",
+    "flow": "flows/run4.json",
+    "stage": "wireframe"
   }
 }

@@ -37,9 +37,28 @@ from .checks import (a_completion, b_display, c_dead_controls, d_contrast,
 from .context import AuditContext
 
 # 집계보다 앞서 도는 검사들. 순서가 곧 fatal/warning 목록과 metrics 키의
-# 순서다 - 바꾸면 출력이 바뀐다.
+# 순서다 - 바꾸면 출력이 바뀐다. I 도 fatal 검사이므로 여기 들어 있어야 한다.
+# 집계 뒤에 돌리면 fatal 목록에는 들어가고 숫자에는 빠진다.
 CHECKS = (a_completion, b_display, c_dead_controls, d_contrast, e_layout,
-          f_language, g_state, h_undefined_class)
+          f_language, g_state, h_undefined_class, i_choices)
+
+
+def count_fatals(fatal):
+    """fatal 목록 하나에서 집계 세 값을 낸다.
+
+    여기서만 정의한다. 집계하는 곳이 두 곳이기 때문이다 - finalize_counts() 가
+    검사 직후에 세고, stage.apply_stage() 가 단계 밖 결과를 걷어낸 뒤 다시
+    센다. 두 곳이 각자 세면 규칙이 갈라지고, 걸러낸 리포트의 숫자가 그 리포트의
+    목록과 맞지 않게 된다.
+
+    파생(`derived_from`)은 한 번 멈춘 탓에 줄줄이 따라온 결함이다. 독립된 결함
+    (`fatal_root`)과 나누지 않으면 일찍 멈춘 실행일수록 숫자가 부풀려져 run
+    끼리 비교할 수 없다.
+    """
+    total = len(fatal)
+    derived = len([f for f in fatal if f.get("derived_from")])
+    return {"fatal_total": total, "fatal_derived": derived,
+            "fatal_root": total - derived}
 
 
 def finalize_counts(ctx):
@@ -59,9 +78,7 @@ def finalize_counts(ctx):
     ctx.fatal[:] = deduped
     m = ctx.metrics
     m["fatal_duplicates_removed"] = dups
-    m["fatal_total"] = len(ctx.fatal)
-    m["fatal_derived"] = len([f for f in ctx.fatal if f.get("derived_from")])
-    m["fatal_root"] = m["fatal_total"] - m["fatal_derived"]
+    m.update(count_fatals(ctx.fatal))
     m["stopped_at"] = ctx.stopped_at
     m["js_error_details"] = ctx.rep.get("js_error_details") or []
     m["flow_notes"] = ctx.rep.get("notes") or []
@@ -97,9 +114,8 @@ def audit(orig, rep, orig_html, rep_html, flow):
     for check in CHECKS:
         check.run(ctx)
 
+    # 집계는 마지막이다. 모든 검사가 fatal 을 다 적은 뒤에 세고 중복을 걷어낸다.
     finalize_counts(ctx)
-    # TODO(버그): I 의 fatal 이 집계에서 빠진다. 정리 후 별도 커밋에서 I 를 집계 앞으로 옮긴다.
-    i_choices.run(ctx)
 
     ctx.metrics["checks_stood_down"] = ctx.skipped
     return {"passed": not ctx.fatal, "fatal": ctx.fatal,

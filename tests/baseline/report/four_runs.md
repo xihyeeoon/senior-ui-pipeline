@@ -83,35 +83,6 @@ fatal 행의 '독립' 은 `fatal_root`, '파생' 은 `fatal_derived` (한 번 �
 - G/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다.
 - H/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다.
 
-## 발견 목록
-
-### Run1
-**I · 선택지 보존 — fatal 1건**
-- 원본의 pick-bank 선택지 67개 중 58개가 생성물에 없다 (예: BNK투자증권, BNP파리바, BOA, DB증권, HSBC …). 화면에 모두 보일 필요는 없지만 값 자체는 모두 접근 가능해야 한다. 검색이나 단계적 선택으로 찾을 수 있게 포함하라.
-
-### Run2
-**I · 선택지 보존 — fatal 1건**
-- 원본의 pick-bank 선택지 67개 중 58개가 생성물에 없다 (예: BNK투자증권, BNP파리바, BOA, DB증권, HSBC …). 화면에 모두 보일 필요는 없지만 값 자체는 모두 접근 가능해야 한다. 검색이나 단계적 선택으로 찾을 수 있게 포함하라.
-
-### Run3
-**I · 선택지 보존 — fatal 1건**
-- 원본의 pick-bank 선택지 67개 중 58개가 생성물에 없다 (예: BNK투자증권, BNP파리바, BOA, DB증권, HSBC …). 화면에 모두 보일 필요는 없지만 값 자체는 모두 접근 가능해야 한다. 검색이나 단계적 선택으로 찾을 수 있게 포함하라.
-
-### Run4
-**F · 언어 (새 영어) — warning 8건**
-- `start` English text not present in the original: LTE
-- `account` English text not present in the original: LTE
-- `bank` English text not present in the original: LTE
-- `account` English text not present in the original: LTE
-- `amount` English text not present in the original: LTE
-- `confirm` English text not present in the original: LTE
-- `password` English text not present in the original: LTE
-- `done` English text not present in the original: LTE
-
-**I · 선택지 보존 — fatal 2건**
-- 원본의 pick-bank 선택지 67개 중 64개가 생성물에 없다 (예: BNK투자증권, BNP파리바, BOA, DB증권, HSBC …). 화면에 모두 보일 필요는 없지만 값 자체는 모두 접근 가능해야 한다. 검색이나 단계적 선택으로 찾을 수 있게 포함하라.
-- 원본의 quick 선택지 4개 중 4개가 생성물에 없다 (예: 10000, 100000, 50000, all). 화면에 모두 보일 필요는 없지만 값 자체는 모두 접근 가능해야 한다. 검색이나 단계적 선택으로 찾을 수 있게 포함하라.
-
 ## 입력
 
 - Run1: `http://localhost:3003/results/restructured_transfer.html`
