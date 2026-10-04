@@ -566,3 +566,26 @@ def test_the_modern_colour_page_has_nothing_else_wrong(d_modern_colour):
                                                       "보낼 돈을 고르세요"]
     assert d_modern_colour["report"]["fatal"] == [], \
         details(d_modern_colour["report"]["fatal"])
+
+
+@pytest.fixture(scope="module")
+def d_bg_alpha(server):
+    return drive_and_audit("d_bg_alpha.json", "d_bg_alpha.html")
+
+
+def test_a_translucent_background_is_mixed_in(d_bg_alpha):
+    """#111 상자에 알파 0.9 흰 베일이 덮이면 실제 배경은 #e7e7e7 이다.
+    그 위의 흰 글자는 1.23:1 이다.
+
+    고치기 전: 알파 0.95 미만인 층을 건너뛰고 불투명한 조상(#111)을 배경으로
+    썼다. 흰 글자가 "어두운 바탕 위의 흰 글자" 로 읽혀 18.9:1 이 나왔다.
+    """
+    rows = [x for x in contrast_of(d_bg_alpha) if x["text"] == "보낼 돈을 고르세요"]
+    assert len(rows) == 1, texts_of(contrast_of(d_bg_alpha))
+    assert rows[0]["bg"] == "rgb(231, 231, 231)"
+    assert rows[0]["ratio"] < 1.5
+
+
+def test_the_bg_alpha_page_has_nothing_else_wrong(d_bg_alpha):
+    assert texts_of(contrast_of(d_bg_alpha)) == ["보낼 돈을 고르세요"]
+    assert d_bg_alpha["report"]["fatal"] == [], details(d_bg_alpha["report"]["fatal"])

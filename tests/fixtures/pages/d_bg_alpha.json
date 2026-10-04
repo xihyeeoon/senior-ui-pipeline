@@ -1,0 +1,22 @@
+{
+  "name": "d_bg_alpha",
+  "note": "검사 D 가 반투명 배경을 건너뛰고 불투명한 조상을 배경으로 쓰는 것을 재현한다. 걷지 않는다 - 색만 잰다.",
+  "derived_from_original": false,
+  "required_ids": [
+    "start"
+  ],
+  "steps": [
+    {
+      "screen": "start"
+    }
+  ],
+  "expect": {
+    "start": [
+      [
+        "#amt",
+        "{AMOUNT_SHOWN}"
+      ]
+    ]
+  },
+  "done_amount": "#amt"
+}

@@ -99,27 +99,34 @@ CONTRAST = r"""
   /* 알파가 든 색을 배경 위에 얹었을 때 눈에 닿는 색. */
   const over = (rgb, a, bg) =>
     [0, 1, 2].map(i => rgb[i] * a + bg[i] * (1 - a));
-  /* opacity 는 자손 전체에 곱해진다. 요소 자신의 것만 보면 opacity:.3 인 상자
-     안의 #111 글자가 #111 그대로 읽힌다 - 눈에는 #b8b8b8 로 보인다. */
-  const opacityOf = el => {
+  /* 글자 하나의 명암을 재려면 그 요소까지의 조상 사슬이 다 필요하다 - opacity
+     는 뿌리에서 곱해 내려오고, 배경은 뿌리에서부터 섞어 올라온다. 한 번만
+     걷고 두 가지에 함께 쓴다. 뿌리가 먼저 오는 순서로 돌려준다. */
+  const chainOf = el => {
+    const up = [];
+    for (let n = el; n && n.nodeType === 1; n = n.parentElement) up.push(n);
+    up.reverse();
     let o = 1;
-    for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
-      const v = parseFloat(getComputedStyle(n).opacity);
-      if (!isNaN(v)) o *= v;
-      if (o <= 0) return 0;
-    }
-    return o;
+    return up.map(n => {
+      const cs = getComputedStyle(n);
+      const v = parseFloat(cs.opacity);
+      o *= isNaN(v) ? 1 : v;
+      return { el: n, cs: cs, opacity: o };
+    });
   };
   const css = c => 'rgb(' + c.map(v => Math.round(v)).join(', ') + ')';
-  /* Climb until an ancestor paints something opaque; body/html default to white. */
-  const bgOf = el => {
-    let n = el;
-    while (n && n.nodeType === 1) {
-      const c = parse(getComputedStyle(n).backgroundColor);
-      if (c && c.a > 0.95) return c.rgb;
-      n = n.parentElement;
+  /* 글자 뒤에 실제로 깔린 색. 반투명 층을 건너뛰지 않고 뿌리에서부터 차례로
+     섞는다. 건너뛰고 "불투명한 조상" 을 찾으면 어두운 상자에 덮인 흰 베일이
+     없는 것처럼 되어, 그 위의 흰 글자가 "어두운 바탕 위의 흰 글자" 로 읽힌다.
+     바탕은 흰색이다 - 아무도 칠하지 않은 캔버스의 색. */
+  const bgOf = chain => {
+    let acc = [255, 255, 255];
+    for (const n of chain) {
+      const c = parse(n.cs.backgroundColor);
+      if (!c || c.a <= 0) continue;
+      acc = over(c.rgb, Math.min(1, c.a * n.opacity), acc);
     }
-    return [255, 255, 255];
+    return acc;
   };
   const ratio = (a, b) => {
     const l1 = lum(a), l2 = lum(b);
@@ -134,16 +141,17 @@ CONTRAST = r"""
     if (!own) return;
     const cs = getComputedStyle(el);
     if (cs.visibility === 'hidden' || cs.display === 'none') return;
-    /* 사실상 보이지 않는 글은 명암 결함이 아니다 - 글자색 알파와 같은 규칙. */
-    const op = opacityOf(el);
-    if (op < 0.05) return;
     const r = el.getBoundingClientRect();
     if (r.width < 1 || r.height < 1) return;
 
     const fg = parse(cs.color);
     /* 완전히 투명한 글자는 명암 결함이 아니라 안 보이는 글이다 - 다른 일이다. */
     if (!fg || fg.a < 0.05) return;
-    const bg = bgOf(el);
+    const chain = chainOf(el);
+    /* 사실상 보이지 않는 글은 명암 결함이 아니다 - 글자색 알파와 같은 규칙. */
+    const op = chain[chain.length - 1].opacity;
+    if (op < 0.05) return;
+    const bg = bgOf(chain);
     const seen = over(fg.rgb, fg.a * op, bg);
     const size = parseFloat(cs.fontSize);
     const weight = parseInt(cs.fontWeight, 10) || 400;
