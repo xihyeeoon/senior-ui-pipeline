@@ -377,3 +377,12 @@ def test_서버_모듈에_LAN_주소를_구하는_코드가_없다():
     assert "local_ip" not in src
     assert "New-NetFirewallRule" not in src
     assert '"0.0.0.0"' not in src
+
+
+# --------------------------------------------------------------------- #
+# 문서
+# --------------------------------------------------------------------- #
+def test_실험_안내_문서_맨_위에_쓰지_않는다는_표시가_있다():
+    p = os.path.join(_api.ROOT_DIR, "docs", "experiment-guide.md")
+    head = io.open(p, encoding="utf-8").readline().strip()
+    assert "Flutter" in head and "쓰지 않는다" in head, head

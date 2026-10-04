@@ -36,7 +36,7 @@ LLM 을 부르는 것은 재구성 루프 하나뿐이고, 키는 `.envs` 의 `O
 | Path | What | Tracked |
 |---|---|---|
 | `senior_ui/` | 이 프로젝트에서 쓴 코드 전부 — 재구성 루프, 검사기, 뷰어 색인, 실험 서버. 모두 `python -m senior_ui.…` 로 실행한다. | yes |
-| `web/` | 브라우저에서 열리는 것 — `dashboard.html`(내부 확인용 4화면), `session.html`(폰에서 쓰는 실험 진행 화면). | yes |
+| `web/` | 브라우저에서 열리는 것 — `dashboard.html`(내부 확인용 4화면), `session.html`(HTML 실험 장치 - 본실험에 쓰지 않는다. `--session` 을 줄 때만 서빙된다). | yes |
 | `flows/` | 흐름 파일. 검사기가 화면을 어떤 순서로 어떻게 몰고 다니는지의 명세. `original.json` 과 재구성본별 `restructured`·`run2`·`run3`·`run4`. | yes |
 | `inputs/` | 파이프라인이 읽는 것. `original_transfer.html` 이 8화면 이체 시제품이고 모든 갈래가 여기서 출발한다. `*.png` 는 실제 SOL 캡처라 추적하지 않는다 (실명이 보인다). | html 만 |
 | `kb/` | 재구성본 사후 대조용 규칙 46개. 생성에는 쓰지 않는다. | yes |
@@ -91,7 +91,7 @@ $env:PYTHONUTF8 = "1"
 ```powershell
 .\.venv\Scripts\python.exe -m senior_ui.viewer.build_index --print    # 뷰어 색인
 .\.venv\Scripts\python.exe -m senior_ui.collect_results               # outputs -> results
-.\.venv\Scripts\python.exe -m senior_ui.experiment.server             # 실험 서버 (또는 시작.bat)
+.\.venv\Scripts\python.exe -m senior_ui.experiment.server             # 대시보드 서버 (또는 시작.bat)
 .\.venv\Scripts\python.exe -m senior_ui.experiment.report             # 세션 집계
 ```
 
@@ -201,8 +201,9 @@ place the auditor already notes what it stood down.
 
 ## The viewer
 
-`시작.bat` (or `python -m senior_ui.experiment.server`) serves the project and
-opens **`web/dashboard.html`** - four pages for checking where things stand
+`시작.bat` (or `python -m senior_ui.experiment.server`) serves the dashboard on
+127.0.0.1 - and only what the dashboard reads - then opens
+**`web/dashboard.html`** - four pages for checking where things stand
 while working:
 
 | | |
