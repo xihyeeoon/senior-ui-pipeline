@@ -22,12 +22,53 @@ DOM_SCREEN = r"""
 """
 
 # --- inventory: what the current screen contains -----------------------------
+# `attr_text` 는 innerText 에 들어오지 않는, 그래도 눈에 닿는 글이다 -
+# placeholder · 입력칸의 현재 값 · alt · aria-label · title. 마크업에서 영어를
+# 찾는 쪽(checks/f_language.markup_words)도 이것들을 못 본다: 태그를 통째로
+# 걷어내므로 속성값이 함께 사라진다. 문서 전체에서 걷되 보이는 요소에서만
+# 걷는다 - 꺼진 화면의 입력칸은 사용자에게 닿지 않는다.
 INVENTORY = r"""
 () => {
   const s = document.querySelector('.screen.on') || document.body;
   const attr = (sel, a) => Array.from(s.querySelectorAll(sel))
                                 .map(e => e.getAttribute(a));
+  const visible = e => {
+    const cs = getComputedStyle(e);
+    if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+    if (+cs.opacity === 0) return false;
+    const r = e.getBoundingClientRect();
+    return r.width >= 1 && r.height >= 1;
+  };
+  const ATTRS = ['placeholder', 'alt', 'aria-label', 'title'];
+  const texts = [];
+  document.querySelectorAll('*').forEach(e => {
+    if (!visible(e)) return;
+    for (const a of ATTRS) {
+      const v = e.getAttribute(a);
+      if (v) texts.push(v);
+    }
+    const t = e.tagName.toLowerCase();
+    if ((t === 'input' || t === 'textarea') && e.value) texts.push(e.value);
+  });
+  /* 켜진 화면 밖에 떠 있는 것 - 모달·토스트·오버레이. 사용자 눈에는 화면 위에
+     덮여 있는데 켜진 화면의 innerText 에는 들어오지 않는다. 켜진 화면의 조상은
+     지나쳐 안으로 들어간다 (찾는 것은 켜진 화면의 형제다). 켜진 화면이 없으면
+     빈 값이다 - 그때 `text` 가 이미 body 전체를 담기 때문이다. */
+  const lit = document.querySelector('.screen.on');
+  const outside = [];
+  const walkOutside = el => {
+    for (const c of el.children) {
+      if (c === lit) continue;
+      if (c.contains(lit)) { walkOutside(c); continue; }
+      if (!visible(c)) continue;
+      const t = (c.innerText || '').trim();
+      if (t) outside.push(t);
+    }
+  };
+  if (lit) walkOutside(document.body);
   return {
+    attr_text: texts.join('\n'),
+    outside_text: outside.join('\n'),
     actions:  attr('[data-action]', 'data-action'),
     ids:      Array.from(s.querySelectorAll('[id]')).map(e => e.id),
     screens:  Array.from(document.querySelectorAll('[data-screen]'))
@@ -44,64 +85,164 @@ INVENTORY = r"""
 # Walks every element holding its own text, resolves the effective background by
 # climbing ancestors until something is opaque, and flags anything under
 # threshold - 3.0 for large text (>=24px, or >=18.66px bold), 4.5 otherwise.
+#
+# 재는 것은 선언된 색이 아니라 눈에 닿는 색이다. 글자색에 알파가 있으면 그
+# 알파만큼만 배경 위에 얹히므로, 선언된 색 그대로 재면 rgba(17,17,17,.25) 가
+# #111 로 읽혀 18.9:1 이 된다 - 실제로는 #c4c4c4 이고 1.75:1 이다.
 CONTRAST = r"""
 () => {
   const lum = c => {
     const f = v => { v /= 255; return v <= 0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4); };
     return 0.2126*f(c[0]) + 0.7152*f(c[1]) + 0.0722*f(c[2]);
   };
-  const parse = s => {
-    const m = (s||'').match(/rgba?\(([^)]+)\)/);
-    if (!m) return null;
-    const p = m[1].split(',').map(x => parseFloat(x.trim()));
-    return { rgb: [p[0], p[1], p[2]], a: p.length > 3 ? p[3] : 1 };
+  /* 색 하나를 sRGB 숫자로 바꾼다.
+
+     rgb()/rgba() 는 글자에서 바로 읽는다. 그 밖의 표기 - oklch() · lab() ·
+     color(srgb …) · color-mix() - 는 getComputedStyle 이 rgb 로 바꾸지 않고
+     적힌 모양 그대로 돌려주므로, canvas 에 1픽셀 찍어 읽는다. 브라우저가
+     칠할 수 있는 색이면 무엇이든 같은 길로 숫자가 된다.
+
+     흰 바탕과 검은 바탕에 각각 찍어 비교하면 알파까지 되돌릴 수 있다.
+     w = C*a + 255*(1-a), b = C*a 이므로 a = 1 - (w-b)/255, C = b/a 다.
+     한 바탕에만 찍고 getImageData 로 읽으면 알파를 곱해 저장한 값을 되돌리는
+     과정에서 옅은 색의 자리수가 깎인다. */
+  const cvs = document.createElement('canvas');
+  cvs.width = cvs.height = 1;
+  const cx = cvs.getContext('2d', { willReadFrequently: true });
+  const paint = (s, backdrop) => {
+    cx.fillStyle = backdrop; cx.fillRect(0, 0, 1, 1);
+    cx.fillStyle = s;        cx.fillRect(0, 0, 1, 1);
+    const d = cx.getImageData(0, 0, 1, 1).data;
+    return [d[0], d[1], d[2]];
   };
-  /* Climb until an ancestor paints something opaque; body/html default to white. */
-  const bgOf = el => {
-    let n = el;
-    while (n && n.nodeType === 1) {
-      const c = parse(getComputedStyle(n).backgroundColor);
-      if (c && c.a > 0.95) return c.rgb;
-      n = n.parentElement;
+  const rasterise = s => {
+    /* 칠할 수 없는 값은 fillStyle 이 앞 값을 그대로 둔다. 서로 다른 두 값에서
+       출발해 두 번 넣어 보면, 끝 값이 갈리는 것으로 걸러진다. */
+    cx.fillStyle = '#000000'; cx.fillStyle = s; const one = cx.fillStyle;
+    cx.fillStyle = '#ffffff'; cx.fillStyle = s;
+    if (one !== cx.fillStyle) return null;
+    const w = paint(s, '#ffffff'), b = paint(s, '#000000');
+    let a = 0;
+    for (let i = 0; i < 3; i++) a += 1 - (w[i] - b[i]) / 255;
+    a = Math.min(1, Math.max(0, a / 3));
+    if (a < 0.004) return { rgb: [0, 0, 0], a: 0 };
+    return { rgb: b.map(v => Math.min(255, v / a)), a: a };
+  };
+  const parse = s => {
+    const m = (s || '').match(/^rgba?\(([^)]+)\)$/);
+    if (m) {
+      const p = m[1].split(',').map(x => parseFloat(x.trim()));
+      if (p.length >= 3 && !p.some(isNaN))
+        return { rgb: [p[0], p[1], p[2]], a: p.length > 3 ? p[3] : 1 };
     }
-    return [255, 255, 255];
+    return rasterise(s);
+  };
+  /* 알파가 든 색을 배경 위에 얹었을 때 눈에 닿는 색. */
+  const over = (rgb, a, bg) =>
+    [0, 1, 2].map(i => rgb[i] * a + bg[i] * (1 - a));
+  /* 글자 하나의 명암을 재려면 그 요소까지의 조상 사슬이 다 필요하다 - opacity
+     는 뿌리에서 곱해 내려오고, 배경은 뿌리에서부터 섞어 올라온다. 한 번만
+     걷고 두 가지에 함께 쓴다. 뿌리가 먼저 오는 순서로 돌려준다. */
+  const chainOf = el => {
+    const up = [];
+    for (let n = el; n && n.nodeType === 1; n = n.parentElement) up.push(n);
+    up.reverse();
+    let o = 1;
+    return up.map(n => {
+      const cs = getComputedStyle(n);
+      const v = parseFloat(cs.opacity);
+      o *= isNaN(v) ? 1 : v;
+      return { el: n, cs: cs, opacity: o };
+    });
+  };
+  const css = c => 'rgb(' + c.map(v => Math.round(v)).join(', ') + ')';
+  /* 글자 뒤에 실제로 깔린 색. 반투명 층을 건너뛰지 않고 뿌리에서부터 차례로
+     섞는다. 건너뛰고 "불투명한 조상" 을 찾으면 어두운 상자에 덮인 흰 베일이
+     없는 것처럼 되어, 그 위의 흰 글자가 "어두운 바탕 위의 흰 글자" 로 읽힌다.
+     바탕은 흰색이다 - 아무도 칠하지 않은 캔버스의 색.
+
+     배경이 색 하나가 아닌 층(그라디언트·이미지)을 만나면 뒤에 무슨 색이
+     깔렸는지 알 수 없다. 그때는 색을 돌려주지 않고 `unknown` 을 세운다 -
+     통과도 저명암도 아닌 "판정 불가" 다. CSS 는 한 요소에서 배경색을 먼저
+     칠하고 그 위에 이미지를 얹으므로, 이미지가 있으면 그 층의 색은 가려진다.
+     반대로 불투명한 색을 칠한 층은 아래에 무엇이 있든 덮으므로 거기서 다시
+     판정할 수 있게 된다. */
+  const bgOf = chain => {
+    let acc = [255, 255, 255], unknown = null;
+    for (const n of chain) {
+      const c = parse(n.cs.backgroundColor);
+      if (c && c.a > 0) {
+        const a = Math.min(1, c.a * n.opacity);
+        if (a > 0.999) { acc = c.rgb; unknown = null; }   /* 아래를 덮었다 */
+        else acc = over(c.rgb, a, acc);
+      }
+      const img = n.cs.backgroundImage;
+      if (img && img !== 'none') {
+        unknown = { background: img.slice(0, 80),
+                    behind: n.el.tagName.toLowerCase()
+                            + (n.el.getAttribute('class')
+                               ? '.' + n.el.getAttribute('class').split(/\s+/)[0]
+                               : '') };
+      }
+    }
+    return { rgb: acc, unknown: unknown };
   };
   const ratio = (a, b) => {
     const l1 = lum(a), l2 = lum(b);
     return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
   };
 
-  const out = [];
+  const out = [], undet = [];
   document.querySelectorAll('*').forEach(el => {
     /* only elements holding their own text */
     const own = Array.from(el.childNodes)
       .filter(n => n.nodeType === 3).map(n => n.textContent.trim()).join(' ').trim();
     if (!own) return;
     const cs = getComputedStyle(el);
-    if (cs.visibility === 'hidden' || cs.display === 'none' || +cs.opacity === 0) return;
+    if (cs.visibility === 'hidden' || cs.display === 'none') return;
     const r = el.getBoundingClientRect();
     if (r.width < 1 || r.height < 1) return;
 
     const fg = parse(cs.color);
-    if (!fg || fg.a < 0.1) return;
-    const bg = bgOf(el);
+    /* 완전히 투명한 글자는 명암 결함이 아니라 안 보이는 글이다 - 다른 일이다. */
+    if (!fg || fg.a < 0.05) return;
+    const chain = chainOf(el);
+    /* 사실상 보이지 않는 글은 명암 결함이 아니다 - 글자색 알파와 같은 규칙. */
+    const op = chain[chain.length - 1].opacity;
+    if (op < 0.05) return;
+    const back = bgOf(chain);
     const size = parseFloat(cs.fontSize);
     const weight = parseInt(cs.fontWeight, 10) || 400;
     const large = size >= 24 || (size >= 18.66 && weight >= 700);
     const need = large ? 3.0 : 4.5;
-    const cr = ratio(fg.rgb, bg);
+    if (back.unknown) {
+      undet.push({
+        text: own.slice(0, 40),
+        tag: el.tagName.toLowerCase(),
+        cls: (el.getAttribute('class') || '').slice(0, 40),
+        color: cs.color,
+        fontSize: Math.round(size * 10) / 10, need,
+        background: back.unknown.background, behind: back.unknown.behind
+      });
+      return;
+    }
+    const bg = back.rgb;
+    const seen = over(fg.rgb, fg.a * op, bg);
+    const cr = ratio(seen, bg);
     if (cr < need) {
       out.push({
         text: own.slice(0, 40),
         tag: el.tagName.toLowerCase(),
         cls: (el.getAttribute('class') || '').slice(0, 40),
-        color: cs.color, bg: 'rgb(' + bg.join(', ') + ')',
+        color: cs.color, seen: css(seen), bg: css(bg),
+        opacity: Math.round(op * 1000) / 1000,
         fontSize: Math.round(size * 10) / 10,
         ratio: Math.round(cr * 100) / 100, need
       });
     }
   });
-  return out;
+  /* 두 칸으로 나눠 돌려준다. 판정 불가를 빈 자리로 돌려주면 통과와 같아진다. */
+  return { low: out, undetermined: undet };
 }
 """
 
@@ -216,10 +357,30 @@ OVERFLOW = r"""
 # --- E3: text that now wraps onto more lines than it used to ------------------
 # The recipient navbar does not overlap by rect - it just wraps inside a bar of
 # fixed height, which is what makes it unreadable.
+#
+# 줄 수는 글이 실제로 그려진 줄 상자를 세어 얻는다. 상자 높이를 줄 높이로 나누면
+# 여백과 테두리가 그 높이에 들어 있으므로, 여백만 붙은 한 줄이 두 줄로 읽힌다 -
+# 위아래 여백 12px 인 버튼은 전부 두 줄이 된다. Range 로 텍스트 노드를 감싸면
+# getClientRects() 가 줄마다 사각형을 돌려주므로 그것을 센다.
 WRAPPED = r"""
 () => {
   const s = document.querySelector('.screen.on');
   if (!s) return null;      /* 켜진 화면이 없다 - 잴 수 없었다는 뜻이다 */
+  /* 한 줄이 여러 조각으로 쪼개져 올 수 있으므로 윗변이 같은 것끼리 묶는다.
+     자기 글만 센다 - 자식 요소의 줄은 그 자식의 줄이다. */
+  const range = document.createRange();
+  const lineCount = el => {
+    const tops = [];
+    for (const node of el.childNodes) {
+      if (node.nodeType !== 3 || !node.textContent.trim()) continue;
+      range.selectNodeContents(node);
+      for (const r of range.getClientRects()) {
+        if (r.width < 1 || r.height < 1) continue;
+        if (!tops.some(t => Math.abs(t - r.top) < 2)) tops.push(r.top);
+      }
+    }
+    return tops.length;
+  };
   const out = [];
   s.querySelectorAll('*').forEach(el => {
     const own = Array.from(el.childNodes)
@@ -227,9 +388,7 @@ WRAPPED = r"""
     if (!own) return;
     const cs = getComputedStyle(el);
     if (cs.display === 'none' || cs.visibility === 'hidden') return;
-    let lh = parseFloat(cs.lineHeight);
-    if (!lh || isNaN(lh)) lh = parseFloat(cs.fontSize) * 1.2;
-    const lines = Math.round(el.getBoundingClientRect().height / lh);
+    const lines = lineCount(el);
     if (lines >= 2) {
       out.push({
         text: own.slice(0, 30),
@@ -243,21 +402,46 @@ WRAPPED = r"""
 }
 """
 
+# --- 스타일시트의 규칙을 하나하나 (중첩까지) -----------------------------------
+# @media · @supports · @layer · @container 안의 규칙도 규칙이다. cssRules 를 한
+# 겹만 돌면 그 블록들은 selectorText 가 없으므로 그냥 지나쳐지고, 그 안에서만
+# 정의한 클래스는 "아무 스타일시트도 정의하지 않는다"(H) 가 되고 그 안에서만
+# 적은 `.x.on` 은 상태 쌍으로 집히지 않는다(G). 그래서 재귀로 돈다.
+#
+# @keyframes 안의 규칙은 selectorText 가 아니라 keyText (`0%`) 이므로 들어가도
+# 걸리는 것이 없다. 들어가지 않는 쪽이 뜻이 분명하므로 건너뛴다.
+# @import 는 그 안에 또 하나의 스타일시트가 있다 - 같은 규칙으로 들어간다.
+EACH_RULE = r"""
+  const eachRule = (fn) => {
+    const walk = (rules) => {
+      for (const r of rules || []) {
+        if (r.type === CSSRule.KEYFRAMES_RULE) continue;
+        if (r.styleSheet) {                    /* @import */
+          try { walk(r.styleSheet.cssRules); } catch (e) { /* 읽을 수 없다 */ }
+          continue;
+        }
+        if (r.selectorText) fn(r);
+        if (r.cssRules) walk(r.cssRules);
+      }
+    };
+    for (const sheet of document.styleSheets) {
+      let rs;
+      try { rs = sheet.cssRules; } catch (e) { continue; }
+      walk(rs);
+    }
+  };
+"""
+
+
 # --- H: classes the markup uses that no stylesheet defines --------------------
 # example1 produced `bg-primary` / `text-primary`; this run produced `sr-only`.
 # Both render as if the class were never written, which is how a "hidden" label
 # ends up on screen.
-UNDEFINED_CLASSES = r"""
-() => {
+UNDEFINED_CLASSES = "() => {" + EACH_RULE + r"""
   const defined = new Set();
-  for (const sheet of document.styleSheets) {
-    let rs;
-    try { rs = sheet.cssRules; } catch (e) { continue; }
-    for (const r of rs) {
-      if (!r.selectorText) continue;
-      for (const m of r.selectorText.matchAll(/\.([A-Za-z0-9_-]+)/g)) defined.add(m[1]);
-    }
-  }
+  eachRule(r => {
+    for (const m of r.selectorText.matchAll(/\.([A-Za-z0-9_-]+)/g)) defined.add(m[1]);
+  });
   const used = new Map();
   document.querySelectorAll('[class]').forEach(el => {
     const screen = el.closest('[data-screen]');
@@ -283,15 +467,10 @@ UNDEFINED_CLASSES = r"""
 # --- G: does a state class still change how the element looks? ----------------
 # Probes `.x` against `.x.on` with real elements so `#0046FF` and
 # `var(--blue-deep)` compare equal, the way the eye sees them.
-STATE_PAIRS = r"""
-() => {
+STATE_PAIRS = "() => {" + EACH_RULE + r"""
   const STATES = ['on', 'act', 'active', 'selected', 'checked', 'disabled'];
   const rules = [];
-  for (const sheet of document.styleSheets) {
-    let rs;
-    try { rs = sheet.cssRules; } catch (e) { continue; }
-    for (const r of rs) if (r.selectorText && r.style) rules.push(r);
-  }
+  eachRule(r => { if (r.style) rules.push(r); });
   const out = [];
   const seen = new Set();
   for (const r of rules) {

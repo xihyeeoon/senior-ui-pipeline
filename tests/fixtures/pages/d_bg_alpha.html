@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 D - 반투명 배경을 건너뛴다</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  .card{background:#111; padding:12px;}
+  .veil{background:rgba(255, 255, 255, 0.9); padding:12px;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- 흰 글자가 어두운 상자(.card #111) 안에 있지만, 그 사이에 거의 불투명한
+     흰 베일(.veil 알파 0.9)이 덮여 있다. 글자 뒤에 실제로 깔린 색은 #e7e7e7
+     이고 흰 글자의 명암비는 1.23:1 - 읽을 수 없다.
+
+     반투명 층을 건너뛰고 "불투명한 조상" 을 찾으면 배경이 #111 로 읽혀
+     18.9:1 이 되어 통과한다. 알파 0.9 는 건너뛰는 경계(0.95)보다 낮다. -->
+<section class="screen on" data-screen="start" id="start">
+  <div class="card">
+    <div class="veil">
+      <p style="color:#ffffff">보낼 돈을 고르세요</p>
+    </div>
+  </div>
+  <p id="amt" style="color:#111">10,000원</p>
+  <button data-action="noop" style="color:#111">확인</button>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'noop') { /* 이 페이지는 걷지 않는다 */ }
+});
+</script>
+</body>
+</html>

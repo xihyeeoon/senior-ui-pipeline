@@ -173,15 +173,20 @@ finding):
 
 ```powershell
 .\.venv\Scripts\python.exe -m senior_ui.audit.report `
-   Run1=results\audit_restructured.v2.json Run2=results\audit_run2.v2.json `
-   Run3=results\audit_run3.v2.json Run4=results\audit_run4.v2.json `
+   Run1=results\audit_restructured.v3.json Run2=results\audit_run2.v3.json `
+   Run3=results\audit_run3.v3.json Run4=results\audit_run4.v3.json `
    --details --out results\audit-report.md
 ```
 
-The `.v2.json` reports are the four runs re-audited after the counting fixes
-(`fix/audit-counting`). The files without `.v2` are what the auditor said before
-those fixes and are kept as they were - their `fatal_total` is 0 even where the
-fatal list is not empty, which is the bug the fixes removed.
+Run 4 is audited at the wireframe stage (`--stage wireframe`); the other three
+use the default, styled. Each run keeps the stage its earlier report used.
+
+The `.v3.json` reports are the four runs re-audited after the screen-measurement
+and robustness fixes (`fix/audit-accuracy-2`); they are the current numbers. The
+`.v2.json` ones are from after the counting fixes (`fix/audit-counting`), and the
+files without a suffix are older still - their `fatal_total` is 0 even where the
+fatal list is not empty, which is the bug those fixes removed. All three are kept
+as they were.
 
 Known gaps, both real: it cannot tell that `☆` labelled "선택됨" is factually
 inverted (that needs a declared class↔label mapping), and it has no

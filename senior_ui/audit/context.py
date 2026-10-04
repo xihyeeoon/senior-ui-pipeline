@@ -29,11 +29,20 @@ class AuditContext:
     derived: bool
     want: list
     shared: list
+    # 방문 이름 -> 그 방문이 가리키는 화면 이름. 같은 화면을 두 번 지나는 흐름
+    # 에서 둘이 갈라진다 ("review#2" -> "review"). 페이지가 스스로 말하는 이름과
+    # 견줄 때는 화면 이름을 써야 한다 - 페이지는 방문 횟수를 모른다.
+    screen_of: dict = field(default_factory=dict)
     fatal: list = field(default_factory=list)
     warning: list = field(default_factory=list)
     metrics: dict = field(default_factory=dict)
     skipped: list = field(default_factory=list)
     stopped_at: str = None
+
+    def screen(self, visit):
+        """방문 이름이 가리키는 화면 이름. 모르는 이름은 그대로 돌려준다 -
+        손으로 만든 스냅샷으로 도는 테스트가 그렇다."""
+        return self.screen_of.get(visit, visit)
 
     def fatal_(self, check, screen, detail, **kw):
         self.fatal.append(dict(check=check, screen=screen, detail=detail, **kw))

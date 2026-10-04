@@ -44,12 +44,18 @@
 
 **표의 fatal 수치는 그 판정을 받은 시점 기준이다.** Run 1·2·3 의 `fatal 0` 은
 검사 I(선택지 보존, `b2db795`)가 생기기 전의 값이다. 지금 검사기로 다시 걸으면
-셋 다 I 에서 fatal 1건이 난다 (원본 `pick-bank` 67개 중 58개 누락) — 측정값은
-`tests/baseline/` 에 있고 근거는 `tests/README.md` 에 적혀 있다. Run 4 의 두 수치는
+셋 다 I 에서 fatal 3건이 난다 (원본 `pick-bank` 67개 중 58개, `quick` 4개 중 1개,
+`num` 11개 중 1개 누락) — 측정값은 `tests/baseline/` 에 있고 근거는
+`tests/README.md` 에 적혀 있다. Run 4 의 두 수치는
 `results/audit_run4.json`(당시)과 `results/audit_run4.recheck.json`(집계 버그를
-고치기 전의 재검사)이다. 네 run 의 지금 수치는 `results/audit_*.v2.json` 에 있다 —
-fatal 목록은 그 전과 같고 `fatal_total`·`fatal_root` 만 맞게 세어졌다
-(Run 1·2·3 은 1, Run 4 는 2).
+고치기 전의 재검사)이다. **네 run 의 지금 수치는 `results/audit_*.v3.json` 에 있다**
+(Run 1·2·3 은 fatal 3 · warning 3, Run 4 는 fatal 2 · warning 8). Run 1·2·3 의
+warning 3 은 검사 D 가 기준에 못 미치는 글자를 하나씩 적은 것이다 — 눌릴 수 없는
+'다음' 버튼 둘(2.52:1)과 금액 자리의 '0원'(2.61:1)이고 셋 다 3.0:1 이 필요하다.
+`.v2.json` 은 그 앞 단계의
+기록이고 `fix/audit-accuracy-1` 이전 수치이므로 더 이상 지금 수치가 아니다 —
+그 커밋들에서 검사 I 가 낱말 단위로 찾게 되면서 Run 1·2·3 의 fatal 이 1 에서 3 으로
+늘었다.
 
 마지막 코드 변경: **2026-10-01 코드 정리** — DesignRepair 시기 파일 삭제, `tools/`
 를 `senior_ui/` 패키지와 `web/`·`flows/` 로 이동, 큰 함수 분리. 동작은 바꾸지
@@ -158,15 +164,20 @@ git log --oneline -3
 .\.venv\Scripts\python.exe -m senior_ui.audit --flow flows\restructured.json `
    --build http://localhost:3003/results/restructured_transfer.html `
    --build-file results\restructured_transfer.html
-# 지금 기준의 기대값: fatal 1 (검사 I 선택지 보존), fatal_total 1, warning 0, exit 1
+# 지금 기준의 기대값: fatal 3 (검사 I 선택지 보존), fatal_total 3,
+#                     warning 3 (검사 D 기준 미달 대비), exit 1
 
 # 네 빌드를 한 표로 (JSON 은 사람이 못 읽는다)
 .\.venv\Scripts\python.exe -m senior_ui.audit.report `
-   Run1=results\audit_restructured.v2.json Run2=results\audit_run2.v2.json `
-   Run3=results\audit_run3.v2.json Run4=results\audit_run4.v2.json `
+   Run1=results\audit_restructured.v3.json Run2=results\audit_run2.v3.json `
+   Run3=results\audit_run3.v3.json Run4=results\audit_run4.v3.json `
    --details --out results\audit-report.md
 ```
 
-`.v2.json` 은 집계 버그를 고친 뒤(`fix/audit-counting`) 네 run 을 다시 검사한
-것이다. `.v2` 가 없는 파일은 고치기 전 검사기가 낸 것이고 그대로 남겨 둔다 -
-fatal 목록은 비어 있지 않은데 `fatal_total` 이 0 인, 그 버그 자체의 기록이다.
+Run 4 는 와이어프레임 단계로 검사한다 (`--stage wireframe`). 나머지 셋은 기본값인
+styled 다 - 각 run 은 앞선 리포트와 같은 단계를 쓴다.
+
+`.v3.json` 은 화면 측정과 실행 견고성을 고친 뒤(`fix/audit-accuracy-2`) 다시
+검사한 것이다. `.v2.json` 은 집계 버그를 고친 뒤(`fix/audit-counting`)의 기록이고,
+`.v2` 가 없는 파일은 그보다 더 앞이다 - fatal 목록은 비어 있지 않은데
+`fatal_total` 이 0 인, 그 버그 자체의 기록이다. 셋 다 덮어쓰지 않고 남겨 둔다.

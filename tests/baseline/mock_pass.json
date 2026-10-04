@@ -12,7 +12,7 @@
       "stage": "audit",
       "passed": false,
       "fatal": 3,
-      "warning": 0
+      "warning": 3
     }
   ],
   "passed": false,

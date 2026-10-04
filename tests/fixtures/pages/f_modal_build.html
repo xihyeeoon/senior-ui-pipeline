@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 F - 켜진 화면 밖의 모달 (빌드)</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  .modal{position:fixed; left:16px; right:16px; top:40%; background:#fff;
+         color:#111; padding:16px; border:1px solid #767676;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<section class="screen on" data-screen="start" id="start">
+  <p>보낼 돈을 고르세요</p>
+  <p id="amt">10,000원</p>
+  <div><button data-action="noop">확인</button></div>
+</section>
+<!-- 켜진 화면 밖에 떠 있는 모달. .screen 이 아니므로 켜진 화면의 innerText 에
+     들어오지 않는다 - 그런데 사용자 눈에는 화면 위에 덮여 있다. 글은 스크립트가
+     넣으므로 마크업에서 찾는 쪽도 보지 못한다 (script 블록은 걷어낸다). -->
+<div class="modal"><p id="msg"></p></div>
+<script>
+document.getElementById('msg').textContent = 'Transfer failed. Please retry.';
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'noop') { /* 이 페이지는 걷지 않는다 */ }
+});
+</script>
+</body>
+</html>

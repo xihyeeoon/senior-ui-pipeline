@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 D - 새 설계에서는 돌지 않고, 남의 화면과 견준다</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  .faint{color:#c9c9c9;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- 두 가지를 한 페이지에서 재현한다.
+
+     1) 흐린 상자 안의 글자는 자기 색이 없다. 상속받은 #c9c9c9 는 흰 배경에서
+        1.65:1 이라 읽히지 않는다 - 색이 없어서 사라진 라벨이다. 상속 색 검사가
+        짝이 되는 원본 화면에서만 돌았으므로, 새 설계에서는 그 짝이 늘 비어
+        아예 돌지 않았다.
+
+     2) 별표 자리의 글은 원본 쪽 페이지의 같은 태그·클래스 자리에 '별표' 가 있고
+        여기에는 '선택됨' 이 있다. 이름만 같은 남의 화면과 견주면 "저대비 요소에
+        글이 늘었다" 는 거짓 경보가 난다 - 두 설계의 그 클래스는 아무 관계가
+        없다. -->
+<section class="screen on" data-screen="start" id="start">
+  <div class="faint"><span>선택됨</span></div>
+  <p class="st" style="color:#c9c9c9">선택됨</p>
+  <p id="amt" style="color:#111">10,000원</p>
+  <div><button data-action="noop" style="color:#111">확인</button></div>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'noop') { /* 이 페이지는 걷지 않는다 */ }
+});
+</script>
+</body>
+</html>

@@ -72,9 +72,9 @@ def read_page(name):
     return io.open(page_path(name), encoding="utf-8").read()
 
 
-def run_audit(flow_file, rep_page, orig_page=None, orig_flow_file=None,
-              orig_html=None):
-    """fixture 페이지를 실제로 걷고 audit() 을 돌려 리포트를 돌려준다.
+def drive_and_audit(flow_file, rep_page, orig_page=None, orig_flow_file=None,
+                    orig_html=None):
+    """fixture 페이지를 실제로 걷고, 긁어 온 것과 리포트를 함께 돌려준다.
 
     `orig_page` 를 주지 않으면 생성물 페이지를 원본으로도 쓴다. 그러면 원본
     대비 비교(D·E·F·G·H·I)가 전부 빈 결과가 되어, 재현하려는 검사의 fatal 만
@@ -94,9 +94,15 @@ def run_audit(flow_file, rep_page, orig_page=None, orig_flow_file=None,
             page_url(orig_page), _api.load_flow(page_path(orig_flow_file
                                                           or flow_file))))
         html_of_orig = read_page(orig_page)
-    return _api.audit(orig, rep,
-                      html_of_orig if orig_html is None else orig_html,
-                      rep_html, flow)
+    report = _api.audit(orig, rep,
+                        html_of_orig if orig_html is None else orig_html,
+                        rep_html, flow)
+    return {"orig": orig, "rep": rep, "report": report}
+
+
+def run_audit(*a, **kw):
+    """리포트만 보면 되는 검사용. 대부분의 테스트가 이것을 쓴다."""
+    return drive_and_audit(*a, **kw)["report"]
 
 
 def fatals(report, check=None):
@@ -467,3 +473,547 @@ def test_the_boundary_rule_follows_the_characters_in_the_value():
     # 숫자 - 영문 글자가 붙은 것은 다른 토막이다 (색 코드의 00 은 숫자판이 아니다)
     assert not present("00", "<script>'#6B5B00'</script>")
     assert present("00", '<b data-v="00">')
+
+
+# ===================================================================== #
+# 5. 명암비가 눈에 보이는 색이 아니라 선언된 색을 잰다
+# ===================================================================== #
+# probes.CONTRAST 는 화면에 매이지 않고 문서 전체를 훑으므로, 꺼진 화면의 글은
+# 사각형이 0 이어서 저절로 빠진다. 아래 페이지들은 켜진 화면 하나만 둔다.
+def contrast_of(res, screen="start"):
+    return res["rep"]["screens"][screen]["contrast"]
+
+
+def undetermined_of(res, screen="start"):
+    return res["rep"]["screens"][screen]["contrast_undetermined"]
+
+
+def texts_of(rows):
+    return sorted(x["text"] for x in rows)
+
+
+@pytest.fixture(scope="module")
+def d_alpha(server):
+    return drive_and_audit("d_alpha.json", "d_alpha.html")
+
+
+def test_a_translucent_text_colour_is_measured_as_it_looks(d_alpha):
+    """rgba(17,17,17,0.25) 는 흰 배경에서 #c4c4c4 로 보인다 - 1.75:1 이다.
+
+    고치기 전: 알파를 버리고 #111 로 재어 18.9:1 이 나왔다. 글자가 거의
+    보이지 않는데 가장 선명한 글로 세졌다.
+    """
+    rows = [x for x in contrast_of(d_alpha) if x["text"] == "보낼 돈을 고르세요"]
+    assert len(rows) == 1, texts_of(contrast_of(d_alpha))
+    assert rows[0]["ratio"] < 2.0
+    assert rows[0]["need"] == 4.5
+
+
+def test_the_alpha_page_has_nothing_else_wrong(d_alpha):
+    """같은 페이지의 읽히는 글은 걸리지 않는다 - 알파를 세기 시작했다고 멀쩡한
+    글까지 잡으면 거짓 경보를 새로 만든 것이다."""
+    assert texts_of(contrast_of(d_alpha)) == ["보낼 돈을 고르세요"]
+    assert d_alpha["report"]["fatal"] == [], details(d_alpha["report"]["fatal"])
+
+
+@pytest.fixture(scope="module")
+def d_opacity(server):
+    return drive_and_audit("d_opacity.json", "d_opacity.html")
+
+
+def test_an_ancestors_opacity_reaches_the_text(d_opacity):
+    """opacity:0.3 인 상자 안의 #111 글자는 #b8b8b8 로 보인다 - 1.99:1 이다.
+
+    고치기 전: 요소 자신의 opacity 만 보았다. 글자 쪽은 opacity 1 이므로
+    #111 그대로 18.9:1 이 나왔다 - 흐려진 것을 보지 못했다.
+    """
+    rows = [x for x in contrast_of(d_opacity) if x["text"] == "보낼 돈을 고르세요"]
+    assert len(rows) == 1, texts_of(contrast_of(d_opacity))
+    assert rows[0]["ratio"] < 2.5
+    assert rows[0]["opacity"] == 0.3
+
+
+def test_the_opacity_page_has_nothing_else_wrong(d_opacity):
+    assert texts_of(contrast_of(d_opacity)) == ["보낼 돈을 고르세요"]
+    assert d_opacity["report"]["fatal"] == [], details(d_opacity["report"]["fatal"])
+
+
+@pytest.fixture(scope="module")
+def d_modern_colour(server):
+    return drive_and_audit("d_modern_colour.json", "d_modern_colour.html")
+
+
+def test_an_oklch_colour_is_measured(d_modern_colour):
+    """oklch(0.85 0.03 250) 은 rgb(192, 208, 225) 다 - 흰 배경에서 1.57:1.
+
+    고치기 전: getComputedStyle 이 적힌 모양 그대로 돌려주고 rgba?() 글자만
+    읽었으므로 "색을 알 수 없다" 가 되어 요소째로 검사에서 빠졌다.
+    """
+    rows = [x for x in contrast_of(d_modern_colour)
+            if x["text"] == "보낼 돈을 고르세요"]
+    assert len(rows) == 1, texts_of(contrast_of(d_modern_colour))
+    assert rows[0]["ratio"] < 2.0
+    assert rows[0]["seen"] == "rgb(192, 208, 225)"
+
+
+def test_a_color_srgb_colour_is_measured(d_modern_colour):
+    """color(srgb 0.8 0.82 0.85) 도 같은 길로 숫자가 된다."""
+    rows = [x for x in contrast_of(d_modern_colour)
+            if x["text"] == "받는 분을 고르세요"]
+    assert len(rows) == 1, texts_of(contrast_of(d_modern_colour))
+    assert rows[0]["ratio"] < 2.0
+    assert rows[0]["seen"] == "rgb(204, 209, 217)"
+
+
+def test_the_modern_colour_page_has_nothing_else_wrong(d_modern_colour):
+    assert texts_of(contrast_of(d_modern_colour)) == ["받는 분을 고르세요",
+                                                      "보낼 돈을 고르세요"]
+    assert d_modern_colour["report"]["fatal"] == [], \
+        details(d_modern_colour["report"]["fatal"])
+
+
+@pytest.fixture(scope="module")
+def d_bg_alpha(server):
+    return drive_and_audit("d_bg_alpha.json", "d_bg_alpha.html")
+
+
+def test_a_translucent_background_is_mixed_in(d_bg_alpha):
+    """#111 상자에 알파 0.9 흰 베일이 덮이면 실제 배경은 #e7e7e7 이다.
+    그 위의 흰 글자는 1.23:1 이다.
+
+    고치기 전: 알파 0.95 미만인 층을 건너뛰고 불투명한 조상(#111)을 배경으로
+    썼다. 흰 글자가 "어두운 바탕 위의 흰 글자" 로 읽혀 18.9:1 이 나왔다.
+    """
+    rows = [x for x in contrast_of(d_bg_alpha) if x["text"] == "보낼 돈을 고르세요"]
+    assert len(rows) == 1, texts_of(contrast_of(d_bg_alpha))
+    assert rows[0]["bg"] == "rgb(231, 231, 231)"
+    assert rows[0]["ratio"] < 1.5
+
+
+def test_the_bg_alpha_page_has_nothing_else_wrong(d_bg_alpha):
+    assert texts_of(contrast_of(d_bg_alpha)) == ["보낼 돈을 고르세요"]
+    assert d_bg_alpha["report"]["fatal"] == [], details(d_bg_alpha["report"]["fatal"])
+
+
+@pytest.fixture(scope="module")
+def d_gradient(server):
+    return drive_and_audit("d_gradient.json", "d_gradient.html")
+
+
+def test_text_on_a_gradient_is_undetermined_not_passing(d_gradient):
+    """그라디언트 위의 글자는 잴 수 없다 - 왼쪽과 오른쪽의 바탕이 다르다.
+
+    고치기 전: backgroundColor 가 rgba(0,0,0,0) 이라 투명으로 읽히고 배경이
+    흰색으로 올라가, 검은 글자가 18.9:1 로 통과했다.
+    """
+    rows = [x for x in undetermined_of(d_gradient)
+            if x["text"] == "보낼 돈을 고르세요"]
+    assert len(rows) == 1, undetermined_of(d_gradient)
+    assert "gradient" in rows[0]["background"]
+    assert texts_of(contrast_of(d_gradient)) == []
+
+
+def test_text_on_a_background_image_is_undetermined(d_gradient):
+    """이미지 위도 같다 - 무슨 색이 깔렸는지 알 수 없다."""
+    rows = [x for x in undetermined_of(d_gradient)
+            if x["text"] == "받는 분을 고르세요"]
+    assert len(rows) == 1, undetermined_of(d_gradient)
+    assert "url(" in rows[0]["background"]
+
+
+def test_an_opaque_layer_over_a_gradient_can_be_judged(d_gradient):
+    """그라디언트를 불투명한 색으로 덮으면 아래가 무엇이든 가려진다 -
+    판정 불가가 아니라 그 색으로 잰다. 넓게 포기하면 판정 불가가 통과의 새
+    이름이 될 뿐이다."""
+    assert texts_of(undetermined_of(d_gradient)) == ["받는 분을 고르세요",
+                                                     "보낼 돈을 고르세요"]
+
+
+def test_undetermined_is_counted_apart_from_low_contrast(d_gradient):
+    """통과도 저명암도 아닌 세 번째 칸으로 센다."""
+    m = d_gradient["report"]["metrics"]
+    assert m["contrast_undetermined"] == 2
+    assert m["low_contrast_after"] == 0
+    hit = [w for w in d_gradient["report"]["warning"]
+           if w["check"] == "D" and "판정할 수 없다" in w["detail"]]
+    assert len(hit) == 2, details(d_gradient["report"]["warning"])
+
+
+# ===================================================================== #
+# 6. 검사 F 가 innerText 에 들어오는 글만 본다
+# ===================================================================== #
+@pytest.fixture(scope="module")
+def f_attrs(server):
+    return run_audit("f_attrs.json", "f_attrs_build.html",
+                     orig_page="f_attrs_orig.html")
+
+
+def warnings_of(report, check=None, source=None):
+    return [w for w in report["warning"]
+            if (check is None or w.get("check") == check)
+            and (source is None or w.get("source") == source)]
+
+
+def test_english_in_attributes_is_found(f_attrs):
+    """placeholder · 입력값 · alt · aria-label · title 도 눈에 닿는 글이다.
+
+    고치기 전: warning 0건. innerText 에는 들어오지 않고, 마크업에서 찾는
+    쪽은 태그를 통째로 걷어내므로 속성값이 함께 사라졌다 - 화면이 영어로
+    뒤덮여도 검사 F 는 할 말이 없었다.
+    """
+    hit = warnings_of(f_attrs, "F", "attribute")
+    assert len(hit) == 1, details(f_attrs["warning"])
+    assert sorted(hit[0]["words"]) == ["Account", "Bank", "Confirm", "Recipient",
+                                       "Transfer", "fee", "logo", "number",
+                                       "transfer"]
+
+
+def test_korean_attributes_raise_nothing(f_attrs):
+    """원본과 같은 자리의 한글은 새 영어가 아니다 - 속성을 보기 시작했다고
+    멀쩡한 속성까지 잡으면 거짓 경보를 새로 만든 것이다."""
+    assert warnings_of(f_attrs, "F", "runtime") == []
+    assert warnings_of(f_attrs, "F", "markup") == []
+    assert f_attrs["fatal"] == [], details(f_attrs["fatal"])
+
+
+@pytest.fixture(scope="module")
+def f_modal(server):
+    return run_audit("f_modal.json", "f_modal_build.html",
+                     orig_page="f_modal_orig.html")
+
+
+def test_english_on_a_modal_outside_the_lit_screen_is_found(f_modal):
+    """화면 위에 덮인 모달도 사용자가 읽는 글이다.
+
+    고치기 전: warning 0건. 켜진 화면의 innerText 에는 모달이 들어오지 않고,
+    글을 스크립트가 넣으므로 마크업에서 찾는 쪽도 보지 못했다.
+    """
+    hit = warnings_of(f_modal, "F", "offscreen")
+    assert len(hit) == 1, details(f_modal["warning"])
+    assert hit[0]["screen"] == "start"
+    assert sorted(hit[0]["words"]) == ["Please", "Transfer", "failed", "retry"]
+
+
+def test_the_modal_page_raises_nothing_else(f_modal):
+    assert warnings_of(f_modal, "F", "runtime") == []
+    assert warnings_of(f_modal, "F", "markup") == []
+    assert f_modal["fatal"] == [], details(f_modal["fatal"])
+
+
+# ===================================================================== #
+# 7. 검사 D 가 새 설계에서 이름만 같은 화면과 견준다
+# ===================================================================== #
+@pytest.fixture(scope="module")
+def d_newdesign(server):
+    return run_audit("d_newdesign.json", "d_newdesign.html",
+                     orig_page="d_newdesign_orig.html")
+
+
+def stood_down(report, letter):
+    return [s for s in report["metrics"]["checks_stood_down"]
+            if s.startswith(letter + "/")]
+
+
+def test_inherited_colour_runs_on_a_new_design(d_newdesign):
+    """자기 색이 없어서 읽히지 않는 라벨은 새 설계에서도 걸려야 한다.
+
+    고치기 전: 상속 색 검사가 shared 화면에서만 돌았다. 새 설계에서는 shared 가
+    늘 비어 있으므로 아예 돌지 않았다 - 색이 없어 사라진 라벨이 통과했다.
+    """
+    hit = [w for w in warnings_of(d_newdesign, "D") if "상속" in w["detail"]]
+    assert len(hit) == 1, details(d_newdesign["warning"])
+    assert hit[0]["screen"] == "start"
+    assert hit[0]["cls"] == ""
+    assert hit[0]["tag"] == "span"
+    assert d_newdesign["metrics"]["inherited_colour_unreadable"] == 1
+
+
+def test_gained_text_does_not_compare_unrelated_screens(d_newdesign):
+    """'start' 라는 이름이 같다고 같은 화면이 아니다.
+
+    고치기 전: gained-text 비교가 want 전체에서 돌아, 원본의 .st(장식 ☆)와
+    빌드의 .st(선택됨)를 견주고 "저대비 요소에 글이 늘었다" 고 했다 - 두
+    설계의 .st 는 아무 관계가 없다.
+    """
+    assert d_newdesign["metrics"]["low_contrast_gained_text"] == 0
+    assert [w for w in warnings_of(d_newdesign, "D")
+            if "gained" in w["detail"]] == [], details(d_newdesign["warning"])
+
+
+def test_the_count_comparison_stands_down_with_its_reason(d_newdesign):
+    """하지 않은 비교는 조용히 사라지면 안 된다 - 이유를 적는다."""
+    down = stood_down(d_newdesign, "D")
+    assert len(down) == 2, down
+    assert any("저명암 개수" in s for s in down)
+    assert any("gained-text" in s for s in down)
+    assert d_newdesign["metrics"]["low_contrast_before"] is None
+    assert d_newdesign["metrics"]["low_contrast_after"] == 2
+
+
+def test_the_new_design_page_has_nothing_else_wrong(d_newdesign):
+    """이 페이지의 저대비 요소는 둘이다 - 색을 물려받은 것과 별표 자리의 것.
+    기준 미달은 하나씩 적으므로 경고도 둘이고, 그 둘뿐이어야 한다."""
+    assert len(warnings_of(d_newdesign, "D")) == 2, details(d_newdesign["warning"])
+    assert d_newdesign["fatal"] == [], details(d_newdesign["fatal"])
+
+
+# ===================================================================== #
+# 8. 검사 H·G 가 @media·@supports·@layer 안의 규칙을 보지 않는다
+# ===================================================================== #
+@pytest.fixture(scope="module")
+def hg_nested(server):
+    return run_audit("hg_nested.json", "hg_nested.html",
+                     orig_page="hg_nested_orig.html")
+
+
+def test_classes_defined_inside_nested_blocks_are_defined(hg_nested):
+    """@media · @supports · @layer 안에서 정의한 클래스도 정의된 것이다.
+
+    고치기 전: H 경고 3건. cssRules 를 한 겹만 돌아서 조건 블록은 "선택자가
+    없는 규칙" 으로 지나쳐졌고, 멀쩡한 클래스 셋이 전부 "아무 스타일시트도
+    정의하지 않는다" 로 걸렸다.
+    """
+    assert warnings_of(hg_nested, "H") == [], details(hg_nested["warning"])
+    assert hg_nested["metrics"]["undefined_classes_new"] == []
+
+
+def test_state_pairs_inside_nested_blocks_are_checked(hg_nested):
+    """조건 블록 안의 `.x.on` 도 상태 쌍이다.
+
+    고치기 전: 짝을 집어 들지 못해 state_pairs_checked 가 1 (`.screen.on` 하나)
+    이었다. 고른 칩이 안 고른 칩과 똑같이 보여도 검사 G 는 할 말이 없었다.
+    """
+    assert hg_nested["metrics"]["state_pairs_checked"] == 2
+    hit = warnings_of(hg_nested, "G")
+    assert len(hit) == 1, details(hg_nested["warning"])
+    assert hit[0]["base"] == ".chip"
+    assert hit[0]["state"] == "on"
+
+
+def test_the_nested_page_has_nothing_else_wrong(hg_nested):
+    assert hg_nested["fatal"] == [], details(hg_nested["fatal"])
+    assert len(hg_nested["warning"]) == 1, details(hg_nested["warning"])
+
+
+# ===================================================================== #
+# 9. 검사 E 가 줄 수를 상자 높이로 센다
+# ===================================================================== #
+@pytest.fixture(scope="module")
+def e_lines(server):
+    return drive_and_audit("e_lines.json", "e_lines_build.html",
+                           orig_page="e_lines_orig.html")
+
+
+def wrapped_of(res, screen="start"):
+    return {x["cls"]: x["lines"] for x in res["rep"]["screens"][screen]["wrapped"]}
+
+
+def test_padding_does_not_make_a_second_line(e_lines):
+    """위아래 여백이 붙은 한 줄은 한 줄이다.
+
+    고치기 전: 상자 높이(getBoundingClientRect)를 줄 높이로 나눴다. 여백과
+    테두리가 그 높이에 들어 있으므로, 여백 14px 만 붙은 한 줄이 두 줄로 읽혀
+    "전에는 줄바꿈이 없었는데 이제 생겼다" 는 거짓 경보가 났다.
+    """
+    assert "padded" not in wrapped_of(e_lines)
+    assert [w for w in e_lines["report"]["warning"]
+            if w.get("check") == "E" and "padded" in (w["detail"] or "")] == []
+
+
+def test_text_that_really_wraps_is_still_counted(e_lines):
+    """정말로 넘어간 줄은 그대로 센다 - 여백을 빼기 시작했다고 진짜 줄바꿈까지
+    놓치면 검사를 끈 것이다."""
+    assert wrapped_of(e_lines)["long"] == 2
+    hit = [w for w in e_lines["report"]["warning"]
+           if w.get("check") == "E" and w.get("lines")]
+    assert len(hit) == 1, details(e_lines["report"]["warning"])
+    assert hit[0]["lines"] == 2
+    assert e_lines["report"]["metrics"]["newly_wrapped_text"] == 1
+
+
+def test_the_lines_page_has_nothing_else_wrong(e_lines):
+    assert e_lines["report"]["fatal"] == [], details(e_lines["report"]["fatal"])
+    assert len(e_lines["report"]["warning"]) == 1, \
+        details(e_lines["report"]["warning"])
+
+
+# ===================================================================== #
+# 10. 걷기가 전환을 고정 시간만 기다린다
+# ===================================================================== #
+@pytest.fixture(scope="module")
+def drive_slow(server):
+    return run_audit("drive_slow.json", "drive_slow.html")
+
+
+def test_a_slow_transition_is_waited_for(drive_slow):
+    """1.2초 걸리는 전환은 결함이 아니다 - 조회를 기다리는 설계에 흔한 일이다.
+
+    고치기 전: 누른 뒤 0.45초만 기다리고 긁었다. 아직 앞 화면에 서 있으므로
+    "landed on 'start' instead" 와 "#amt is missing" 두 건이 났다 - 둘 다
+    거짓 경보다.
+    """
+    assert drive_slow["fatal"] == [], details(drive_slow["fatal"])
+    assert drive_slow["passed"] is True
+    assert drive_slow["metrics"]["screens_landed_on"]["done"] == {
+        "hook": "done", "dom": "done"}
+
+
+@pytest.fixture(scope="module")
+def drive_dialog_late(server):
+    return run_audit("drive_dialog_late.json", "drive_dialog_late.html")
+
+
+def test_a_dialog_raised_as_the_walk_ends_is_still_caught(drive_dialog_late):
+    """마지막 화면에 도착한 뒤 0.12초 늦게 뜨는 alert 도 길을 막는 대화상자다.
+
+    고치기 전: fatal 0건. 걷기가 끝나자마자 브라우저를 닫으므로 대화상자가
+    아예 뜨지 못했다. 닫는 동안에는 타이머가 돌지 않는다 - 노출된 틈은 마지막
+    화면을 긁은 뒤 20ms 쯤이다 (측정).
+
+    걷는 중에 뜨는 대화상자는 전에도 잡혔다. 대화상자가 뜨면 페이지의 JS 가
+    멈추므로 다음 evaluate 가 끝나지 않고 그 사이에 처리기가 돈다.
+    """
+    hit = [f for f in fatals(drive_dialog_late, "B") if "blocking" in f["detail"]]
+    assert len(hit) == 1, details(drive_dialog_late["fatal"])
+    assert hit[0]["screen"] == "done"
+    assert "보내기 결과를 확인하세요" in hit[0]["detail"]
+    assert drive_dialog_late["metrics"]["dialogs_during_task"] == 1
+
+
+# ===================================================================== #
+# 11. 같은 화면을 두 번 지나면 두 번째 방문이 첫 번째를 덮어쓴다
+# ===================================================================== #
+@pytest.fixture(scope="module")
+def visit_twice(server):
+    return drive_and_audit("visit_twice.json", "visit_twice.html")
+
+
+def test_each_visit_is_kept_in_order(visit_twice):
+    """방문은 순서대로 남는다 - 첫 방문은 화면 이름 그대로, 그다음은 `#2`."""
+    assert list(visit_twice["rep"]["screens"]) == ["start", "detail",
+                                                   "start#2", "done"]
+    assert visit_twice["report"]["metrics"]["screens_in_flow"] == [
+        "start", "detail", "start#2", "done"]
+
+
+def test_the_first_visit_is_not_overwritten_by_the_second(visit_twice):
+    """첫 방문의 틀린 금액은 사용자가 실제로 본 것이다.
+
+    고치기 전: 두 번째 방문이 `screens['start']` 를 덮어썼다. 돌아왔을 때는
+    금액이 고쳐져 있으므로 검사 B 는 통과했다 - 사용자가 틀린 값을 보고 지나간
+    화면이 아무도 보지 못한 일이 됐다.
+    """
+    hit = [f for f in fatals(visit_twice["report"], "B")
+           if f.get("selector") == "#amt"]
+    assert len(hit) == 1, details(visit_twice["report"]["fatal"])
+    assert hit[0]["screen"] == "start"
+    assert hit[0]["got"] == "9,000원"
+
+
+def test_the_second_visit_passes_on_its_own(visit_twice):
+    """두 번째 방문은 고쳐진 값을 보여 준다 - 방문마다 따로 판정한다."""
+    assert [f for f in fatals(visit_twice["report"], "B")
+            if f.get("screen") == "start#2"] == []
+    assert len(visit_twice["report"]["fatal"]) == 1, \
+        details(visit_twice["report"]["fatal"])
+
+
+# ===================================================================== #
+# 12. 새 설계에서 기준 미달 대비를 아무도 말하지 않는다
+# ===================================================================== #
+@pytest.fixture(scope="module")
+def d_below(server):
+    return drive_and_audit("d_below.json", "d_below.html")
+
+
+@pytest.fixture(scope="module")
+def d_below_derived(server):
+    return run_audit("d_below_derived.json", "d_below.html")
+
+
+def test_text_under_the_threshold_is_warned_one_by_one(d_below):
+    """3.25:1 짜리 안내문은 4.5:1 이 필요하다 - 읽을 수 없는 글이다.
+
+    고치기 전: warning 0건. 새 설계에서는 개수의 전후 비교가 물러나고 그 자리에
+    아무 말도 남지 않았으므로, 기준 미달인 글자가 조용히 통과했다.
+    """
+    hit = [w for w in warnings_of(d_below["report"], "D")
+           if w.get("ratio") and "흐린 안내문" in w["detail"]]
+    assert len(hit) == 1, details(d_below["report"]["warning"])
+    w = hit[0]
+    assert w["screen"] == "start"
+    assert w["tag"] == "p"
+    assert 3.0 < w["ratio"] < 3.5
+    assert w["need"] == 4.5
+    assert w["color"] == "rgb(138, 143, 152)"
+    assert w["bg"] == "rgb(255, 255, 255)"
+
+
+def test_the_threshold_is_kept_per_element(d_below):
+    """같은 색의 26px 큰 글씨는 3.0:1 만 넘으면 된다 - 같은 3.25:1 로 통과한다.
+    요소마다 경계를 지키지 않으면 멀쩡한 큰 글씨까지 잡는다."""
+    assert [w for w in warnings_of(d_below["report"], "D")
+            if "큰 글씨" in w["detail"]] == [], details(d_below["report"]["warning"])
+    assert texts_of(contrast_of(d_below)) == ["물려받은 색입니다", "흐린 안내문입니다"]
+
+
+def test_an_unreadable_inherited_colour_is_one_warning_not_two(d_below):
+    """자기 색이 없어서 읽히지 않는 글자는 결함 하나다. 기준 미달 경고와 상속
+    경고를 따로 내면 결함 하나가 경고 둘이 된다 - 상속이라는 사실을 그 경고에
+    함께 담는다."""
+    hit = [w for w in warnings_of(d_below["report"], "D")
+           if "물려받은 색" in w["detail"]]
+    assert len(hit) == 1, details(d_below["report"]["warning"])
+    assert hit[0]["inherited"] is True
+    assert "색을 정해 주는 규칙이 없다" in hit[0]["detail"]
+    assert d_below["report"]["metrics"]["inherited_colour_unreadable"] == 1
+    assert len(warnings_of(d_below["report"], "D")) == 2, \
+        details(d_below["report"]["warning"])
+
+
+def test_a_derived_build_is_unchanged(d_below_derived):
+    """원본에서 파생된 빌드의 동작은 바뀌지 않는다. 같은 페이지를 원본으로도
+    쓰면 전후 비교는 아무것도 찾지 못하고, 요소별 경고도 나지 않는다 - 그
+    경고는 비교가 물러난 자리를 메우는 것이기 때문이다."""
+    assert warnings_of(d_below_derived, "D") == [], \
+        details(d_below_derived["warning"])
+    assert d_below_derived["metrics"]["low_contrast_before"] == 2
+    assert d_below_derived["metrics"]["low_contrast_after"] == 2
+    assert d_below_derived["metrics"]["new_inherited_colour"] == 0
+    assert d_below_derived["fatal"] == [], details(d_below_derived["fatal"])
+
+
+# ===================================================================== #
+# 13. 검사 F 의 마크업 검사가 주석을 걷어내지 못한다
+# ===================================================================== #
+@pytest.fixture(scope="module")
+def f_comment(server):
+    return run_audit("f_comment.json", "f_comment_build.html",
+                     orig_page="f_comment_orig.html")
+
+
+def test_english_inside_a_comment_is_not_new_english(f_comment):
+    """주석은 파일에만 있는 글이 아니라 아예 글이 아니다 - 브라우저가 읽지 않는다.
+
+    고치기 전: markup_words() 가 `<[^>]+>` 로 태그를 걷어내는 것만 했다. 주석
+    안에 `>` 가 있으면 (`->` 처럼) 주석이 거기서 끊기고 그 뒤가 문서의 글로
+    남아, "마크업에만 있는 새 영어" 로 잡혔다 - Shuffle · Password · Reset.
+    """
+    assert warnings_of(f_comment, "F", "markup") == [], details(f_comment["warning"])
+    assert f_comment["metrics"]["new_english_words_markup_only"] == []
+
+
+def test_the_comment_page_raises_nothing_else(f_comment):
+    assert warnings_of(f_comment, "F") == [], details(f_comment["warning"])
+    assert f_comment["fatal"] == [], details(f_comment["fatal"])
+
+
+def test_markup_english_outside_a_comment_is_still_found():
+    """주석을 걷어내기 시작했다고 진짜 마크업의 영어까지 놓치면 검사를 끈 것이다.
+    브라우저가 필요 없는 규칙이므로 여기서 직접 본다."""
+    from senior_ui.audit.checks.f_language import markup_words
+    assert markup_words("<p>Shuffle</p>") == {"Shuffle"}
+    assert markup_words("<!-- a -> Shuffle -->") == set()
+    assert markup_words("<!-- <script>x</script> Shuffle -->") == set()
+    assert markup_words("<script>var Shuffle = 1;</script>") == set()
+    assert markup_words("<!-- a --> Shuffle") == {"Shuffle"}

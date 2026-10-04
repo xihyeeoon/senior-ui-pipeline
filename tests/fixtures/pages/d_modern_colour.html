@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 D - rgb() 가 아닌 색 표기를 읽지 못한다</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- getComputedStyle 은 oklch() · color(srgb …) 를 rgb 로 바꾸지 않고 적힌
+     모양 그대로 돌려준다. rgba?() 글자만 읽으면 둘 다 "색을 알 수 없다" 가
+     되어 요소째로 검사에서 빠진다 - 아무리 옅어도 통과한다.
+
+       oklch(0.85 0.03 250)        -> rgb(192, 208, 225)  흰 배경에서 1.57:1
+       color(srgb 0.8 0.82 0.85)   -> rgb(204, 209, 217)  흰 배경에서 1.51:1 -->
+<section class="screen on" data-screen="start" id="start">
+  <p style="color:oklch(0.85 0.03 250)">보낼 돈을 고르세요</p>
+  <p style="color:color(srgb 0.8 0.82 0.85)">받는 분을 고르세요</p>
+  <p id="amt" style="color:#111">10,000원</p>
+  <button data-action="noop" style="color:#111">확인</button>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'noop') { /* 이 페이지는 걷지 않는다 */ }
+});
+</script>
+</body>
+</html>

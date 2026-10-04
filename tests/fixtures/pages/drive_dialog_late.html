@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>걷기 - 끝나고 뜨는 대화상자</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- 마지막 화면에 도착한 뒤 0.12초 늦게 alert 이 뜬다. 보내기 결과를 뒤늦게
+     알리는 설계에서 흔한 모양이고, 과업 중에 길을 막는 대화상자이므로 검사 B
+     가 적어야 하는 결함이다.
+
+     걷는 중에 뜨는 대화상자는 저절로 잡힌다 - 대화상자가 뜨면 페이지의 JS 가
+     멈추므로 다음 evaluate 가 끝나지 않고 그 사이에 처리기가 돈다. 노출된
+     자리는 마지막 화면을 긁은 뒤부터 브라우저를 닫기까지의 짧은 틈이다.
+     측정해 보면 그 틈은 20ms 쯤이고, 닫는 동안에는 타이머가 돌지 않는다.
+     그래서 0.12초면 대화상자가 아예 뜨지 못한 채 브라우저가 닫힌다. -->
+<section class="screen on" data-screen="start" id="start">
+  <p>보낼 돈을 고르세요</p>
+  <div><button data-action="go-next">다음</button></div>
+</section>
+<section class="screen" data-screen="done" id="done">
+  <p id="amt">10,000원</p>
+  <div><button data-action="noop">확인</button></div>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'go-next') {
+    document.getElementById('start').classList.remove('on');
+    document.getElementById('done').classList.add('on');
+    window.__task.screen = 'done';
+    setTimeout(() => alert('보내기 결과를 확인하세요'), 120);
+  }
+  if (a === 'noop') { /* 아무것도 안 한다 */ }
+});
+</script>
+</body>
+</html>

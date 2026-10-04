@@ -7,10 +7,14 @@ import asyncio
 import os
 import re
 
+from playwright.async_api import TimeoutError as PlaywrightTimeout
 from playwright.async_api import async_playwright
 
 from . import probes as P
-from .flow import fill
+from .flow import fill, visit_keys
+
+# 방문 이름의 `#` 는 파일 이름에서는 쓰지 않는다 (URL 에서 조각 구분자다).
+SHOT_SAFE = re.compile(r"[^0-9A-Za-z_.-]")
 
 # A `%s`-bearing attribute selector, e.g. the [data-v='%s'] in
 # "[data-action='acc-num'][data-v='%s']". Dropping it leaves the selector that
@@ -71,6 +75,38 @@ async def run_actions(page, spec, notes=None):
             await page.click(fill(item["click"]))
             if item.get("wait"):
                 await asyncio.sleep(float(item["wait"]))
+
+
+# 한 걸음 뒤 기대 화면이 켜지기를 기다리는 최대 시간.
+#
+# 전에는 걸음마다 0.45초를 고정으로 쉬었다. 그 수는 두 가지를 한꺼번에 틀린다 -
+# 전환이 그보다 느린 설계(조회를 기다리거나 전환을 천천히 보여 주는 것)에서는
+# 아직 앞 화면에 서 있는 것을 긁어 "엉뚱한 화면에 도착했다" 는 거짓 경보가 나고,
+# 전환이 즉시 끝나는 설계에서는 화면 수만큼 그냥 기다린다.
+#
+# 이제 기대 화면이 켜지는 것을 보고 넘어간다. 이 값은 그러므로 "이만큼 기다려도
+# 안 켜지면 안 켜지는 것이다" 이고, 다 되면 그대로 긁는다 - 못 켜진 것은 검사 A
+# 가 적을 일이고, 여기서 예외를 내면 "검사하지 못했다" 가 되어 결함을 감춘다.
+SETTLE_TIMEOUT_MS = 3000
+
+# 기록(window.__screen())과 화면(`.screen.on`)이 둘 다 그 이름이어야 켜진 것이다.
+# 화면만 보고 넘어가면 기록이 늦게 따라오는 설계에서 옛 이름을 긁는다. 기록 훅이
+# 아예 없는 빌드는 화면만 본다 - 훅이 없다는 것 자체는 검사 A 가 적는다.
+SCREEN_IS = """name => {
+  const s = document.querySelector('.screen.on');
+  if (!s || (s.dataset.screen || null) !== name) return false;
+  if (typeof window.__screen !== 'function') return true;
+  return window.__screen() === name;
+}"""
+
+
+async def settle(page, name, timeout_ms=SETTLE_TIMEOUT_MS):
+    """기대 화면이 켜질 때까지 기다린다. 켜졌으면 True, 시간이 다 되면 False."""
+    try:
+        await page.wait_for_function(SCREEN_IS, arg=name, timeout=timeout_ms)
+        return True
+    except PlaywrightTimeout:
+        return False
 
 
 SELECTOR_IN_ERROR = re.compile(r'waiting for locator\("([^"]+)"\)')
@@ -140,9 +176,28 @@ SHOWN = """sels => {
 }"""
 
 
+# 걷기를 끝낸 뒤 늦게 뜨는 dialog 에게 주는 틈.
+#
+# 걷는 중에 뜨는 dialog 는 저절로 잡힌다 - dialog 가 뜨면 페이지의 JS 가 멈추
+# 므로 다음 evaluate 가 끝나지 않고, 그 사이에 처리기가 돈다. 노출된 자리는
+# 마지막 화면을 긁은 뒤부터 브라우저를 닫기까지의 틈이고, 재어 보면 20ms 쯤이다.
+# 닫는 동안에는 타이머가 돌지 않으므로 그 뒤에 예정된 alert 은 아예 뜨지 못한다.
+# 보내기 결과를 뒤늦게 알리는 설계의 alert 이 바로 거기서 사라진다.
+#
+# 걸음마다 쉬던 0.45초가 전에는 이 틈을 우연히 덮고 있었다. 그 sleep 을 걷어낸
+# 자리에, 끝에서 한 번만 주는 이 틈을 둔다 - 기다리는 대상이 화면이 아니라
+# dialog 이므로 기대 화면을 보고 넘어가는 방식으로는 대신할 수 없다.
+DIALOG_GRACE_MS = 400
+
+
 def attach_listeners(page, data):
     """JS 오류와 dialog 를 `data` 에 모은다. 둘 다 언제 올지 모르므로, 걷기를
-    시작하기 전에 붙여 둔다."""
+    시작하기 전에 붙여 둔다.
+
+    dialog 처리기는 코루틴이므로 task 가 된다. 그 task 들을 돌려준다 - 붙잡지
+    않으면 아무도 기다리지 않는 task 가 되어, 브라우저를 닫는 순간 기록도 되지
+    않고 예외도 아무도 읽지 않는다 (drain_dialogs 참고).
+    """
     def on_pageerror(e):
         # 메시지만 남기면 "S is not defined" 뿐이라 어디를 고칠지 알 수 없다.
         # stack 에 파일과 줄 번호가 들어 있으므로 함께 보관한다.
@@ -154,14 +209,33 @@ def attach_listeners(page, data):
         })
     page.on("pageerror", on_pageerror)
 
+    tasks = []
+
     async def on_dialog(d):
         data["dialogs"].append({"screen": data["reached"][-1] if data["reached"]
                                 else "?", "type": d.type, "message": d.message})
         await d.dismiss()
-    page.on("dialog", lambda d: asyncio.ensure_future(on_dialog(d)))
+    page.on("dialog", lambda d: tasks.append(asyncio.ensure_future(on_dialog(d))))
+    return tasks
 
 
-async def collect_screen(page, flow, name, reached=None):
+async def drain_dialogs(tasks, grace_ms=DIALOG_GRACE_MS):
+    """브라우저를 닫기 전에 남은 dialog 를 처리한다.
+
+    먼저 늦게 뜰 dialog 에게 틈을 준다 (DIALOG_GRACE_MS 의 설명 참고). 그다음
+    만들어진 처리기 task 가 전부 끝나기를 기다린다 - 처리 중에 또 뜰 수 있으므로
+    새 task 가 없을 때까지 돈다. 다섯 바퀴로 끊는다: 끝없이 대화상자를 띄우는
+    페이지에서 영원히 머무르지 않게 한다.
+    """
+    await asyncio.sleep(grace_ms / 1000.0)
+    for _ in range(5):
+        pending = [t for t in tasks if not t.done()]
+        if not pending:
+            break
+        await asyncio.gather(*pending, return_exceptions=True)
+
+
+async def collect_screen(page, flow, visit, reached=None):
     """한 화면에 도착한 뒤의 상태를 전부 긁어 하나의 row 로 돌려준다.
 
     `reached` 를 주면 __screen() 의 답을 긁기 직전에 거기에 먼저 적는다. 걷는
@@ -181,13 +255,19 @@ async def collect_screen(page, flow, name, reached=None):
            "dom_screen": await page.evaluate(P.DOM_SCREEN)}
     row.update(await page.evaluate(P.INVENTORY))
     row["choices"] = await page.evaluate(P.CHOICE_GROUPS)
-    row["contrast"] = await page.evaluate(P.CONTRAST)
+    # CONTRAST 는 두 칸으로 돌려준다 - 잰 것과 잴 수 없었던 것. 한 칸으로
+    # 합치면 그라디언트 위의 글자가 "저명암 아님" 과 구분되지 않는다.
+    contrast = await page.evaluate(P.CONTRAST)
+    row["contrast"] = contrast["low"]
+    row["contrast_undetermined"] = contrast["undetermined"]
     row["inherited"] = await page.evaluate(P.INHERITED_COLOUR)
     row["overlap"] = await page.evaluate(P.OVERLAP)
     row["overflow"] = await page.evaluate(P.OVERFLOW)
     row["wrapped"] = await page.evaluate(P.WRAPPED)
+    # expect 는 방문 이름으로 적는다 - 화면 이름만 적으면 첫 방문이다
+    # (flow.visit_keys 참고).
     row["shown"] = await page.evaluate(
-        SHOWN, [fill(s) for s, _ in flow["expect"].get(name, [])])
+        SHOWN, [fill(s) for s, _ in flow["expect"].get(visit, [])])
     return row
 
 
@@ -199,42 +279,54 @@ async def drive(url, flow, want_shots=None):
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch()
-        page = await browser.new_page(viewport={"width": 390, "height": 844})
-        attach_listeners(page, data)
-
+        # 띄운 브라우저는 무슨 일이 있어도 닫는다. 걷는 중에 예외가 나면 전에는
+        # 닫히지 않은 chromium 이 그대로 남았다.
         try:
-            await page.goto(url, wait_until="networkidle")
-        except Exception as e:
-            data["load_failed"] = "%s: %s" % (type(e).__name__, e)
+            page = await browser.new_page(viewport={"width": 390, "height": 844})
+            tasks = attach_listeners(page, data)
+            await walk(page, flow, data, want_shots, url)
+            await drain_dialogs(tasks)
+        finally:
             await browser.close()
-            return data
-
-        data["missing_ids"] = await page.evaluate(
-            "ids => ids.filter(i => !document.getElementById(i))",
-            flow["required_ids"])
-        data["state_pairs"] = await page.evaluate(P.STATE_PAIRS)
-        data["undefined_classes"] = await page.evaluate(P.UNDEFINED_CLASSES)
-
-        for step in flow["steps"]:
-            name = step["screen"]
-            try:
-                if "do" in step:
-                    await run_actions(page, step["do"], data["notes"])
-                elif "click" in step:
-                    await run_actions(page, {"click": step["click"]}, data["notes"])
-            except Exception as e:
-                msg = "%s: %s" % (type(e).__name__, e)
-                hint = await where_is(page, msg)
-                if hint:
-                    msg += " || " + hint
-                data["screens"][name] = {"error": msg}
-                break
-            await asyncio.sleep(0.45)
-
-            data["screens"][name] = await collect_screen(
-                page, flow, name, data["reached"])
-            if want_shots:
-                await page.screenshot(path=os.path.join(
-                    want_shots, "audit_%s.png" % name))
-        await browser.close()
     return data
+
+
+async def walk(page, flow, data, want_shots, url):
+    """한 페이지를 흐름대로 걷는다. 브라우저의 생명은 drive() 가 쥐고 있다."""
+    try:
+        await page.goto(url, wait_until="networkidle")
+    except Exception as e:
+        data["load_failed"] = "%s: %s" % (type(e).__name__, e)
+        return
+
+    data["missing_ids"] = await page.evaluate(
+        "ids => ids.filter(i => !document.getElementById(i))",
+        flow["required_ids"])
+    data["state_pairs"] = await page.evaluate(P.STATE_PAIRS)
+    data["undefined_classes"] = await page.evaluate(P.UNDEFINED_CLASSES)
+
+    for step, visit in zip(flow["steps"], visit_keys(flow["steps"])):
+        name = step["screen"]
+        try:
+            if "do" in step:
+                await run_actions(page, step["do"], data["notes"])
+            elif "click" in step:
+                await run_actions(page, {"click": step["click"]}, data["notes"])
+        except Exception as e:
+            msg = "%s: %s" % (type(e).__name__, e)
+            hint = await where_is(page, msg)
+            if hint:
+                msg += " || " + hint
+            data["screens"][visit] = {"error": msg}
+            break
+        if not await settle(page, name):
+            data["notes"].append(
+                "flow: %r 화면이 %dms 안에 켜지지 않았다. 그 상태로 긁는다 - "
+                "무엇이 켜져 있었는지는 검사 A 가 적는다."
+                % (name, SETTLE_TIMEOUT_MS))
+
+        data["screens"][visit] = await collect_screen(
+            page, flow, visit, data["reached"])
+        if want_shots:
+            await page.screenshot(path=os.path.join(
+                want_shots, "audit_%s.png" % SHOT_SAFE.sub("_", visit)))

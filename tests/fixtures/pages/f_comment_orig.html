@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 F - 주석에 화살표가 없는 원본</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- 이 주석에는 꺾쇠가 없다. 그래서 태그를 걷어내는 정규식이 주석 전체를 태그
+     하나로 삼켜 통째로 지운다. -->
+<section class="screen on" data-screen="start" id="start">
+  <p>보낼 돈을 고르세요</p>
+  <p id="amt">10,000원</p>
+  <div><button data-action="noop">확인</button></div>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'noop') { /* 이 페이지는 걷지 않는다 */ }
+});
+</script>
+</body>
+</html>

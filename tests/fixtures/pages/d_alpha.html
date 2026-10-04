@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 D - 글자색의 알파를 세지 않는다</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- 글자색이 rgba(17,17,17,0.25) 다. 흰 배경에 얹히면 실제로 보이는 색은
+     #c4c4c4 이고 명암비는 1.75:1 - 읽을 수 없다. 알파를 세지 않으면 #111 로
+     읽혀 18.9:1 이 되어 통과한다.
+
+     색은 전부 inline 으로 적는다. 상속 색 검사(INHERITED_COLOUR)에 걸리지 않게
+     해서 이 페이지가 재현하는 것이 명암비 하나만 되게 한다. -->
+<section class="screen on" data-screen="start" id="start">
+  <p style="color:rgba(17, 17, 17, 0.25)">보낼 돈을 고르세요</p>
+  <p id="amt" style="color:#111">10,000원</p>
+  <button data-action="noop" style="color:#111">확인</button>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'noop') { /* 이 페이지는 걷지 않는다 */ }
+});
+</script>
+</body>
+</html>

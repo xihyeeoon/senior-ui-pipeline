@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>검사 F - 속성에 적힌 영어 (빌드)</title>
+<style>
+  body{background:#fff; color:#111; font-size:18px; margin:0; padding:16px;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  input{font-size:18px; padding:8px; color:#111; background:#fff; border:1px solid #767676;}
+  button{background:#F1F3F7; color:#111; border:0; padding:12px; font-size:18px;}
+</style>
+</head>
+<body>
+<!-- placeholder · 입력값 · alt · aria-label · title 은 눈에 닿는 글인데
+     innerText 에 들어오지 않는다. 태그 안에 있으므로 마크업에서 영어를 찾는
+     쪽(markup_words)도 보지 못한다 - 태그를 통째로 걷어내기 때문이다. -->
+<section class="screen on" data-screen="start" id="start">
+  <p>보낼 돈을 고르세요</p>
+  <input id="acc" placeholder="Account number">
+  <input id="who" value="Recipient">
+  <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Bank logo" width="24" height="24">
+  <div><button data-action="noop" aria-label="Confirm transfer">확인</button></div>
+  <div><span title="Transfer fee">수수료</span></div>
+  <p id="amt">10,000원</p>
+</section>
+<script>
+window.__task = {screen: 'start'};
+window.__screen = () => window.__task.screen;
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'noop') { /* 이 페이지는 걷지 않는다 */ }
+});
+</script>
+</body>
+</html>

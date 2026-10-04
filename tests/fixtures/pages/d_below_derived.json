@@ -1,0 +1,22 @@
+{
+  "name": "d_below_derived",
+  "note": "같은 페이지를 원본에서 파생된 빌드로 검사한다. 원본과 빌드가 같은 페이지이므로 전후 비교는 아무것도 찾지 못해야 하고, 요소별 경고도 나지 않아야 한다 - derived=true 의 동작이 바뀌지 않았다는 확인이다.",
+  "derived_from_original": true,
+  "required_ids": [
+    "start"
+  ],
+  "steps": [
+    {
+      "screen": "start"
+    }
+  ],
+  "expect": {
+    "start": [
+      [
+        "#amt",
+        "{AMOUNT_SHOWN}"
+      ]
+    ]
+  },
+  "done_amount": "#amt"
+}

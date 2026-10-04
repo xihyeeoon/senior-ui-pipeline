@@ -1,0 +1,23 @@
+{
+  "name": "f_modal",
+  "note": "검사 F 가 켜진 화면 밖에 떠 있는 모달의 영어를 보지 못하는 것을 재현한다. 모달의 글은 스크립트가 넣는다 - 마크업에서 찾는 쪽도 보지 못하게 해서 재현하는 것이 하나만 되게 한다.",
+  "derived_from_original": false,
+  "required_ids": [
+    "start",
+    "msg"
+  ],
+  "steps": [
+    {
+      "screen": "start"
+    }
+  ],
+  "expect": {
+    "start": [
+      [
+        "#amt",
+        "{AMOUNT_SHOWN}"
+      ]
+    ]
+  },
+  "done_amount": "#amt"
+}
