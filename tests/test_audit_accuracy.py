@@ -637,3 +637,40 @@ def test_undetermined_is_counted_apart_from_low_contrast(d_gradient):
     hit = [w for w in d_gradient["report"]["warning"]
            if w["check"] == "D" and "판정할 수 없다" in w["detail"]]
     assert len(hit) == 2, details(d_gradient["report"]["warning"])
+
+
+# ===================================================================== #
+# 6. 검사 F 가 innerText 에 들어오는 글만 본다
+# ===================================================================== #
+@pytest.fixture(scope="module")
+def f_attrs(server):
+    return run_audit("f_attrs.json", "f_attrs_build.html",
+                     orig_page="f_attrs_orig.html")
+
+
+def warnings_of(report, check=None, source=None):
+    return [w for w in report["warning"]
+            if (check is None or w.get("check") == check)
+            and (source is None or w.get("source") == source)]
+
+
+def test_english_in_attributes_is_found(f_attrs):
+    """placeholder · 입력값 · alt · aria-label · title 도 눈에 닿는 글이다.
+
+    고치기 전: warning 0건. innerText 에는 들어오지 않고, 마크업에서 찾는
+    쪽은 태그를 통째로 걷어내므로 속성값이 함께 사라졌다 - 화면이 영어로
+    뒤덮여도 검사 F 는 할 말이 없었다.
+    """
+    hit = warnings_of(f_attrs, "F", "attribute")
+    assert len(hit) == 1, details(f_attrs["warning"])
+    assert sorted(hit[0]["words"]) == ["Account", "Bank", "Confirm", "Recipient",
+                                       "Transfer", "fee", "logo", "number",
+                                       "transfer"]
+
+
+def test_korean_attributes_raise_nothing(f_attrs):
+    """원본과 같은 자리의 한글은 새 영어가 아니다 - 속성을 보기 시작했다고
+    멀쩡한 속성까지 잡으면 거짓 경보를 새로 만든 것이다."""
+    assert warnings_of(f_attrs, "F", "runtime") == []
+    assert warnings_of(f_attrs, "F", "markup") == []
+    assert f_attrs["fatal"] == [], details(f_attrs["fatal"])

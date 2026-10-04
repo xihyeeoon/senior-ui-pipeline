@@ -22,12 +22,36 @@ DOM_SCREEN = r"""
 """
 
 # --- inventory: what the current screen contains -----------------------------
+# `attr_text` 는 innerText 에 들어오지 않는, 그래도 눈에 닿는 글이다 -
+# placeholder · 입력칸의 현재 값 · alt · aria-label · title. 마크업에서 영어를
+# 찾는 쪽(checks/f_language.markup_words)도 이것들을 못 본다: 태그를 통째로
+# 걷어내므로 속성값이 함께 사라진다. 문서 전체에서 걷되 보이는 요소에서만
+# 걷는다 - 꺼진 화면의 입력칸은 사용자에게 닿지 않는다.
 INVENTORY = r"""
 () => {
   const s = document.querySelector('.screen.on') || document.body;
   const attr = (sel, a) => Array.from(s.querySelectorAll(sel))
                                 .map(e => e.getAttribute(a));
+  const visible = e => {
+    const cs = getComputedStyle(e);
+    if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+    if (+cs.opacity === 0) return false;
+    const r = e.getBoundingClientRect();
+    return r.width >= 1 && r.height >= 1;
+  };
+  const ATTRS = ['placeholder', 'alt', 'aria-label', 'title'];
+  const texts = [];
+  document.querySelectorAll('*').forEach(e => {
+    if (!visible(e)) return;
+    for (const a of ATTRS) {
+      const v = e.getAttribute(a);
+      if (v) texts.push(v);
+    }
+    const t = e.tagName.toLowerCase();
+    if ((t === 'input' || t === 'textarea') && e.value) texts.push(e.value);
+  });
   return {
+    attr_text: texts.join('\n'),
     actions:  attr('[data-action]', 'data-action'),
     ids:      Array.from(s.querySelectorAll('[id]')).map(e => e.id),
     screens:  Array.from(document.querySelectorAll('[data-screen]'))
