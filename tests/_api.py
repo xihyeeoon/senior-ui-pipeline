@@ -22,6 +22,7 @@ from senior_ui import audit as _audit                        # noqa: E402
 from senior_ui import config as _config                      # noqa: E402
 from senior_ui import devserver as _devserver                # noqa: E402
 from senior_ui.audit import core as _audit_core              # noqa: E402
+from senior_ui.audit import __main__ as _audit_cli           # noqa: E402
 from senior_ui.audit import stage as _audit_stage            # noqa: E402
 from senior_ui.audit import report as _audit_report          # noqa: E402
 from senior_ui.restructure import model as _model            # noqa: E402
@@ -45,6 +46,10 @@ STAGES = _audit_stage.STAGES
 count_fatals = _audit_core.count_fatals
 audit_core_module = _audit_core
 audit_stage_module = _audit_stage
+
+# ---- senior_ui/audit/__main__.py (CLI - 종료 코드까지) ----------------- #
+audit_cli_main = _audit_cli.main
+audit_cli_module = _audit_cli
 
 # ---- senior_ui/audit/report.py (여러 audit 를 나란히 놓는 md) ----------- #
 ar_main = _audit_report.main

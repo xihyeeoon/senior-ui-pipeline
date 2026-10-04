@@ -9,8 +9,14 @@ r"""집계 버그 재현 테스트. 브라우저 없이, 손으로 만든 스냅
 드러내는 상황(엉뚱한 화면에 도착, 주입된 alert 등)이 네 빌드에는 없다.
 """
 import copy
+import io
+import json
+import os
+import sys
 
 import _api
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # --------------------------------------------------------------------- #
@@ -336,3 +342,60 @@ def test_screens_after_a_wrong_landing_are_derived():
     assert m["fatal_derived"] == 1
     after = [f for f in report["fatal"] if f.get("screen") == "done"]
     assert after and after[0]["derived_from"] == "middle"
+
+
+# --------------------------------------------------------------------- #
+# 4. 검사기 자체가 죽으면 종료 코드 2 와 리포트 모양 JSON
+# --------------------------------------------------------------------- #
+# 빌드 불합격(fatal 있음)은 1 이다. 검사기가 돌지 못한 것과 빌드가 떨어진 것은
+# 재생성 루프에게 전혀 다른 사건이므로 종료 코드가 같아서는 안 된다.
+CLI_ARGS = [
+    "--build", "http://localhost:3003/results/restructured_transfer.html",
+    "--build-file", os.path.join(ROOT, "results", "restructured_transfer.html"),
+    "--original-file", os.path.join(ROOT, "inputs", "original_transfer.html"),
+    "--flow", os.path.join(ROOT, "flows", "restructured.json"),
+]
+
+
+def run_cli(monkeypatch, argv, encoding="ascii"):
+    """CLI 를 부르고 (종료 코드, stdout 에 찍힌 글) 을 돌려준다.
+
+    stdout 은 일부러 한글을 못 쓰는 인코딩으로 둔다. 검사기가 스스로 UTF-8 로
+    맞추지 않으면 JSON 을 찍다가 UnicodeEncodeError 로 죽는다 - cp949 콘솔에서
+    실제로 그렇게 죽는다."""
+    raw = io.BytesIO()
+    monkeypatch.setattr(sys, "stdout",
+                        io.TextIOWrapper(raw, encoding=encoding, errors="strict"))
+    code = _api.audit_cli_main(argv)
+    sys.stdout.flush()
+    return code, raw.getvalue().decode("utf-8")
+
+
+def test_cli_exits_2_when_the_auditor_itself_dies(monkeypatch, tmp_path):
+    """고치기 전: drive() 가 던지면 역추적이 그대로 올라가 종료 코드 1 이 됐다 -
+    "빌드 불합격" 과 구분되지 않았다."""
+    def boom(*a, **kw):
+        raise RuntimeError("브라우저를 띄울 수 없다")
+    monkeypatch.setattr(_api.audit_cli_module, "drive", boom)
+
+    code, out = run_cli(monkeypatch, CLI_ARGS
+                        + ["--out", str(tmp_path / "audit.json")])
+    assert code == 2
+    report = json.loads(out)
+    assert report["passed"] is False
+    assert report["warning"] == [] and report["metrics"] == {}
+    assert len(report["fatal"]) == 1
+    f = report["fatal"][0]
+    assert f["check"] is None and f["screen"] is None
+    assert "RuntimeError" in f["detail"] and "브라우저" in f["detail"]
+
+
+def test_cli_exits_2_when_an_input_cannot_be_read(monkeypatch, tmp_path):
+    """읽기 실패는 전부터 2 였다. 한글이 든 JSON 이 cp949 stdout 에서도
+    찍히는지를 함께 본다 (stdout 을 UTF-8 로 맞추는 것이 main 의 첫 일이다)."""
+    argv = list(CLI_ARGS)
+    argv[argv.index("--build-file") + 1] = str(tmp_path / "없는-빌드.html")
+    code, out = run_cli(monkeypatch, argv)
+    assert code == 2
+    report = json.loads(out)
+    assert "없는-빌드.html" in report["fatal"][0]["detail"]
