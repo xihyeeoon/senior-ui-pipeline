@@ -50,8 +50,25 @@ INVENTORY = r"""
     const t = e.tagName.toLowerCase();
     if ((t === 'input' || t === 'textarea') && e.value) texts.push(e.value);
   });
+  /* 켜진 화면 밖에 떠 있는 것 - 모달·토스트·오버레이. 사용자 눈에는 화면 위에
+     덮여 있는데 켜진 화면의 innerText 에는 들어오지 않는다. 켜진 화면의 조상은
+     지나쳐 안으로 들어간다 (찾는 것은 켜진 화면의 형제다). 켜진 화면이 없으면
+     빈 값이다 - 그때 `text` 가 이미 body 전체를 담기 때문이다. */
+  const lit = document.querySelector('.screen.on');
+  const outside = [];
+  const walkOutside = el => {
+    for (const c of el.children) {
+      if (c === lit) continue;
+      if (c.contains(lit)) { walkOutside(c); continue; }
+      if (!visible(c)) continue;
+      const t = (c.innerText || '').trim();
+      if (t) outside.push(t);
+    }
+  };
+  if (lit) walkOutside(document.body);
   return {
     attr_text: texts.join('\n'),
+    outside_text: outside.join('\n'),
     actions:  attr('[data-action]', 'data-action'),
     ids:      Array.from(s.querySelectorAll('[id]')).map(e => e.id),
     screens:  Array.from(document.querySelectorAll('[data-screen]'))

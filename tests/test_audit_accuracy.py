@@ -674,3 +674,27 @@ def test_korean_attributes_raise_nothing(f_attrs):
     assert warnings_of(f_attrs, "F", "runtime") == []
     assert warnings_of(f_attrs, "F", "markup") == []
     assert f_attrs["fatal"] == [], details(f_attrs["fatal"])
+
+
+@pytest.fixture(scope="module")
+def f_modal(server):
+    return run_audit("f_modal.json", "f_modal_build.html",
+                     orig_page="f_modal_orig.html")
+
+
+def test_english_on_a_modal_outside_the_lit_screen_is_found(f_modal):
+    """화면 위에 덮인 모달도 사용자가 읽는 글이다.
+
+    고치기 전: warning 0건. 켜진 화면의 innerText 에는 모달이 들어오지 않고,
+    글을 스크립트가 넣으므로 마크업에서 찾는 쪽도 보지 못했다.
+    """
+    hit = warnings_of(f_modal, "F", "offscreen")
+    assert len(hit) == 1, details(f_modal["warning"])
+    assert hit[0]["screen"] == "start"
+    assert sorted(hit[0]["words"]) == ["Please", "Transfer", "failed", "retry"]
+
+
+def test_the_modal_page_raises_nothing_else(f_modal):
+    assert warnings_of(f_modal, "F", "runtime") == []
+    assert warnings_of(f_modal, "F", "markup") == []
+    assert f_modal["fatal"] == [], details(f_modal["fatal"])

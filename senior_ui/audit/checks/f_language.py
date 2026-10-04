@@ -2,7 +2,9 @@ r"""검사 F - 언어. warning.
 
 원본에 없던 영어 단어가 생성물에 나타났는지 본다. 세 곳을 따로 본다.
 
-  runtime    화면에 렌더된 글 (innerText)
+  runtime    켜진 화면에 렌더된 글 (innerText)
+  offscreen  켜진 화면 밖에 떠 있는 것의 글 - 모달·토스트·오버레이. 화면 위에
+             덮여 있으므로 사용자는 읽는데, 켜진 화면의 innerText 에는 없다
   attribute  innerText 에 들어오지 않는데 눈에 닿는 글 - placeholder ·
              입력칸의 현재 값 · alt · aria-label · title
   markup     스크립트가 덮어쓰기 전의 마크업. 눈에 닿지 않지만 파일에 남아 있다
@@ -24,6 +26,9 @@ ENGLISH = re.compile(r"[A-Za-z][A-Za-z'’]{1,}")
 SEEN_SOURCES = [
     ("runtime", "text",
      "English text not present in the original: "),
+    ("offscreen", "outside_text",
+     "English the original did not have, on something covering the screen "
+     "(a modal or overlay outside the lit screen): "),
     ("attribute", "attr_text",
      "English the original did not have, in an attribute the eye still reads "
      "(placeholder / input value / alt / aria-label / title): "),
