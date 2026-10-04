@@ -67,6 +67,8 @@ PORT = _config.PORT
 
 # ---- senior_ui/experiment/server.py (대시보드 서버) --------------------- #
 srv_make_handler = _exp_server.make_handler
+srv_make_server = _exp_server.make_server
+srv_parser = _exp_server.build_parser
 
 # ---- senior_ui/experiment/report.py (집계 함수) ------------------------- #
 sr_load = _session_report.load

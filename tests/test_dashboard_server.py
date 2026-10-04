@@ -15,8 +15,10 @@ tmp_path 에만 쓴다.
 """
 import contextlib
 import http.client
+import socket
 import threading
-from http.server import ThreadingHTTPServer
+
+import pytest
 
 import _api
 
@@ -26,9 +28,10 @@ import _api
 # --------------------------------------------------------------------- #
 @contextlib.contextmanager
 def serving(**kw):
-    """127.0.0.1 의 빈 포트에 서버를 하나 띄우고 포트를 넘긴다."""
+    """빈 포트(0)에 서버를 하나 띄우고 포트를 넘긴다. 바인드 주소는 테스트가
+    고르지 않는다 - 서버가 쓰는 make_server() 를 그대로 거친다."""
     handler = _api.srv_make_handler(**kw)
-    srv = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    srv = _api.srv_make_server(0, handler)
     t = threading.Thread(target=srv.serve_forever, daemon=True)
     t.start()
     try:
@@ -75,3 +78,47 @@ def test_404_뒤에도_서버가_계속_받는다():
         req(port, "/favicon.ico")
         status, _, _ = req(port, "/web/dashboard.html")
     assert status == 200
+
+def lan_ip():
+    """이 PC 의 LAN 주소. 연결되는 망이 없어도 된다."""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("10.255.255.255", 1))
+        return s.getsockname()[0]
+    except Exception:
+        return "127.0.0.1"
+    finally:
+        s.close()
+
+
+def reachable(host, port):
+    with socket.socket() as s:
+        s.settimeout(1.0)
+        return s.connect_ex((host, port)) == 0
+
+
+# --------------------------------------------------------------------- #
+# 바인드 주소: 루프백만
+# --------------------------------------------------------------------- #
+# 0.0.0.0 에 띄우면 같은 Wi-Fi 의 누구나 들어올 수 있다. 이 서버는 이 PC 의
+# 대시보드를 보는 용도뿐이므로 루프백 밖으로는 나가지 않는다.
+def test_서버는_루프백에만_바인드한다():
+    srv = _api.srv_make_server(0, _api.srv_make_handler(**handler_kw()))
+    try:
+        assert srv.server_address[0] == "127.0.0.1"
+    finally:
+        srv.server_close()
+
+
+def test_LAN_주소로는_접속되지_않는다():
+    ip = lan_ip()
+    if ip == "127.0.0.1":
+        pytest.skip("LAN 주소가 없는 PC")
+    with serving(**handler_kw()) as port:
+        assert reachable("127.0.0.1", port), "루프백으로는 열려 있어야 한다"
+        assert not reachable(ip, port), "LAN 주소로 들어올 수 있다 - %s:%d" % (ip, port)
+
+
+def test_LAN_에_여는_옵션은_없다():
+    dests = {a.dest for a in _api.srv_parser()._actions}
+    assert not dests & {"host", "bind", "lan", "address", "addr"}

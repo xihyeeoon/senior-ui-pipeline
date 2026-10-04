@@ -47,6 +47,14 @@ TASKS = [
 ]
 
 
+# 바인드 주소. 루프백만 - LAN 에 여는 옵션은 두지 않는다.
+HOST = "127.0.0.1"
+
+
+def make_server(port, handler):
+    return ThreadingHTTPServer((HOST, port), handler)
+
+
 def reindex():
     """outputs/index.json 을 다시 만든다. 뷰어의 '다시 읽기' 가 부른다."""
     idx = build_index.build()
@@ -138,13 +146,17 @@ def make_handler(sessions_dir, tasks):
     return H
 
 
-def main():
+def build_parser():
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=PORT)
     ap.add_argument("--sessions", default=os.path.join(ROOT, "sessions"))
     ap.add_argument("--task-file", default=None,
                     help="JSON list of {name, instruction} to replace the built-in tasks")
-    args = ap.parse_args()
+    return ap
+
+
+def main():
+    args = build_parser().parse_args()
 
     tasks = TASKS
     if args.task_file:
@@ -181,7 +193,7 @@ def main():
     print(" Ctrl+C 로 종료")
     print()
 
-    srv = ThreadingHTTPServer(("0.0.0.0", args.port), handler)
+    srv = make_server(args.port, handler)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
