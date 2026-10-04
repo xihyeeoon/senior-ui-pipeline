@@ -63,6 +63,7 @@ mock_reply = _model.mock_reply
 
 # ---- senior_ui/devserver.py · senior_ui/config.py ---------------------- #
 listening = _devserver.listening
+ensure_server = _devserver.ensure_server
 PORT = _config.PORT
 ROOT_DIR = _config.ROOT
 
