@@ -42,7 +42,13 @@ def _screens_reached(ctx):
                          "기록 훅 __screen() 은 현재 화면의 id 를 반환해야 한다. "
                          "원본 HTML 의 __screen() · __startTask() · __dump() 를 유지하라.")
         elif row["landed_on"] != name:
+            # 예외는 나지 않았지만 과제는 여기서 더 나아가지 못했다. 뒤의 화면
+            # 들은 그 결과이므로, 멈춘 곳으로 적어 파생으로 묶이게 한다.
+            # 적지 않으면 첫 "도달 못 함" 이 stopped_at 을 자기 이름으로 채워,
+            # 멈춤의 결과가 원인으로 기록된다.
             F("A", name, "landed on %r instead" % row["landed_on"])
+            if not ctx.stopped_at:
+                ctx.stopped_at = name
 
 
 def _transition_ids(ctx):

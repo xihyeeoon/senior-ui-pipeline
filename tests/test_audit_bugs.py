@@ -305,3 +305,34 @@ def test_injected_dialog_without_a_number_is_still_one_fatal():
     assert len(report["fatal"]) == 1
     assert report["fatal"][0]["numbers"] == []
     assert "hardcode" not in report["fatal"][0]["detail"]
+
+
+# --------------------------------------------------------------------- #
+# 3-4. 엉뚱한 화면에 도착한 것도 "멈춤" 이다
+# --------------------------------------------------------------------- #
+def landed_wrong():
+    """두 번째 화면에서 엉뚱한 곳에 도착하고, 세 번째는 아예 못 간 경우.
+    예외는 나지 않았다 - 클릭은 됐고 화면만 바뀌지 않았다."""
+    rep = snap({"start": row("start"), "middle": row("middle", landed_on="start")})
+    return _api.audit(snap({"start": row("start")}), rep, "", "",
+                      flow(["start", "middle", "done"]))
+
+
+def test_landing_on_the_wrong_screen_records_where_it_stopped():
+    """고치기 전: stopped_at 이 비어 있어서, 뒤따르는 "도달 못 함" 이 파생이
+    아니라 독립된 결함으로 세졌다. 게다가 그 "도달 못 함" 이 stopped_at 을
+    자기 이름(done)으로 채워, 실제로 멈춘 곳(middle)이 아니라 멈춤의 결과가
+    원인으로 기록되었다."""
+    report = landed_wrong()
+    assert report["metrics"]["stopped_at"] == "middle"
+
+
+def test_screens_after_a_wrong_landing_are_derived():
+    report = landed_wrong()
+    m = report["metrics"]
+    assert len(report["fatal"]) == 2
+    assert m["fatal_total"] == 2
+    assert m["fatal_root"] == 1              # 엉뚱한 화면 하나만 독립 결함이다
+    assert m["fatal_derived"] == 1
+    after = [f for f in report["fatal"] if f.get("screen") == "done"]
+    assert after and after[0]["derived_from"] == "middle"
