@@ -31,7 +31,8 @@ Everything from a run lands in outputs/restructure_auto/<timestamp>/:
   attempt_N.reflection.json  반성 (재시도에만)
   shots/attempt_N/       one screenshot per screen reached
   designer_brief.md      디자이너용 변경 설명서 (통과한 실행에만)
-  run.log, summary.json  run.log 첫 줄 = 작업 트리 경고 (깨끗하지 않을 때)
+  run.log, summary.json  run.log 첫 줄 = 모델과 그 출처 (+ 작업 트리 경고,
+                         깨끗하지 않을 때)
                          summary.json 의 git · tokens = 커밋 · 단계별 토큰
 
 This file is the command line and nothing else. The work is split up:
@@ -75,7 +76,9 @@ mock 모드는 일곱이고 Run 1 빌드를 되읽는다. 모드마다 은행 �
                   -> 검사 J 에서 실패 (틀린 값으로 다음 화면에 넘어간다)
 
 The key comes from .envs (OPENAI_API_KEY=...) or the environment. The model
-comes from --model, then RESTRUCTURE_MODEL, then DESIGNREPAIR_MODEL, then gpt-4o.
+comes from --model, then RESTRUCTURE_MODEL, then DESIGNREPAIR_MODEL, then
+config.DEFAULT_MODEL (지금 gpt-4o). 어디서 왔는지는 run.log 첫 줄과
+summary.json 의 model_source 에 남는다.
 Exit: 0 = a build passed, 1 = every attempt failed, 2 = could not run.
 
 "돌지 못했다"(2)에 들어가는 것은 넷이다 - 레이트 리밋으로 멈춤, API 가 요청을
@@ -87,6 +90,7 @@ import argparse
 import sys
 
 from senior_ui._cli import setup_stdout
+from senior_ui import config
 from senior_ui.audit.stage import STAGES
 from senior_ui.tasks import DEFAULT_TASK, task_names
 
@@ -111,7 +115,10 @@ def build_parser():
                     help="검사 fatal 에 쓸 재시도 횟수 (기본: --attempts)")
     ap.add_argument("--infra-attempts", type=int, default=3,
                     help="모델에 닿지 못했을 때(연결 실패) 쓸 재시도 횟수")
-    ap.add_argument("--model", default=None)
+    ap.add_argument("--model", default=None,
+                    help="부를 모델. 주지 않으면 환경 변수 RESTRUCTURE_MODEL · "
+                         "DESIGNREPAIR_MODEL, 그다음 config.DEFAULT_MODEL (%s)"
+                         % config.DEFAULT_MODEL)
     ap.add_argument("--temperature", type=float, default=TEMPERATURE,
                     help="못박아 보낸다. 기본 %s - 재현에 가장 가깝다" % TEMPERATURE)
     ap.add_argument("--seed", type=int, default=SEED,

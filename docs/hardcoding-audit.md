@@ -122,7 +122,7 @@
 | `__main__.py:106,112,119,135` | `--attempts 3`, `--infra-attempts 3`, `--max-tokens 14000`, `--delay 60` | 상수 | 일부러 둠 | 명령줄 기본값, 분당 한도 근거가 도움말에 있다 (테스트가 못박는다) |
 | `__main__.py:128` | `--task` 기본 `transfer` | 과제 | 일부러 둠 | 이체 기준값 |
 | `loop.py:58` | `PLAN_MAX_TOKENS = 6000` | 상수 | 일부러 둠 | 이름 붙인 상수 |
-| `loop.py:209` | 모델 대체값 `"gpt-4o"` (환경 변수 `RESTRUCTURE_MODEL` · `DESIGNREPAIR_MODEL` 다음) | 환경 | 일부러 둠 | 재현 기록이 응답 모델을 따로 적는다. 바꿀 때는 `--model` |
+| `loop.py:209` | 모델 대체값 `"gpt-4o"` (환경 변수 `RESTRUCTURE_MODEL` · `DESIGNREPAIR_MODEL` 다음) | 환경 | **모델 바꾸기 준비에서 옮김** | `config.DEFAULT_MODEL` 한 곳. 출처는 `loop.model_choice` 가 run.log 첫 줄 · `summary.model_source` 에 남긴다 |
 | `loop.py:838–867` | 승격 이름 `restructured_auto*` | 실행 | **11번에서 고침** | 과제를 넣었다 (`promoted_name`) |
 | `loop.py:937` | 종료 코드 2 의 이유 넷 | 상수 | 일부러 둠 | 종료 코드 규약 한 곳 |
 | `loop.py` 여러 줄 | 시도 파일 이름 `attempt_N.*`, `run.log`, `summary.json` | 실행 | 일부러 둠 | 실행 폴더 규약 |

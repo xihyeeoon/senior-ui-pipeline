@@ -66,6 +66,13 @@ def url_for(path):
 
 ORIGINAL_URL = url_for(ORIGINAL_REL)
 
+# 재구성 루프가 부르는 모델. 정하는 순서는 --model, 환경 변수(아래 순서), 이 값이다
+# (restructure.loop.model_choice). 실행마다 어디서 왔는지가 run.log 첫 줄과
+# summary.json 의 model_source 에 남는다. 모델마다 부르는 방식이 다르다 -
+# restructure.model.profile_for.
+DEFAULT_MODEL = "gpt-4o"
+MODEL_ENV_VARS = ("RESTRUCTURE_MODEL", "DESIGNREPAIR_MODEL")
+
 # The two builds under comparison. `url` is what the phone loads in the frame.
 CONDITIONS = [
     {"key": "original",

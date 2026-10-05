@@ -29,6 +29,7 @@ import sys
 import time
 
 from senior_ui import audit as A
+from senior_ui import config
 from senior_ui.audit.flow import required_errors
 from senior_ui.config import OUTPUTS_ENV, ROOT, inside_root, outputs_dir, url_for
 from senior_ui.devserver import ensure_server
@@ -113,7 +114,7 @@ class Run:
     """한 실행이 공유하는 것들. 단계 함수들은 이것만 주고받는다."""
 
     def __init__(self, args, log, run_dir, model, template, original_html,
-                 original_url=None, plan_template="", task=None):
+                 original_url=None, plan_template="", task=None, model_source=None):
         self.args = args
         # 프롬프트에 넣는 원본과 브라우저가 걷는 원본은 같은 문서다.
         self.original_url = original_url
@@ -163,7 +164,10 @@ class Run:
         # 길이 제한에 잘린 답이 연속 몇 번인지. 둘째 번부터는 안내가 달라진다.
         self.truncated = 0
         # 과제는 실행 기록 안에 있어야 한다 - 여러 실행을 모아 볼 때 과제를 가른다.
-        self.summary = {"run_dir": run_dir, "model": model, "mock": args.mock,
+        # model 은 보낸 이름, response_models 는 API 가 답한 이름들이다. 별칭
+        # (gpt-4o)은 날짜가 붙은 판으로 풀리고, 그 판은 말없이 바뀐다.
+        self.summary = {"run_dir": run_dir, "model": model, "model_source": model_source,
+                        "response_models": [], "mock": args.mock,
                         "task": self.task["id"],
                         "stage": args.stage, "preserved": {}, "plan": None,
                         "repro": repro(template, temperature=self.temperature,
@@ -204,9 +208,23 @@ def original_url(path):
     return url_for(rel.replace(os.sep, "/"))
 
 
+def model_choice(args):
+    """`(모델 이름, 어디서 왔나)`. --model, 환경 변수, config.DEFAULT_MODEL 순서다.
+
+    어디서 왔는지를 함께 돌려주는 이유는 환경 변수다. .envs 나 셸에 남아 있던
+    RESTRUCTURE_MODEL 하나가 기본값을 말없이 이기면, 실행 기록의 모델 이름만
+    보고는 그것이 의도한 것인지 알 수 없다.
+    """
+    if getattr(args, "model", None):
+        return args.model, "--model"
+    for name in config.MODEL_ENV_VARS:
+        if os.environ.get(name):
+            return os.environ[name], name
+    return config.DEFAULT_MODEL, "config.DEFAULT_MODEL"
+
+
 def pick_model(args):
-    return args.model or os.environ.get("RESTRUCTURE_MODEL") \
-        or os.environ.get("DESIGNREPAIR_MODEL") or "gpt-4o"
+    return model_choice(args)[0]
 
 
 def repro(template, reply=None, temperature=TEMPERATURE, seed=SEED):
@@ -256,7 +274,7 @@ def git_state():
 
 
 def dirty_warning(git):
-    """run.log 첫 줄에 쓰는 경고. 깨끗하면 None. 실행은 막지 않는다."""
+    """run.log 첫 줄(모델 다음)에 잇는 경고. 깨끗하면 None. 실행은 막지 않는다."""
     if not git or not git.get("dirty"):
         return None
     files = git.get("dirty_files") or []
@@ -437,8 +455,10 @@ def ask_model(r, n, p, prompt, max_tokens, mock, stage):
     if reply.get("max_tokens") not in (None, max_tokens):
         # 분당 한도에 맞추느라 줄여서 보냈다 (model.shrink_for_minute)
         call["max_tokens_sent"] = reply["max_tokens"]
+    if reply.get("model") and reply["model"] not in r.summary["response_models"]:
+        r.summary["response_models"].append(reply["model"])
     if reply.get("model") or reply.get("system_fingerprint"):
-        r.log("model: 응답 %s (fingerprint %s)"
+        r.log("model: 응답 모델 %s (fingerprint %s)"
               % (reply.get("model"), reply.get("system_fingerprint")))
     return reply, None
 
@@ -965,12 +985,7 @@ def run(args):
                            + ("-mock-" + args.mock if args.mock else ""))
     os.makedirs(run_dir, exist_ok=True)
     log = make_logger(os.path.join(run_dir, "run.log"))
-    # 첫 줄. 작업 트리가 깨끗하지 않으면 그 사실이 run.log 를 여는 사람에게 가장
-    # 먼저 보여야 한다. 실행은 막지 않는다.
     git = git_state()
-    warning = dirty_warning(git)
-    if warning:
-        log(warning)
 
     try:
         load_env()
@@ -982,7 +997,17 @@ def run(args):
               os.path.join(run_dir, "summary.json"))
         log("summary: %s" % os.path.join(run_dir, "summary.json"))
         return 2
-    model = pick_model(args)
+    # 첫 줄은 모델이다 - 어느 모델로 돌았는지가 run.log 를 여는 사람에게 가장 먼저
+    # 보여야 한다. 모델은 .envs 의 환경 변수로도 정해지므로 키를 읽은 뒤에 고른다.
+    # API 가 답한 실제 판 이름은 호출마다 "model: 응답 모델" 줄로, 실행 전체는
+    # summary.json 의 response_models 로 남는다.
+    #
+    # 작업 트리가 깨끗하지 않으면 그 경고도 같은 첫 줄에 잇는다 - 그 사실 역시
+    # run.log 를 여는 사람에게 가장 먼저 보여야 한다. 실행은 막지 않는다.
+    model, source = model_choice(args)
+    warning = dirty_warning(git)
+    log("model=%s (출처 %s) — API 가 답한 판 이름은 호출마다 '응답 모델' 줄에 남는다"
+        % (model, source) + (" | " + warning if warning else ""))
     if not args.mock and not os.environ.get("OPENAI_API_KEY"):
         print("no OPENAI_API_KEY in the environment or .envs", file=sys.stderr)
         return 2
@@ -1015,7 +1040,7 @@ def run(args):
         % (run_dir, model, args.attempts, args.stage, args.mock, orig_url)
         + ("" if task["id"] == DEFAULT_TASK else " | task=%s" % task["id"]))
     r = Run(args, log, run_dir, model, template, original_html, orig_url,
-            plan_template=plan_template, task=task)
+            plan_template=plan_template, task=task, model_source=source)
     r.summary["git"] = git
     r.allowed_removals = allowed
     if allowed:
