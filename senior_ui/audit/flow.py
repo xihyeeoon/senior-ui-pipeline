@@ -41,6 +41,12 @@ def make_truth(block, where="truth"):
         raise ValueError("%s.AMOUNT 는 쉼표 없는 숫자여야 한다: %r" % (where, amount))
     truth = {k: str(block[k]) for k in TRUTH_KEYS}
     truth["AMOUNT_SHOWN"] = "{:,}".format(int(amount))
+    # 필수 키 밖의 값도 자리표시자로 남긴다 - 오류 경로가 눌러 넣는 틀린 값
+    # ({ACCOUNT_WRONG} 등) 이 여기 있다. 이름은 과제가 정하므로 코드가 고르지
+    # 않는다.
+    for k, v in block.items():
+        if k not in truth and isinstance(v, (str, int)) and str(v):
+            truth[k] = str(v)
     return truth
 
 

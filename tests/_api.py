@@ -148,3 +148,6 @@ sr_trouble = _session_report.trouble
 sr_write_csv = _session_report.write_csv
 sr_table = _session_report.table
 sr_main = _session_report.main
+
+# ---- senior_ui/audit/flow.py (정답 값 · 오류 경로 정의) ----------------- #
+flow_module = _audit.flow
