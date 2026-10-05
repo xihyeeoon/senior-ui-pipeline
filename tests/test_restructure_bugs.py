@@ -96,15 +96,16 @@ def fake_run_env(monkeypatch, out_root):
     monkeypatch.setenv("OPENAI_API_KEY", "test-key-not-used")
     monkeypatch.setattr(loop, "ensure_server", lambda log: None)
     monkeypatch.setattr(loop.A, "drive", fake_drive)
-    monkeypatch.setattr(loop.A, "load_flow", lambda p: {"name": "original", "steps": []})
+    monkeypatch.setattr(loop.A, "load_flow",
+                        lambda p, task=None: {"name": "original", "steps": []})
     # 가짜 원본에는 오류 경로도 없다. 진짜 원본의 오류 정의를 그대로 두면 이
     # 파일의 가짜 답(오류 경로 없음)이 모두 형식에서 떨어진다. 오류 경로를
     # 요구하는 루프는 test_error_paths.py 가 따로 본다.
-    monkeypatch.setattr(loop, "original_error_paths", lambda: [])
+    monkeypatch.setattr(loop, "required_errors", lambda task=None: [])
     monkeypatch.setattr(loop, "choices_block", lambda snap, html: "")
-    monkeypatch.setattr(loop, "load_template", lambda: "TEMPLATE {{ORIGINAL_HTML}} "
+    monkeypatch.setattr(loop, "load_template", lambda task=None: "TEMPLATE {{ORIGINAL_HTML}} "
                                                        "{{RETRY_BLOCK}} {{CHOICES}}")
-    monkeypatch.setattr(loop, "load_plan_template", lambda: PLAN_TEMPLATE)
+    monkeypatch.setattr(loop, "load_plan_template", lambda task=None: PLAN_TEMPLATE)
     monkeypatch.setattr(loop, "run_audit",
                         lambda *a, **kw: passing_report())
     return monkeypatch
@@ -535,7 +536,7 @@ def test_the_summary_records_it_once_for_the_run(fake_run_env, out_root):
 def test_the_prompt_template_is_fingerprinted(fake_run_env, out_root):
     """템플릿이 바뀌면 같은 입력도 다른 답을 낸다. 어느 템플릿이었는지 남긴다."""
     import hashlib
-    fake_run_env.setattr(loop, "load_template", lambda: "바뀐 템플릿")
+    fake_run_env.setattr(loop, "load_template", lambda task=None: "바뀐 템플릿")
     _code, summary = run_loop(fake_run_env, out_root, recording_reply([]),
                               attempts=1)
     want = hashlib.sha256("바뀐 템플릿".encode("utf-8")).hexdigest()
@@ -584,7 +585,7 @@ def test_the_audit_compares_against_the_same_original(driven_urls, monkeypatch,
     seen = {}
 
     def spy(orig_snapshot, orig_html, html_path, flow_path, url, shots, stage,
-            original_url=None, allowed_removals=None):
+            original_url=None, allowed_removals=None, task=None):
         seen["url"] = original_url
         return passing_report()
 
@@ -864,7 +865,7 @@ def test_check_I_catches_values_the_model_declared_removed(fake_run_env, out_roo
     seen = {}
 
     def spy(orig_snapshot, orig_html, html_path, flow_path, url, shots, stage,
-            original_url=None, allowed_removals=None):
+            original_url=None, allowed_removals=None, task=None):
         seen["flow"] = json.load(io.open(flow_path, encoding="utf-8"))
         return passing_report()
 
@@ -959,7 +960,7 @@ def test_the_preserved_data_is_injected_into_the_build(preserving, out_root):
     seen = {}
 
     def spy(orig_snapshot, orig_html, html_path, flow_path, url, shots, stage,
-            original_url=None, allowed_removals=None):
+            original_url=None, allowed_removals=None, task=None):
         seen["html"] = io.open(html_path, encoding="utf-8").read()
         return passing_report()
 

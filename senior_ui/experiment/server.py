@@ -30,6 +30,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 from senior_ui._cli import setup_stdout
 from senior_ui.config import CONDITIONS, OUTPUTS_DIR, PORT, ROOT
+from senior_ui.tasks import load_task, task_names
 from senior_ui.viewer import build_index
 
 # What the participant is asked to do. The long task is the one the redesign
@@ -51,6 +52,8 @@ HOST = "127.0.0.1"
 # 서빙하는 것의 전부. 루트 기준 경로가 이 중 하나와 정확히 맞지 않으면 404 다.
 #
 #   - 대시보드 자신(web/dashboard.html·css·js)과 그것이 읽는 색인
+#   - 과제마다 원본 HTML 하나 (tasks/<과제>.json 의 original). inputs/ 의 다른
+#     파일은 나가지 않는다
 #   - "화면 비교" 가 iframe 으로 여는 빌드 HTML. outputs/restructure_auto/
 #     <실행>/attempt_N.html 처럼 하위 폴더에 있는 것도 있어서 깊이를 제한하지
 #     않는다. 대신 확장자가 .html 인 파일만 나간다
@@ -63,7 +66,7 @@ HOST = "127.0.0.1"
 ALLOW = tuple(re.compile(x) for x in (
     r"web/dashboard\.[A-Za-z0-9]+",
     r"outputs/index\.json",
-    r"inputs/original_transfer\.html",
+) + tuple(re.escape(load_task(n)["original"]) for n in task_names()) + (
     r"(?:outputs|results)/(?:[^/]+/)*[^/]+\.html",
     r"(?:outputs|results)/shots/(?:[^/]+/)*[^/]+\.png",
 ))

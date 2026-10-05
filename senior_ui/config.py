@@ -18,6 +18,7 @@ PORT = 3003
 BASE_URL = "http://localhost:%d" % PORT
 
 FLOWS_DIR = os.path.join(ROOT, "flows")
+TASKS_DIR = os.path.join(ROOT, "tasks")          # 과제 정의 (senior_ui/tasks.py)
 OUTPUTS_DIR = os.path.join(ROOT, "outputs")      # .gitignore - 재생성 가능
 RESULTS_DIR = os.path.join(ROOT, "results")      # 추적함 - 남겨야 할 증거
 

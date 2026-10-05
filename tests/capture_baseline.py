@@ -14,6 +14,7 @@ senior_ui/ 는 한 줄도 건드리지 않는다. 전부 tests/_api.py 를 거�
   [5] mock 실행 (--mock pass / fail / preserved-all / -some / -none)
   [6] 가짜 세션 4건으로 session_report
   [7] senior_ui.audit.report (여러 audit 를 나란히 놓는 md, --details 포함)
+  [8] 공과금 과제 (baseline/bill/): 원본 대 원본 · 프롬프트 · mock bill-identity
 
 빌드는 results/ 를 쓴다. outputs/ 는 .gitignore 에 있어 PC 마다 내용이 달라서
 기준값의 입력으로 쓸 수 없다.
@@ -21,6 +22,11 @@ senior_ui/ 는 한 줄도 건드리지 않는다. 전부 tests/_api.py 를 거�
 Usage:
   .\.venv\Scripts\python.exe tests/capture_baseline.py
   .\.venv\Scripts\python.exe tests/capture_baseline.py --out <다른 폴더>
+  .\.venv\Scripts\python.exe tests/capture_baseline.py --only bill
+
+--only bill 은 baseline/bill/ 만 지우고 다시 뽑는다. 이체 기준값은 건드리지
+않는다 - 전체를 다시 뽑으면 원본의 비밀번호 숫자판이 다시 섞여 스냅샷 파일이
+바이트 단위로 달라진다 (비교에서는 빼는 값이지만 파일은 바뀐다).
 """
 import argparse
 import asyncio
@@ -85,6 +91,15 @@ def listening(port):
         return s.connect_ex(("127.0.0.1", port)) == 0
 
 
+def server_cmd(port):
+    """테스트가 띄우는 http.server 의 명령. 루프백에만 묶는다 - 아무것도 주지
+    않으면 0.0.0.0 에 열려, 같은 망의 누구나 .envs 를 포함한 프로젝트 루트를
+    받아 갈 수 있다 (senior_ui/devserver.py 와 같은 약속). 기준값 캡처와 브라우저
+    테스트가 모두 이것을 쓴다."""
+    return [sys.executable, "-m", "http.server", str(port), "--bind", "127.0.0.1",
+            "--directory", ROOT]
+
+
 def start_server():
     """프로젝트 루트를 :3003 에 띄운다. 이미 떠 있으면 멈춘다 - 남이 띄운 서버가
     무엇을 서빙하는지 알 수 없고, 기준값은 서빙 내용에 전적으로 달려 있다."""
@@ -95,9 +110,8 @@ def start_server():
             "  그대로 쓰면 기준값이 무엇을 기준으로 한 것인지 알 수 없게 됩니다.\n"
             "  그 서버를 끄고 다시 실행하세요 (확인: netstat -ano | findstr :%d)."
             % (PORT, PORT))
-    proc = subprocess.Popen(
-        [sys.executable, "-m", "http.server", str(PORT), "--directory", ROOT],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    proc = subprocess.Popen(server_cmd(PORT),
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     for _ in range(50):
         if listening(PORT):
             say("서버: http.server :%d 시작 (pid %d)" % (PORT, proc.pid))
@@ -680,17 +694,107 @@ def capture_audit_report(out):
 
 
 # --------------------------------------------------------------------- #
+# [8] 공과금 과제 (baseline/bill/)
+# --------------------------------------------------------------------- #
+# 이체 기준값과 같은 순서로 뽑되 폴더를 따로 둔다. 공과금 원본에는 오류 경로가
+# 없고 재구성 실행의 기록(Run 1~3)도 없으므로, 원본 대 원본 · 프롬프트 ·
+# mock 하나뿐이다.
+BILL = "bill"
+BILL_TASK = "bill"
+BILL_ORIGINAL_REL = "inputs/original_bill.html"
+# (이름, 빌드, 흐름) - 원본 대 원본만
+BILL_CASES = [("original_vs_original", BILL_ORIGINAL_REL, "original_bill.json")]
+BILL_MOCK_RUNS = [
+    ("mock_bill_identity", ["--task", "bill", "--mock", "bill-identity",
+                            "--attempts", "1"]),
+]
+
+
+def bill_prompt_plan():
+    """공과금 프롬프트 기준값에 넣는 계획 - mock bill-identity 의 그 계획이다."""
+    return json.dumps(_api.model_module.BILL_PLAN, ensure_ascii=False, indent=2)
+
+
+def bill_errors():
+    """공과금 과제의 오류 조건 절 (오류 경로가 없어 빈 문자열이다)."""
+    return _api.prompt_module.errors_block(_api.flow_module.required_errors(BILL_TASK))
+
+
+def bill_prompts(orig_html, orig_snapshot):
+    """(선택지 요약, 진단·계획 프롬프트, 첫 생성 프롬프트) 전문."""
+    choices = _api.choices_block(orig_snapshot, orig_html)
+    plan = _api.build_plan_prompt(_api.load_plan_template(BILL_TASK), orig_html,
+                                  choices, _api.plan_module.screens_in(orig_html),
+                                  errors=bill_errors())
+    first = _api.build_prompt(_api.load_template(BILL_TASK), orig_html, "", choices,
+                              bill_prompt_plan(), errors=bill_errors())
+    return choices, plan, first
+
+
+def capture_bill(out):
+    d = os.path.join(out, BILL)
+    orig_html = read(os.path.join(ROOT, BILL_ORIGINAL_REL))
+    orig_url = "%s/%s" % (BASE_URL, BILL_ORIGINAL_REL)
+    for name, rel, flow_name in BILL_CASES:
+        flow = _api.load_flow(flow_path_of(flow_name))
+        say("  bill/%s: 원본 drive" % name)
+        orig = asyncio.run(_api.drive(orig_url, flow))
+        say("  bill/%s: 빌드 drive (%s)" % (name, rel))
+        rep = asyncio.run(_api.drive("%s/%s" % (BASE_URL, rel), flow))
+        report = _api.audit(orig, rep, orig_html, read(os.path.join(ROOT, rel)), flow)
+        c = os.path.join(d, name)
+        dump(os.path.join(c, "snapshots.json"), {"orig": orig, "rep": rep})
+        dump(os.path.join(c, "audit.json"), report)
+        for stage in ("styled", "wireframe"):
+            dump(os.path.join(c, "audit.%s.json" % stage),
+                 _api.apply_stage(copy.deepcopy(report), stage))
+        m = report["metrics"]
+        say("    -> fatal %d / warning %d / 화면 %s/%s"
+            % (len(report["fatal"]), len(report["warning"]),
+               m.get("screens_reached"), m.get("screens_expected")))
+    snaps = json.load(io.open(os.path.join(d, "original_vs_original", "snapshots.json"),
+                              encoding="utf-8"))
+    choices, plan, first = bill_prompts(orig_html, snaps["orig"])
+    dump_text(os.path.join(d, "prompt", "choices_block.txt"), choices)
+    dump_text(os.path.join(d, "prompt", "plan.txt"), plan)
+    dump_text(os.path.join(d, "prompt", "attempt_1.txt"), first)
+    say("  bill/prompt: choices_block, 진단·계획, 첫 시도")
+    for name, args in BILL_MOCK_RUNS:
+        say("  bill/%s: python -m senior_ui.restructure %s" % (name, " ".join(args)))
+        summary, code = run_mock(args)
+        dump(os.path.join(d, "%s.json" % name), strip_volatile(summary))
+        say("    -> passed=%s exit=%d" % (summary.get("passed"), code))
+
+
+# --------------------------------------------------------------------- #
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=os.path.join(HERE, "baseline"),
                     help="기준값을 쓸 폴더 (기본: tests/baseline)")
     ap.add_argument("--fixtures",
                     default=os.path.join(HERE, "fixtures", "sessions"))
+    ap.add_argument("--only", choices=["all", BILL], default="all",
+                    help="bill: baseline/bill/ 만 다시 뽑는다 (이체 기준값은 그대로)")
     args = ap.parse_args()
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
 
     out = os.path.abspath(args.out)
+    if args.only == BILL:
+        d = os.path.join(out, BILL)
+        if os.path.isdir(d):
+            shutil.rmtree(d)
+        say("공과금 기준값 -> %s" % d)
+        server = start_server()
+        try:
+            capture_bill(out)
+        finally:
+            server.terminate()
+            server.wait()
+            say("서버: 종료 (pid %d)" % server.pid)
+        say("")
+        say("끝. 기준값: %s" % d)
+        return 0
     if os.path.isdir(out):
         shutil.rmtree(out)
     os.makedirs(out)
@@ -709,6 +813,8 @@ def main():
         capture_parse_reply(out)
         say("[5/7] mock 실행")
         copied = capture_mock(out)
+        say("[+] 공과금 과제")
+        capture_bill(out)
     finally:
         server.terminate()
         server.wait()

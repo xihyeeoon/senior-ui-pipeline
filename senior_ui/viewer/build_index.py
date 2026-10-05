@@ -38,6 +38,7 @@ from senior_ui._cli import setup_stdout
 from senior_ui.config import CONDITIONS, ROOT
 from senior_ui.config import FLOWS_DIR as FLOWS
 from senior_ui.config import OUTPUTS_DIR as OUTPUTS
+from senior_ui.tasks import DEFAULT_TASK, abs_path, load_task, task_names
 
 SHOTS = os.path.join(OUTPUTS, "shots")
 
@@ -341,9 +342,36 @@ def build_row(build_rel, path, d, dirs, alts):
     }
 
 
+def task_of_audit(d):
+    """그 audit 이 어느 과제의 것인지 - 비교 기준으로 쓴 원본이 어느 과제
+    파일의 original 인가. 모르면 기본 과제(이체)다."""
+    orig = url_to_rel((d.get("inputs") or {}).get("original")) or ""
+    for name in task_names():
+        if load_task(name)["original"] == orig:
+            return name
+    return DEFAULT_TASK
+
+
+def mark_task(row, d, used):
+    """기본 과제가 아닌 빌드에 과제를 적고, 이미 쓰인 id 와 겹치면 실행 폴더
+    이름으로 가른다. 재구성 루프의 승격 audit 은 과제와 상관없이 실행 폴더의
+    attempt_N.html 을 가리켜서, 이체와 공과금의 행이 같은 id 가 될 수 있다 -
+    그러면 대시보드가 공과금 빌드를 이체 것으로 연다. 이체 행은 그대로다."""
+    task = task_of_audit(d)
+    if task != DEFAULT_TASK:
+        row["task"] = task
+        row["name"] = "%s · %s" % (row["name"], load_task(task).get("label", task))
+    if row["id"] in used:
+        parent = os.path.basename(os.path.dirname(row["html"]))
+        row["id"] = "%s-%s" % (parent, row["id"])
+    used.add(row["id"])
+    return row
+
+
 def collect_builds():
     dirs = shot_dirs()
     found = {}          # build rel path -> record
+    audit_of = {}       # build rel path -> 그 record 를 만든 audit
     for name, path, d, build_rel in audited_builds():
         prev = found.get(build_rel)
         if prev is None:
@@ -353,8 +381,10 @@ def collect_builds():
             if alts is None:
                 continue
         found[build_rel] = build_row(build_rel, path, d, dirs, alts)
+        audit_of[build_rel] = d
 
-    builds = list(found.values())
+    used = set()
+    builds = [mark_task(row, audit_of[k], used) for k, row in found.items()]
     builds.sort(key=lambda b: (ORDER.index(b["id"]) if b["id"] in ORDER else 99, b["id"]))
     return builds, dirs
 
@@ -379,6 +409,36 @@ def collect_baseline(dirs):
         "audit": None, "flow": {"name": "original", "path": "flows/original.json"},
         "attempts": [],
     }
+
+
+def collect_originals(dirs):
+    """기본 과제(이체) 말고 다른 과제의 원본 카드. 이체 원본은 collect_baseline
+    이 만드는 baseline 그대로 둔다 - 그 카드의 모양을 바꾸지 않으려는 것이다.
+
+    스크린샷은 흐름 이름 · 카드 id 와 같은 이름의 폴더에서만 찾는다.
+    outputs/shots/before_*.png 는 이체 원본의 화면이므로 여기에 붙이지 않는다."""
+    out = []
+    for name in task_names():
+        if name == DEFAULT_TASK:
+            continue
+        task = load_task(name)
+        path = abs_path(task["original"])
+        if not os.path.exists(path):
+            continue
+        with io.open(abs_path(task["flow"]), encoding="utf-8") as f:
+            flow_name = json.load(f).get("name") or name
+        bid = os.path.splitext(os.path.basename(path))[0]
+        out.append({
+            "id": bid, "name": "원본 · %s" % task.get("label", name),
+            "layer": "input",
+            "layer_note": "%s 과제의 출발점입니다." % task.get("label", name),
+            "html": rel(path), "when": when(mtime(path)),
+            "screens": screens_of(path),
+            "shots": match_shots(dirs, flow_name, bid),
+            "audit": None, "flow": {"name": flow_name, "path": task["flow"]},
+            "attempts": [],
+        })
+    return out
 
 
 # --------------------------------------------------------------------------- #
@@ -537,12 +597,19 @@ def parse_kb(changes, claims):
 def build():
     builds, dirs = collect_builds()
     baseline = collect_baseline(dirs)
+    originals = collect_originals(dirs)
+    # 다른 과제의 원본 카드와 그 원본을 검사한 audit 의 행이 같은 id 가 되지
+    # 않게 한다 (원본 대 원본 audit 은 inputs/original_bill.html 을 가리킨다).
+    taken = {o["id"] for o in originals}
+    for b in builds:
+        if b["id"] in taken:
+            b["id"] = "%s-%s" % (os.path.basename(os.path.dirname(b["html"])), b["id"])
     changes = parse_changelog()
     claims = parse_claims()
     rules = parse_kb(changes, claims)
     conds = study_conditions()
     in_study = {c["build"] for c in conds}
-    for b in ([baseline] if baseline else []) + builds:
+    for b in ([baseline] if baseline else []) + originals + builds:
         b["in_study"] = b["html"] in in_study
 
     return {
@@ -553,6 +620,8 @@ def build():
         "kb_note": KB_NOTE,
         "study_conditions": conds,
         "baseline": baseline,
+        # 다른 과제의 원본 카드 (공과금 등). 이체 원본은 baseline 이다.
+        "originals": originals,
         "builds": builds,
         "changes": changes,
         "rules": rules,

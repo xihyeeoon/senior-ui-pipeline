@@ -91,6 +91,14 @@
   `outputs/restructured_auto.*` 를 덮지 않게 떼어 놓았다 (이제 `--mock` 의
   기본값이기도 하다. 캡처는 같은 폴더를 환경 변수로 한 번 더 못박는다)
 - `session_report.md` / `.csv`
+- `bill/` — 공과금 과제 (`tasks/bill.json`). `original_vs_original/`
+  (`inputs/original_bill.html` 을 `flows/original_bill.json` 으로, 이체와 같은 네
+  파일) · `prompt/` (`choices_block.txt` · `plan.txt` · `attempt_1.txt` — 계획은
+  `model.BILL_PLAN`) · `mock_bill_identity.json` (`--task bill --mock bill-identity`
+  의 `summary.json`, 통과한다). 공과금만 다시 뽑을 때는
+  `tests/capture_baseline.py --only bill` — 이체 기준값은 건드리지 않는다. 실행마다
+  흔들리는 것은 이체와 같이 비밀번호 숫자판뿐이다 (`ignore.SNAPSHOT`, 두 번 뽑아
+  견줘 확인했다)
 - `report/four_runs.md` / `report/four_runs.details.md` —
   `senior_ui.audit.report` 가 `fixtures/report/` 의 audit JSON 네 개를 나란히
   놓은 md (`--details` 를 붙인 것과 안 붙인 것)
@@ -100,6 +108,7 @@
 | 경우 | passed | fatal | warning | 화면 |
 |---|---|---|---|---|
 | `original_vs_original` | ○ | 0 | 0 | 8/8 |
+| `bill/original_vs_original` | ○ | 0 | 2 | 8/8 |
 | `run1` | ✕ | 1 | 0 | 9/9 |
 | `run2` | ✕ | 1 | 0 | 7/7 |
 | `run3` | ✕ | 1 | 0 | 8/8 |

@@ -1,32 +1,30 @@
 {
   "model": "gpt-4o",
-  "mock": "errors-undeclared",
-  "task": "transfer",
+  "mock": "bill-identity",
+  "task": "bill",
   "stage": "styled",
   "preserved": {
-    "BANKS": 38,
-    "SECS": 29,
-    "AMT_KEYS": 11,
-    "ACC_KEYS": 10,
+    "MENU_BANK": 79,
+    "MENU_CARD": 5,
+    "BILL_ITEMS": 23,
     "PW_KEYS": 10,
-    "QUICK": 4
+    "MENU_TABS": 7
   },
   "plan": {
     "attempt": 1,
     "diagnosis": "<run>/attempt_1.diagnosis.json",
-    "diagnosis_count": 7,
+    "diagnosis_count": 2,
     "screens": [
-      "start",
-      "who",
-      "accno",
-      "bank",
-      "whoconfirm",
-      "amount",
-      "review",
-      "auth",
+      "home",
+      "menu",
+      "search",
+      "bill-home",
+      "camera",
+      "info",
+      "password",
       "done"
     ],
-    "changes": 8,
+    "changes": 1,
     "unaddressed": []
   },
   "repro": {
@@ -35,7 +33,7 @@
     "response_model": null,
     "system_fingerprint": null,
     "openai_sdk": "<sdk>",
-    "prompt_template_sha256": "b426753a611f1faf0a08c0459bca4be784375cca9104b3fa2755127c638b47b0"
+    "prompt_template_sha256": "c6f95046a100d67846242670fefe1da9f1038fe786ee6682ade541d57d115fd3"
   },
   "attempts": [
     {
@@ -48,20 +46,20 @@
         "response_model": null,
         "system_fingerprint": null,
         "openai_sdk": "<sdk>",
-        "prompt_template_sha256": "b426753a611f1faf0a08c0459bca4be784375cca9104b3fa2755127c638b47b0"
+        "prompt_template_sha256": "c6f95046a100d67846242670fefe1da9f1038fe786ee6682ade541d57d115fd3"
       },
       "plan": "<run>/attempt_1.plan.json",
       "calls": [
         {
           "stage": "plan",
-          "estimated_prompt": 12831,
+          "estimated_prompt": 11761,
           "method": "tiktoken:o200k_base",
           "max_tokens": 6000,
           "usage": null
         },
         {
           "stage": "generate",
-          "estimated_prompt": 15169,
+          "estimated_prompt": 13273,
           "method": "tiktoken:o200k_base",
           "max_tokens": 14000,
           "usage": null
@@ -74,30 +72,31 @@
       },
       "preserved": {
         "injected": {
-          "BANKS": 38,
-          "SECS": 29,
-          "AMT_KEYS": 11,
-          "ACC_KEYS": 10,
+          "MENU_BANK": 79,
+          "MENU_CARD": 5,
+          "BILL_ITEMS": 23,
           "PW_KEYS": 10,
-          "QUICK": 4
+          "MENU_TABS": 7
         },
         "redeclared": [],
         "read": [
-          "BANKS",
-          "SECS",
-          "AMT_KEYS",
-          "QUICK"
+          "MENU_BANK",
+          "MENU_CARD",
+          "BILL_ITEMS",
+          "PW_KEYS",
+          "MENU_TABS"
         ]
       },
       "html": "<run>/attempt_1.html",
       "flow": "<run>/attempt_1.flow.json",
       "model_html": "<run>/attempt_1.model.html",
-      "stage": "flow",
-      "passed": false,
-      "fatal": 2
+      "stage": "audit",
+      "passed": true,
+      "fatal": 0,
+      "warning": 29
     }
   ],
-  "passed": false,
+  "passed": true,
   "final": {
     "attempt": 1,
     "html": "<run>/attempt_1.html",
@@ -107,33 +106,45 @@
     "diagnosis": "<run>/attempt_1.diagnosis.json",
     "preserved": {
       "injected": {
-        "BANKS": 38,
-        "SECS": 29,
-        "AMT_KEYS": 11,
-        "ACC_KEYS": 10,
+        "MENU_BANK": 79,
+        "MENU_CARD": 5,
+        "BILL_ITEMS": 23,
         "PW_KEYS": 10,
-        "QUICK": 4
+        "MENU_TABS": 7
       },
       "redeclared": [],
       "read": [
-        "BANKS",
-        "SECS",
-        "AMT_KEYS",
-        "QUICK"
+        "MENU_BANK",
+        "MENU_CARD",
+        "BILL_ITEMS",
+        "PW_KEYS",
+        "MENU_TABS"
       ]
     },
-    "model_html": "<run>/attempt_1.model.html"
+    "model_html": "<run>/attempt_1.model.html",
+    "model_html_promoted": "<root>/.mock-outputs/restructured_auto_bill.model.html",
+    "brief": "<run>/designer_brief.md",
+    "brief_promoted": "<root>/.mock-outputs/restructured_auto_bill.designer_brief.md"
   },
   "budget": {
-    "format_used": 1,
+    "format_used": 0,
     "format_budget": 1,
     "audit_used": 0,
     "audit_budget": 1,
     "infra_used": 0,
     "infra_budget": 3
   },
-  "stopped_reason": "budget_exhausted",
-  "trend": [],
+  "stopped_reason": null,
+  "trend": [
+    {
+      "attempt": 1,
+      "fatal_total": 0,
+      "fatal_root": 0,
+      "fatal_derived": 0,
+      "screens": "8/8",
+      "stopped_at": null
+    }
+  ],
   "git": {
     "commit": "<commit>",
     "branch": "<branch>",
@@ -145,14 +156,14 @@
     "by_stage": {
       "plan": {
         "calls": 1,
-        "estimated_prompt": 12831,
+        "estimated_prompt": 11761,
         "max_tokens": 6000,
         "prompt": null,
         "completion": null
       },
       "generate": {
         "calls": 1,
-        "estimated_prompt": 15169,
+        "estimated_prompt": 13273,
         "max_tokens": 14000,
         "prompt": null,
         "completion": null
@@ -160,14 +171,14 @@
     },
     "total": {
       "calls": 2,
-      "estimated_prompt": 28000,
+      "estimated_prompt": 25034,
       "max_tokens": 20000,
       "prompt": null,
       "completion": null
     },
     "first_attempt": {
       "calls": 2,
-      "estimated_prompt": 28000,
+      "estimated_prompt": 25034,
       "max_tokens": 20000,
       "prompt": null,
       "completion": null

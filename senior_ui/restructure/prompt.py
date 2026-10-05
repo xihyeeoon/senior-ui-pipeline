@@ -1,13 +1,13 @@
 r"""모델에 보낼 프롬프트를 만든다.
 
-docs/restructure-prompt.md 에 블록이 셋 있다.
+docs/restructure-prompt.md 에 프롬프트 블록이 둘 있다.
 
-    <!-- TASK -->         과제 설명. 아래 두 프롬프트가 같은 글을 쓴다
     <!-- PLAN_PROMPT -->  진단·계획 (호출 1)
     <!-- PROMPT -->       생성 (호출 2, 그리고 재시도)
 
-과제 설명을 한 곳에 두는 이유는 과제를 바꾸는 날 한 곳만 고치게 하려는 것이다 -
-두 프롬프트에 따로 적으면 한쪽만 바뀐 채로 돈다.
+두 블록의 `{{TASK}}` 에는 과제 파일(tasks/<과제>.json, senior_ui/tasks.py)의
+`description` 이 들어간다. 과제 설명을 한 곳에 두는 이유는 과제를 바꾸는 날 한
+곳만 고치게 하려는 것이다 - 두 프롬프트에 따로 적으면 한쪽만 바뀐 채로 돈다.
 
 생성 프롬프트의 슬롯은 다섯이다 - 원본 HTML · 재시도 블록 · 선택지 요약 · 오류
 조건 · 계획.
@@ -24,6 +24,7 @@ import re
 from senior_ui.audit.flow import original_error_paths
 from senior_ui.config import ROOT
 from senior_ui.preserved import GLOBAL_NAME
+from senior_ui.tasks import load_task
 
 from .preserve import preserved_data, split_groups
 
@@ -40,20 +41,36 @@ def load_block(name, text=None):
     return m.group(1)
 
 
-def _with_task(name):
-    text = io.open(PROMPT_FILE, encoding="utf-8").read()
-    return load_block(name, text).replace("{{TASK}}",
-                                          load_block("TASK", text).strip())
+TASK_SLOT = re.compile(r"\{\{TASK_([A-Z_]+)\}\}")
 
 
-def load_template():
-    """생성 프롬프트. 과제 설명은 TASK 블록에서 채운 뒤다."""
-    return _with_task("PROMPT")
+def _with_task(name, task=None):
+    """블록의 `{{TASK}}` 는 과제 설명으로, `{{TASK_<칸>}}` 은 과제 파일 prompt 의
+    그 칸(줄 목록)으로 채운다. 칸이 없는 슬롯이 남으면 멈춘다 - 빈 문자열로
+    두면 과제의 규칙 한 덩이가 말없이 프롬프트에서 사라진다."""
+    t = load_task(task)
+    text = load_block(name).replace("{{TASK}}", t["description"])
+    parts = t.get("prompt") or {}
+
+    def fill(m):
+        key = m.group(1).lower()
+        if key not in parts:
+            raise RuntimeError("과제 %s 의 prompt 에 %r 칸이 없다 (%s 의 {{TASK_%s}})"
+                               % (t["id"], key, PROMPT_FILE, m.group(1)))
+        v = parts[key]
+        return "\n".join(v) if isinstance(v, list) else str(v)
+    return TASK_SLOT.sub(fill, text)
 
 
-def load_plan_template():
-    """진단·계획 프롬프트. 과제 설명은 생성 프롬프트와 같은 TASK 블록이다."""
-    return _with_task("PLAN_PROMPT")
+def load_template(task=None):
+    """생성 프롬프트. 과제 설명은 과제 파일(tasks/<과제>.json)에서 채운 뒤다.
+    과제를 주지 않으면 기본 과제(이체)다."""
+    return _with_task("PROMPT", task)
+
+
+def load_plan_template(task=None):
+    """진단·계획 프롬프트. 과제 설명은 생성 프롬프트와 같은 과제 파일의 것이다."""
+    return _with_task("PLAN_PROMPT", task)
 
 
 def build_prompt(template, original_html, retry_block, choices="", plan="",

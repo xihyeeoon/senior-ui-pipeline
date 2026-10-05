@@ -38,6 +38,7 @@ from senior_ui.restructure import prompt as _prompt          # noqa: E402
 from senior_ui.restructure import reply as _reply            # noqa: E402
 from senior_ui.experiment import report as _session_report    # noqa: E402
 from senior_ui.experiment import server as _exp_server        # noqa: E402
+from senior_ui import tasks as _tasks                        # noqa: E402
 # ======================================================================= #
 
 # ---- senior_ui/audit (core.audit · drive.drive · flow.load_flow) ------- #
@@ -85,10 +86,15 @@ choices_block = _prompt.choices_block
 build_prompt = _prompt.build_prompt
 retry_block = _prompt.retry_block
 brief_failure = _prompt.brief_failure
-# 진단·계획 프롬프트. 과제 설명(TASK 블록)을 생성 프롬프트와 같이 쓴다.
+# 진단·계획 프롬프트. 과제 설명(과제 파일)을 생성 프롬프트와 같이 쓴다.
 load_plan_template = _prompt.load_plan_template
 build_plan_prompt = _prompt.build_plan_prompt
 prompt_module = _prompt
+
+# ---- senior_ui/tasks.py (과제 정의 tasks/<이름>.json) ------------------- #
+load_task = _tasks.load_task
+task_names = _tasks.task_names
+tasks_module = _tasks
 
 # ---- senior_ui/restructure/__main__.py (명령줄 기본값) ------------------ #
 restructure_parser = _restructure_cli.build_parser
@@ -99,6 +105,7 @@ brief_module = _brief
 # ---- senior_ui/viewer/build_index.py (대시보드 색인) --------------------- #
 # 빌드 옆의 plan.json 을 "변경 추적" 탭에 붙이는 곳
 index_plan_of = _build_index.plan_of
+build_index_module = _build_index
 
 # ---- senior_ui/restructure/plan.py (진단·계획 · 일치 검사 · 반성) ------- #
 plan_module = _plan
@@ -118,6 +125,7 @@ loop_module = _loop
 # 허용하는 제거 목록을 읽고 검사 직전에 합치는 곳.
 load_allowed_removals = _audit_call.load_allowed_removals
 merge_allowed_removals = _audit_call.merge_allowed_removals
+audit_call_module = _audit_call
 
 # ---- senior_ui/devserver.py · senior_ui/config.py ---------------------- #
 listening = _devserver.listening
@@ -155,3 +163,7 @@ flow_module = _audit.flow
 # 따로 보기 위해 내보낸다.
 from senior_ui.audit.checks import j_errors                  # noqa: E402
 from senior_ui.audit.context import AuditContext             # noqa: E402
+# 검사 B (표시 정확도). 과제가 정한 값으로 보는지 손으로 만든 스냅샷으로 본다.
+from senior_ui.audit.checks import b_display                 # noqa: E402
+# 검사 A (과제 완수). 완료 화면의 값을 과제에서 읽는지 손으로 만든 스냅샷으로 본다.
+from senior_ui.audit.checks import a_completion                # noqa: E402

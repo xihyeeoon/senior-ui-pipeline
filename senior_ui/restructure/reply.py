@@ -14,6 +14,7 @@ import re
 from ..audit.checks.i_choices import present
 from ..audit.handlers import handled_actions
 from ..preserved import GLOBAL_NAME
+from ..tasks import load_task
 from .preserve import names_read
 
 FENCE = re.compile(r"```(html|json)[ \t]*\r?\n(.*?)\r?\n[ \t]*```", re.S)
@@ -232,15 +233,22 @@ def _check_omissions(flow, html, steps, screens):
     return problems
 
 
-def _check_ids(flow, html, steps, screens):
-    """required_ids 가 목록인지, 과제가 반드시 쓰는 두 id 가 양쪽에 다 있는지."""
+def _done_of(done):
+    """완료 화면에서 확인할 짝들. 주지 않으면 기본 과제(이체)의 것."""
+    return load_task()["done_expect"] if done is None else done
+
+
+def _check_ids(flow, html, steps, screens, done=None):
+    """required_ids 가 목록인지, 과제가 반드시 쓰는 id - `#phone` 과 완료 화면의
+    값 자리(과제의 done_expect) - 가 양쪽에 다 있는지."""
     problems = []
     ids = set(re.findall(r'\bid="([^"]+)"', html))
     req = flow.get("required_ids")
     if not isinstance(req, list):
         problems.append("required_ids 가 목록이 아니다")
         req = []
-    for must in ("phone", "dn-amt"):
+    musts = ["phone"] + [sel[1:] for sel, _ in _done_of(done) if sel.startswith("#")]
+    for must in musts:
         if must not in req:
             problems.append("required_ids 에 %r 이 없다" % must)
         if must not in ids:
@@ -251,16 +259,33 @@ def _check_ids(flow, html, steps, screens):
     return problems
 
 
-def _check_expect(flow, html, steps, screens):
-    """완료 화면에서 금액을 확인할 짝이 있는지."""
+def _check_expect(flow, html, steps, screens, done=None):
+    """완료 화면에서 과제의 값(done_expect - 이체는 금액)을 확인할 짝이 있는지.
+
+    완료 화면은 steps 의 마지막 화면이다 - 이름이 "done" 이 아니어도. 전에는
+    expect 의 "done" 칸만 보아서, 마지막 화면을 finish 로 지은 설계가
+    expect.done 을 적으면 형식 검사를 지나고 검사 B 는 그 칸을 말없이 건너뛰었다.
+    같은 이유로 steps 의 방문 이름이 아닌 expect 칸도 문제로 센다 - 검사기는
+    그 칸의 값을 보지 않는다."""
     problems = []
     expect = flow.get("expect")
     if not isinstance(expect, dict):
         problems.append("expect 가 객체가 아니다")
-    else:
-        done = expect.get("done") or []
-        if not any(isinstance(p, list) and len(p) == 2 and p[0] == "#dn-amt" for p in done):
-            problems.append('expect.done 에 ["#dn-amt", "{AMOUNT_SHOWN}"] 이 없다')
+        return problems
+    visits = _visits(steps)
+    last = visits[-1] if visits else "done"
+    pairs = expect.get(last) or []
+    for sel, val in _done_of(done):
+        if not any(isinstance(p, list) and len(p) == 2 and p[0] == sel for p in pairs):
+            problems.append("expect.%s 에 %s 이 없다"
+                            % (last, json.dumps([sel, val], ensure_ascii=False)))
+    stray = [k for k in expect if visits and k not in visits]
+    if stray:
+        problems.append("expect 의 키 %s 는 steps 의 화면이 아니다 - 검사기는 그 값을 "
+                        "보지 않는다. 키는 steps 의 screen 이름(같은 화면을 두 번 지나면 "
+                        "\"이름#2\")이고, 완료 화면의 값은 마지막 화면(%s) 칸에 적는다 "
+                        "(있는 것: %s)" % (", ".join(repr(k) for k in stray), last,
+                                         ", ".join(visits)))
     return problems
 
 
@@ -370,9 +395,11 @@ def _check_error_paths(flow, html, steps, screens, required=None):
 CHECKS = [_check_steps, _check_handlers, _check_step_screens, _check_transitions,
           _check_omissions, _check_ids, _check_expect, _check_derived,
           _check_coverage]
+# 과제의 완료 화면 짝(done_expect)을 함께 받는 검사들.
+DONE_CHECKS = (_check_ids, _check_expect)
 
 
-def validate_flow(flow, html, required_errors=None):
+def validate_flow(flow, html, required_errors=None, done_expect=None):
     """Shape checks the audit would otherwise crash on, phrased for the model.
 
     타입은 shape_problems 가 먼저 본다. 여기 아래의 검사들은 그 결과를 전제로
@@ -381,7 +408,10 @@ def validate_flow(flow, html, required_errors=None):
 
     `required_errors` 는 과제가 정한 오류 경로(원본 흐름의 error_paths)다.
     재구성 루프만 넘긴다. 넘기지 않으면 빠진 오류 경로를 문제로 세지 않는다 -
-    오류 경로가 생기기 전의 흐름(Run 1~4)을 다시 볼 때 결과가 같아야 한다."""
+    오류 경로가 생기기 전의 흐름(Run 1~4)을 다시 볼 때 결과가 같아야 한다.
+
+    `done_expect` 는 과제가 정한 완료 화면의 짝(tasks/<과제>.json)이다. 주지
+    않으면 기본 과제(이체)의 것이다."""
     bad_shape = shape_problems(flow)
     if bad_shape:
         return bad_shape
@@ -389,9 +419,13 @@ def validate_flow(flow, html, required_errors=None):
     # script is not a screen
     screens = set(re.findall(r'data-screen="([a-z0-9_-]+)"', html))
     steps = _steps_of(flow)
+    done = _done_of(done_expect)
     problems = []
     for check in CHECKS:
-        problems += check(flow, html, steps, screens)
+        if check in DONE_CHECKS:
+            problems += check(flow, html, steps, screens, done)
+        else:
+            problems += check(flow, html, steps, screens)
     problems += _check_error_paths(flow, html, steps, screens, required_errors)
     return problems
 

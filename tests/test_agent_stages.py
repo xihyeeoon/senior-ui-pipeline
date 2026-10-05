@@ -106,16 +106,43 @@ def test_an_unaddressed_diagnosis_is_recorded_not_rejected():
 # ===================================================================== #
 # 2. 프롬프트
 # ===================================================================== #
-def test_the_task_is_written_once_and_both_prompts_use_it():
-    """과제를 바꾸는 날 한 곳만 고치게 한다."""
+@pytest.mark.parametrize("name", ["transfer", "bill"])
+def test_the_task_is_written_once_and_both_prompts_use_it(name):
+    """과제를 바꾸는 날 한 곳만 고치게 한다. 과제 설명은 과제 파일에만 있고
+    템플릿 문서에는 없다 - 문서에 남아 있으면 두 곳 중 한쪽만 고쳐진다."""
     doc = io.open(os.path.join(ROOT, "docs", "restructure-prompt.md"),
                   encoding="utf-8").read()
-    task = _api.prompt_module.load_block("TASK", doc).strip()
-    assert doc.count(task) == 1
-    assert task in _api.load_template()
-    assert task in _api.load_plan_template()
-    assert "{{TASK}}" not in _api.load_template()
-    assert "{{TASK}}" not in _api.load_plan_template()
+    task = _api.load_task(name)["description"]
+    assert task not in doc
+    assert task in _api.load_template(name)
+    assert task in _api.load_plan_template(name)
+    assert "{{TASK}}" not in _api.load_template(name)
+    assert "{{TASK}}" not in _api.load_plan_template(name)
+
+
+def test_the_default_task_is_transfer():
+    """과제를 고르지 않은 실행은 전과 같아야 한다 (이체)."""
+    assert _api.load_template() == _api.load_template("transfer")
+    assert _api.load_plan_template() == _api.load_plan_template("transfer")
+    assert _api.restructure_parser().parse_args([]).task == "transfer"
+    assert _api.restructure_parser().parse_args(["--task", "bill"]).task == "bill"
+
+
+def test_task_files_agree_with_their_flows():
+    """과제 파일이 가리키는 원본 · 흐름이 있고, 필수 오류 경로가 흐름의 것과
+    같다."""
+    for name in _api.task_names():
+        t = _api.load_task(name)
+        assert os.path.exists(_api.tasks_module.abs_path(t["original"])), name
+        flow = json.load(io.open(_api.tasks_module.abs_path(t["flow"]),
+                                 encoding="utf-8"))
+        assert t["required_error_paths"] ==             [e["id"] for e in flow.get("error_paths") or []], name
+        assert set(t["required_truth"]) <= set(flow["truth"]), name
+
+
+def test_an_unknown_task_stops():
+    with pytest.raises(ValueError):
+        _api.load_task("nope")
 
 
 def _example_values(template):

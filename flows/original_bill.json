@@ -1,12 +1,13 @@
 {
   "name": "original_bill",
-  "truth": {"BANK": "신한", "ACCOUNT": "110-000-000000", "AMOUNT": "2160", "NAME": "홍길동",
-            "ENO": "1700000000", "MONTH": "202607", "QUERY": "공과"},
-  "note": "The SOL bill-payment prototype - 8 task screens, aligned to the Flutter dummy app A1 bill path (senior-ui-dummy-app 00834ca). Scope B: the bank menu tab plus card > 대표 생활요금; the other tabs are names only (docs/original-bill-scope.md). The steps go through the menu search because the coverage rule needs every screen walked and there are no error paths; the direct menu route (메뉴 > 은행 > 세금/공과금 > 납부하기) is walked in tests/test_original_bill.py. The dummy app has no error popup on this path - the password is not checked - so error_paths is empty and there are no *_WRONG values. truth: BANK/ACCOUNT are the withdrawal account, NAME the customer name on the bill, ENO the electronic payment number, QUERY the search word typed.",
+  "task": "bill",
+  "truth": {"AMOUNT": "2160", "ENO": "1700000000", "MONTH": "202607", "QUERY": "공과",
+            "CUSTOMER": "홍길동", "PAY_BANK": "신한", "PAY_ACCOUNT": "110-000-000000"},
+  "note": "The SOL bill-payment prototype - 8 task screens, aligned to the Flutter dummy app A1 bill path (senior-ui-dummy-app 00834ca). Scope B: the bank menu tab plus card > 대표 생활요금; the other tabs are names only (docs/original-bill-scope.md). The steps go through the menu search because the coverage rule needs every screen walked and there are no error paths; the direct menu route (메뉴 > 은행 > 세금/공과금 > 납부하기) is walked in tests/test_original_bill.py. The dummy app has no error popup on this path - the password is not checked - so error_paths is empty and there are no *_WRONG values. truth: the task (tasks/bill.json) requires AMOUNT and ENO; CUSTOMER is the customer name on the bill, PAY_BANK/PAY_ACCOUNT the withdrawal account, ENO the electronic payment number, QUERY the search word typed. The done screen shows the paid amount (#dn-paid) and the payment number (#dn-eno), as the dummy app's A1BillPayDone does.",
   "derived_from_original": true,
   "required_ids": ["phone", "menu-tabs", "menu-body", "search-input", "search-body",
                    "bill-list", "bi-eno", "bi-name", "bi-amt", "bi-acc",
-                   "pw-dots", "pwpad", "dn-acc", "dn-amt", "dn-eno"],
+                   "pw-dots", "pwpad", "dn-acc", "dn-paid", "dn-eno"],
   "steps": [
     {"screen": "home"},
     {"screen": "menu", "click": "[data-action='go-menu']"},
@@ -23,10 +24,11 @@
     ]}
   ],
   "expect": {
-    "info": [["#bi-eno", "{ENO}"], ["#bi-name", "{NAME}"], ["#bi-amt", "{AMOUNT_SHOWN}"],
-             ["#bi-acc", "{BANK} {ACCOUNT}"]],
-    "done": [["#dn-amt", "{AMOUNT_SHOWN}"], ["#dn-acc", "{BANK} {ACCOUNT}"], ["#dn-eno", "{ENO}"]]
+    "info": [["#bi-eno", "{ENO}"], ["#bi-name", "{CUSTOMER}"], ["#bi-amt", "{AMOUNT_SHOWN}"],
+             ["#bi-acc", "{PAY_BANK} {PAY_ACCOUNT}"]],
+    "done": [["#dn-paid", "{AMOUNT_SHOWN}"], ["#dn-acc", "{PAY_BANK} {PAY_ACCOUNT}"],
+             ["#dn-eno", "{ENO}"]]
   },
-  "done_amount": "#dn-amt",
+  "done_amount": "#dn-paid",
   "error_paths": []
 }

@@ -29,21 +29,22 @@ import sys
 import time
 
 from senior_ui import audit as A
-from senior_ui.audit.flow import original_error_paths
+from senior_ui.audit.flow import required_errors
 from senior_ui.config import OUTPUTS_ENV, ROOT, inside_root, outputs_dir, url_for
 from senior_ui.devserver import ensure_server
+from senior_ui.tasks import DEFAULT_TASK, abs_path, load_task
 
 from .audit_call import load_allowed_removals, run_audit
 from .brief import write_brief
-from .model import (TEMPERATURE, SEED, ApiRejected, InfraFailed, RateLimited,
-                    call_model, estimate_tokens, load_env, mock_plan_reply, mock_reply,
-                    sdk_version)
+from .model import (MOCK_TASK, TEMPERATURE, SEED, ApiRejected, InfraFailed,
+                    RateLimited, call_model, estimate_tokens, load_env, mock_plan_reply,
+                    mock_reply, sdk_version)
 from .plan import (PlanProblems, apply_changes, match_problems, parse_plan,
                    parse_reflection, plan_report, screens_in, unaddressed)
 from .preserve import inject, names_read, preserved_data
-from .prompt import (build_plan_prompt, build_prompt, choices_block, load_plan_template,
-                     load_template, one_line, plan_retry_block, retry_block,
-                     with_reflection)
+from .prompt import (build_plan_prompt, build_prompt, choices_block, errors_block,
+                     load_plan_template, load_template, one_line, plan_retry_block,
+                     retry_block, with_reflection)
 from .reply import (FlowShape, failure_report, parse_reply,
                     preserved_problems, problems_report, validate_flow)
 
@@ -112,7 +113,7 @@ class Run:
     """한 실행이 공유하는 것들. 단계 함수들은 이것만 주고받는다."""
 
     def __init__(self, args, log, run_dir, model, template, original_html,
-                 original_url=None, plan_template=""):
+                 original_url=None, plan_template="", task=None):
         self.args = args
         # 프롬프트에 넣는 원본과 브라우저가 걷는 원본은 같은 문서다.
         self.original_url = original_url
@@ -124,6 +125,10 @@ class Run:
         self.original_html = original_html
         # 원본의 화면 이름. 계획의 from 이 가리킬 수 있는 이름들이다.
         self.original_screens = screens_in(original_html)
+        # 이 실행의 과제 (tasks/<과제>.json). 과제가 정한 오류 경로는 계획 ·
+        # 프롬프트의 오류 조건 · 형식 검사 · 설명서가 같은 목록을 쓴다.
+        self.task = task or load_task(DEFAULT_TASK)
+        self.errors = required_errors(self.task["id"])
         # 진단과 지금의 계획. 계획은 실행에 하나이고 재시도에서 고쳐진다.
         self.diagnosis = None
         self.plan = None
@@ -157,7 +162,9 @@ class Run:
         self.last_error = None
         # 길이 제한에 잘린 답이 연속 몇 번인지. 둘째 번부터는 안내가 달라진다.
         self.truncated = 0
+        # 과제는 실행 기록 안에 있어야 한다 - 여러 실행을 모아 볼 때 과제를 가른다.
         self.summary = {"run_dir": run_dir, "model": model, "mock": args.mock,
+                        "task": self.task["id"],
                         "stage": args.stage, "preserved": {}, "plan": None,
                         "repro": repro(template, temperature=self.temperature,
                                        seed=self.seed),
@@ -307,7 +314,8 @@ def request_plan(r, n, p):
     여기서 끝났고 outcome 이 다음에 할 일이다. 쓸 수 없는 답은 형식 실패다 -
     모델이 고칠 수 있는 것이므로 형식 예산을 쓴다."""
     prompt = build_plan_prompt(r.plan_template, r.original_html, r.choices,
-                               r.original_screens, plan_retry_block(r.plan_error))
+                               r.original_screens, plan_retry_block(r.plan_error),
+                               errors=errors_block(r.errors))
     io.open(p + ".plan_prompt.txt", "w", encoding="utf-8", newline="\n").write(prompt)
     r.log("plan prompt: %d chars%s" % (len(prompt),
                                        " (with retry block)" if r.plan_error else ""))
@@ -327,8 +335,7 @@ def request_plan(r, n, p):
             raise PlanProblems(["답이 길이 제한에서 잘렸다 (finish_reason=length). "
                                 "진단과 변경의 문장을 짧게 써서 JSON 을 끝까지 닫아라."])
         diagnosis, plan = parse_plan(reply["text"], r.original_screens,
-                                     [e["id"] for e in original_error_paths()
-                                      if "id" in e])
+                                     [e["id"] for e in r.errors])
     except PlanProblems as e:
         r.log("plan: %d problem(s): %s" % (len(e.problems),
                                            " | ".join(e.problems)[:300]))
@@ -462,7 +469,8 @@ def request_reply(r, n, p):
     # 재시도에서는 코드보다 반성을 먼저 쓰게 한다. 그래서 실패 목록보다 앞이다.
     r.asked_reflection = bool(block)
     block = with_reflection(block)
-    prompt = build_prompt(r.template, r.original_html, block, r.choices, plan_text(r))
+    prompt = build_prompt(r.template, r.original_html, block, r.choices, plan_text(r),
+                          errors=errors_block(r.errors))
     io.open(p + ".prompt.txt", "w", encoding="utf-8", newline="\n").write(prompt)
     r.log("prompt: %d chars%s" % (len(prompt), " (with retry block)" if block else ""))
 
@@ -569,8 +577,9 @@ def check_reply(r, p, entry, reply, n=None):
         dropped = drop_declared_removals(r, flow)
         if dropped:
             entry["choices_removed_dropped"] = dropped
-        # 과제가 정한 오류 경로를 모두 적었는지도 본다 (원본 흐름의 error_paths).
-        problems = validate_flow(flow, html, original_error_paths())
+        # 과제가 정한 오류 경로를 모두 적었는지, 완료 화면에서 과제의 값을
+        # 확인하는지도 본다 (과제 파일 · 과제의 원본 흐름).
+        problems = validate_flow(flow, html, r.errors, r.task["done_expect"])
     except FlowShape as e:
         # 타입이 틀린 흐름 명세. 답의 형식 문제(PARSE)가 아니라 FLOW 문제다.
         r.log("flow: %d problem(s): %s" % (len(e.problems),
@@ -689,7 +698,8 @@ def _drive_audit(r, n, build):
         return run_audit(r.orig_snapshot, r.original_html, build["html_path"],
                          build["flow_path"], url_for(rel), shots, r.args.stage,
                          original_url=r.original_url,
-                         allowed_removals=r.allowed_removals)
+                         allowed_removals=r.allowed_removals,
+                         task=r.task["id"])
     except Exception as e:                           # a flow the audit cannot drive
         r.log("audit: crashed: %s: %s" % (type(e).__name__, e))
         return failure_report("AUDIT", "검사기가 흐름 명세를 실행하지 못했다: %s: %s"
@@ -821,19 +831,38 @@ def log_tokens(r):
 
 
 # outputs/ 안에서 "지금 쓰는 것" 을 가리키는 이름들. 실행 이름이 붙은 사본은
-# 같은 이름에 실행 폴더 이름이 하나 끼어든다.
-PROMOTED = [("html", "restructured_auto%s.html"),
-            ("flow", "restructured_auto%s.flow.json"),
-            ("audit", "audit_auto%s.json"),
+# 같은 이름에 실행 폴더 이름이 하나 끼어든다 (%s). {task} 자리에는 과제가
+# 들어간다 - 이체는 빈 글자라 이름이 전과 같고, 공과금은 _bill 이다
+# (restructured_auto_bill.html). 과제를 넣지 않으면 두 과제를 번갈아 돌릴 때
+# 나중 과제가 앞 과제의 "지금 쓰는 재구성본" 을 말없이 덮는다.
+PROMOTED = [("html", "restructured_auto{task}%s.html"),
+            ("flow", "restructured_auto{task}%s.flow.json"),
+            ("audit", "audit_auto{task}%s.json"),
             # 이 빌드를 만든 진단과 계획. 승격된 산출물만 보는 사람도 "무엇을
             # 근거로 무엇을 바꿨는지" 를 같은 자리에서 찾을 수 있어야 한다.
-            ("plan", "restructured_auto%s.plan.json"),
-            ("diagnosis", "restructured_auto%s.diagnosis.json"),
+            ("plan", "restructured_auto{task}%s.plan.json"),
+            ("diagnosis", "restructured_auto{task}%s.diagnosis.json"),
             # 주입 전, 모델이 쓴 그대로. 승격된 산출물에는 도구가 넣은
             # 데이터 블록과 고친 선언이 들어 있으므로, 둘을 나란히 두지
             # 않으면 "모델이 만든 것" 을 되찾을 수 없다. 뽑을 데이터가
             # 없는 입력에서는 이 자리가 비고, 그때는 건너뛴다.
-            ("model_html", "restructured_auto%s.model.html")]
+            ("model_html", "restructured_auto{task}%s.model.html")]
+
+# 승격된 설명서의 이름. 다른 산출물과 같이 restructured_auto{task} 로 시작한다.
+BRIEF = "designer_brief.md"
+PROMOTED_BRIEF = "restructured_auto{task}%s.designer_brief.md"
+
+
+def task_tag(task_id):
+    """승격 이름에 끼우는 과제 표시. 기본 과제(이체)는 빈 글자다."""
+    return "" if task_id == DEFAULT_TASK else "_" + task_id
+
+
+def promoted_name(key, task_id, suffix=""):
+    """그 과제의 승격 파일 이름. key 는 PROMOTED 의 칸이거나 "brief" 다.
+    suffix 는 "" (지금 쓰는 것) 또는 "." + 실행 이름 (사본)."""
+    pattern = PROMOTED_BRIEF if key == "brief" else dict(PROMOTED)[key]
+    return pattern.format(task=task_tag(task_id)) % suffix
 
 
 def copy_final(r):
@@ -846,22 +875,26 @@ def copy_final(r):
 
     실행 이름이 붙은 사본을 함께 두는 이유는 그 반대다. 통과한 실행이 둘 이상
     이면 나중 것이 앞의 것을 덮는데, 둘을 비교할 수 있어야 한다.
+
+    이름은 과제마다 따로다 (promoted_name).
     """
     f = r.summary["final"]
     if not f:
         return
+    tid = r.task["id"]
     if not r.summary.get("passed"):
-        r.log("final: 통과한 빌드가 없다 — outputs/restructured_auto.* 는 그대로 둔다")
+        r.log("final: 통과한 빌드가 없다 — outputs/%s 는 그대로 둔다"
+              % (promoted_name("html", tid).rsplit(".", 1)[0] + ".*"))
         return
     out, name = outputs_dir(bool(r.args.mock)), os.path.basename(r.run_dir)
     os.makedirs(out, exist_ok=True)
     promoted = []
-    for key, pattern in PROMOTED:
+    for key, _pattern in PROMOTED:
         if not f.get(key):
             continue
-        shutil.copy2(f[key], os.path.join(out, pattern % ""))
-        shutil.copy2(f[key], os.path.join(out, pattern % ("." + name)))
-        promoted.append(pattern % "")
+        shutil.copy2(f[key], os.path.join(out, promoted_name(key, tid)))
+        shutil.copy2(f[key], os.path.join(out, promoted_name(key, tid, "." + name)))
+        promoted.append(promoted_name(key, tid))
     r.log("final: attempt %d -> %s (+ .%s 사본)"
           % (f["attempt"], ", ".join(promoted), name))
     # 도구가 모델의 목록을 고쳤다면, 통과한 산출물이 모델이 쓴 그대로가
@@ -870,16 +903,10 @@ def copy_final(r):
     if pres.get("redeclared"):
         r.log("final: 주의 - 이 산출물은 모델이 쓴 그대로가 아니다. 도구가 "
               "%s 의 선언을 입력의 데이터로 바꿨다. 모델이 쓴 것은 %s 다."
-              % (", ".join(pres["redeclared"]),
-                 dict(PROMOTED)["model_html"] % ""))
+              % (", ".join(pres["redeclared"]), promoted_name("model_html", tid)))
     if f.get("model_html"):
-        f["model_html_promoted"] = os.path.join(out, dict(PROMOTED)["model_html"] % "")
+        f["model_html_promoted"] = os.path.join(out, promoted_name("model_html", tid))
     write_briefs(r, out, name)
-
-
-# 승격된 설명서의 이름. 다른 산출물과 같이 restructured_auto 로 시작한다.
-BRIEF = "designer_brief.md"
-PROMOTED_BRIEF = "restructured_auto%s.designer_brief.md"
 
 
 def write_briefs(r, out, name):
@@ -887,16 +914,18 @@ def write_briefs(r, out, name):
     하나(+ 실행 이름 사본). 링크가 설명서의 폴더 기준이므로 복사하지 않고 따로
     쓴다 - 같은 스크린샷을 가리키되 링크 글자가 다르다."""
     f = r.summary["final"]
-    path = write_brief(r.summary, r.original_screens, os.path.join(r.run_dir, BRIEF))
+    tid = r.task["id"]
+    path = write_brief(r.summary, r.original_screens, os.path.join(r.run_dir, BRIEF),
+                       errors=r.errors)
     if not path:
         r.log("final: 계획이 없어 설명서를 쓰지 않았다")
         return
     f["brief"] = path
     promoted = write_brief(r.summary, r.original_screens,
-                           os.path.join(out, PROMOTED_BRIEF % ""))
-    shutil.copy2(promoted, os.path.join(out, PROMOTED_BRIEF % ("." + name)))
+                           os.path.join(out, promoted_name("brief", tid)), errors=r.errors)
+    shutil.copy2(promoted, os.path.join(out, promoted_name("brief", tid, "." + name)))
     f["brief_promoted"] = promoted
-    r.log("final: 디자이너용 설명서 -> %s (+ %s)" % (path, PROMOTED_BRIEF % ""))
+    r.log("final: 디자이너용 설명서 -> %s (+ %s)" % (path, promoted_name("brief", tid)))
 
 
 # --------------------------------------------------------------------------- #
@@ -929,8 +958,11 @@ def run(args):
         return 2
 
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    # 실행 폴더 이름에 과제를 붙인다. 기본 과제(이체)는 전처럼 붙이지 않는다.
+    task_name = getattr(args, "task", None) or DEFAULT_TASK
     run_dir = os.path.join(runs_dir(mock),
-                           stamp + ("-mock-" + args.mock if args.mock else ""))
+                           stamp + ("" if task_name == DEFAULT_TASK else "-" + task_name)
+                           + ("-mock-" + args.mock if args.mock else ""))
     os.makedirs(run_dir, exist_ok=True)
     log = make_logger(os.path.join(run_dir, "run.log"))
     # 첫 줄. 작업 트리가 깨끗하지 않으면 그 사실이 run.log 를 여는 사람에게 가장
@@ -945,7 +977,7 @@ def run(args):
     except RuntimeError as e:
         log("cannot start: %s" % e)
         print("cannot start: %s" % e, file=sys.stderr)
-        _dump({"run_dir": run_dir, "passed": False, "attempts": [],
+        _dump({"run_dir": run_dir, "task": task_name, "passed": False, "attempts": [],
                "stopped_reason": "cannot_start", "error": str(e), "git": git},
               os.path.join(run_dir, "summary.json"))
         log("summary: %s" % os.path.join(run_dir, "summary.json"))
@@ -956,24 +988,34 @@ def run(args):
         return 2
 
     try:
-        template = load_template()
-        plan_template = load_plan_template()
+        # 과제가 프롬프트의 과제 설명과 기본 원본을 정한다. 과제를 주지 않은
+        # 실행(테스트가 손으로 만든 인자 포함)은 기본 과제다.
+        task = load_task(getattr(args, "task", None) or DEFAULT_TASK)
+        if not getattr(args, "original", None):
+            args.original = abs_path(task["original"])
+        # mock 은 한 과제의 빌드를 되읽는다. 다른 과제로 돌리면 결과에 뜻이 없다.
+        if args.mock and MOCK_TASK.get(args.mock) != task["id"]:
+            raise RuntimeError("--mock %s 는 %s 과제의 mock 이다 (지금 과제: %s)"
+                               % (args.mock, MOCK_TASK.get(args.mock), task["id"]))
+        template = load_template(task["id"])
+        plan_template = load_plan_template(task["id"])
         original_html = io.open(args.original, encoding="utf-8").read()
         orig_url = original_url(args.original)
-        allowed = load_allowed_removals()
-    except (OSError, RuntimeError) as e:
+        allowed = load_allowed_removals(task["id"])
+    except (OSError, RuntimeError, ValueError) as e:
         log("cannot start: %s" % e)
         print("cannot start: %s" % e, file=sys.stderr)
-        _dump({"run_dir": run_dir, "passed": False, "attempts": [],
+        _dump({"run_dir": run_dir, "task": task_name, "passed": False, "attempts": [],
                "stopped_reason": "cannot_start", "error": str(e), "git": git},
               os.path.join(run_dir, "summary.json"))
         log("summary: %s" % os.path.join(run_dir, "summary.json"))
         return 2
 
     log("run: %s | model=%s | attempts=%d | stage=%s | mock=%s | original=%s"
-        % (run_dir, model, args.attempts, args.stage, args.mock, orig_url))
+        % (run_dir, model, args.attempts, args.stage, args.mock, orig_url)
+        + ("" if task["id"] == DEFAULT_TASK else " | task=%s" % task["id"]))
     r = Run(args, log, run_dir, model, template, original_html, orig_url,
-            plan_template=plan_template)
+            plan_template=plan_template, task=task)
     r.summary["git"] = git
     r.allowed_removals = allowed
     if allowed:
@@ -991,7 +1033,9 @@ def run(args):
             r.summary["error"] = str(e)
             return exit_code(r.summary)
         # 대비·언어 검사의 기준이 되는 원본 스냅샷. 실행마다 한 번만 걷는다.
-        base_flow = A.load_flow(None)
+        # 과제의 원본 흐름으로 걷는다 - 다른 과제의 흐름으로 걸으면 첫 화면에서
+        # 멈추고, 선택지 요약 · 지킬 데이터가 빈다.
+        base_flow = A.load_flow(None, task=task["id"])
         log("audit: driving the original once (baseline for contrast / language)")
         # 비교 기준으로만 쓰므로 원본의 오류 경로는 걷지 않는다 - 모델의 설계는
         # 원본과 화면이 다르고, 오류 경로는 생성물의 흐름으로 걷는다.

@@ -47,6 +47,7 @@ This file is the command line and nothing else. The work is split up:
 Usage:
   python -m senior_ui.restructure                 # real model, 3 attempts
   python -m senior_ui.restructure --attempts 2 --model gpt-4o
+  python -m senior_ui.restructure --task bill     # 공과금 과제 (기본은 transfer)
   python -m senior_ui.restructure --mock pass     # no API: replays Run 1
   python -m senior_ui.restructure --mock fail     # no API: a broken flow, every attempt fails
 
@@ -87,10 +88,10 @@ import sys
 
 from senior_ui._cli import setup_stdout
 from senior_ui.audit.stage import STAGES
-from senior_ui.config import ORIGINAL_FILE
+from senior_ui.tasks import DEFAULT_TASK, task_names
 
 from .loop import PLAN_MAX_TOKENS, run
-from .model import MODES, SEED, TEMPERATURE
+from .model import ALL_MODES, SEED, TEMPERATURE
 
 
 # --mock pass 가 무엇을 하는가. Run 1 빌드에는 원본 숫자판의 00 과 금액 버튼의
@@ -121,10 +122,14 @@ def build_parser():
                          "30,000 을 넘는다")
     ap.add_argument("--plan-max-tokens", type=int, default=PLAN_MAX_TOKENS,
                     help="진단·계획 호출의 completion cap (JSON 하나)")
-    ap.add_argument("--mock", choices=MODES, default=None,
+    ap.add_argument("--mock", choices=ALL_MODES, default=None,
                     help="API 없이 Run 1 을 되읽는다. 모드마다 은행 목록 "
                          "한 줄이 다르다 - model.MOCKS 참고. %s" % MOCK_PASS_NOTE)
-    ap.add_argument("--original", default=ORIGINAL_FILE)
+    ap.add_argument("--task", choices=task_names(), default=DEFAULT_TASK,
+                    help="과제 (tasks/<이름>.json). 프롬프트의 과제 설명과 기본 원본이 "
+                         "여기서 온다. 기본 %s" % DEFAULT_TASK)
+    ap.add_argument("--original", default=None,
+                    help="원본 HTML. 주지 않으면 과제 파일의 original")
     ap.add_argument("--stage", choices=sorted(STAGES), default="styled",
                     help="검사 단계. wireframe 은 A·B·C·F·I 만 본다")
     ap.add_argument("--delay", type=float, default=60.0,

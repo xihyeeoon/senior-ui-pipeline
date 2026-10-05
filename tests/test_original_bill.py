@@ -349,8 +349,36 @@ def test_flow_file_shape():
     raw = json.load(io.open(FLOW, encoding="utf-8"))
     assert raw["truth"]["AMOUNT"] == "2160"
     assert raw["truth"]["ENO"] == "1700000000"
-    assert raw["truth"]["NAME"] == "홍길동"
+    assert raw["truth"]["CUSTOMER"] == "홍길동"
+    assert raw["task"] == "bill"
+    # 이체에 맞춰 넣었던 이름은 걷어 냈다 (11번 단계)
+    assert not {"ACCOUNT", "BANK", "NAME"} & set(raw["truth"])
+    assert raw["done_amount"] == "#dn-paid"
     assert raw["error_paths"] == []
     assert not [k for k in raw["truth"] if k.endswith("_WRONG")]
     flow = load_flow()
     assert flow["truth"]["AMOUNT_SHOWN"] == "2,160"
+
+
+def test_done_screen_fits_without_scrolling(page):
+    """납부완료 화면은 실제 앱 캡처(더미앱 docs/screenshots/03_공과금납부/납부하기/6.png)
+    처럼 안내 문구까지 스크롤 없이 다 보이고 [확인] 버튼과 겹치지 않는다.
+
+    고치기 전: 행 간격이 넓고 "고객전용지정 계좌번호" 가 두 줄로 꺾여 본문이 넘쳤다.
+    안내 문구가 스크롤 영역 아래로 잘려, 검사 E 는 그것을 [확인] 버튼과 61% 겹침으로
+    적었다 - 원본에만 있는 문제는 재설계 모델이 가짜 문제로 진단한다."""
+    flow = load_flow()
+    walk_to(page, flow, "done")
+    got = page.evaluate("""() => {
+      const s = document.querySelector("[data-screen='done']");
+      const body = s.querySelector('.body');
+      const r = e => e.getBoundingClientRect();
+      const labels = [...s.querySelectorAll('.kv .k')].map(e => r(e).height);
+      return {scroll: body.scrollHeight - body.clientHeight,
+              note_bottom: r(s.querySelector('.note')).bottom, body_bottom: r(body).bottom,
+              button_top: r(s.querySelector('.btn-primary')).top,
+              label_max: Math.max(...labels), label_min: Math.min(...labels)};
+    }""")
+    assert got["scroll"] <= 0, got
+    assert got["note_bottom"] <= got["body_bottom"] <= got["button_top"], got
+    assert got["label_max"] == got["label_min"], got        # 라벨이 꺾이지 않는다

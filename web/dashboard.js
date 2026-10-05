@@ -11,9 +11,10 @@ const esc = s => String(s == null ? '' : s)
 let IX = null;            // index.json
 let PAGE = 'home';
 
-/* 원본을 포함한 전체 목록. 원본은 검사 대상이 아니라 비교 기준이다. */
+/* 원본을 포함한 전체 목록. 원본은 검사 대상이 아니라 비교 기준이다.
+   이체 원본은 baseline, 다른 과제의 원본은 originals 다. */
 function allBuilds(){
-  return (IX.baseline ? [IX.baseline] : []).concat(IX.builds || []);
+  return (IX.baseline ? [IX.baseline] : []).concat(IX.originals || [], IX.builds || []);
 }
 function buildById(id){ return allBuilds().find(b => b.id === id); }
 
@@ -51,6 +52,7 @@ function drawHome(){
   const pipe = (IX.builds || []).filter(b => b.layer === 'pipeline');
 
   if (base) rows.push(row(base));
+  (IX.originals || []).forEach(b => rows.push(row(b)));
   if (pipe.length){
     rows.push('<tr class="sect-row"><td colspan="8">파이프라인 산출물 — LLM 직접 재구성</td></tr>');
     pipe.forEach(b => rows.push(row(b)));

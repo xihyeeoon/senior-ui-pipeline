@@ -220,11 +220,13 @@ def _read(path):
         else None
 
 
-def write_brief(summary, original_screens, brief_path):
+def write_brief(summary, original_screens, brief_path, errors=None):
     """summary.json 이 가리키는 파일들로 설명서를 쓴다. 쓴 경로를 돌려준다.
 
     통과한 빌드에만 부른다. 계획이 없으면(진단·계획 단계 이전의 실행) 쓰지
-    않는다 - 대응표와 변경 목록이 설명서의 몸통이다."""
+    않는다 - 대응표와 변경 목록이 설명서의 몸통이다.
+
+    `errors` 는 과제가 정한 오류 경로다. 주지 않으면 기본 과제(이체)의 것."""
     final = summary.get("final") or {}
     plan = _read(final.get("plan"))
     if not plan:
@@ -246,6 +248,6 @@ def write_brief(summary, original_screens, brief_path):
         redeclared=(final.get("preserved") or {}).get("redeclared"),
         model_html=final.get("model_html_promoted") or final.get("model_html"),
         git=summary.get("git"), reflections=reflections,
-        errors=original_error_paths())
+        errors=original_error_paths() if errors is None else errors)
     io.open(brief_path, "w", encoding="utf-8", newline="\n").write(text)
     return brief_path

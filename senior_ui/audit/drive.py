@@ -11,7 +11,7 @@ from playwright.async_api import TimeoutError as PlaywrightTimeout
 from playwright.async_api import async_playwright
 
 from . import probes as P
-from .flow import fill, truth_of, visit_keys
+from .flow import done_pairs, fill, truth_of, visit_keys
 
 # 방문 이름의 `#` 는 파일 이름에서는 쓰지 않는다 (URL 에서 조각 구분자다).
 SHOT_SAFE = re.compile(r"[^0-9A-Za-z_.-]")
@@ -270,9 +270,13 @@ async def collect_screen(page, flow, visit, reached=None):
     row["wrapped"] = await page.evaluate(P.WRAPPED)
     # expect 는 방문 이름으로 적는다 - 화면 이름만 적으면 첫 방문이다
     # (flow.visit_keys 참고).
-    row["shown"] = await page.evaluate(
-        SHOWN, [fill(s, truth_of(flow))
-                for s, _ in flow["expect"].get(visit, [])])
+    sels = [s for s, _ in flow["expect"].get(visit, [])]
+    # 마지막 방문(완료 화면)에서는 과제의 완료 값 자리도 읽는다 - 흐름이
+    # expect 에 적지 않았어도 검사 A 가 볼 수 있어야 한다. 이미 적힌 것은
+    # 다시 넣지 않는다 (적힌 흐름의 수집 결과는 전과 같다).
+    if flow.get("steps") and visit == visit_keys(flow["steps"])[-1]:
+        sels += [s for s, _ in done_pairs(flow) if s not in sels]
+    row["shown"] = await page.evaluate(SHOWN, [fill(s, truth_of(flow)) for s in sels])
     return row
 
 

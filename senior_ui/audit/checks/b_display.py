@@ -12,8 +12,9 @@ alert/confirm/prompt 나 onclick 이 끼어들었는지를 본다. 값은 숫자
 """
 import re
 
+from ...tasks import load_task
 from ..context import union
-from ..flow import fill, truth_of
+from ..flow import fill, task_of, truth_of
 
 # 숫자 사이의 하이픈과 공백은 끊어 읽히게 하는 장식이다 (3333-0000-0000-0,
 # 3333 0000 0000 0). 숫자 사이가 아닌 것은 걷어내지 않는다 - "카카오뱅크
@@ -56,9 +57,13 @@ def run(ctx):
     rep, orig = ctx.rep, ctx.orig
     metrics, F, W = ctx.metrics, ctx.fatal_, ctx.warn
     truth = truth_of(ctx.flow)
-    # 원본 화면에 있던 이름은 원본을 걸을 때의 정답으로 찾는다. 옛 빌드를 새
-    # 원본과 견주면 둘의 받는 사람이 다르다.
-    orig_name = (orig.get("truth") or truth)["NAME"]
+    task = load_task(task_of(ctx.flow))
+    # 원본 화면에 있던 값(이체는 받는 사람 이름)은 원본을 걸을 때의 정답으로
+    # 찾는다. 옛 빌드를 새 원본과 견주면 둘의 받는 사람이 다르다. 어느 값을
+    # 지켜볼지와 경고에 쓸 이름은 과제가 정한다 (keep_on_screen).
+    orig_truth = orig.get("truth") or truth
+    keep = [(key, label, orig_truth[key]) for key, label
+            in task["keep_on_screen"].items() if key in orig_truth and key in truth]
 
     for name, pairs in ctx.flow["expect"].items():
         pairs = [(fill(sel, truth), fill(val, truth)) for sel, val in pairs]
@@ -75,9 +80,10 @@ def run(ctx):
                   % (sel, got, expected), selector=sel, expected=expected, got=got)
         # Only a name the original actually showed here can go missing.
         orig_text = (orig["screens"].get(name) or {}).get("text") or ""
-        if orig_name in orig_text and truth["NAME"] not in (row.get("text") or ""):
-            W("B", name, "recipient name %r no longer appears on this screen"
-              % truth["NAME"])
+        for key, label, orig_value in keep:
+            if orig_value in orig_text and truth[key] not in (row.get("text") or ""):
+                W("B", name, "%s %r no longer appears on this screen"
+                  % (label, truth[key]))
 
     # injected dialogs / handlers, by diffing the two documents
     #
@@ -113,14 +119,14 @@ def run(ctx):
     # 하나고, 그것이 과제가 쓰지 않은 숫자를 말한다는 것은 그 대화상자의
     # 성질이므로 finding 의 `numbers` 속성으로 둔다. 따로 적으면 대화상자
     # 한 개가 fatal 두 건이 된다.
+    # 대화상자가 말해도 되는 숫자는 과제가 정한다 (dialog_ok_values).
+    ok = [truth[k] for k in task["dialog_ok_values"] if k in truth]
     metrics["dialogs_during_task"] = len(rep["dialogs"])
     for d in rep["dialogs"]:
-        nums = [n for n in re.findall(r"\d[\d,]*", d["message"])
-                if n not in (truth["AMOUNT_SHOWN"], truth["AMOUNT"],
-                             truth["ACCOUNT"])]
+        nums = [n for n in re.findall(r"\d[\d,]*", d["message"]) if n not in ok]
         wrong = ""
         if nums:
             wrong = (" - it states %s while the task used %s"
-                     % (", ".join(nums), truth["AMOUNT_SHOWN"]))
+                     % (", ".join(nums), truth.get("AMOUNT_SHOWN", "?")))
         F("B", d["screen"], "blocking %s during the task: %r%s"
           % (d["type"], d["message"], wrong), numbers=nums)
