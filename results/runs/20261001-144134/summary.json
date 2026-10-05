@@ -1,0 +1,186 @@
+{
+  "run_dir": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-144134",
+  "model": "gpt-4o",
+  "mock": null,
+  "stage": "wireframe",
+  "attempts": [
+    {
+      "n": 1,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt": 12256,
+        "completion": 3286
+      },
+      "seconds": 20.9,
+      "html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-144134\\attempt_1.html",
+      "flow": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-144134\\attempt_1.flow.json",
+      "stage": "flow",
+      "passed": false,
+      "fatal": 2
+    },
+    {
+      "n": 2,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt": 15633,
+        "completion": 3334
+      },
+      "seconds": 20.8,
+      "html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-144134\\attempt_2.html",
+      "flow": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-144134\\attempt_2.flow.json",
+      "stage": "flow",
+      "passed": false,
+      "fatal": 1
+    },
+    {
+      "n": 3,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt": 15658,
+        "completion": 3449
+      },
+      "seconds": 21.3,
+      "html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-144134\\attempt_3.html",
+      "flow": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-144134\\attempt_3.flow.json",
+      "stage": "flow",
+      "passed": false,
+      "fatal": 1
+    },
+    {
+      "n": 4,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt": 15768,
+        "completion": 3468
+      },
+      "seconds": 28.1,
+      "html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-144134\\attempt_4.html",
+      "flow": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-144134\\attempt_4.flow.json",
+      "stage": "audit",
+      "passed": false,
+      "fatal": 1,
+      "warning": 0
+    },
+    {
+      "n": 5,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt": 15822,
+        "completion": 3459
+      },
+      "seconds": 21.6,
+      "html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-144134\\attempt_5.html",
+      "flow": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-144134\\attempt_5.flow.json",
+      "stage": "audit",
+      "passed": false,
+      "fatal": 1,
+      "warning": 0
+    },
+    {
+      "n": 6,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt": 15817,
+        "completion": 3471
+      },
+      "seconds": 19.2,
+      "html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-144134\\attempt_6.html",
+      "flow": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-144134\\attempt_6.flow.json",
+      "stage": "audit",
+      "passed": false,
+      "fatal": 1,
+      "warning": 0
+    },
+    {
+      "n": 7,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt": 15821,
+        "completion": 3468
+      },
+      "seconds": 22.0,
+      "html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-144134\\attempt_7.html",
+      "flow": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-144134\\attempt_7.flow.json",
+      "stage": "audit",
+      "passed": false,
+      "fatal": 6,
+      "warning": 0
+    },
+    {
+      "n": 8,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt": 16103,
+        "completion": 3497
+      },
+      "seconds": 20.2,
+      "html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-144134\\attempt_8.html",
+      "flow": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-144134\\attempt_8.flow.json",
+      "stage": "flow",
+      "passed": false,
+      "fatal": 1
+    },
+    {
+      "n": 9,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt": 15816,
+        "completion": 3497
+      },
+      "seconds": 20.3,
+      "html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-144134\\attempt_9.html",
+      "flow": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-144134\\attempt_9.flow.json",
+      "stage": "flow",
+      "passed": false,
+      "fatal": 1
+    }
+  ],
+  "passed": false,
+  "final": {
+    "attempt": 9,
+    "html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-144134\\attempt_9.html",
+    "flow": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-144134\\attempt_9.flow.json",
+    "audit": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261001-144134\\attempt_9.audit.json"
+  },
+  "budget": {
+    "format_used": 5,
+    "format_budget": 5,
+    "audit_used": 4,
+    "audit_budget": 6
+  },
+  "stopped_reason": "budget_exhausted",
+  "trend": [
+    {
+      "attempt": 4,
+      "fatal_total": null,
+      "fatal_root": null,
+      "fatal_derived": null,
+      "screens": "None/None",
+      "stopped_at": null
+    },
+    {
+      "attempt": 5,
+      "fatal_total": null,
+      "fatal_root": null,
+      "fatal_derived": null,
+      "screens": "None/None",
+      "stopped_at": null
+    },
+    {
+      "attempt": 6,
+      "fatal_total": null,
+      "fatal_root": null,
+      "fatal_derived": null,
+      "screens": "None/None",
+      "stopped_at": null
+    },
+    {
+      "attempt": 7,
+      "fatal_total": 5,
+      "fatal_root": 3,
+      "fatal_derived": 2,
+      "screens": "4/7",
+      "stopped_at": "confirm"
+    }
+  ]
+}

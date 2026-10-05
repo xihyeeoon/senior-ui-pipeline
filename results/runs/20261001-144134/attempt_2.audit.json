@@ -1,0 +1,15 @@
+{
+  "passed": false,
+  "warning": [],
+  "metrics": {
+    "flow": "auto",
+    "not_audited": true
+  },
+  "fatal": [
+    {
+      "check": "FLOW",
+      "screen": null,
+      "detail": "data-action 이 있지만 `a==='…'` 분기가 없는 것: back-amount, pw-del, pw-shuffle, quick"
+    }
+  ]
+}

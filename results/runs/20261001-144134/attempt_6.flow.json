@@ -1,0 +1,65 @@
+{
+  "name": "auto",
+  "note": "이체 화면 진행 플로우",
+  "derived_from_original": false,
+  "required_ids": [
+    "phone",
+    "dn-amt"
+  ],
+  "steps": [
+    {
+      "screen": "start"
+    },
+    {
+      "screen": "recipient",
+      "click": "[data-action='go-recipient']"
+    },
+    {
+      "screen": "bank",
+      "click": "[data-action='go-bank']"
+    },
+    {
+      "screen": "amount",
+      "click": "[data-action='pick-bank']"
+    },
+    {
+      "screen": "confirm",
+      "do": [
+        {
+          "type": "{ACCOUNT}",
+          "key": "[data-action='acc-input']"
+        },
+        {
+          "type": "{AMOUNT}",
+          "key": "[data-action='amt-input']"
+        },
+        {
+          "click": "[data-action='go-confirm']"
+        }
+      ]
+    },
+    {
+      "screen": "password",
+      "do": [
+        {
+          "repeat": 4,
+          "click": "#pwpad [data-action='pw']",
+          "wait": 0.15
+        }
+      ]
+    },
+    {
+      "screen": "done",
+      "click": "[data-action='finish']"
+    }
+  ],
+  "expect": {
+    "done": [
+      [
+        "#dn-amt",
+        "{AMOUNT_SHOWN}"
+      ]
+    ]
+  },
+  "done_amount": "#dn-amt"
+}
