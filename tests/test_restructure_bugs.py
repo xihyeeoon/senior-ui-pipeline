@@ -271,3 +271,79 @@ def test_the_run_writes_nothing_into_the_real_outputs_dir(fake_run_env, tmp_path
     after = {n: os.path.getmtime(os.path.join(real, n))
              for n in os.listdir(real)} if os.path.isdir(real) else {}
     assert after == before
+
+
+# ===================================================================== #
+# 2. 재시도 상태
+# ===================================================================== #
+BAD_REPLY = "코드 블록 없이 설명만 적은 답"
+
+
+def replies(*texts, finish="stop"):
+    """정해진 순서대로 답을 내놓는 call_model 대역."""
+    seq = list(texts)
+
+    def call(*a, **kw):
+        text = seq.pop(0) if len(seq) > 1 else seq[0]
+        reason = finish if isinstance(finish, str) else finish[0]
+        return {"text": text, "finish_reason": reason, "seconds": 0.0, "usage": None}
+    return call
+
+
+def prompts_of(tmp_path):
+    runs = sorted((tmp_path / "outputs" / "restructure_auto").iterdir())
+    return [io.open(str(p), encoding="utf-8").read()
+            for p in sorted(runs[-1].glob("attempt_*.prompt.txt"))]
+
+
+def test_parse_failure_keeps_the_last_audited_findings(fake_run_env, tmp_path):
+    """파싱이 실패한 시도는 검사받은 적이 없다. 검사 결과는 그 전 시도의 것이다.
+
+    고치기 전: 직전 HTML 은 그대로 두면서 그 HTML 의 검사 결과는 파싱 실패
+    리포트로 덮었다. 재시도 프롬프트가 HTML 과 어긋난 실패 목록을 보게 된다 -
+    "이 HTML 을 고쳐라" 고 하면서 그 HTML 에서 나오지 않은 실패를 붙인 셈이다.
+    """
+    fake_run_env.setattr(loop, "run_audit", lambda *a, **kw: failing_report())
+    call = replies(GOOD_REPLY, BAD_REPLY, GOOD_REPLY)
+
+    _code, _summary = run_loop(fake_run_env, tmp_path, call, attempts=3)
+    third = prompts_of(tmp_path)[2]
+    # 2번 시도의 파싱 실패와, 1번 시도에서 실제로 검사받은 실패가 둘 다 있어야
+    # 한다 - 한쪽이 다른 쪽을 덮으면 안 된다.
+    assert "```html 코드 블록이 없다" in third
+    assert "금액이 틀렸다" in third
+
+
+def test_parse_failure_carries_the_html_that_was_audited(fake_run_env, tmp_path):
+    """프롬프트에 실리는 HTML 과 흐름 명세는 그 실패 목록을 낸 바로 그 빌드다."""
+    fake_run_env.setattr(loop, "run_audit", lambda *a, **kw: failing_report())
+    call = replies(GOOD_REPLY, BAD_REPLY, GOOD_REPLY)
+
+    _code, _summary = run_loop(fake_run_env, tmp_path, call, attempts=3)
+    third = prompts_of(tmp_path)[2]
+    assert "data-screen=\"start\"" in third      # 직전에 검사받은 HTML
+    assert "\"required_ids\"" in third            # 그 HTML 과 짝인 흐름 명세
+
+
+def test_a_truncated_answer_is_called_out_on_the_retry(fake_run_env, tmp_path):
+    """길이 제한에 잘린 답은 "짧게 써라" 가 아니라 "잘렸다" 를 알려야 한다.
+
+    고치기 전: 잘린 답도 보통의 파싱 실패와 같은 한 줄로 들어갔고, 같은 길이의
+    답이 다시 와서 같은 자리에서 또 잘렸다.
+    """
+    call = replies("```html\n<html>여기서 잘림", finish="length")
+
+    _code, summary = run_loop(fake_run_env, tmp_path, call, attempts=3)
+    second = prompts_of(tmp_path)[1]
+    assert "finish_reason=length" in second
+    assert "[잘린 답]" in second
+    assert summary["attempts"][0]["truncated"] is True
+
+
+def test_the_truncation_notice_counts_how_many_times_it_happened(fake_run_env, tmp_path):
+    """두 번째로 잘리면 그 사실이 보여야 한다 - 같은 지시를 반복해도 소용없다."""
+    call = replies("```html\n<html>여기서 잘림", finish="length")
+
+    _code, _summary = run_loop(fake_run_env, tmp_path, call, attempts=3)
+    third = prompts_of(tmp_path)[2]
+    assert "2번 연속" in third

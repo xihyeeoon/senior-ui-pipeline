@@ -103,7 +103,13 @@ class Run:
             args.format_attempts if args.format_attempts is not None else args.attempts,
             args.audit_attempts if args.audit_attempts is not None else args.attempts,
             getattr(args, "infra_attempts", 3))
-        self.prev = {"report": None, "html": None, "flow_text": None}
+        # 마지막으로 **검사까지 간** 빌드와 그 결과. 셋은 늘 같은 시도의 것이다.
+        self.last = {"report": None, "html": None, "flow_text": None}
+        # 마지막 형식 오류. 검사 결과와 다른 것이므로 따로 들고 있는다 - 한쪽을
+        # 다른 쪽에 넣으면 재시도 프롬프트가 둘 중 하나를 잃는다.
+        self.last_error = None
+        # 길이 제한에 잘린 답이 연속 몇 번인지. 둘째 번부터는 안내가 달라진다.
+        self.truncated = 0
         self.summary = {"run_dir": run_dir, "model": model, "mock": args.mock,
                         "stage": args.stage, "attempts": [], "passed": False,
                         "final": None, "budget": {}, "stopped_reason": None,
@@ -140,8 +146,9 @@ def request_reply(r, n, p):
 
     돌려주는 것은 (reply, outcome). reply 가 None 이면 이 시도가 모델 호출에서
     끝난 것이고 outcome 이 다음에 할 일이다."""
-    block = retry_block(r.prev["report"], r.prev["html"], r.prev["flow_text"]) \
-        if r.prev["report"] else ""
+    block = retry_block(r.last["report"], r.last["html"], r.last["flow_text"],
+                        error=r.last_error, truncated=r.truncated) \
+        if (r.last["report"] or r.last_error or r.truncated) else ""
     prompt = build_prompt(r.template, r.original_html, block, r.choices)
     io.open(p + ".prompt.txt", "w", encoding="utf-8", newline="\n").write(prompt)
     r.log("prompt: %d chars%s" % (len(prompt), " (with retry block)" if block else ""))
@@ -173,7 +180,7 @@ def request_reply(r, n, p):
             # 설계 실패가 아니므로 형식·검사 예산은 건드리지 않는다. 대신 인프라
             # 예산을 쓴다 - 다시 될 수도 있지만 무한히 기다리지는 않는다.
             #
-            # 오류 문구는 프롬프트로 가지 않는다 (r.prev 를 그대로 둔다). 모델이
+            # 오류 문구는 프롬프트로 가지 않는다 (r.last 를 그대로 둔다). 모델이
             # 고칠 수 있는 것이 아니고, 직전에 검사받은 빌드의 실패 목록을
             # API 오류로 덮으면 다음 시도가 고칠 것을 잃는다.
             kind = "InfraFailed" if isinstance(e, InfraFailed) else type(e).__name__
@@ -201,8 +208,9 @@ def check_reply(r, p, entry, reply):
 
     돌려주는 것은 (build, outcome). build 가 None 이면 파싱이 실패해 이 시도가
     끝난 것이다."""
+    truncated = reply["finish_reason"] == "length"
     try:
-        if reply["finish_reason"] == "length":
+        if truncated:
             raise ValueError("답이 길이 제한에서 잘렸다 (finish_reason=length). "
                              "코드 블록 두 개만, 군더더기 없이 출력하라")
         html, flow, flow_text = parse_reply(reply["text"])
@@ -213,17 +221,28 @@ def check_reply(r, p, entry, reply):
         r.log("parse: %s" % e)
         report = failure_report("PARSE", str(e))
         entry.update(stage="parse", passed=False, fatal=1)
+        if truncated:
+            entry["truncated"] = True
         _dump(report, p + ".audit.json")
         r.summary["attempts"].append(entry)
-        # TODO 버그: 직전 HTML 은 그대로 두면서 그 HTML 의 검사 결과(report)는
-        # 버린다. 재시도 프롬프트가 HTML 과 어긋난 실패 목록을 보게 된다.
-        r.prev = {"report": report, "html": r.prev["html"],
-                  "flow_text": r.prev["flow_text"]}
+        # 이 시도는 검사를 받은 적이 없다. r.last 는 마지막으로 **검사까지 간**
+        # 빌드와 그 결과이므로 건드리지 않는다 - 덮으면 다음 프롬프트가 그 HTML
+        # 에서 나오지 않은 실패 목록을 "이것을 고쳐라" 와 함께 보게 된다.
+        if truncated:
+            # 잘린 답은 형식 오류와 겉모양이 같다. 한 번만 말하게 한다.
+            r.truncated += 1
+            r.last_error = None
+        else:
+            r.truncated = 0
+            r.last_error = str(e)
         r.budget.spend("format")
         if r.budget.out_of("format"):
             r.log("형식 재시도 예산 소진 (%d회)" % r.budget.format_used)
             return None, STOP
         return None, GO_ON
+
+    # 여기까지 왔으면 답은 읽을 수 있는 모양이다. 형식 오류는 해결되었다.
+    r.truncated, r.last_error = 0, None
 
     html_path, flow_path = p + ".html", p + ".flow.json"
     io.open(html_path, "w", encoding="utf-8", newline="\n").write(html)
@@ -299,7 +318,7 @@ def record(r, n, p, entry, report, build):
         r.summary["passed"] = True
         r.log("PASSED on attempt %d" % n)
         return STOP
-    r.prev = {"report": report, "html": build["html"], "flow_text": build["flow_text"]}
+    r.last = {"report": report, "html": build["html"], "flow_text": build["flow_text"]}
     return _budget_stop(r, entry)
 
 
