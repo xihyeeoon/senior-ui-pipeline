@@ -357,3 +357,107 @@ def test_a_reasoning_request_that_cannot_fit_stops_at_once(monkeypatch):
     F.install(monkeypatch, [F.too_large(30000, 50000, "gpt-5-pro")])
     with pytest.raises(model.RateLimited):
         model.call_model("gpt-5-pro", "p", 14000)
+
+
+# ===================================================================== #
+# 4. 연구자가 직접 돌릴 확인 명령 - --list-models · --probe
+# ===================================================================== #
+cli = _api.restructure_cli
+
+
+@pytest.fixture
+def probe_env(monkeypatch, out_root):
+    monkeypatch.setenv("SENIOR_UI_OUTPUTS", out_root)
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key-not-used")
+    monkeypatch.setattr(model.time, "sleep", lambda s: None)
+    return monkeypatch
+
+
+def run_cli(monkeypatch, *argv):
+    monkeypatch.setattr("sys.argv", ["senior_ui.restructure"] + list(argv))
+    return cli.main()
+
+
+def probe_log(out_root):
+    return io.open(os.path.join(out_root, "model-probe.log"), encoding="utf-8").read()
+
+
+MODEL_IDS = ["o3", "gpt-5", "dall-e-3", "gpt-4o", "gpt-4.1", "gpt-5.10",
+             "gpt-5.2", "gpt-4o-2024-08-06", "text-embedding-3-small", "gpt-5-pro"]
+
+
+def test_list_models_shows_only_gpt_sorted(probe_env, out_root, capsys):
+    F.install(probe_env, model_ids=MODEL_IDS)
+    assert run_cli(probe_env, "--list-models") == 0
+    out = capsys.readouterr().out
+    shown = [l.split()[0] for l in out.splitlines() if l.startswith("  gpt-")]
+    assert shown == ["gpt-4.1", "gpt-4o", "gpt-4o-2024-08-06", "gpt-5", "gpt-5-pro",
+                     "gpt-5.2", "gpt-5.10"]
+    assert "o3" not in shown and "3개" in out          # gpt- 가 아닌 셋은 센다
+    assert "gpt-5.10" in probe_log(out_root)
+
+
+def test_list_models_marks_how_each_would_be_called(probe_env, out_root, capsys):
+    F.install(probe_env, model_ids=["gpt-5-pro", "gpt-4o", "gpt-zz"])
+    run_cli(probe_env, "--list-models")
+    rows = {l.split()[0]: l for l in capsys.readouterr().out.splitlines()
+            if l.startswith("  gpt-")}
+    assert "responses" in rows["gpt-5-pro"] and "추론형" in rows["gpt-5-pro"]
+    assert "chat" in rows["gpt-4o"]
+    assert "모름" in rows["gpt-zz"]
+
+
+def test_probe_reports_limits_and_the_real_model(probe_env, out_root, capsys):
+    client = F.install(probe_env, [F.Reply(model="gpt-5-2026-08-07", reasoning=0,
+                                           completion=2)])
+    assert run_cli(probe_env, "--probe", "gpt-5") == 0
+    out = capsys.readouterr().out
+    assert "gpt-5-2026-08-07" in out
+    assert "30000" in out and "500" in out
+    assert "지원하지 않는 인자 오류: 없음" in out
+    # 아주 짧은 요청 하나
+    assert len(client.sent) == 1
+    assert client.sent[0][1]["max_completion_tokens"] <= 16
+    assert "gpt-5-2026-08-07" in probe_log(out_root)
+
+
+def test_probe_reports_a_rejected_parameter(probe_env, out_root, capsys):
+    client = F.install(probe_env, [F.unsupported("temperature", "unsupported_value", 0),
+                                   "ok"])
+    assert run_cli(probe_env, "--probe", "mystery-1") == 0
+    out = capsys.readouterr().out
+    assert "지원하지 않는 인자 오류: 있음" in out and "temperature" in out
+    assert len(client.sent) == 2
+
+
+def test_probe_of_a_responses_model_uses_max_output_tokens(probe_env, out_root, capsys):
+    client = F.install(probe_env, [F.Reply(truncated=True, text="")])
+    assert run_cli(probe_env, "--probe", "gpt-5-pro") == 0
+    api, kw = client.sent[0]
+    assert api == "responses" and kw["max_output_tokens"] == 16
+    assert "length" in capsys.readouterr().out
+
+
+def test_probe_that_the_api_refuses_exits_2(probe_env, out_root, capsys):
+    import openai
+    F.install(probe_env, [F.make_error(openai.NotFoundError,
+                                       "The model `nope` does not exist", 404)])
+    assert run_cli(probe_env, "--probe", "nope") == 2
+    out = capsys.readouterr().out
+    assert "does not exist" in out
+    assert "does not exist" in probe_log(out_root)
+
+
+def test_probe_without_a_key_exits_2(probe_env, out_root, capsys):
+    probe_env.delenv("OPENAI_API_KEY")
+    probe_env.setattr(model, "load_env", lambda: None)
+    assert run_cli(probe_env, "--probe", "gpt-4o") == 2
+    assert "OPENAI_API_KEY" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("argv", [["--list-models"], ["--probe", "gpt-4o"]])
+def test_check_commands_make_no_run_folder(probe_env, out_root, argv):
+    F.install(probe_env, model_ids=["gpt-4o"])
+    run_cli(probe_env, *argv)
+    assert not os.path.exists(os.path.join(out_root, "restructure_auto"))
+    assert os.listdir(out_root) == ["model-probe.log"]

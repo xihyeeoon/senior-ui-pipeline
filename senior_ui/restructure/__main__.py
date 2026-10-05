@@ -51,6 +51,8 @@ Usage:
   python -m senior_ui.restructure --task bill     # 공과금 과제 (기본은 transfer)
   python -m senior_ui.restructure --mock pass     # no API: replays Run 1
   python -m senior_ui.restructure --mock fail     # no API: a broken flow, every attempt fails
+  python -m senior_ui.restructure --list-models   # 이 키로 쓸 수 있는 gpt- 모델 (요금 없음)
+  python -m senior_ui.restructure --probe gpt-5   # 아주 짧은 요청 하나: 분당 한도 · 실제 모델
 
 mock 모드는 일곱이고 Run 1 빌드를 되읽는다. 모드마다 은행 목록 한 줄과,
 원본에 있고 Run 1 에 없는 두 값(금액 숫자판의 00 · 빠른 금액의 전액)을 채우는
@@ -96,6 +98,7 @@ from senior_ui.tasks import DEFAULT_TASK, task_names
 
 from .loop import PLAN_MAX_TOKENS, run
 from .model import ALL_MODES, APIS, REASONING_EFFORTS, SEED, TEMPERATURE
+from .probe import list_models, probe
 
 
 # --mock pass 가 무엇을 하는가. Run 1 빌드에는 원본 숫자판의 00 과 금액 버튼의
@@ -147,6 +150,14 @@ def build_parser():
                     help="원본 HTML. 주지 않으면 과제 파일의 original")
     ap.add_argument("--stage", choices=sorted(STAGES), default="styled",
                     help="검사 단계. wireframe 은 A·B·C·F·I 만 본다")
+    ap.add_argument("--list-models", action="store_true",
+                    help="이 키로 쓸 수 있는 gpt- 모델을 보이고 끝난다 (models.list, 요금 "
+                         "없음). 실행 폴더를 만들지 않는다 - outputs/model-probe.log")
+    ap.add_argument("--probe", metavar="MODEL", default=None,
+                    help="그 모델에 아주 짧은 요청 하나를 실제 실행과 같은 방식으로 "
+                         "보내고, 분당 한도 · 실제 모델 이름 · 지원하지 않는 인자 오류를 "
+                         "보이고 끝난다. --api · --reasoning-effort · --temperature · "
+                         "--seed 를 따른다. 실행 폴더를 만들지 않는다")
     ap.add_argument("--delay", type=float, default=60.0,
                     help="모델 호출 사이 대기(초) - 진단·계획과 생성 사이, 시도와 "
                          "시도 사이. 원본 HTML 이 두 호출에 모두 들어가서 같은 1분 "
@@ -157,7 +168,14 @@ def build_parser():
 def main():
     # 무엇이든 찍기 전에 맞춘다 (senior_ui/_cli.py).
     setup_stdout()
-    return run(build_parser().parse_args())
+    args = build_parser().parse_args()
+    # 확인 명령은 루프를 돌리지 않는다 - 실행 폴더도 만들지 않는다 (probe.py).
+    if args.list_models:
+        return list_models()
+    if args.probe:
+        return probe(args.probe, temperature=args.temperature, seed=args.seed,
+                     reasoning_effort=args.reasoning_effort, api=args.api)
+    return run(args)
 
 
 if __name__ == "__main__":
