@@ -147,3 +147,58 @@ def test_b_is_unchanged_for_transfer():
     ctx = run_b(flow, "", "", dialogs=[
         {"type": "alert", "message": "32,000 110234567890 5", "screen": "done"}])
     assert ctx.fatal[0]["numbers"] == ["5"]
+
+
+
+# --------------------------------------------------------------------- #
+# 3. 재구성 루프 - 기준값 걷기 · 형식 검사 · 프롬프트의 오류 조건
+# --------------------------------------------------------------------- #
+from test_restructure_bugs import (GOOD_FLOW, GOOD_HTML, GOOD_PLAN_REPLY,  # noqa: E402
+                                   always_reply, fake_run_env, out_root,  # noqa: F401
+                                   reply_text, run_loop)
+
+loop = _api.loop_module
+FLOW_REAL = _api.flow_module
+
+BILL_HTML = GOOD_HTML.replace(
+    '<span id="dn-amt">10,000</span>',
+    '<span id="dn-paid">2,160</span><span id="dn-eno">1700000000</span>')
+BILL_FLOW = {"name": "auto", "required_ids": ["phone", "dn-paid", "dn-eno"],
+             "steps": GOOD_FLOW["steps"],
+             "expect": {"done": [["#dn-paid", "{AMOUNT_SHOWN}"], ["#dn-eno", "{ENO}"]]},
+             "done_amount": "#dn-paid", "error_paths": []}
+
+
+def bill_reply(*a, **kw):
+    return {"text": reply_text(BILL_HTML, BILL_FLOW), "finish_reason": "stop",
+            "seconds": 0.0, "usage": None}
+
+
+def bill_run(env, out_root, call=bill_reply, **kw):  # noqa: F811
+    """공과금 과제로 루프를 돌린다. 가짜 환경은 오류 정의를 비워 두는데, 여기서는
+    과제의 것(공과금은 빈 목록)이 쓰여야 하므로 진짜를 되돌려 둔다."""
+    env.setattr(loop, "required_errors", FLOW_REAL.required_errors)
+    return run_loop(env, out_root, call, attempts=1, task="bill", original=None, **kw)
+
+
+def test_the_bill_prompts_carry_the_bill_task_and_no_transfer_errors(
+        fake_run_env, out_root):  # noqa: F811
+    """고치기 전: 오류 조건 절이 늘 이체의 두 오류였다."""
+    fake_run_env.setattr(loop, "load_template", _api.load_template)
+    # 가짜 모델은 이 머리말로 진단·계획 호출을 알아본다 (is_plan_prompt).
+    fake_run_env.setattr(loop, "load_plan_template",
+                         lambda task=None: "PLAN_TEMPLATE " + _api.load_plan_template(task))
+    bill_run(fake_run_env, out_root)
+    run_dir = sorted(os.listdir(os.path.join(out_root, "restructure_auto")))[-1]
+    p = os.path.join(out_root, "restructure_auto", run_dir, "attempt_1")
+    for suffix in (".prompt.txt", ".plan_prompt.txt"):
+        text = io.open(p + suffix, encoding="utf-8").read()
+        assert _api.load_task("bill")["description"] in text
+        assert "## 원본의 오류 조건" not in text
+        assert "wrong-account" not in text
+
+
+def test_required_errors_follow_the_task():
+    assert FLOW_REAL.required_errors("bill") == []
+    assert [e["id"] for e in FLOW_REAL.required_errors()] == ["wrong-account",
+                                                               "wrong-bank"]

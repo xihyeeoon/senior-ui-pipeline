@@ -102,6 +102,20 @@ def task_error_paths(task=None):
     return _task_errors[task]
 
 
+def required_errors(task=None):
+    """그 과제가 반드시 걸어야 할 오류 경로의 정의, 과제 파일의
+    required_error_paths 순서로. 정의(about · uses · notice_any)는 과제의 원본
+    흐름에 있다. 과제 파일이 정의 없는 id 를 적었으면 멈춘다 - 조용히 빼면
+    걸어야 할 오류 하나가 아무 데서도 걸리지 않는다."""
+    defs = {e["id"]: e for e in task_error_paths(task) if "id" in e}
+    ids = T.load_task(task)["required_error_paths"]
+    missing = [i for i in ids if i not in defs]
+    if missing:
+        raise ValueError("과제 %s 의 required_error_paths 에 흐름이 정의하지 않은 "
+                         "오류가 있다: %s" % (task or T.DEFAULT_TASK, ", ".join(missing)))
+    return [defs[i] for i in ids]
+
+
 def original_truth():
     """기본 과제(이체)의 정답. 과제를 모르는 호출 - 이체 mock 등 - 이 쓴다."""
     return task_truth(T.DEFAULT_TASK)

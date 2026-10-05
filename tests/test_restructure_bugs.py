@@ -100,7 +100,7 @@ def fake_run_env(monkeypatch, out_root):
     # 가짜 원본에는 오류 경로도 없다. 진짜 원본의 오류 정의를 그대로 두면 이
     # 파일의 가짜 답(오류 경로 없음)이 모두 형식에서 떨어진다. 오류 경로를
     # 요구하는 루프는 test_error_paths.py 가 따로 본다.
-    monkeypatch.setattr(loop, "original_error_paths", lambda: [])
+    monkeypatch.setattr(loop, "required_errors", lambda task=None: [])
     monkeypatch.setattr(loop, "choices_block", lambda snap, html: "")
     monkeypatch.setattr(loop, "load_template", lambda task=None: "TEMPLATE {{ORIGINAL_HTML}} "
                                                        "{{RETRY_BLOCK}} {{CHOICES}}")

@@ -29,7 +29,7 @@ import sys
 import time
 
 from senior_ui import audit as A
-from senior_ui.audit.flow import original_error_paths
+from senior_ui.audit.flow import required_errors
 from senior_ui.config import OUTPUTS_ENV, ROOT, inside_root, outputs_dir, url_for
 from senior_ui.devserver import ensure_server
 from senior_ui.tasks import DEFAULT_TASK, abs_path, load_task
@@ -42,9 +42,9 @@ from .model import (TEMPERATURE, SEED, ApiRejected, InfraFailed, RateLimited,
 from .plan import (PlanProblems, apply_changes, match_problems, parse_plan,
                    parse_reflection, plan_report, screens_in, unaddressed)
 from .preserve import inject, names_read, preserved_data
-from .prompt import (build_plan_prompt, build_prompt, choices_block, load_plan_template,
-                     load_template, one_line, plan_retry_block, retry_block,
-                     with_reflection)
+from .prompt import (build_plan_prompt, build_prompt, choices_block, errors_block,
+                     load_plan_template, load_template, one_line, plan_retry_block,
+                     retry_block, with_reflection)
 from .reply import (FlowShape, failure_report, parse_reply,
                     preserved_problems, problems_report, validate_flow)
 
@@ -113,7 +113,7 @@ class Run:
     """한 실행이 공유하는 것들. 단계 함수들은 이것만 주고받는다."""
 
     def __init__(self, args, log, run_dir, model, template, original_html,
-                 original_url=None, plan_template=""):
+                 original_url=None, plan_template="", task=None):
         self.args = args
         # 프롬프트에 넣는 원본과 브라우저가 걷는 원본은 같은 문서다.
         self.original_url = original_url
@@ -125,6 +125,10 @@ class Run:
         self.original_html = original_html
         # 원본의 화면 이름. 계획의 from 이 가리킬 수 있는 이름들이다.
         self.original_screens = screens_in(original_html)
+        # 이 실행의 과제 (tasks/<과제>.json). 과제가 정한 오류 경로는 계획 ·
+        # 프롬프트의 오류 조건 · 형식 검사 · 설명서가 같은 목록을 쓴다.
+        self.task = task or load_task(DEFAULT_TASK)
+        self.errors = required_errors(self.task["id"])
         # 진단과 지금의 계획. 계획은 실행에 하나이고 재시도에서 고쳐진다.
         self.diagnosis = None
         self.plan = None
@@ -308,7 +312,8 @@ def request_plan(r, n, p):
     여기서 끝났고 outcome 이 다음에 할 일이다. 쓸 수 없는 답은 형식 실패다 -
     모델이 고칠 수 있는 것이므로 형식 예산을 쓴다."""
     prompt = build_plan_prompt(r.plan_template, r.original_html, r.choices,
-                               r.original_screens, plan_retry_block(r.plan_error))
+                               r.original_screens, plan_retry_block(r.plan_error),
+                               errors=errors_block(r.errors))
     io.open(p + ".plan_prompt.txt", "w", encoding="utf-8", newline="\n").write(prompt)
     r.log("plan prompt: %d chars%s" % (len(prompt),
                                        " (with retry block)" if r.plan_error else ""))
@@ -328,8 +333,7 @@ def request_plan(r, n, p):
             raise PlanProblems(["답이 길이 제한에서 잘렸다 (finish_reason=length). "
                                 "진단과 변경의 문장을 짧게 써서 JSON 을 끝까지 닫아라."])
         diagnosis, plan = parse_plan(reply["text"], r.original_screens,
-                                     [e["id"] for e in original_error_paths()
-                                      if "id" in e])
+                                     [e["id"] for e in r.errors])
     except PlanProblems as e:
         r.log("plan: %d problem(s): %s" % (len(e.problems),
                                            " | ".join(e.problems)[:300]))
@@ -463,7 +467,8 @@ def request_reply(r, n, p):
     # 재시도에서는 코드보다 반성을 먼저 쓰게 한다. 그래서 실패 목록보다 앞이다.
     r.asked_reflection = bool(block)
     block = with_reflection(block)
-    prompt = build_prompt(r.template, r.original_html, block, r.choices, plan_text(r))
+    prompt = build_prompt(r.template, r.original_html, block, r.choices, plan_text(r),
+                          errors=errors_block(r.errors))
     io.open(p + ".prompt.txt", "w", encoding="utf-8", newline="\n").write(prompt)
     r.log("prompt: %d chars%s" % (len(prompt), " (with retry block)" if block else ""))
 
@@ -570,8 +575,8 @@ def check_reply(r, p, entry, reply, n=None):
         dropped = drop_declared_removals(r, flow)
         if dropped:
             entry["choices_removed_dropped"] = dropped
-        # 과제가 정한 오류 경로를 모두 적었는지도 본다 (원본 흐름의 error_paths).
-        problems = validate_flow(flow, html, original_error_paths())
+        # 과제가 정한 오류 경로를 모두 적었는지도 본다 (과제의 원본 흐름).
+        problems = validate_flow(flow, html, r.errors)
     except FlowShape as e:
         # 타입이 틀린 흐름 명세. 답의 형식 문제(PARSE)가 아니라 FLOW 문제다.
         r.log("flow: %d problem(s): %s" % (len(e.problems),
@@ -888,13 +893,14 @@ def write_briefs(r, out, name):
     하나(+ 실행 이름 사본). 링크가 설명서의 폴더 기준이므로 복사하지 않고 따로
     쓴다 - 같은 스크린샷을 가리키되 링크 글자가 다르다."""
     f = r.summary["final"]
-    path = write_brief(r.summary, r.original_screens, os.path.join(r.run_dir, BRIEF))
+    path = write_brief(r.summary, r.original_screens, os.path.join(r.run_dir, BRIEF),
+                       errors=r.errors)
     if not path:
         r.log("final: 계획이 없어 설명서를 쓰지 않았다")
         return
     f["brief"] = path
     promoted = write_brief(r.summary, r.original_screens,
-                           os.path.join(out, PROMOTED_BRIEF % ""))
+                           os.path.join(out, PROMOTED_BRIEF % ""), errors=r.errors)
     shutil.copy2(promoted, os.path.join(out, PROMOTED_BRIEF % ("." + name)))
     f["brief_promoted"] = promoted
     r.log("final: 디자이너용 설명서 -> %s (+ %s)" % (path, PROMOTED_BRIEF % ""))
@@ -980,7 +986,7 @@ def run(args):
         % (run_dir, model, args.attempts, args.stage, args.mock, orig_url)
         + ("" if task["id"] == DEFAULT_TASK else " | task=%s" % task["id"]))
     r = Run(args, log, run_dir, model, template, original_html, orig_url,
-            plan_template=plan_template)
+            plan_template=plan_template, task=task)
     r.summary["git"] = git
     r.allowed_removals = allowed
     if allowed:
