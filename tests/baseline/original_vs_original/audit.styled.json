@@ -165,6 +165,13 @@
       "num": 11,
       "pw": 10
     },
+    "choice_values_selectable": {
+      "pick-bank": 67,
+      "acc-num": 10,
+      "quick": 4,
+      "num": 11,
+      "pw": 10
+    },
     "choice_values_missing": {},
     "fatal_duplicates_removed": 0,
     "fatal_total": 0,

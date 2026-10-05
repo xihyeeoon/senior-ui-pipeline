@@ -13,12 +13,15 @@ it returns, run audit.py, read the JSON, ask again - is one command:
        d. stop on pass; otherwise carry the fatal list into the next prompt
   3. stop the server if this script started it
   4. copy the final build to outputs/restructured_auto.html (+ .flow.json,
-     audit_auto.json) and write summary.json next to the per-attempt files
+     audit_auto.json, .model.html) and write summary.json next to the
+     per-attempt files
 
 Everything from a run lands in outputs/restructure_auto/<timestamp>/:
   attempt_N.prompt.txt   the exact prompt sent
   attempt_N.response.txt the raw reply
-  attempt_N.html / attempt_N.flow.json
+  attempt_N.html         도구가 선택지 데이터를 넣은 뒤 - 검사기가 여는 것
+  attempt_N.model.html   넣기 전, 모델이 쓴 그대로 (넣을 데이터가 있을 때만)
+  attempt_N.flow.json
   attempt_N.audit.json   the audit's report (or the parse/validation failure)
   shots/attempt_N/       one screenshot per screen reached
   run.log, summary.json
@@ -37,6 +40,14 @@ Usage:
   python -m senior_ui.restructure --mock pass     # no API: replays Run 1
   python -m senior_ui.restructure --mock fail     # no API: a broken flow, every attempt fails
 
+mock 모드는 다섯이고 Run 1 빌드의 은행 목록 한 줄에서만 다르다 (model.MOCKS).
+
+  pass            목록을 window.PRESERVED 로 바꿔 끼운다 - 검사까지 가고 떨어진다
+  fail            같은 빌드 + 둘째 걸음이 없는 선택자를 클릭하는 흐름
+  preserved-all   데이터를 참조해 전부 그린다 (+ 원본 숫자판의 '00'·'전액')  -> 통과
+  preserved-some  참조는 하지만 slice(0, 4) 로 일부만 그린다  -> 검사 I 에서 실패
+  preserved-none  참조하지 않고 직접 네 개를 쓴다  -> 형식 검사에서 실패
+
 The key comes from .envs (OPENAI_API_KEY=...) or the environment. The model
 comes from --model, then RESTRUCTURE_MODEL, then DESIGNREPAIR_MODEL, then gpt-4o.
 Exit: 0 = a build passed, 1 = every attempt failed, 2 = could not run.
@@ -54,7 +65,7 @@ from senior_ui.audit.stage import STAGES
 from senior_ui.config import ORIGINAL_FILE
 
 from .loop import run
-from .model import SEED, TEMPERATURE
+from .model import MODES, SEED, TEMPERATURE
 
 
 def main():
@@ -76,8 +87,9 @@ def main():
                     help="못박아 보낸다. 기본 %s" % SEED)
     ap.add_argument("--max-tokens", type=int, default=16000,
                     help="completion cap; the HTML alone is ~12k tokens")
-    ap.add_argument("--mock", choices=["pass", "fail"], default=None,
-                    help="skip the API and replay Run 1 (fail: with a broken flow)")
+    ap.add_argument("--mock", choices=MODES, default=None,
+                    help="API 없이 Run 1 을 되읽는다. 모드마다 은행 목록 "
+                         "한 줄이 다르다 - model.MOCKS 참고")
     ap.add_argument("--original", default=ORIGINAL_FILE)
     ap.add_argument("--stage", choices=sorted(STAGES), default="styled",
                     help="검사 단계. wireframe 은 A·B·C·F·I 만 본다")

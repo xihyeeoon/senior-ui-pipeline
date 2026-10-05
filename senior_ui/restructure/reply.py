@@ -11,7 +11,10 @@ problems 목록의 순서이고, 그 순서는 재시도 프롬프트에 그대�
 import json
 import re
 
+from ..audit.checks.i_choices import present
 from ..audit.handlers import handled_actions
+from ..preserved import GLOBAL_NAME
+from .preserve import names_read
 
 FENCE = re.compile(r"```(html|json)[ \t]*\r?\n(.*?)\r?\n[ \t]*```", re.S)
 
@@ -281,6 +284,39 @@ def validate_flow(flow, html):
     for check in CHECKS:
         problems += check(flow, html, steps, screens)
     return problems
+
+
+# --------------------------------------------------------------------------- #
+# 참조 검사 - 도구가 넣어 준 데이터를 읽는가
+# --------------------------------------------------------------------------- #
+def preserved_problems(html, data):
+    """도구가 넣어 줄 선택지 데이터를 스크립트가 읽지 않으면 형식 문제다.
+
+    위의 검사들과 같은 성격이다 - 규칙으로 보고, 브라우저를 띄우지 않고, 메시지가
+    그대로 다음 프롬프트로 간다. 읽지 않았다는 것은 모델이 목록을 스스로 지어
+    썼다는 뜻이고, 그 답은 검사까지 갈 필요가 없다.
+
+    **주입하기 전** 의 HTML 로 불러야 한다. 도구가 넣는 블록은
+    `window.PRESERVED = {...}` 로 쓰므로, 주입한 뒤의 문서로 보면 그 블록 하나가
+    늘 있어서 무엇을 보내도 통과한다.
+
+    값을 하나도 빠뜨리지 않고 직접 쓴 목록은 참조를 요구하지 않는다. 그때는
+    참조하든 않든 결과가 같은데, 요구하면 숫자판을 마크업에 적은 설계가 그것
+    때문에 재시도를 한 번 쓴다 - 이 장치는 재시도를 아끼려고 만든 것이다.
+    값이 "있다" 를 보는 눈은 검사 I 와 같은 것을 쓴다 (i_choices.present).
+    """
+    if not data:
+        return []
+    read = names_read(html, list(data))
+    missed = [n for n, vals in data.items()
+              if n not in read and not all(present(v, html) for v in vals)]
+    if not missed:
+        return []
+    return ["재설계 HTML 의 스크립트가 도구가 넣어 주는 선택지 데이터를 읽지 "
+            "않는다: %s. 이 데이터는 window.%s.<이름> 으로 들어간다 - 목록을 "
+            "직접 쓰지 말고 그 이름을 참조해 그려라. 몇 개를 어떻게 보일지는 "
+            "네가 정하되 모든 값을 고를 수 있어야 한다."
+            % (", ".join(missed), GLOBAL_NAME)]
 
 
 def problems_report(problems):

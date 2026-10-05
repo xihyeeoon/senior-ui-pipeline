@@ -78,9 +78,14 @@
   넣은 것이다 (`capture_baseline.PROMPT_RETRY_CASE`)
 - `parse_reply.json` — `mock_reply` 의 답을 `parse_reply` 로 되읽은 결과
   (HTML 은 28KB 라 해시만 남긴다)
-- `mock_pass.json` / `mock_fail.json` — `--mock pass --attempts 1` 과
-  `--mock fail --attempts 2 --delay 0` 의 `summary.json`. 둘 다 `passed=false`,
-  종료 코드 1 이다
+- `mock_*.json` — `--mock` 다섯 모드의 `summary.json`
+  (`capture_baseline.MOCK_RUNS`). 다섯은 Run 1 빌드의 은행 목록 한 줄에서만
+  다르고, 그 한 줄 때문에 각각 다른 자리에서 갈린다.
+  `mock_pass` · `mock_fail` 은 검사까지 가서 떨어진다 (`passed=false`, 종료
+  코드 1). `mock_preserved_all` 은 통과한다 (`passed=true`, 종료 코드 0),
+  `mock_preserved_some` 은 검사 I 에서, `mock_preserved_none` 은 형식 검사에서
+  떨어진다. mock 실행은 `.mock-outputs/` 를 쓴다 — 통과한 빌드가
+  `outputs/restructured_auto.*` 를 덮지 않게 떼어 놓았다
 - `session_report.md` / `.csv`
 - `report/four_runs.md` / `report/four_runs.details.md` —
   `senior_ui.audit.report` 가 `fixtures/report/` 의 audit JSON 네 개를 나란히
