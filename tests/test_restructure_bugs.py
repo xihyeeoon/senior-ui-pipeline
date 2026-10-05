@@ -35,6 +35,7 @@ def make_args(tmp_path, **kw):
     """`senior_ui.restructure.__main__` 이 만드는 것과 같은 모양의 args."""
     d = dict(attempts=2, format_attempts=None, audit_attempts=None,
              infra_attempts=3, model="test-model", max_tokens=1000, mock=None,
+             temperature=0.0, seed=20260101,
              original=os.path.join(ROOT, "inputs", "original_transfer.html"),
              stage="styled", delay=0)
     d.update(kw)
@@ -416,3 +417,64 @@ def test_summary_is_written_even_when_the_loop_dies(fake_run_env, tmp_path):
         run_loop(fake_run_env, tmp_path, explode, attempts=1)
     runs = sorted((tmp_path / "outputs" / "restructure_auto").iterdir())
     assert (runs[-1] / "summary.json").exists()
+
+
+# ===================================================================== #
+# 4. 재현 기록
+# ===================================================================== #
+def recording_reply(seen):
+    """call_model 이 실제로 받은 인자를 적어 두는 대역."""
+    def call(model_name, prompt, max_tokens, log=None, **kw):
+        seen.append(dict(kw, model=model_name))
+        return {"text": GOOD_REPLY, "finish_reason": "stop", "seconds": 0.0,
+                "usage": None, "model": "gpt-4o-2026-01-01",
+                "system_fingerprint": "fp_abc123",
+                "temperature": kw.get("temperature"), "seed": kw.get("seed")}
+    return call
+
+
+REPRO_KEYS = ["temperature", "seed", "response_model", "system_fingerprint",
+              "openai_sdk", "prompt_template_sha256"]
+
+
+def test_temperature_and_seed_are_set_not_left_to_the_default(fake_run_env, tmp_path):
+    """지정하지 않으면 공급자의 기본값이 쓰이고, 그 값은 기록에 남지 않는다."""
+    seen = []
+    _code, _summary = run_loop(fake_run_env, tmp_path, recording_reply(seen),
+                               attempts=1)
+    assert seen[0]["temperature"] is not None
+    assert seen[0]["seed"] is not None
+
+
+def test_every_attempt_records_what_it_would_take_to_repeat_it(fake_run_env, tmp_path):
+    """시도 하나를 다시 돌리려면 무엇이 필요한가 - 그것이 시도 기록에 있어야 한다.
+
+    고치기 전: 기록은 finish_reason · usage · seconds 뿐이었다. 같은 프롬프트를
+    같은 모델에 보내도 다른 답이 나오는 이유(temperature·seed·실제 응답 모델·
+    system_fingerprint)는 아무 데도 남지 않았다.
+    """
+    _code, summary = run_loop(fake_run_env, tmp_path, recording_reply([]),
+                              attempts=1)
+    repro = summary["attempts"][0]["repro"]
+    assert sorted(repro) == sorted(REPRO_KEYS)
+    assert repro["response_model"] == "gpt-4o-2026-01-01"
+    assert repro["system_fingerprint"] == "fp_abc123"
+    assert repro["openai_sdk"]
+
+
+def test_the_summary_records_it_once_for_the_run(fake_run_env, tmp_path):
+    _code, summary = run_loop(fake_run_env, tmp_path, recording_reply([]),
+                              attempts=1)
+    assert sorted(summary["repro"]) == sorted(REPRO_KEYS)
+    assert summary["repro"]["response_model"] is None    # 실행 자체는 모델이 없다
+
+
+def test_the_prompt_template_is_fingerprinted(fake_run_env, tmp_path):
+    """템플릿이 바뀌면 같은 입력도 다른 답을 낸다. 어느 템플릿이었는지 남긴다."""
+    import hashlib
+    fake_run_env.setattr(loop, "load_template", lambda: "바뀐 템플릿")
+    _code, summary = run_loop(fake_run_env, tmp_path, recording_reply([]),
+                              attempts=1)
+    want = hashlib.sha256("바뀐 템플릿".encode("utf-8")).hexdigest()
+    assert summary["repro"]["prompt_template_sha256"] == want
+    assert summary["attempts"][0]["repro"]["prompt_template_sha256"] == want

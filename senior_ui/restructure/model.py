@@ -54,7 +54,24 @@ class InfraFailed(ModelError):
     """연결 실패·타임아웃. 다시 시도할 값은 있지만 무한히 하지는 않는다."""
 
 
-def call_model(model, prompt, max_tokens, log=None, backoff=(20, 45, 90, 180)):
+# 같은 프롬프트를 같은 모델에 보내도 답은 달라진다. 지정하지 않으면 공급자의
+# 기본값이 쓰이고 그 값은 어디에도 남지 않으므로, 못박아 두고 기록한다. 0 이
+# 재현에 가장 가깝고, seed 는 같은 값이기만 하면 된다.
+TEMPERATURE = 0.0
+SEED = 20260101
+
+
+def sdk_version():
+    """지금 쓰는 openai SDK 의 판. 같은 코드라도 SDK 가 다르면 답이 달라진다."""
+    try:
+        import openai
+        return getattr(openai, "__version__", None)
+    except ImportError:
+        return None
+
+
+def call_model(model, prompt, max_tokens, log=None, backoff=(20, 45, 90, 180),
+               temperature=TEMPERATURE, seed=SEED):
     """시도마다 직전 HTML 전체를 다시 보내므로 프롬프트가 크다. 이 계정은 전에
     TPM 30,000 한도에 걸린 적이 있으므로 429 를 지수적으로 기다렸다 다시 친다.
     그래도 안 되면 RateLimited 를 올려 설계 실패와 섞이지 않게 한다.
@@ -80,6 +97,8 @@ def call_model(model, prompt, max_tokens, log=None, backoff=(20, 45, 90, 180)):
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
                 max_completion_tokens=max_tokens,
+                temperature=temperature,
+                seed=seed,
             )
             break
         except RateLimitError as e:
@@ -99,6 +118,13 @@ def call_model(model, prompt, max_tokens, log=None, backoff=(20, 45, 90, 180)):
         "seconds": round(time.time() - t0, 1),
         "usage": {"prompt": getattr(usage, "prompt_tokens", None),
                   "completion": getattr(usage, "completion_tokens", None)} if usage else None,
+        # 보낸 것과 받은 것을 함께 적는다. --model gpt-4o 로 보내도 실제로
+        # 답한 것은 그 별명이 가리키는 어느 판본이고, 그 판본이 바뀌면 같은
+        # 프롬프트가 다른 답을 낸다. system_fingerprint 는 그 뒤의 구성이다.
+        "temperature": temperature,
+        "seed": seed,
+        "model": getattr(resp, "model", None),
+        "system_fingerprint": getattr(resp, "system_fingerprint", None),
     }
 
 
@@ -128,4 +154,6 @@ def mock_reply(mode):
         flow["steps"][1]["click"] = "[data-action='does-not-exist']"
     text = "```html\n%s\n```\n\n```json\n%s\n```\n" % (
         html, json.dumps(flow, ensure_ascii=False, indent=2))
-    return {"text": text, "finish_reason": "stop", "seconds": 0.0, "usage": None}
+    return {"text": text, "finish_reason": "stop", "seconds": 0.0, "usage": None,
+            "temperature": TEMPERATURE, "seed": SEED,
+            "model": None, "system_fingerprint": None}

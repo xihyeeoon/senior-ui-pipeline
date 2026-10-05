@@ -48,6 +48,7 @@ from senior_ui.audit.stage import STAGES
 from senior_ui.config import ORIGINAL_FILE
 
 from .loop import run
+from .model import SEED, TEMPERATURE
 
 
 def main():
@@ -61,6 +62,10 @@ def main():
     ap.add_argument("--infra-attempts", type=int, default=3,
                     help="모델에 닿지 못했을 때(연결 실패) 쓸 재시도 횟수")
     ap.add_argument("--model", default=None)
+    ap.add_argument("--temperature", type=float, default=TEMPERATURE,
+                    help="못박아 보낸다. 기본 %s - 재현에 가장 가깝다" % TEMPERATURE)
+    ap.add_argument("--seed", type=int, default=SEED,
+                    help="못박아 보낸다. 기본 %s" % SEED)
     ap.add_argument("--max-tokens", type=int, default=16000,
                     help="completion cap; the HTML alone is ~12k tokens")
     ap.add_argument("--mock", choices=["pass", "fail"], default=None,

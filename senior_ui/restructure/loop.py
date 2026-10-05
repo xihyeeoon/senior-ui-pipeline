@@ -14,6 +14,7 @@ r"""재시도 루프. 한 번의 시도는 네 단계다.
 """
 import asyncio
 import datetime
+import hashlib
 import io
 import json
 import os
@@ -26,8 +27,8 @@ from senior_ui.config import ORIGINAL_URL, ROOT, outputs_dir, url_for
 from senior_ui.devserver import ensure_server
 
 from .audit_call import run_audit
-from .model import (ApiRejected, InfraFailed, RateLimited, call_model,
-                    load_env, mock_reply)
+from .model import (TEMPERATURE, SEED, ApiRejected, InfraFailed, RateLimited,
+                    call_model, load_env, mock_reply, sdk_version)
 from .prompt import build_prompt, choices_block, load_template, one_line, retry_block
 from .reply import (FlowShape, failure_report, parse_reply,
                     problems_report, validate_flow)
@@ -98,6 +99,10 @@ class Run:
         self.model = model
         self.template = template
         self.original_html = original_html
+        # 못박아 두는 값. 지정하지 않으면 공급자의 기본값이 쓰이고 그 값은
+        # 기록에 남지 않는다 - 나중에 "그때 무엇이 달랐나" 를 물을 수 없다.
+        self.temperature = getattr(args, "temperature", TEMPERATURE)
+        self.seed = getattr(args, "seed", SEED)
         self.choices = ""
         self.orig_snapshot = None
         self.budget = Budget(
@@ -112,9 +117,11 @@ class Run:
         # 길이 제한에 잘린 답이 연속 몇 번인지. 둘째 번부터는 안내가 달라진다.
         self.truncated = 0
         self.summary = {"run_dir": run_dir, "model": model, "mock": args.mock,
-                        "stage": args.stage, "attempts": [], "passed": False,
-                        "final": None, "budget": {}, "stopped_reason": None,
-                        "trend": []}
+                        "stage": args.stage,
+                        "repro": repro(template, temperature=self.temperature,
+                                       seed=self.seed),
+                        "attempts": [], "passed": False, "final": None,
+                        "budget": {}, "stopped_reason": None, "trend": []}
 
 
 # --------------------------------------------------------------------------- #
@@ -133,6 +140,24 @@ def make_logger(log_path):
 def pick_model(args):
     return args.model or os.environ.get("RESTRUCTURE_MODEL") \
         or os.environ.get("DESIGNREPAIR_MODEL") or "gpt-4o"
+
+
+def repro(template, reply=None, temperature=TEMPERATURE, seed=SEED):
+    """이 시도를 다시 돌리려면 알아야 하는 것.
+
+    같은 프롬프트를 같은 모델에 보내도 답은 달라진다. 무엇이 달랐는지 나중에
+    물을 수 있으려면 보낸 쪽(temperature · seed · 프롬프트 템플릿)과 답한
+    쪽(실제 응답 모델 · system_fingerprint · SDK 판)을 함께 적어야 한다 -
+    `--model gpt-4o` 는 별명이고, 그 별명이 가리키는 판본은 말없이 바뀐다.
+    """
+    reply = reply or {}
+    return {"temperature": reply.get("temperature", temperature),
+            "seed": reply.get("seed", seed),
+            "response_model": reply.get("model"),
+            "system_fingerprint": reply.get("system_fingerprint"),
+            "openai_sdk": sdk_version(),
+            "prompt_template_sha256":
+                hashlib.sha256(template.encode("utf-8")).hexdigest()}
 
 
 def _dump(obj, path):
@@ -158,7 +183,8 @@ def request_reply(r, n, p):
         reply = mock_reply(r.args.mock)
     else:
         try:
-            reply = call_model(r.model, prompt, r.args.max_tokens, r.log)
+            reply = call_model(r.model, prompt, r.args.max_tokens, r.log,
+                               temperature=r.temperature, seed=r.seed)
         except RateLimited as e:
             # 설계 실패가 아니다. 예산을 깎지 않고 여기서 멈춘다.
             r.log("중단: 인프라 한도 — 백오프를 다 쓰고도 429 (%s)" % e)
@@ -201,6 +227,9 @@ def request_reply(r, n, p):
     io.open(p + ".response.txt", "w", encoding="utf-8", newline="\n").write(reply["text"])
     r.log("model: %s chars, finish=%s, %ss, usage=%s"
           % (len(reply["text"]), reply["finish_reason"], reply["seconds"], reply["usage"]))
+    if reply.get("model") or reply.get("system_fingerprint"):
+        r.log("model: 응답 %s (fingerprint %s)"
+              % (reply.get("model"), reply.get("system_fingerprint")))
     return reply, None
 
 
@@ -359,7 +388,7 @@ def attempt(r, n):
     if reply is None:
         return outcome
     entry = {"n": n, "finish_reason": reply["finish_reason"], "usage": reply["usage"],
-             "seconds": reply["seconds"]}
+             "seconds": reply["seconds"], "repro": repro(r.template, reply)}
     build, outcome = check_reply(r, p, entry, reply)
     if build is None:
         return outcome
