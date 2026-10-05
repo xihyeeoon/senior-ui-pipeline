@@ -39,10 +39,12 @@ CHECKS = [
     ("G", "상태 구분"),
     ("H", "미정의 클래스"),
     ("I", "선택지 보존"),
+    ("J", "오류 경로"),
 ]
 SEVERITY = {"A": "fatal", "B": "fatal", "C": "fatal",
             "D": "warning", "E": "warning", "F": "warning",
-            "G": "warning", "H": "warning", "I": "fatal"}
+            "G": "warning", "H": "warning", "I": "fatal",
+            "J": "fatal"}
 
 
 def load(arg):
@@ -276,7 +278,7 @@ def details(builds, cap):
 def render(builds, want_details, cap, title):
     parts = ["# %s" % title, ""]
     parts += ["## 개요", "", overview(builds), ""]
-    parts += ["## 검사 항목별 (A~I)", "", per_check(builds), ""]
+    parts += ["## 검사 항목별 (A~J)", "", per_check(builds), ""]
     parts += ["## 핵심 지표", "", key_metrics(builds), ""]
     parts += ["## 생략된 검사", "", stood_down(builds), ""]
     if want_details:

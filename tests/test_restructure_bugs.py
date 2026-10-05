@@ -89,7 +89,7 @@ def fake_run_env(monkeypatch, out_root):
     바꿔 끼우는 것은 바깥 세계뿐이다 - 서버 띄우기, 원본을 한 번 걷기, 검사기
     호출. 루프 자신의 판단(예산·중단·종료 코드)은 그대로 돈다.
     """
-    async def fake_drive(url, flow, want_shots=None):
+    async def fake_drive(url, flow, want_shots=None, **_kw):
         return dict(FAKE_SNAPSHOT)
 
     monkeypatch.setenv("SENIOR_UI_OUTPUTS", out_root)
@@ -547,7 +547,7 @@ def driven_urls(fake_run_env, monkeypatch):
     """원본을 걸을 때 쓴 URL 을 적어 둔다. fake_run_env 의 drive 를 덮는다."""
     seen = []
 
-    async def fake_drive(url, flow, want_shots=None):
+    async def fake_drive(url, flow, want_shots=None, **_kw):
         seen.append(url)
         return dict(FAKE_SNAPSHOT)
 

@@ -989,7 +989,10 @@ def run(args):
         # 대비·언어 검사의 기준이 되는 원본 스냅샷. 실행마다 한 번만 걷는다.
         base_flow = A.load_flow(None)
         log("audit: driving the original once (baseline for contrast / language)")
-        r.orig_snapshot = asyncio.run(A.drive(r.original_url, base_flow))
+        # 비교 기준으로만 쓰므로 원본의 오류 경로는 걷지 않는다 - 모델의 설계는
+        # 원본과 화면이 다르고, 오류 경로는 생성물의 흐름으로 걷는다.
+        r.orig_snapshot = asyncio.run(A.drive(r.original_url, base_flow,
+                                              errors=False))
         r.choices = choices_block(r.orig_snapshot, original_html)
         if r.choices:
             log("선택지: %s" % " / ".join(

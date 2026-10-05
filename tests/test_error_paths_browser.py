@@ -1,0 +1,98 @@
+r"""오류 경로를 브라우저로 실제로 걷는다. `pytest -m browser` 로만 돈다.
+
+  원본 대 원본      원본의 두 오류 경로(계좌번호 틀림 · 은행 틀림)가 나타나고
+                    되돌아가는가
+  미리 막는 설계    틀린 계좌번호를 넣는 즉시 같은 화면에 이유를 보이고 [다음]
+                    을 끈다 - 같은 화면 + 새 글로 오류 상태가 인정되는가
+  처리 없는 설계    같은 화면이 확인하지 않고 그대로 넘어간다 - J 가 잡는가
+
+  .\.venv\Scripts\python.exe -m pytest -m browser tests/test_error_paths_browser.py
+"""
+import asyncio
+import io
+import os
+
+import pytest
+
+import _api
+import capture_baseline as C
+from test_drive import server  # noqa: F401  (같은 서버 fixture 를 쓴다)
+from test_error_paths import ORIGINAL_TRIGGERS
+
+pytestmark = pytest.mark.browser
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(HERE)
+FIXTURE = "tests/fixtures/error_paths/inline.html"
+
+
+def run(rel, flow, base_flow=None, query=""):
+    base_flow = base_flow or flow
+    orig = asyncio.run(_api.drive("%s/%s" % (C.BASE_URL, C.ORIGINAL_REL),
+                                  base_flow, errors=base_flow is flow))
+    rep = asyncio.run(_api.drive("%s/%s%s" % (C.BASE_URL, rel, query), flow))
+    oh = io.open(os.path.join(ROOT, C.ORIGINAL_REL), encoding="utf-8").read()
+    rh = io.open(os.path.join(ROOT, rel), encoding="utf-8").read()
+    return rep, _api.audit(orig, rep, oh, rh, flow)
+
+
+def test_original_vs_original_walks_both_error_paths(server):
+    flow = _api.load_flow(None)
+    rep, report = run(C.ORIGINAL_REL, flow)
+    assert report["passed"]
+    assert [f for f in report["fatal"] if f["check"] == "J"] == []
+    res = report["metrics"]["error_paths"]
+    assert set(res) == {"wrong-account", "wrong-bank"}
+    for eid, r in res.items():
+        assert r["appeared"] and r["recovered"], eid
+        # 판정 테스트(test_error_paths.py)가 쓰는 trigger 와 같은 화면이다.
+        assert r["trigger_screen"] == ORIGINAL_TRIGGERS[eid]
+    assert any("계좌번호가 올바르지 않습니다" in l
+               for l in res["wrong-account"]["notice"])
+    # 원본의 은행 오류 문구는 은행을 말하지 않는다 ("과목코드 오류") - warning.
+    jw = [w for w in report["warning"] if w["check"] == "J"]
+    assert [w["error_path"] for w in jw] == ["wrong-bank"]
+
+
+def inline_flow(inputs):
+    flow = {"name": "inline", "derived_from_original": False,
+            "required_ids": ["phone"],
+            "steps": [{"screen": "start"},
+                      {"screen": "account", "click": "[data-action='go']"},
+                      {"screen": "amount", "do": [
+                          {"type": "{ACCOUNT}",
+                           "key": "[data-action='num'][data-v='%s']"},
+                          {"click": "#next"}]}],
+            "expect": {}, "done_amount": "#dn-amt",
+            "error_paths": [{"id": "wrong-account", "from_step": "account",
+                             "inputs": inputs, "expect_screen": "account",
+                             "recover": [{"click": "#clear"}],
+                             "back_to": "account"}]}
+    flow["truth"] = _api.flow_module.truth_of(None)
+    return flow
+
+
+TYPE_WRONG = {"type": "{ACCOUNT_WRONG}", "key": "[data-action='num'][data-v='%s']"}
+
+
+def test_preventive_design_counts_as_an_error_state(server):
+    """[다음] 이 꺼진 설계 - 흐름은 꺼진 버튼을 누르지 않는다. 틀린 값을 넣는
+    즉시 같은 화면에 이유가 보이므로 오류 상태로 인정된다."""
+    flow = inline_flow([TYPE_WRONG])
+    rep, report = run(FIXTURE, flow, base_flow=_api.load_flow(None))
+    assert [f for f in report["fatal"] if f["check"] == "J"] == []
+    r = report["metrics"]["error_paths"]["wrong-account"]
+    assert r["appeared"] and r["recovered"]
+    assert r["notice"] == ["없는 계좌번호예요. 계좌번호를 다시 확인해 주세요"]
+    assert [w for w in report["warning"] if w["check"] == "J"] == []
+
+
+def test_design_without_error_handling_is_caught(server):
+    """같은 설계에서 확인을 끈 것 (?none). 흐름은 [다음] 까지 누르고, 틀린
+    계좌번호로 금액 화면에 넘어간다 - J fatal."""
+    flow = inline_flow([TYPE_WRONG, {"click": "#next"}])
+    rep, report = run(FIXTURE, flow, base_flow=_api.load_flow(None),
+                      query="?none")
+    j = [f for f in report["fatal"] if f["check"] == "J"]
+    assert len(j) == 1 and "나타나지 않았다" in j[0]["detail"]
+    assert "'amount'" in j[0]["detail"]

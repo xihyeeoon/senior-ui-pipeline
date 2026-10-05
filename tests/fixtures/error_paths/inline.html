@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>오류 미리 알리기</title>
+<style>
+  .screen { display: none; }
+  .screen.on { display: block; }
+  .hint { color: #222; }
+  .bad { color: #a00; }
+</style>
+</head>
+<body>
+<!-- 검사 J 의 브라우저 테스트용 작은 설계. 계좌번호를 넣는 즉시 맞는지 보고,
+     틀리면 같은 화면에 이유를 보이고 [다음] 을 끈다 (오류를 미리 막는 설계).
+     ?none 을 붙이면 확인하지 않고 그대로 넘어간다 (오류 처리가 없는 설계). -->
+<div id="phone">
+  <section class="screen on" data-screen="start">
+    <p class="hint">보내기를 시작합니다</p>
+    <button data-action="go">보내기</button>
+  </section>
+  <section class="screen" data-screen="account">
+    <p class="hint">계좌번호를 넣어 주세요</p>
+    <p class="hint" id="acc"></p>
+    <p class="bad" id="why"></p>
+    <div>
+      <button data-action="num" data-v="0">0</button><button data-action="num" data-v="1">1</button>
+      <button data-action="num" data-v="2">2</button><button data-action="num" data-v="3">3</button>
+      <button data-action="num" data-v="4">4</button><button data-action="num" data-v="5">5</button>
+      <button data-action="num" data-v="6">6</button><button data-action="num" data-v="7">7</button>
+      <button data-action="num" data-v="8">8</button><button data-action="num" data-v="9">9</button>
+    </div>
+    <button data-action="clear" id="clear">모두 지우기</button>
+    <button data-action="next" id="next" disabled>다음</button>
+  </section>
+  <section class="screen" data-screen="amount">
+    <p class="hint">얼마를 보낼까요?</p>
+    <p id="dn-amt"></p>
+  </section>
+</div>
+<script>
+const CHECK = location.search.indexOf('none') < 0;
+const RIGHT = '110234567890';
+const S = { acc: '' };
+window.__log = [];
+let current = 'start';
+window.__screen = () => current;
+window.__startTask = () => {};
+window.__dump = () => JSON.stringify(window.__log);
+function show(name) {
+  document.querySelectorAll('.screen').forEach(s =>
+    s.classList.toggle('on', s.dataset.screen === name));
+  current = name;
+  window.__log.push({ type: 'screen_enter', to: name });
+}
+function render() {
+  document.getElementById('acc').textContent = S.acc;
+  const full = S.acc.length >= 12;
+  const wrong = CHECK && full && S.acc !== RIGHT;
+  document.getElementById('why').textContent =
+    wrong ? '없는 계좌번호예요. 계좌번호를 다시 확인해 주세요' : '';
+  document.getElementById('next').disabled = !full || wrong;
+}
+document.getElementById('phone').addEventListener('click', e => {
+  const el = e.target.closest('[data-action]'); if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'go') show('account');
+  else if (a === 'num') { if (S.acc.length < 14) S.acc += el.dataset.v; render(); }
+  else if (a === 'clear') { S.acc = ''; render(); }
+  else if (a === 'next') show('amount');
+});
+render();
+</script>
+</body>
+</html>

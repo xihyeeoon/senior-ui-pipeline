@@ -155,7 +155,8 @@ def capture_cases(out):
             if not flow.get("derived_from_original", True) else flow
 
         say("  %s: 원본 drive" % name)
-        orig = asyncio.run(_api.drive(orig_url, base_flow))
+        orig = asyncio.run(_api.drive(orig_url, base_flow,
+                                      errors=base_flow is flow))
         say("  %s: 빌드 drive (%s)" % (name, rel))
         rep = asyncio.run(_api.drive(rep_url, flow))
 

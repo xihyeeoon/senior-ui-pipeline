@@ -151,3 +151,7 @@ sr_main = _session_report.main
 
 # ---- senior_ui/audit/flow.py (정답 값 · 오류 경로 정의) ----------------- #
 flow_module = _audit.flow
+# 검사 J (오류 경로) 와 그 판정이 쓰는 문맥. 손으로 만든 걷기 결과로 판정만
+# 따로 보기 위해 내보낸다.
+from senior_ui.audit.checks import j_errors                  # noqa: E402
+from senior_ui.audit.context import AuditContext             # noqa: E402

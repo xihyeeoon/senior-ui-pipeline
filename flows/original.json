@@ -1,7 +1,8 @@
 {
   "name": "original",
-  "truth": {"BANK": "신한", "ACCOUNT": "110234567890", "AMOUNT": "32000", "NAME": "김철수"},
-  "note": "The SOL transfer prototype - 8 task screens, aligned to the Flutter dummy app A1 transfer (2026-10-05); the two error popups (err-account, err-bank) are screens too but the happy path does not visit them. derived_from_original means the build under test is a repair of this same document, so structural preservation can be asserted.",
+  "truth": {"BANK": "신한", "ACCOUNT": "110234567890", "AMOUNT": "32000", "NAME": "김철수",
+            "ACCOUNT_WRONG": "110234567891", "BANK_WRONG": "국민"},
+  "note": "The SOL transfer prototype - 8 task screens, aligned to the Flutter dummy app A1 transfer (2026-10-05); the two error popups (err-account, err-bank) are reached by the error_paths, not by the happy path. ACCOUNT_WRONG / BANK_WRONG are the wrong inputs the error paths type in - they are never shown to the model. derived_from_original means the build under test is a repair of this same document, so structural preservation can be asserted.",
   "derived_from_original": true,
   "required_ids": ["phone", "grid-bank", "grid-sec", "tab-bank", "tab-sec",
                    "picked-bank", "acc-input", "acc-next", "amt-acc",
@@ -32,5 +33,40 @@
     "confirm": [["#cf-bank", "{BANK}"], ["#cf-acc", "{ACCOUNT}"], ["#cf-amt", "{AMOUNT_SHOWN}"]],
     "done": [["#dn-amt", "{AMOUNT_SHOWN}"]]
   },
-  "done_amount": "#dn-amt"
+  "done_amount": "#dn-amt",
+  "error_paths": [
+    {"id": "wrong-account",
+     "about": "계좌번호가 틀렸다 (원본 오류 코드 ELB00016)",
+     "condition": "계좌번호를 넣고 [다음]을 눌렀는데 받는 사람의 계좌번호가 아니다. 원본은 오류 팝업을 띄우고, [확인]을 누르면 계좌 화면으로 돌아가 다시 넣게 한다.",
+     "uses": ["ACCOUNT_WRONG"],
+     "notice_any": ["계좌"],
+     "from_step": "bank",
+     "inputs": [
+       {"click": "[data-action='pick-bank'][data-bank='{BANK}']"},
+       {"wait": 0.3},
+       {"type": "{ACCOUNT_WRONG}", "key": "[data-action='acc-num'][data-v='%s']"},
+       {"click": "#acc-next"}
+     ],
+     "expect_screen": "err-account",
+     "recover": [{"click": "[data-screen='err-account'] .ebtn"}],
+     "back_to": "account"},
+    {"id": "wrong-bank",
+     "about": "계좌번호는 맞는데 은행이 틀렸다 (원본 오류 코드 ETA00325)",
+     "condition": "계좌번호는 맞지만 받는 사람의 은행이 아닌 은행을 고른 채 금액까지 넣고 확인 화면에서 [보내기]를 눌렀다. 원본은 오류 팝업을 띄우고, [확인]을 누르면 확인 화면으로 돌아간다.",
+     "uses": ["BANK_WRONG"],
+     "notice_any": ["은행"],
+     "from_step": "bank",
+     "inputs": [
+       {"click": "[data-action='pick-bank'][data-bank='{BANK_WRONG}']"},
+       {"wait": 0.3},
+       {"type": "{ACCOUNT}", "key": "[data-action='acc-num'][data-v='%s']"},
+       {"click": "#acc-next"},
+       {"type": "{AMOUNT}", "key": "[data-action='num'][data-v='%s']"},
+       {"click": "#amt-next"},
+       {"click": "[data-action='send']"}
+     ],
+     "expect_screen": "err-bank",
+     "recover": [{"click": "[data-screen='err-bank'] .ebtn"}],
+     "back_to": "confirm"}
+  ]
 }

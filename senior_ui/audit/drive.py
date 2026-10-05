@@ -276,8 +276,14 @@ async def collect_screen(page, flow, visit, reached=None):
     return row
 
 
-async def drive(url, flow, want_shots=None):
-    """Walk the task once and collect everything the checks need."""
+async def drive(url, flow, want_shots=None, errors=True):
+    """Walk the task once and collect everything the checks need.
+
+    흐름에 오류 경로(`error_paths`)가 있으면 정답 경로를 걸은 뒤 경로마다 새
+    페이지를 열어 한 번씩 더 걷는다 (walk_error_path). 결과는 `error_paths`
+    에 따로 담는다 - `screens` 에 섞으면 A~I 가 보는 입력이 바뀐다. 흐름에
+    오류 경로가 없거나 `errors=False` 면 그 키 자체가 없다. 비교 기준으로만
+    걷는 원본(새 설계의 검사에서)은 오류 경로를 걸을 필요가 없다."""
     data = {"screens": {}, "dialogs": [], "js_errors": [], "reached": [],
             "missing_ids": [], "state_pairs": [], "load_failed": None,
             "notes": [], "js_error_details": [], "flow": flow["name"],
@@ -294,6 +300,13 @@ async def drive(url, flow, want_shots=None):
             tasks = attach_listeners(page, data)
             await walk(page, flow, data, want_shots, url)
             await drain_dialogs(tasks)
+            paths = [e for e in flow.get("error_paths") or []
+                     if isinstance(e, dict) and e.get("id")] if errors else []
+            if paths:
+                data["error_paths"] = {}
+                for ep in paths:
+                    data["error_paths"][ep["id"]] = await walk_error_path(
+                        browser, url, flow, ep)
         finally:
             await browser.close()
     return data
@@ -340,3 +353,99 @@ async def walk(page, flow, data, want_shots, url):
         if want_shots:
             await page.screenshot(path=os.path.join(
                 want_shots, "audit_%s.png" % SHOT_SAFE.sub("_", visit)))
+
+
+# 오류 경로에서 "보이는 글" 을 긁는다. 켜진 화면의 글과 켜진 화면 밖에 떠 있는
+# 것(모달·토스트)을 함께 본다 - 오류를 어떻게 보일지는 설계가 정하므로, 화면
+# 하나로 보이든 덮개로 보이든 사용자 눈에 닿는 글이면 된다.
+async def _visible_text(page):
+    inv = await page.evaluate(P.INVENTORY)
+    return "\n".join(t for t in (inv.get("text"), inv.get("outside_text")) if t)
+
+
+async def _where(page):
+    return {"landed_on": await page.evaluate(
+                "() => window.__screen && window.__screen()"),
+            "dom_screen": await page.evaluate(P.DOM_SCREEN)}
+
+
+async def walk_error_path(browser, url, flow, ep):
+    """오류 경로 하나를 새 페이지에서 걷는다. 판정은 하지 않는다 (검사 J).
+
+      1. 정답 걸음을 `from_step` (방문 이름) 에 도착할 때까지 밟는다.
+      2. `inputs` 를 실행한다. 마지막 동작 바로 앞에서 켜진 화면과 보이는 글을
+         적어 둔다 - 마지막 동작이 오류를 일으키는 동작이고, 그 앞의 글이
+         "새로 나타난 글" 을 가르는 기준이다. 틀린 값을 넣는 즉시 알리는
+         설계라면 마지막 동작이 타이핑이고, 그때도 같은 규칙이다.
+      3. `expect_screen` 이 켜지기를 기다리고 보이는 글을 긁는다.
+      4. `recover` 를 실행하고 `back_to` 가 켜지기를 기다린다.
+
+    단계마다 실패하면 거기서 멈추고 `error` 에 어느 단계였는지 적는다.
+    """
+    truth = truth_of(flow)
+    row = {"from_step": ep.get("from_step"), "expect_screen": ep.get("expect_screen"),
+           "back_to": ep.get("back_to"), "error": None}
+    ed = {"js_errors": [], "js_error_details": [], "dialogs": [], "reached": []}
+    page = await browser.new_page(viewport={"width": 390, "height": 844})
+    tasks = attach_listeners(page, ed)
+
+    async def failed(phase, e):
+        msg = "%s: %s" % (type(e).__name__, e) if isinstance(e, Exception) else e
+        hint = await where_is(page, msg) if isinstance(e, Exception) else None
+        row["error"] = {"phase": phase, "detail": msg + (" || " + hint if hint else "")}
+
+    try:
+        try:
+            await page.goto(url, wait_until="networkidle")
+        except Exception as e:
+            await failed("load", e)
+            return row
+        visits = visit_keys(flow["steps"])
+        if ep.get("from_step") not in visits:
+            await failed("replay", "from_step %r 은 steps 의 방문 이름이 아니다 (%s)"
+                         % (ep.get("from_step"), ", ".join(visits)))
+            return row
+        for step, visit in zip(flow["steps"], visits):
+            try:
+                if "do" in step:
+                    await run_actions(page, step["do"], None, truth)
+                elif "click" in step:
+                    await run_actions(page, {"click": step["click"]}, None, truth)
+            except Exception as e:
+                await failed("replay", e)
+                return row
+            if not await settle(page, step["screen"]):
+                await failed("replay", "정답 걸음 %r 화면이 켜지지 않았다" % visit)
+                return row
+            if visit == ep.get("from_step"):
+                break
+
+        inputs = ep.get("inputs") or []
+        inputs = inputs if isinstance(inputs, list) else [inputs]
+        try:
+            if inputs[:-1]:
+                await run_actions(page, inputs[:-1], None, truth)
+            row["trigger"] = await _where(page)
+            row["before_text"] = await _visible_text(page)
+            if inputs:
+                await run_actions(page, inputs[-1:], None, truth)
+        except Exception as e:
+            await failed("inputs", e)
+            return row
+        row["settled"] = await settle(page, ep.get("expect_screen"))
+        row["after"] = await _where(page)
+        row["after_text"] = await _visible_text(page)
+
+        try:
+            await run_actions(page, ep.get("recover") or [], None, truth)
+        except Exception as e:
+            await failed("recover", e)
+            return row
+        row["recovered"] = await settle(page, ep.get("back_to"))
+        row["recover"] = await _where(page)
+        return row
+    finally:
+        await drain_dialogs(tasks)
+        row["js_errors"] = ed["js_errors"]
+        row["dialogs"] = ed["dialogs"]
+        await page.close()

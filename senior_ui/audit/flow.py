@@ -26,6 +26,7 @@ from ..config import FLOWS_DIR
 TRUTH_KEYS = ("ACCOUNT", "AMOUNT", "BANK", "NAME")
 
 _original_truth = None
+_original_errors = None
 
 
 def make_truth(block, where="truth"):
@@ -59,6 +60,32 @@ def original_truth():
             _original_truth = make_truth(json.load(f).get("truth"),
                                          "flows/original.json 의 truth")
     return _original_truth
+
+
+def original_error_paths():
+    """원본 흐름이 정한 오류 경로들. 한 번 읽고 들고 있는다.
+
+    무엇이 오류인지(about · condition · 쓰는 틀린 값 `uses` · 알림 글로 인정할
+    단어 `notice_any`)는 과제가 정한다. 재구성 루프에서는 흐름 명세를 모델이
+    쓰므로, 판정에 쓰는 이 칸들은 모델의 흐름이 아니라 여기서 읽는다 - 정답
+    값을 truth 에서만 읽는 것과 같은 이유다."""
+    global _original_errors
+    if _original_errors is None:
+        path = os.path.join(FLOWS_DIR, "original.json")
+        with open(path, encoding="utf-8") as f:
+            _original_errors = list(json.load(f).get("error_paths") or [])
+    return _original_errors
+
+
+def error_defs(flow=None):
+    """오류 경로 id -> 과제가 정한 정의. 원본 흐름의 것이 기준이다.
+
+    흐름 자신이 원본에서 파생된 것(원본 대 원본)이면 그 흐름의 정의를 쓴다 -
+    옛 원본으로 만든 흐름은 옛 정의로 검사할 수 있어야 한다."""
+    own = (flow or {}).get("error_paths") or []
+    if (flow or {}).get("derived_from_original") and             any("notice_any" in e or "uses" in e for e in own if isinstance(e, dict)):
+        return {e["id"]: e for e in own if isinstance(e, dict) and "id" in e}
+    return {e["id"]: e for e in original_error_paths() if "id" in e}
 
 
 def truth_of(flow):
@@ -126,5 +153,8 @@ def load_flow(path):
     # 일부러 뺀 선택지의 선언 (checks/i_choices.declared 참고). 없으면 빈
     # 선언이고, 그때 검사 I 는 모든 누락을 fatal 로 센다.
     flow.setdefault("choices_removed", {})
+    # 잘못된 입력에서 오류를 보이고 되돌아가는 경로 (checks/j_errors.py).
+    # 없으면 정답 경로만 걷고, 검사 J 는 물러난다 - 옛 흐름이 그렇다.
+    flow.setdefault("error_paths", [])
     return flow
 

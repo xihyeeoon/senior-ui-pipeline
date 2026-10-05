@@ -98,8 +98,9 @@ def test_apply_stage_matches_baseline(name, rel, flow_name, stage):
 
 def test_wireframe_drops_only_visual_checks():
     """apply_stage 의 계약: 와이어프레임에서 빠지는 것은 D·E·G·H 뿐이고
-    A·B·C·F·I 는 그대로 남는다. 기준값 비교와 별도로 이 규칙을 못박는다."""
-    assert set(_api.STAGES["wireframe"]["checks"]) == {"A", "B", "C", "F", "I"}
+    A·B·C·F·I·J 는 그대로 남는다. 기준값 비교와 별도로 이 규칙을 못박는다.
+    J(오류 경로)는 구조 검사이므로 와이어프레임에서도 본다."""
+    assert set(_api.STAGES["wireframe"]["checks"]) == {"A", "B", "C", "F", "I", "J"}
     dropped = set(_api.STAGES["styled"]["checks"]) - set(
         _api.STAGES["wireframe"]["checks"])
     assert dropped == {"D", "E", "G", "H"}
