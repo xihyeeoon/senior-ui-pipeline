@@ -75,6 +75,24 @@ def shape_problems(flow):
         if "do" in st and not isinstance(st["do"], (list, dict)):
             problems.append("steps[%d].do 가 목록도 객체도 아니다 (지금은 %s)"
                             % (i, type_of(st["do"])))
+    paths = flow.get("error_paths")
+    if paths is not None and not isinstance(paths, list):
+        problems.append("error_paths 가 목록이 아니다 (지금은 %s). 오류 경로 "
+                        "하나가 객체 하나다." % type_of(paths))
+        paths = None
+    for i, ep in enumerate(paths or []):
+        if not isinstance(ep, dict):
+            problems.append("error_paths[%d] 가 객체가 아니다 (지금은 %s)"
+                            % (i, type_of(ep)))
+            continue
+        for key in ("id", "from_step", "expect_screen", "back_to"):
+            if key in ep and not isinstance(ep[key], str):
+                problems.append("error_paths[%d].%s 가 문자열이 아니다 (지금은 %s)"
+                                % (i, key, type_of(ep[key])))
+        for key in ("inputs", "recover"):
+            if key in ep and not isinstance(ep[key], (list, dict)):
+                problems.append("error_paths[%d].%s 가 목록도 객체도 아니다 "
+                                "(지금은 %s)" % (i, key, type_of(ep[key])))
     return problems
 
 
@@ -253,12 +271,99 @@ def _check_derived(flow, html, steps, screens):
     return []
 
 
+def _error_paths_of(flow):
+    paths = flow.get("error_paths")
+    return [e for e in paths if isinstance(e, dict)] if isinstance(paths, list) else []
+
+
 def _check_coverage(flow, html, steps, screens):
-    """HTML 에 있지만 흐름이 지나가지 않는 화면."""
-    unseen = screens - {st.get("screen") for st in steps if isinstance(st, dict)}
+    """HTML 에 있지만 정답 경로도 오류 경로도 지나가지 않는 화면.
+
+    오류를 알리는 화면(팝업 등)은 정답 경로가 지나가지 않는다. 전에는 이
+    규칙이 정답 경로만 보았으므로, 오류 화면을 둔 설계는 흐름에 억지 우회
+    경로를 넣어야 통과했다."""
+    seen = {st.get("screen") for st in steps if isinstance(st, dict)}
+    for e in _error_paths_of(flow):
+        seen |= {e.get("expect_screen"), e.get("back_to")}
+    unseen = screens - seen
     if unseen:
-        return ["steps 가 지나가지 않는 화면: " + ", ".join(sorted(unseen))]
+        return ["steps 와 error_paths 가 지나가지 않는 화면: "
+                + ", ".join(sorted(unseen))]
     return []
+
+
+def _visits(steps):
+    """steps 의 방문 이름 (audit.flow.visit_keys 와 같은 규칙)."""
+    seen, out = {}, []
+    for st in steps:
+        name = st.get("screen") if isinstance(st, dict) else None
+        seen[name] = seen.get(name, 0) + 1
+        out.append(name if seen[name] == 1 else "%s#%d" % (name, seen[name]))
+    return out
+
+
+def _check_error_paths(flow, html, steps, screens, required=None):
+    """오류 경로의 칸이 걸을 수 있는 모양인지. 무엇이 오류인지는 과제가 정한다
+    (`required` - 원본 흐름의 error_paths). 그 정의의 id 가 빠졌거나, 정의가
+    정한 틀린 값의 자리표시자(`uses`)를 쓰지 않으면 문제다.
+
+    틀린 값의 실제 값은 여기서도 말하지 않는다 - 모델이 그 값을 알면 "그 값일
+    때만 오류를 띄우는" HTML 로 검사 J 를 지날 수 있다. 자리표시자 이름만 쓴다.
+
+    back_to 의 순서 규칙(오류가 나타난 화면이거나 그보다 앞)은 오류가 정답 경로
+    위의 화면에 나타나는 경우만 여기서 본다. 오류 전용 화면(팝업)은 그 화면을
+    띄운 곳을 걸어 봐야 알 수 있으므로 검사 J 가 본다."""
+    problems = []
+    paths = _error_paths_of(flow)
+    defs = {d["id"]: d for d in required or [] if isinstance(d, dict) and "id" in d}
+    have = [e.get("id") for e in paths]
+    for rid, d in defs.items():
+        if rid not in have:
+            problems.append(
+                "오류 경로 %s 가 error_paths 에 없다 (%s). 이 오류를 어떻게 알리고 "
+                "어디로 되돌아가는지 적어라. 잘못된 입력은 %s 로 넣는다."
+                % (rid, d.get("about") or "?",
+                   ", ".join("{%s}" % k for k in d.get("uses") or []) or "?"))
+    order = []
+    for st in steps:
+        if isinstance(st, dict) and st.get("screen") not in order:
+            order.append(st.get("screen"))
+    visits = _visits(steps)
+    for i, e in enumerate(paths):
+        eid = e.get("id")
+        where = "error_paths[%d] (%s)" % (i, eid or "id 없음")
+        if not eid:
+            problems.append("%s 에 id 가 없다" % where)
+        elif defs and eid not in defs:
+            problems.append("%s: 과제의 오류가 아니다 (있는 것: %s)"
+                            % (where, ", ".join(defs)))
+        if e.get("from_step") not in visits:
+            problems.append("%s.from_step=%r 은 steps 의 화면이 아니다 (있는 것: %s)"
+                            % (where, e.get("from_step"), ", ".join(visits)))
+        exp, back = e.get("expect_screen"), e.get("back_to")
+        if exp not in screens:
+            problems.append("%s.expect_screen=%r 은 HTML 의 data-screen 에 없다"
+                            % (where, exp))
+        if back != exp and back not in order:
+            problems.append("%s.back_to=%r 은 steps 의 화면도 오류가 나타난 화면도 "
+                            "아니다" % (where, back))
+        elif exp in order and back in order and order.index(back) > order.index(exp):
+            problems.append("%s.back_to=%r 은 오류가 나타난 화면(%r)보다 뒤다. 고칠 "
+                            "수 있는 곳 - 오류가 나타난 화면이나 그 앞 - 으로 돌아가야 "
+                            "한다." % (where, back, exp))
+        if not e.get("inputs"):
+            problems.append("%s.inputs 가 비어 있다. 잘못된 입력을 넣는 동작을 적어라"
+                            % where)
+        if not e.get("recover") and back != exp:
+            problems.append("%s.recover 가 비어 있다. %r 로 되돌아가는 동작을 적어라"
+                            % (where, back))
+        need = (defs.get(eid) or {}).get("uses") or []
+        text = json.dumps(e.get("inputs"), ensure_ascii=False)
+        for key in need:
+            if "{%s}" % key not in text:
+                problems.append("%s.inputs 가 {%s} 를 쓰지 않는다. 잘못된 값은 이 "
+                                "자리표시자로만 넣는다." % (where, key))
+    return problems
 
 
 # 이 순서가 problems 의 순서다.
@@ -267,12 +372,16 @@ CHECKS = [_check_steps, _check_handlers, _check_step_screens, _check_transitions
           _check_coverage]
 
 
-def validate_flow(flow, html):
+def validate_flow(flow, html, required_errors=None):
     """Shape checks the audit would otherwise crash on, phrased for the model.
 
     타입은 shape_problems 가 먼저 본다. 여기 아래의 검사들은 그 결과를 전제로
     쓰여 있으므로, 타입이 틀렸으면 그 목록만 돌려주고 끝낸다 - 전제가 깨진
-    상태로 더 보면 문제를 돌려주는 대신 터진다."""
+    상태로 더 보면 문제를 돌려주는 대신 터진다.
+
+    `required_errors` 는 과제가 정한 오류 경로(원본 흐름의 error_paths)다.
+    재구성 루프만 넘긴다. 넘기지 않으면 빠진 오류 경로를 문제로 세지 않는다 -
+    오류 경로가 생기기 전의 흐름(Run 1~4)을 다시 볼 때 결과가 같아야 한다."""
     bad_shape = shape_problems(flow)
     if bad_shape:
         return bad_shape
@@ -283,6 +392,7 @@ def validate_flow(flow, html):
     problems = []
     for check in CHECKS:
         problems += check(flow, html, steps, screens)
+    problems += _check_error_paths(flow, html, steps, screens, required_errors)
     return problems
 
 

@@ -11,7 +11,7 @@ import os
 
 from senior_ui import audit as A
 from senior_ui.audit import stage as S
-from senior_ui.audit.flow import original_truth
+from senior_ui.audit.flow import original_error_paths, original_truth
 from senior_ui.config import FLOWS_DIR
 
 
@@ -75,6 +75,10 @@ def run_audit(orig_snapshot, orig_html, html_path, flow_path, url, shots, stage,
     # 원본 과제의 정답(flows/original.json)으로 한다 - 모델이 정답을 고르게 두면
     # 자기가 보여 주는 값을 정답으로 적어 검사 B 를 끌 수 있다.
     flow["truth"] = original_truth()
+    # 과제가 정한 오류 경로는 모두 걸어야 한다. 흐름 명세에서 빠졌으면 형식
+    # 검사가 먼저 막지만, 검사 J 도 같은 목록으로 한 번 더 본다.
+    flow["error_paths_required"] = [e["id"] for e in original_error_paths()
+                                    if "id" in e]
     rep_html = io.open(html_path, encoding="utf-8").read()
     rep = asyncio.run(A.drive(url, flow, want_shots=shots))
     report = A.audit(orig_snapshot, rep, orig_html, rep_html, flow)

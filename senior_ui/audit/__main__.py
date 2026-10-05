@@ -4,8 +4,9 @@ r"""검사기 CLI. 원본과 생성물을 같은 과제로 한 번씩 걷고 비
 둘은 같은 일을 했고, 뒤의 것이 앞의 것을 부른 다음 단계 밖 검사를 걷어내기만
 했다. 이제 단계는 이 CLI 의 인자 하나다.
 
-  wireframe   A 과제 완주 · B 표시 정확성 · C 죽은 컨트롤 · F 언어 · I 선택지
-  styled      A~I 전부
+  wireframe   A 과제 완주 · B 표시 정확성 · C 죽은 컨트롤 · F 언어 · I 선택지 ·
+              J 오류 경로
+  styled      A~J 전부
 
 단계는 --stage 가 가장 세고, 없으면 흐름 파일의 "stage", 그것도 없으면 styled
 다. 즉 단계를 적지 않은 기존 흐름은 예전과 똑같이 전부 검사한다.
@@ -105,7 +106,10 @@ def main(argv=None):
     # 1 로 끝나면 부르는 쪽이 그 둘을 구분할 수 없으므로, 리포트 모양으로 적어
     # 2 로 끝낸다. 역추적은 사람이 고칠 수 있게 stderr 로 보낸다.
     try:
-        orig = asyncio.run(drive(args.original, base_flow))
+        # 원본은 비교 기준이다. 새 설계를 검사할 때는 원본의 오류 경로를 걷지
+        # 않는다 - 오류 경로는 빌드의 흐름으로 빌드를 걷는다.
+        orig = asyncio.run(drive(args.original, base_flow,
+                                 errors=base_flow is flow))
         rep = asyncio.run(drive(args.build, flow, want_shots=args.shots))
 
         report = audit(orig, rep, orig_html, rep_html, flow)

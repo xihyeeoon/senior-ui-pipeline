@@ -346,7 +346,8 @@
       "A/per-screen attribute loss",
       "D/저명암 개수 전후 비교 (합계·화면별) - 새 설계라 짝이 되는 원본 화면이 없다. 화면 이름이 같다고 같은 화면이 아니므로, 견주면 두 설계가 다른 것을 결함으로 읽는다.",
       "D/gained-text (저대비 요소에 글이 늘었는지) - 새 설계라 짝이 되는 원본 화면이 없다. 화면 이름이 같다고 같은 화면이 아니므로, 견주면 두 설계가 다른 것을 결함으로 읽는다.",
-      "E/newly-wrapped text and height growth (no shared screens)"
+      "E/newly-wrapped text and height growth (no shared screens)",
+      "J/흐름에 오류 경로가 없다 - 정답 경로만 걸었다"
     ],
     "stage": "styled"
   }

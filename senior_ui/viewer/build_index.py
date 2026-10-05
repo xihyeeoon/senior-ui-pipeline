@@ -69,7 +69,7 @@ PIPELINE = [
      "artifact": "inputs/original_transfer.html"},
     {"id": "restructure", "name": "LLM 재구성", "note": "과업의 어려움을 보고 구조를 다시 설계",
      "artifact": "outputs/restructured_*.html"},
-    {"id": "audit", "name": "검사기", "note": "와이어프레임은 A·B·C·F·I, 스타일 이식 후 A~I",
+    {"id": "audit", "name": "검사기", "note": "와이어프레임은 A·B·C·F·I·J, 스타일 이식 후 A~J",
      "artifact": "senior_ui/audit/stage.py"},
     {"id": "style", "name": "스타일 이식", "note": "시각 디테일을 채운다 — 아직",
      "artifact": None},
@@ -84,7 +84,7 @@ KB_NOTE = ("senior_kb.csv 대조는 사후 확인입니다. 생성에 규칙을 
 CHECK_NAMES = {
     "A": "과업 완료·구조 보존", "B": "표시 정확성", "C": "죽은 컨트롤", "D": "대비",
     "E": "레이아웃", "F": "언어", "G": "상태 구분", "H": "미정의 클래스",
-    "I": "선택지 보존",
+    "I": "선택지 보존", "J": "오류 경로",
 }
 
 

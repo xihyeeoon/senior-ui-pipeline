@@ -29,6 +29,7 @@ import sys
 import time
 
 from senior_ui import audit as A
+from senior_ui.audit.flow import original_error_paths
 from senior_ui.config import OUTPUTS_ENV, ROOT, inside_root, outputs_dir, url_for
 from senior_ui.devserver import ensure_server
 
@@ -325,7 +326,9 @@ def request_plan(r, n, p):
         if reply["finish_reason"] == "length":
             raise PlanProblems(["답이 길이 제한에서 잘렸다 (finish_reason=length). "
                                 "진단과 변경의 문장을 짧게 써서 JSON 을 끝까지 닫아라."])
-        diagnosis, plan = parse_plan(reply["text"], r.original_screens)
+        diagnosis, plan = parse_plan(reply["text"], r.original_screens,
+                                     [e["id"] for e in original_error_paths()
+                                      if "id" in e])
     except PlanProblems as e:
         r.log("plan: %d problem(s): %s" % (len(e.problems),
                                            " | ".join(e.problems)[:300]))
@@ -566,7 +569,8 @@ def check_reply(r, p, entry, reply, n=None):
         dropped = drop_declared_removals(r, flow)
         if dropped:
             entry["choices_removed_dropped"] = dropped
-        problems = validate_flow(flow, html)
+        # 과제가 정한 오류 경로를 모두 적었는지도 본다 (원본 흐름의 error_paths).
+        problems = validate_flow(flow, html, original_error_paths())
     except FlowShape as e:
         # 타입이 틀린 흐름 명세. 답의 형식 문제(PARSE)가 아니라 FLOW 문제다.
         r.log("flow: %d problem(s): %s" % (len(e.problems),
@@ -989,7 +993,10 @@ def run(args):
         # 대비·언어 검사의 기준이 되는 원본 스냅샷. 실행마다 한 번만 걷는다.
         base_flow = A.load_flow(None)
         log("audit: driving the original once (baseline for contrast / language)")
-        r.orig_snapshot = asyncio.run(A.drive(r.original_url, base_flow))
+        # 비교 기준으로만 쓰므로 원본의 오류 경로는 걷지 않는다 - 모델의 설계는
+        # 원본과 화면이 다르고, 오류 경로는 생성물의 흐름으로 걷는다.
+        r.orig_snapshot = asyncio.run(A.drive(r.original_url, base_flow,
+                                              errors=False))
         r.choices = choices_block(r.orig_snapshot, original_html)
         if r.choices:
             log("선택지: %s" % " / ".join(

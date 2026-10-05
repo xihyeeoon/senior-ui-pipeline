@@ -5,8 +5,9 @@ fatal · warning · metrics · skipped 에 쌓는다. 부르는 순서는 core.a
 정한다 - 여기서는 이름만 모은다.
 """
 from . import (a_completion, b_display, c_dead_controls, d_contrast, e_layout,
-               f_language, g_state, h_undefined_class, i_choices)
+               f_language, g_state, h_undefined_class, i_choices,
+               j_errors)
 
 __all__ = ["a_completion", "b_display", "c_dead_controls", "d_contrast",
            "e_layout", "f_language", "g_state", "h_undefined_class",
-           "i_choices"]
+           "i_choices", "j_errors"]

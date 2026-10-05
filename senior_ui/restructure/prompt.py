@@ -9,7 +9,8 @@ docs/restructure-prompt.md 에 블록이 셋 있다.
 과제 설명을 한 곳에 두는 이유는 과제를 바꾸는 날 한 곳만 고치게 하려는 것이다 -
 두 프롬프트에 따로 적으면 한쪽만 바뀐 채로 돈다.
 
-생성 프롬프트의 슬롯은 넷이다 - 원본 HTML · 재시도 블록 · 선택지 요약 · 계획.
+생성 프롬프트의 슬롯은 다섯이다 - 원본 HTML · 재시도 블록 · 선택지 요약 · 오류
+조건 · 계획.
 재시도 블록은 직전 검사 결과를 모델이 읽을 수 있는 몇 줄로 줄이는 일이고, 그
 줄이기가 이 파일의 대부분이다.
 
@@ -20,6 +21,7 @@ import io
 import os
 import re
 
+from senior_ui.audit.flow import original_error_paths
 from senior_ui.config import ROOT
 from senior_ui.preserved import GLOBAL_NAME
 
@@ -54,19 +56,66 @@ def load_plan_template():
     return _with_task("PLAN_PROMPT")
 
 
-def build_prompt(template, original_html, retry_block, choices="", plan=""):
+def build_prompt(template, original_html, retry_block, choices="", plan="",
+                 errors=None):
+    """`errors` 를 주지 않으면 원본 흐름의 오류 조건으로 채운다 (errors_block)."""
+    if errors is None:
+        errors = errors_block(original_error_paths())
     return (template.replace("{{ORIGINAL_HTML}}", original_html)
                     .replace("{{RETRY_BLOCK}}", retry_block)
                     .replace("{{CHOICES}}", choices)
+                    .replace("{{ERRORS}}", errors)
                     .replace("{{PLAN}}", plan))
 
 
 def build_plan_prompt(template, original_html, choices, original_screens,
-                      retry=""):
+                      retry="", errors=None):
+    if errors is None:
+        errors = errors_block(original_error_paths())
     return (template.replace("{{ORIGINAL_HTML}}", original_html)
                     .replace("{{RETRY_BLOCK}}", retry)
                     .replace("{{CHOICES}}", choices)
+                    .replace("{{ERRORS}}", errors)
                     .replace("{{ORIGINAL_SCREENS}}", ", ".join(original_screens)))
+
+
+def errors_block(paths):
+    """원본의 오류 조건을 모델이 읽을 글로. 원본 흐름의 error_paths 에서 만든다.
+
+    넣는 것은 id · 무엇이 틀렸나(about) · 원본은 어떻게 하나(condition) · 잘못된
+    값의 **자리표시자 이름** 뿐이다. 실제 값은 넣지 않는다 - 모델이 그 값을 알면
+    "그 값일 때만 오류를 띄우는" HTML 로 검사 J 를 지날 수 있다. 정답이 아닌
+    모든 값에서 같은 오류가 나야 한다는 것을 대신 말한다.
+
+    과제에 묶이지 않는다 - 오류의 수도 이름도 글도 흐름 파일에서 나온다.
+    """
+    paths = [e for e in paths or [] if isinstance(e, dict) and e.get("id")]
+    if not paths:
+        return ""
+    out = ["## 원본의 오류 조건", "",
+           "사용자는 실제로 잘못 입력한다. 잘못된 입력을 알리고 고치게 하는 것도 "
+           "과업의 일부다.", "원본에는 오류가 %d개 있다." % len(paths), ""]
+    for e in paths:
+        out.append("- `%s` — %s" % (e["id"], e.get("about") or ""))
+        if e.get("condition"):
+            out.append("  %s" % e["condition"])
+        if e.get("uses"):
+            out.append("  검사기가 넣는 잘못된 값: %s"
+                       % ", ".join("`{%s}`" % k for k in e["uses"]))
+    out += ["",
+            "보여 주는 방식은 자유다. 팝업이 아니어도 되고, 넣는 즉시 같은 화면에서 "
+            "알려도 되고,",
+            "[다음] 을 끄고 이유를 보여도 되고, 오류 코드는 쉬운 말로 바꿔도 되고, "
+            "여러 오류를 한",
+            "화면으로 보여도 된다. 지킬 것은 셋이다.", "",
+            "1. 그 잘못된 입력에서 오류 상태가 나타난다 — 틀린 값으로 다음 단계에 "
+            "넘어가지 않는다.",
+            "2. 무엇이 틀렸는지 알아챌 수 있는 글이 새로 보인다.",
+            "3. 고칠 수 있는 화면 — 오류가 나타난 화면이나 그 앞 — 으로 되돌아갈 수 "
+            "있다.", "",
+            "잘못된 값이 무엇인지는 알려 주지 않는다. 정답이 아닌 모든 값에서 같은 "
+            "오류가 나야 한다.", ""]
+    return "\n".join(out)
 
 
 def reflection_request():
@@ -315,7 +364,9 @@ def retry_block(report, prev_html, prev_flow_text, error=None, truncated=0):
 
     # 규칙 3: 파생은 한 줄로 묶는다.
     if derived:
-        names = " · ".join(f.get("screen") or "?" for f in derived)
+        # 같은 화면이 두 검사(A 의 도달 못 함 · J 의 오류 경로)에서 함께 파생될
+        # 수 있다. 이름은 한 번만 적는다.
+        names = " · ".join(dict.fromkeys(f.get("screen") or "?" for f in derived))
         head = "[아래는 위 원인의 결과다. 따로 고치지 마라]" if (cause or other) \
             else "[도달하지 못한 화면]"
         parts += [head, "  %s — 도달 못 함" % names, ""]

@@ -10,6 +10,7 @@ import os
 import re
 import time
 
+from senior_ui.audit.flow import original_truth
 from senior_ui.config import FLOWS_DIR, OUTPUTS_DIR, RESULTS_DIR, ROOT, outputs_dir
 
 
@@ -319,19 +320,96 @@ PAD_ARRAYS = (
         ".join('');\n</script>")])
 PADS = {None: [], "markup": PAD_MARKUP, "arrays": PAD_ARRAYS}
 
-# (은행 목록 한 줄, 원본에 있고 Run 1 에 없는 두 값을 채우는 방법, 흐름을 깨뜨리는가)
+# Run 1 에는 오류 처리가 없다 - 틀린 계좌번호도 틀린 은행도 그대로 보낸다.
+# 원본의 두 오류(flows/original.json 의 error_paths)를 같은 화면 안의 안내 글로
+# 알리게 바꿔 끼운다. 새 화면을 만들지 않으므로 계획(MOCK_PLAN)의 화면은 그대로다.
+#
+#   wrong-account  계좌 화면 [다음] 에서 정답 계좌가 아니면 그 화면 아래에 알리고
+#                  머무른다. 숫자를 지우면 안내가 사라진다.
+#   wrong-bank     확인 화면 [보내기] 에서 정답 은행이 아니면 그 화면에 알리고
+#                  머무른다. [고치기] 로 계좌 화면에 돌아간다.
+#
+# 정답은 원본 HTML 이 가진 것(ANSWER_ACCOUNT · ANSWER_BANK)과 같은 값이다 - 모델도
+# 원본에서 그것을 읽는다. 틀린 값(truth 의 ACCOUNT_WRONG · BANK_WRONG)은 쓰지 않는다.
+def error_swaps():
+    t = original_truth()
+    clear = "document.getElementById('mock-acc-err').textContent=''; "
+    return [
+        ('<div class="count" id="acc-count">아직 누르지 않았습니다</div>',
+         '<div class="count" id="acc-count">아직 누르지 않았습니다</div>\n'
+         '    <div class="count" id="mock-acc-err"></div>'),
+        ('<div class="fee">수수료 없음</div>',
+         '<div class="fee">수수료 없음</div>\n'
+         '    <div class="fee" id="mock-bank-err"></div>'),
+        ("else if(a==='acc-num'){ if(S.acc.length<16){ S.acc+=el.dataset.v; renderAcc(); } }",
+         "else if(a==='acc-num'){ if(S.acc.length<16){ S.acc+=el.dataset.v; renderAcc(); } "
+         + clear + "}"),
+        ("else if(a==='acc-del'){ S.acc=S.acc.slice(0,-1); renderAcc(); }",
+         "else if(a==='acc-del'){ S.acc=S.acc.slice(0,-1); renderAcc(); " + clear + "}"),
+        ("    if(S.acc.length<10) return;\n",
+         "    if(S.acc.length<10) return;\n"
+         "    if(S.acc!=='%s'){ document.getElementById('mock-acc-err').textContent="
+         "'계좌번호가 맞지 않습니다. 받는 분 계좌번호를 다시 확인해 주세요.'; return; }\n"
+         % t["ACCOUNT"]),
+        ("  else if(a==='send'){\n",
+         "  else if(a==='send'){\n"
+         "    if(S.bank!=='%s'){ document.getElementById('mock-bank-err').textContent="
+         "'받는 분의 은행이 맞지 않습니다. [고치기]를 눌러 은행을 다시 골라 주세요.'; "
+         "return; }\n" % t["BANK"]),
+        ("  else if(a==='edit-who'){ S.saved ? show('who') : show('accno'); }",
+         "  else if(a==='edit-who'){ document.getElementById('mock-bank-err').textContent=''; "
+         "S.saved ? show('who') : show('accno'); }"),
+    ]
+
+
+# 위 오류 처리를 걷는 오류 경로. 흐름은 Run 1 의 것(flows/restructured.json)이다.
+MOCK_ERROR_PATHS = [
+    {"id": "wrong-account", "from_step": "accno",
+     "inputs": [{"type": "{ACCOUNT_WRONG}",
+                 "key": "[data-action='acc-num'][data-v='%s']"},
+                {"click": "#acc-next"}],
+     "expect_screen": "accno", "expect_text_any": ["계좌번호"],
+     "recover": [{"click": "[data-action='acc-del']"}], "back_to": "accno"},
+    {"id": "wrong-bank", "from_step": "accno",
+     "inputs": [{"type": "{ACCOUNT}", "key": "[data-action='acc-num'][data-v='%s']"},
+                {"click": "#acc-next"},
+                {"click": "[data-action='bank-other']"}, {"wait": 0.2},
+                {"click": "[data-action='pick-bank'][data-bank='{BANK_WRONG}']"},
+                {"click": "[data-action='who-yes']"},
+                {"type": "{AMOUNT}", "key": "[data-action='amt-num'][data-v='%s']"},
+                {"click": "#amt-next"},
+                {"click": "[data-action='send']"}],
+     "expect_screen": "review", "expect_text_any": ["은행"],
+     "recover": [{"click": "[data-action='edit-who']"}], "back_to": "accno"},
+]
+
+# 오류를 어떻게 다루는가 - (HTML 에 오류 처리를 넣는가, 흐름에 오류 경로를 적는가)
+ERRORS = {"handled": (True, True),
+          # 오류 경로는 적었지만 HTML 은 Run 1 그대로 - 틀린 값으로 넘어간다.
+          "unhandled": (False, True),
+          # 둘 다 없다 - Run 1 그대로.
+          "undeclared": (False, False)}
+
+# (은행 목록 한 줄, 원본에 있고 Run 1 에 없는 두 값을 채우는 방법, 흐름을 깨뜨리는가,
+#  오류 처리)
 MOCKS = {
-    # Run 1 을 되읽는다. 목록과 숫자판·빠른 금액을 도구가 넣은 배열에서 그린다.
-    # 지시대로 한 답이고, 통과해야 한다.
-    "pass": (BANKS_ALL, "arrays", False),
+    # Run 1 을 되읽는다. 목록과 숫자판·빠른 금액을 도구가 넣은 배열에서 그리고,
+    # 두 오류를 같은 화면에서 알린다. 지시대로 한 답이고, 통과해야 한다.
+    "pass": (BANKS_ALL, "arrays", False, "handled"),
     # 둘째 걸음이 없는 선택자를 클릭한다 - 모든 시도가 화면 2에서 죽는다.
-    "fail": (BANKS_ALL, "arrays", True),
+    "fail": (BANKS_ALL, "arrays", True, "handled"),
     # 목록은 참조하고 두 값은 마크업에 직접 썼다. 통과해야 한다.
-    "preserved-all": (BANKS_ALL, "markup", False),
+    "preserved-all": (BANKS_ALL, "markup", False, "handled"),
     # 참조는 했지만 일부만 그렸다. 검사 I 에서 떨어져야 한다.
-    "preserved-some": (BANKS_SOME, "markup", False),
+    "preserved-some": (BANKS_SOME, "markup", False, "handled"),
     # 참조하지 않고 직접 썼다. 형식 검사에서 떨어져야 한다.
-    "preserved-none": (BANKS_NONE, "markup", False),
+    "preserved-none": (BANKS_NONE, "markup", False, "handled"),
+    # pass 에서 오류 처리와 오류 경로를 모두 뺐다 (Run 1 그대로). 형식 검사가
+    # 빠진 오류 경로를 잡는다 - 검사기까지 가지 않는다.
+    "errors-undeclared": (BANKS_ALL, "arrays", False, "undeclared"),
+    # 오류 경로는 적었지만 HTML 에 오류 처리가 없다. 형식 검사는 지나고, 검사 J
+    # 가 "틀린 값으로 다음 화면에 넘어갔다" 로 잡는다.
+    "errors-unhandled": (BANKS_ALL, "arrays", False, "unhandled"),
 }
 MODES = sorted(MOCKS)
 
@@ -346,9 +424,12 @@ def swap(html, old, new):
 
 def mock_build(mode):
     """그 모드가 모델 답으로 내놓을 HTML."""
-    banks, pad, _broken = MOCKS[mode]
+    banks, pad, _broken, errors = MOCKS[mode]
     html = swap(io.open(mock_build_path(), encoding="utf-8").read(),
                 BANKS_LINE, banks)
+    if ERRORS[errors][0]:
+        for old, new in error_swaps():
+            html = swap(html, old, new)
     # 이름은 두 자리 모두 바꾼다 (bank-yes · pick-bank).
     html = swap(html, *NAME_SWAP).replace(*NAME_SWAP)
     for old, new in PADS[pad]:
@@ -362,7 +443,8 @@ def mock_build(mode):
 # Run 1 빌드에 맞춘 진단과 계획. 화면은 그 빌드의 data-screen 아홉 개 그대로다 -
 # 계획과 생성물이 어긋나면 일치 검사에서 떨어지므로, mock 이 생성 단계까지 가려면
 # 계획이 빌드와 맞아야 한다. 내용은 docs/restructure-changelog.md 에서 옮겼다.
-# 다섯 모드가 같은 계획을 쓴다 - 모드는 생성 답의 은행 목록 한 줄에서만 다르다.
+# 일곱 모드가 같은 계획을 쓴다 - 모드는 생성 답의 은행 목록 한 줄과 오류 처리에서만
+# 다르다. 계획의 errors 는 pass 의 오류 처리(error_swaps)를 말한다.
 MOCK_DIAGNOSIS = [
     {"id": "D1", "screen": "home", "element": "이체 입구",
      "problem": "이체 버튼이 첫 카드 안의 작은 버튼 하나라 시작점을 찾지 못한다",
@@ -383,6 +465,9 @@ MOCK_DIAGNOSIS = [
     {"id": "D6", "screen": "done", "element": "완료 버튼 4개",
      "problem": "끝난 건지, 무엇을 더 해야 하는지에서 멈춘다",
      "evidence": "추가이체·상세보기·공유·확인 네 버튼"},
+    {"id": "D7", "screen": "err-account", "element": "오류 팝업",
+     "problem": "오류 코드와 은행 용어만 보여 무엇이 틀렸는지 모른다",
+     "evidence": "ELB00016 · ETA00325 와 '과목코드 오류' 문구"},
 ]
 
 MOCK_PLAN = {
@@ -421,6 +506,17 @@ MOCK_PLAN = {
         {"id": "C7", "what": "완료 화면의 버튼을 [처음으로] 하나로 줄인다",
          "why": "끝났다는 것이 분명하게", "addresses": ["D6"],
          "from_screens": ["done"], "to_screens": ["done"]},
+        {"id": "C8", "what": "오류 팝업 두 개를 그 화면 안의 쉬운 안내 글로 바꾼다",
+         "why": "무엇이 틀렸고 무엇을 하면 되는지 그 자리에서 알게", "addresses": ["D7"],
+         "from_screens": ["err-account", "err-bank"], "to_screens": ["accno", "review"]},
+    ],
+    "errors": [
+        {"id": "wrong-account", "screen": "accno",
+         "how": "계좌번호 칸 아래에 맞지 않는다고 알리고 그 화면에 머문다",
+         "back_to": "accno"},
+        {"id": "wrong-bank", "screen": "review",
+         "how": "보내기를 누르면 은행이 맞지 않는다고 알리고, [고치기]로 다시 고르게 한다",
+         "back_to": "accno"},
     ],
 }
 
@@ -458,6 +554,8 @@ def mock_reply(mode, reflect=False):
     flow["name"] = "auto"
     if MOCKS[mode][2]:
         flow["steps"][1]["click"] = "[data-action='does-not-exist']"
+    if ERRORS[MOCKS[mode][3]][1]:
+        flow["error_paths"] = json.loads(json.dumps(MOCK_ERROR_PATHS))
     text = "```html\n%s\n```\n\n```json\n%s\n```\n" % (
         html, json.dumps(flow, ensure_ascii=False, indent=2))
     if reflect:

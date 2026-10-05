@@ -89,7 +89,7 @@ def fake_run_env(monkeypatch, out_root):
     바꿔 끼우는 것은 바깥 세계뿐이다 - 서버 띄우기, 원본을 한 번 걷기, 검사기
     호출. 루프 자신의 판단(예산·중단·종료 코드)은 그대로 돈다.
     """
-    async def fake_drive(url, flow, want_shots=None):
+    async def fake_drive(url, flow, want_shots=None, **_kw):
         return dict(FAKE_SNAPSHOT)
 
     monkeypatch.setenv("SENIOR_UI_OUTPUTS", out_root)
@@ -97,6 +97,10 @@ def fake_run_env(monkeypatch, out_root):
     monkeypatch.setattr(loop, "ensure_server", lambda log: None)
     monkeypatch.setattr(loop.A, "drive", fake_drive)
     monkeypatch.setattr(loop.A, "load_flow", lambda p: {"name": "original", "steps": []})
+    # 가짜 원본에는 오류 경로도 없다. 진짜 원본의 오류 정의를 그대로 두면 이
+    # 파일의 가짜 답(오류 경로 없음)이 모두 형식에서 떨어진다. 오류 경로를
+    # 요구하는 루프는 test_error_paths.py 가 따로 본다.
+    monkeypatch.setattr(loop, "original_error_paths", lambda: [])
     monkeypatch.setattr(loop, "choices_block", lambda snap, html: "")
     monkeypatch.setattr(loop, "load_template", lambda: "TEMPLATE {{ORIGINAL_HTML}} "
                                                        "{{RETRY_BLOCK}} {{CHOICES}}")
@@ -547,7 +551,7 @@ def driven_urls(fake_run_env, monkeypatch):
     """원본을 걸을 때 쓴 URL 을 적어 둔다. fake_run_env 의 drive 를 덮는다."""
     seen = []
 
-    async def fake_drive(url, flow, want_shots=None):
+    async def fake_drive(url, flow, want_shots=None, **_kw):
         seen.append(url)
         return dict(FAKE_SNAPSHOT)
 
