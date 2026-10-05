@@ -33,6 +33,7 @@ from senior_ui.config import OUTPUTS_ENV, ROOT, inside_root, outputs_dir, url_fo
 from senior_ui.devserver import ensure_server
 
 from .audit_call import load_allowed_removals, run_audit
+from .brief import write_brief
 from .model import (TEMPERATURE, SEED, ApiRejected, InfraFailed, RateLimited,
                     call_model, estimate_tokens, load_env, mock_plan_reply, mock_reply,
                     sdk_version)
@@ -850,6 +851,31 @@ def copy_final(r):
               "%s 의 선언을 입력의 데이터로 바꿨다. 모델이 쓴 것은 %s 다."
               % (", ".join(pres["redeclared"]),
                  dict(PROMOTED)["model_html"] % ""))
+    if f.get("model_html"):
+        f["model_html_promoted"] = os.path.join(out, dict(PROMOTED)["model_html"] % "")
+    write_briefs(r, out, name)
+
+
+# 승격된 설명서의 이름. 다른 산출물과 같이 restructured_auto 로 시작한다.
+BRIEF = "designer_brief.md"
+PROMOTED_BRIEF = "restructured_auto%s.designer_brief.md"
+
+
+def write_briefs(r, out, name):
+    """통과한 빌드의 디자이너용 설명서 (brief.py). 실행 폴더에 하나, outputs/ 에
+    하나(+ 실행 이름 사본). 링크가 설명서의 폴더 기준이므로 복사하지 않고 따로
+    쓴다 - 같은 스크린샷을 가리키되 링크 글자가 다르다."""
+    f = r.summary["final"]
+    path = write_brief(r.summary, r.original_screens, os.path.join(r.run_dir, BRIEF))
+    if not path:
+        r.log("final: 계획이 없어 설명서를 쓰지 않았다")
+        return
+    f["brief"] = path
+    promoted = write_brief(r.summary, r.original_screens,
+                           os.path.join(out, PROMOTED_BRIEF % ""))
+    shutil.copy2(promoted, os.path.join(out, PROMOTED_BRIEF % ("." + name)))
+    f["brief_promoted"] = promoted
+    r.log("final: 디자이너용 설명서 -> %s (+ %s)" % (path, PROMOTED_BRIEF % ""))
 
 
 # --------------------------------------------------------------------------- #

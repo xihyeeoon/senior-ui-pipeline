@@ -346,10 +346,13 @@ def strip_volatile(summary):
 
     fix_repro(s)
 
+    root = ROOT.replace("\\", "/")
+
     def fix(p):
         if not isinstance(p, str) or not run_dir:
             return p
-        return p.replace("\\", "/").replace(run_dir, "<run>")
+        # 실행 폴더 밖이지만 저장소 안인 것(승격된 사본)은 <root> 로
+        return p.replace("\\", "/").replace(run_dir, "<run>").replace(root, "<root>")
 
     # 실행 폴더 아래를 가리키는 경로는 모두 <run> 으로 바꾼다. 키를 손으로
     # 적어 두면 새 산출물(model_html 등)이 늘 때마다 PC 마다 다른 절대

@@ -30,6 +30,8 @@ from senior_ui.restructure import audit_call as _audit_call  # noqa: E402
 from senior_ui.restructure import loop as _loop              # noqa: E402
 from senior_ui.restructure import model as _model            # noqa: E402
 from senior_ui.restructure import plan as _plan              # noqa: E402
+from senior_ui.restructure import brief as _brief            # noqa: E402
+from senior_ui.viewer import build_index as _build_index     # noqa: E402
 from senior_ui.restructure import __main__ as _restructure_cli  # noqa: E402
 from senior_ui.restructure import preserve as _preserve      # noqa: E402
 from senior_ui.restructure import prompt as _prompt          # noqa: E402
@@ -90,6 +92,13 @@ prompt_module = _prompt
 
 # ---- senior_ui/restructure/__main__.py (명령줄 기본값) ------------------ #
 restructure_parser = _restructure_cli.build_parser
+
+# ---- senior_ui/restructure/brief.py (디자이너용 설명서) ----------------- #
+brief_module = _brief
+
+# ---- senior_ui/viewer/build_index.py (대시보드 색인) --------------------- #
+# 빌드 옆의 plan.json 을 "변경 추적" 탭에 붙이는 곳
+index_plan_of = _build_index.plan_of
 
 # ---- senior_ui/restructure/plan.py (진단·계획 · 일치 검사 · 반성) ------- #
 plan_module = _plan

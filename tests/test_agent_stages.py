@@ -680,3 +680,151 @@ def test_a_rate_limit_on_a_retry_does_not_spend_the_budget(fake_run_env, out_roo
     assert summary["budget"]["audit_used"] == 1           # 첫 시도의 검사 실패뿐
     assert summary["budget"]["format_used"] == 0
     assert summary["attempts"][-1]["stage"] == "rate_limit"
+
+
+# ===================================================================== #
+# 9. 디자이너용 설명서
+# ===================================================================== #
+brief = _api.brief_module
+
+BRIEF_PLAN = {
+    "screens": [{"name": "start", "purpose": "시작", "from": ["home"]},
+                {"name": "pick", "purpose": "은행 고르기", "from": ["bank", "account"]},
+                {"name": "check", "purpose": "새로 넣은 확인", "from": []},
+                {"name": "done", "purpose": "끝", "from": ["done"]}],
+    "changes": [{"id": "C1", "what": "버튼을 키운다", "why": "찾게",
+                 "addresses": ["D1"], "from_screens": ["home"], "to_screens": ["start"]},
+                {"id": "C2", "what": "확인 화면을 더한다", "why": "잘못 보내지 않게",
+                 "addresses": [], "from_screens": [], "to_screens": ["check"]}]}
+BRIEF_DIAG = [{"id": "D1", "screen": "home", "element": "이체 버튼",
+               "problem": "작아서 못 찾는다", "evidence": "카드 안의 작은 버튼"}]
+BRIEF_REPORT = {
+    "passed": True, "fatal": [],
+    "warning": [{"check": "F", "screen": "start", "detail": "영어 낱말 LTE"},
+                {"check": "I", "screen": None,
+                 "detail": "원본의 pick-bank 선택지 67개 중 63개는 … 고를 수 없었다"}],
+    "metrics": {"choice_values_kept": {"pick-bank": 67, "num": 11},
+                "choice_values_selectable": {"pick-bank": 4, "num": 11},
+                "choice_values_removed_by_design": {
+                    "quick": {"values": ["all"], "reason": "전액은 실수가 크다"}}}}
+
+
+def render(tmp_path, **kw):
+    shots = tmp_path / "shots" / "attempt_2"
+    shots.mkdir(parents=True)
+    (shots / "audit_start.png").write_bytes(b"png")
+    (shots / "audit_pick.png").write_bytes(b"png")
+    args = dict(run_name="20261005-120000", attempt=2, plan=BRIEF_PLAN,
+                diagnosis=BRIEF_DIAG, report=BRIEF_REPORT,
+                original_screens=ORIGINAL, shots_dir=str(shots),
+                brief_dir=str(tmp_path), preserved={"BANKS": 38, "SECS": 29},
+                redeclared=[], model_html=None, git=CLEAN, reflections=[])
+    args.update(kw)
+    return brief.render_brief(**args)
+
+
+def section(md, title):
+    """'## title' 부터 다음 '## ' 앞까지."""
+    start = md.index("## " + title)
+    nxt = md.find("\n## ", start + 3)
+    return md[start: nxt if nxt >= 0 else len(md)]
+
+
+def test_the_brief_maps_every_original_screen(tmp_path):
+    md = section(render(tmp_path), "화면 대응")
+    assert "| bank | pick |" in md and "| account | pick |" in md
+    assert "| home | start |" in md
+    assert "recipient" in md and "없어짐" in md             # 계획이 쓰지 않은 원본 화면
+    assert "| (새 화면) | check |" in md
+
+
+def test_the_brief_lists_changes_with_the_diagnosis_they_answer(tmp_path):
+    md = section(render(tmp_path), "변경 목록")
+    assert "C1" in md and "버튼을 키운다" in md and "찾게" in md
+    assert "D1" in md and "작아서 못 찾는다" in md
+    assert "C2" in md and "대응하는 진단 없음" in md
+
+
+def test_the_brief_links_the_screenshots_the_checker_took(tmp_path):
+    md = section(render(tmp_path), "화면별 스크린샷")
+    assert "(shots/attempt_2/audit_start.png)" in md
+    assert "(shots/attempt_2/audit_pick.png)" in md
+    assert "check" in md and "스크린샷 없음" in md
+
+
+def test_the_brief_lists_what_a_person_must_check(tmp_path):
+    md = section(render(tmp_path), "사람이 확인할 것")
+    assert "영어 낱말 LTE" in md
+    assert "pick-bank" in md and "67" in md and "4" in md   # kept / selectable 차이
+    assert "| num |" not in md                               # 차이 없는 것은 빼고
+    assert "quick" in md and "전액은 실수가 크다" in md       # 실제로 쓰인 허용 제거
+    assert "도구가 고친 것: 없음" in md
+
+
+def test_the_brief_says_when_the_tool_rewrote_the_models_list(tmp_path):
+    md = render(tmp_path, redeclared=["BANKS"],
+                model_html=str(tmp_path / "restructured_auto.model.html"))
+    part = section(md, "사람이 확인할 것")
+    assert "BANKS" in part and "restructured_auto.model.html" in part
+
+
+def test_the_brief_names_where_the_choice_data_comes_from(tmp_path):
+    md = render(tmp_path)
+    assert "window.PRESERVED" in md and "BANKS 38" in md
+
+
+def test_the_brief_shows_the_reflections_when_the_plan_moved(tmp_path):
+    md = render(tmp_path, reflections=[{"attempt": 2, "cause": "선택자가 없다",
+                                        "plan_changes": 1}])
+    assert "선택자가 없다" in md
+
+
+def test_the_brief_records_a_dirty_tree(tmp_path):
+    md = render(tmp_path, git=DIRTY)
+    assert "깨끗하지 않" in md
+
+
+def shooting_audit(*a, **kw):
+    """검사기 대역. 받은 스크린샷 폴더에 start 화면 한 장을 찍는다."""
+    shots = a[5]
+    io.open(os.path.join(shots, "audit_start.png"), "wb").write(b"png")
+    return passing_report()
+
+
+def test_a_passing_run_writes_the_brief(fake_run_env, out_root):
+    fake_run_env.setattr(loop, "run_audit", shooting_audit)
+    _code, summary = run_loop(fake_run_env, out_root, always_reply, attempts=1)
+    d = last_run(out_root)
+    md = io.open(os.path.join(d, "designer_brief.md"), encoding="utf-8").read()
+    assert "(shots/attempt_1/audit_start.png)" in md
+    assert summary["final"]["brief"].endswith("designer_brief.md")
+    # 승격된 사본은 outputs/ 에서 열어도 링크가 맞는다
+    promoted = io.open(os.path.join(out_root, "restructured_auto.designer_brief.md"),
+                       encoding="utf-8").read()
+    name = os.path.basename(d)
+    assert "(restructure_auto/%s/shots/attempt_1/audit_start.png)" % name in promoted
+
+
+def test_a_failed_run_writes_no_brief(fake_run_env, out_root):
+    fake_run_env.setattr(loop, "run_audit", lambda *a, **kw: failing_report())
+    run_loop(fake_run_env, out_root, always_reply, attempts=1)
+    assert not os.path.exists(os.path.join(last_run(out_root), "designer_brief.md"))
+
+
+# ===================================================================== #
+# 10. 대시보드 "변경 추적" - plan.json 이 있는 빌드
+# ===================================================================== #
+def test_the_index_attaches_a_build_s_plan(out_root):
+    rel = os.path.relpath(out_root, ROOT).replace(os.sep, "/")
+    base = os.path.join(out_root, "restructured_auto")
+    io.open(base + ".html", "w", encoding="utf-8").write("<html></html>")
+    json.dump(GOOD_PLAN, io.open(base + ".plan.json", "w", encoding="utf-8"))
+    json.dump(GOOD_DIAGNOSIS, io.open(base + ".diagnosis.json", "w", encoding="utf-8"))
+    got = _api.index_plan_of(rel + "/restructured_auto.html")
+    assert got["plan"] == GOOD_PLAN and got["diagnosis"] == GOOD_DIAGNOSIS
+    assert got["path"] == rel + "/restructured_auto.plan.json"
+
+
+def test_a_build_without_a_plan_has_none(out_root):
+    rel = os.path.relpath(out_root, ROOT).replace(os.sep, "/")
+    assert _api.index_plan_of(rel + "/nothing.html") is None
