@@ -122,9 +122,9 @@
       ]
     },
     "model_html": "<run>/attempt_1.model.html",
-    "model_html_promoted": "<root>/.mock-outputs/restructured_auto.model.html",
+    "model_html_promoted": "<root>/.mock-outputs/restructured_auto_bill.model.html",
     "brief": "<run>/designer_brief.md",
-    "brief_promoted": "<root>/.mock-outputs/restructured_auto.designer_brief.md"
+    "brief_promoted": "<root>/.mock-outputs/restructured_auto_bill.designer_brief.md"
   },
   "budget": {
     "format_used": 0,
