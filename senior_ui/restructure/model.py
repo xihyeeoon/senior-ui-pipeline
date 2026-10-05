@@ -9,7 +9,7 @@ import json
 import os
 import time
 
-from senior_ui.config import FLOWS_DIR, OUTPUTS_DIR, ROOT
+from senior_ui.config import FLOWS_DIR, OUTPUTS_DIR, RESULTS_DIR, ROOT, outputs_dir
 
 
 def load_env():
@@ -67,11 +67,25 @@ def call_model(model, prompt, max_tokens, log=None, backoff=(20, 45, 90, 180)):
     }
 
 
+# mock 이 되읽는 Run 1 빌드. outputs/ 는 추적하지 않아서 없을 수 있고, 테스트는
+# 산출물 폴더를 임시 폴더로 옮긴다 - 그래서 셋을 차례로 본다. 마지막 results/ 는
+# 추적되는 사본이므로 어느 PC 에서나 있다.
+MOCK_BUILD = "restructured_transfer.html"
+
+
+def mock_build_path():
+    for d in (outputs_dir(), OUTPUTS_DIR, RESULTS_DIR):
+        path = os.path.join(d, MOCK_BUILD)
+        if os.path.exists(path):
+            return path
+    raise FileNotFoundError("mock 이 읽을 %s 가 없다 (%s · %s)"
+                            % (MOCK_BUILD, OUTPUTS_DIR, RESULTS_DIR))
+
+
 def mock_reply(mode):
     """No API: replay Run 1. 'fail' hands back a flow whose second step clicks
     a selector that does not exist, so every attempt dies on screen 2."""
-    html = io.open(os.path.join(OUTPUTS_DIR, "restructured_transfer.html"),
-                   encoding="utf-8").read()
+    html = io.open(mock_build_path(), encoding="utf-8").read()
     flow = json.load(io.open(os.path.join(FLOWS_DIR, "restructured.json"),
                              encoding="utf-8"))
     flow["name"] = "auto"

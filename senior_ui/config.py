@@ -21,6 +21,21 @@ FLOWS_DIR = os.path.join(ROOT, "flows")
 OUTPUTS_DIR = os.path.join(ROOT, "outputs")      # .gitignore - 재생성 가능
 RESULTS_DIR = os.path.join(ROOT, "results")      # 추적함 - 남겨야 할 증거
 
+# 산출물 폴더를 옮길 수 있게 하는 환경 변수. 테스트가 쓴다.
+OUTPUTS_ENV = "SENIOR_UI_OUTPUTS"
+
+
+def outputs_dir():
+    """산출물을 쓸 폴더. 기본은 OUTPUTS_DIR 이고 SENIOR_UI_OUTPUTS 로 바꾼다.
+
+    상수가 아니라 함수인 이유는 테스트다. 재구성 루프를 한 번 돌리면 마지막
+    빌드가 `outputs/restructured_auto.*` 로 복사되는데, 그 루프를 돌리는 테스트가
+    있으므로 테스트를 한 번 돌릴 때마다 실제 산출물이 mock 결과로 덮여 쓰였다.
+    상수를 import 해 두면 테스트가 환경 변수를 세워도 이미 늦으므로, 쓰는
+    자리에서 매번 읽는다.
+    """
+    return os.environ.get(OUTPUTS_ENV) or OUTPUTS_DIR
+
 # 모든 갈래가 여기서 출발한다.
 ORIGINAL_FILE = os.path.join(ROOT, "inputs", "original_transfer.html")
 ORIGINAL_REL = "inputs/original_transfer.html"

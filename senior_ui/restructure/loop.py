@@ -22,7 +22,7 @@ import sys
 import time
 
 from senior_ui import audit as A
-from senior_ui.config import ORIGINAL_URL, OUTPUTS_DIR, ROOT, url_for
+from senior_ui.config import ORIGINAL_URL, ROOT, outputs_dir, url_for
 from senior_ui.devserver import ensure_server
 
 from .audit_call import run_audit
@@ -30,7 +30,9 @@ from .model import RateLimited, call_model, load_env, mock_reply
 from .prompt import build_prompt, choices_block, load_template, one_line, retry_block
 from .reply import failure_report, parse_reply, validate_flow
 
-RUNS_DIR = os.path.join(OUTPUTS_DIR, "restructure_auto")
+def runs_dir():
+    """실행 폴더들이 쌓이는 곳. 산출물 폴더와 같이 움직인다 (config.outputs_dir)."""
+    return os.path.join(outputs_dir(), "restructure_auto")
 
 # 한 번의 시도가 끝나는 방식
 STOP = "stop"            # 루프를 끝낸다
@@ -314,16 +316,37 @@ def log_trend(r):
                  t["fatal_derived"], t["screens"], t["stopped_at"] or "-"))
 
 
+# outputs/ 안에서 "지금 쓰는 것" 을 가리키는 이름들. 실행 이름이 붙은 사본은
+# 같은 이름에 실행 폴더 이름이 하나 끼어든다.
+PROMOTED = [("html", "restructured_auto%s.html"),
+            ("flow", "restructured_auto%s.flow.json"),
+            ("audit", "audit_auto%s.json")]
+
+
 def copy_final(r):
-    """파일까지 간 마지막 빌드를 통과 여부와 무관하게 outputs/ 로 복사한다."""
+    """통과한 빌드만 outputs/ 로 올린다. 사본은 실행 이름으로도 하나 남긴다.
+
+    통과 여부와 무관하게 복사하던 것을 바꿨다. `restructured_auto.html` 은
+    뷰어와 실험 조건이 "지금 쓰는 재구성본" 으로 읽는 이름인데, 떨어진 빌드가
+    그 자리에 올라오면 마지막으로 통과한 빌드가 조용히 사라진다 - 떨어졌다는
+    사실은 summary.json 에만 남고, 그 자리의 파일은 멀쩡해 보인다.
+
+    실행 이름이 붙은 사본을 함께 두는 이유는 그 반대다. 통과한 실행이 둘 이상
+    이면 나중 것이 앞의 것을 덮는데, 둘을 비교할 수 있어야 한다.
+    """
     f = r.summary["final"]
     if not f:
         return
-    shutil.copy2(f["html"], os.path.join(OUTPUTS_DIR, "restructured_auto.html"))
-    shutil.copy2(f["flow"], os.path.join(OUTPUTS_DIR, "restructured_auto.flow.json"))
-    shutil.copy2(f["audit"], os.path.join(OUTPUTS_DIR, "audit_auto.json"))
-    r.log("final: attempt %d -> outputs/restructured_auto.html (+ .flow.json, audit_auto.json)"
-          % f["attempt"])
+    if not r.summary.get("passed"):
+        r.log("final: 통과한 빌드가 없다 — outputs/restructured_auto.* 는 그대로 둔다")
+        return
+    out, name = outputs_dir(), os.path.basename(r.run_dir)
+    os.makedirs(out, exist_ok=True)
+    for key, pattern in PROMOTED:
+        shutil.copy2(f[key], os.path.join(out, pattern % ""))
+        shutil.copy2(f[key], os.path.join(out, pattern % ("." + name)))
+    r.log("final: attempt %d -> %s (+ .%s 사본)"
+          % (f["attempt"], ", ".join(p % "" for _k, p in PROMOTED), name))
 
 
 # --------------------------------------------------------------------------- #
@@ -331,7 +354,8 @@ def run(args):
     """한 실행 전체. 돌려주는 것이 프로세스의 종료 코드다 -
     0 = 통과한 빌드가 있다, 1 = 전부 실패, 2 = 아예 돌지 못했다."""
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    run_dir = os.path.join(RUNS_DIR, stamp + ("-mock-" + args.mock if args.mock else ""))
+    run_dir = os.path.join(runs_dir(),
+                           stamp + ("-mock-" + args.mock if args.mock else ""))
     os.makedirs(run_dir, exist_ok=True)
     log = make_logger(os.path.join(run_dir, "run.log"))
 

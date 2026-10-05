@@ -25,6 +25,7 @@ from senior_ui.audit import core as _audit_core              # noqa: E402
 from senior_ui.audit import __main__ as _audit_cli           # noqa: E402
 from senior_ui.audit import stage as _audit_stage            # noqa: E402
 from senior_ui.audit import report as _audit_report          # noqa: E402
+from senior_ui.restructure import loop as _loop              # noqa: E402
 from senior_ui.restructure import model as _model            # noqa: E402
 from senior_ui.restructure import prompt as _prompt          # noqa: E402
 from senior_ui.restructure import reply as _reply            # noqa: E402
@@ -74,6 +75,14 @@ brief_failure = _prompt.brief_failure
 
 # ---- senior_ui/restructure/model.py (API 없이 도는 대역) --------------- #
 mock_reply = _model.mock_reply
+# 호출 실패의 종류를 가르는 예외들. 루프가 그 종류로 판단하므로 테스트도 같은
+# 것을 던져야 한다.
+model_module = _model
+
+# ---- senior_ui/restructure/loop.py (재시도 루프 · 예산 · 종료 코드) ----- #
+# 버그 재현 테스트는 단계 함수를 하나씩 부르고 루프 안의 이름을 바꿔 끼우므로
+# 모듈째로 내보낸다.
+loop_module = _loop
 
 # ---- senior_ui/devserver.py · senior_ui/config.py ---------------------- #
 listening = _devserver.listening
