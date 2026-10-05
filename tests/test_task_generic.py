@@ -369,3 +369,30 @@ def test_the_cli_defaults_to_transfer(monkeypatch, tmp_path):
     seen = cli_drives(monkeypatch, tmp_path, [])
     assert seen[0][0].endswith("/inputs/original_transfer.html")
     assert seen[0][1:] == ("original", "transfer")
+
+
+# --------------------------------------------------------------------- #
+# 7. 대시보드 - 서버 허용 목록 · 원본 카드
+# --------------------------------------------------------------------- #
+def test_the_dashboard_server_serves_every_tasks_original():
+    """고치기 전: 허용 목록에 original_transfer.html 만 있어 공과금 원본은 404."""
+    for name in _api.task_names():
+        assert _api.srv_module.allowed(_api.load_task(name)["original"]), name
+    # 원본이 아닌 inputs/ 의 파일(실제 앱 캡처)은 여전히 막는다
+    assert not _api.srv_module.allowed("inputs/1.png")
+    assert not _api.srv_module.allowed("inputs/other.html")
+
+
+def test_the_index_has_a_card_for_every_tasks_original():
+    """고치기 전: 원본 카드가 original_transfer 하나로 박혀 있었다. 이체 카드는
+    그대로 baseline 에 두고, 다른 과제의 원본은 originals 에 둔다."""
+    BI = _api.build_index_module
+    dirs = []
+    assert BI.collect_baseline(dirs)["id"] == "original_transfer"
+    others = BI.collect_originals(dirs)
+    assert [o["id"] for o in others] == ["original_bill"]
+    bill = others[0]
+    assert bill["html"] == "inputs/original_bill.html"
+    assert bill["flow"] == {"name": "original_bill", "path": "flows/original_bill.json"}
+    assert bill["layer"] == "input"
+    assert "bill-home" in bill["screens"]

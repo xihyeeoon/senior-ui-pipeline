@@ -105,6 +105,7 @@ brief_module = _brief
 # ---- senior_ui/viewer/build_index.py (대시보드 색인) --------------------- #
 # 빌드 옆의 plan.json 을 "변경 추적" 탭에 붙이는 곳
 index_plan_of = _build_index.plan_of
+build_index_module = _build_index
 
 # ---- senior_ui/restructure/plan.py (진단·계획 · 일치 검사 · 반성) ------- #
 plan_module = _plan
