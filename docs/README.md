@@ -360,3 +360,4 @@ flags as optimistic.
 | `variance-notes.md` | 같은 프롬프트를 다시 돌릴 때 무엇이 달라지는가. |
 | `restructure-changelog.md` | Run 1 의 변경 내역과 KB 규칙 사후 대조. |
 | `defect-types.md` | 생성물에 반복해 나타나는 결함 유형. 검사기에 넣을 후보. |
+| `input-contract.md` | 앞단(스크린샷 → HTML)이 지켜야 할 입력 HTML 의 약속. 뒤쪽이 무엇을 읽고 그중 무엇이 스크린샷에서 오는가. |
