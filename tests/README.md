@@ -37,6 +37,8 @@
 | `test_baseline.py` | 저장된 스냅샷으로 다시 계산해 비교 (브라우저 없음) |
 | `test_drive.py` | 브라우저로 실제로 다시 걷고 비교 (`-m browser`) |
 | `test_restructure_bugs.py` | 재구성 루프의 버그 재현. 모델도 브라우저도 부르지 않는다 |
+| `test_model_upgrade.py` | 모델 바꾸기 준비 - 기본값 · 모델별 부르는 방식 · 분당 한도 · 확인 명령 · 가격. 실제 API 는 부르지 않는다 |
+| `fake_openai.py` | `openai.OpenAI` 의 대역 (with_raw_response 의 헤더 · Responses · models.list · 429 · 400) |
 | `baseline/` | 기준값. 마지막 캡처 실행의 결과다 |
 | `fixtures/sessions/` | `session_report` 용 가짜 세션 4건 |
 | `fixtures/report/` | `audit.report` 의 입력으로 고정해 둔 audit JSON 4건 |
