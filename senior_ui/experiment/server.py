@@ -28,6 +28,7 @@ import sys
 import urllib.parse
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
+from senior_ui._cli import setup_stdout
 from senior_ui.config import CONDITIONS, OUTPUTS_DIR, PORT, ROOT
 from senior_ui.viewer import build_index
 
@@ -291,6 +292,8 @@ def banner(port, sessions_dir, tasks, allow_session=False):
 
 
 def main():
+    # 무엇이든 찍기 전에 맞춘다 (senior_ui/_cli.py).
+    setup_stdout()
     args = build_parser().parse_args()
 
     tasks = TASKS

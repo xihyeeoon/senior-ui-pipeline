@@ -49,6 +49,7 @@ Exit: 0 = a build passed, 1 = every attempt failed, 2 = could not run.
 import argparse
 import sys
 
+from senior_ui._cli import setup_stdout
 from senior_ui.audit.stage import STAGES
 from senior_ui.config import ORIGINAL_FILE
 
@@ -57,6 +58,8 @@ from .model import SEED, TEMPERATURE
 
 
 def main():
+    # 무엇이든 찍기 전에 맞춘다 (senior_ui/_cli.py).
+    setup_stdout()
     ap = argparse.ArgumentParser()
     ap.add_argument("--attempts", type=int, default=3,
                     help="두 예산의 기본값")

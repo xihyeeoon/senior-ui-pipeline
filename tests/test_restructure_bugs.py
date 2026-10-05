@@ -31,7 +31,7 @@ model = _api.model_module
 # --------------------------------------------------------------------- #
 # 루프를 서버 없이 돌리기
 # --------------------------------------------------------------------- #
-def make_args(tmp_path, **kw):
+def make_args(out_root, **kw):
     """`senior_ui.restructure.__main__` 이 만드는 것과 같은 모양의 args."""
     d = dict(attempts=2, format_attempts=None, audit_attempts=None,
              infra_attempts=3, model="test-model", max_tokens=1000, mock=None,
@@ -42,10 +42,10 @@ def make_args(tmp_path, **kw):
     return argparse.Namespace(**d)
 
 
-def make_run(tmp_path, **kw):
+def make_run(out_root, **kw):
     """단계 함수 하나만 보는 테스트용 Run. 로그는 리스트에 쌓인다."""
-    args = make_args(tmp_path, **kw)
-    run_dir = str(tmp_path)
+    args = make_args(out_root, **kw)
+    run_dir = str(out_root)
     lines = []
     r = loop.Run(args, lines.append, run_dir, "test-model", "TEMPLATE", "<html></html>")
     r.log_lines = lines
@@ -65,7 +65,25 @@ def passing_report():
 
 
 @pytest.fixture
-def fake_run_env(monkeypatch, tmp_path):
+def out_root(request):
+    """테스트가 쓰는 산출물 폴더. 저장소 루트 **아래** 에 둔다.
+
+    검사기는 빌드를 :3003 이 서빙하는 http:// 로 열고 그 서버는 ROOT 만
+    서빙하므로, 산출물이 밖에 있으면 실제 실행에서는 빌드를 열지 못한다.
+    tmp_path 를 쓰면 그 사실이 테스트에서 드러나지 않는다.
+    """
+    import shutil
+    d = os.path.join(ROOT, ".pytest-outputs", request.node.name[:60])
+    shutil.rmtree(d, ignore_errors=True)
+    os.makedirs(d)
+    try:
+        yield d
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+@pytest.fixture
+def fake_run_env(monkeypatch, out_root):
     """`loop.run()` 을 서버·브라우저 없이 돌린다.
 
     바꿔 끼우는 것은 바깥 세계뿐이다 - 서버 띄우기, 원본을 한 번 걷기, 검사기
@@ -74,7 +92,7 @@ def fake_run_env(monkeypatch, tmp_path):
     async def fake_drive(url, flow, want_shots=None):
         return dict(FAKE_SNAPSHOT)
 
-    monkeypatch.setenv("SENIOR_UI_OUTPUTS", str(tmp_path / "outputs"))
+    monkeypatch.setenv("SENIOR_UI_OUTPUTS", out_root)
     monkeypatch.setenv("OPENAI_API_KEY", "test-key-not-used")
     monkeypatch.setattr(loop, "ensure_server", lambda log: None)
     monkeypatch.setattr(loop.A, "drive", fake_drive)
@@ -87,12 +105,19 @@ def fake_run_env(monkeypatch, tmp_path):
     return monkeypatch
 
 
-def run_loop(monkeypatch, tmp_path, call_model, **kw):
+def run_dirs(out_root):
+    """이 실행이 만든 실행 폴더들, 오래된 것부터."""
+    d = os.path.join(out_root, "restructure_auto")
+    return [os.path.join(d, n) for n in sorted(os.listdir(d))]
+
+
+def run_loop(monkeypatch, out_root, call_model, **kw):
     """`call_model` 을 바꿔 끼우고 루프를 한 번 돌린다. (종료 코드, summary)."""
     monkeypatch.setattr(loop, "call_model", call_model)
-    code = loop.run(make_args(tmp_path, **kw))
-    runs = sorted((tmp_path / "outputs" / "restructure_auto").iterdir())
-    summary = json.load(io.open(str(runs[-1] / "summary.json"), encoding="utf-8"))
+    code = loop.run(make_args(out_root, **kw))
+    last = run_dirs(out_root)[-1]
+    summary = json.load(io.open(os.path.join(last, "summary.json"),
+                                encoding="utf-8"))
     return code, summary
 
 
@@ -128,7 +153,7 @@ def always_reply(*a, **kw):
 # ===================================================================== #
 # 1. 429 가 아닌 모델 호출 실패
 # ===================================================================== #
-def test_rejected_key_stops_the_loop(fake_run_env, tmp_path):
+def test_rejected_key_stops_the_loop(fake_run_env, out_root):
     """인증 오류는 다시 보내도 같은 답이 온다. 첫 실패에서 멈춰야 한다.
 
     고치기 전: 예산을 쓰지 않고 다음 시도로 넘어갔다 - 키가 틀리면 루프가
@@ -140,23 +165,23 @@ def test_rejected_key_stops_the_loop(fake_run_env, tmp_path):
         calls.append(1)
         raise model.ApiRejected("AuthenticationError: invalid api key")
 
-    code, summary = run_loop(fake_run_env, tmp_path, boom, attempts=5)
+    code, summary = run_loop(fake_run_env, out_root, boom, attempts=5)
     assert len(calls) == 1
     assert summary["stopped_reason"] == "api_rejected"
     assert code == 2
 
 
-def test_rejected_key_does_not_spend_the_retry_budget(fake_run_env, tmp_path):
+def test_rejected_key_does_not_spend_the_retry_budget(fake_run_env, out_root):
     """설계 실패가 아니므로 형식·검사 예산은 그대로 남아야 한다."""
     def boom(*a, **kw):
         raise model.ApiRejected("BadRequestError: model not found")
 
-    _code, summary = run_loop(fake_run_env, tmp_path, boom, attempts=5)
+    _code, summary = run_loop(fake_run_env, out_root, boom, attempts=5)
     assert summary["budget"]["format_used"] == 0
     assert summary["budget"]["audit_used"] == 0
 
 
-def test_network_errors_spend_the_infra_budget(fake_run_env, tmp_path):
+def test_network_errors_spend_the_infra_budget(fake_run_env, out_root):
     """네트워크 오류는 다음에 될 수 있다 - 다시 시도하되 끝은 있어야 한다."""
     calls = []
 
@@ -164,7 +189,7 @@ def test_network_errors_spend_the_infra_budget(fake_run_env, tmp_path):
         calls.append(1)
         raise model.InfraFailed("APIConnectionError: connection reset")
 
-    code, summary = run_loop(fake_run_env, tmp_path, boom,
+    code, summary = run_loop(fake_run_env, out_root, boom,
                              attempts=10, infra_attempts=3)
     assert len(calls) == 3
     assert summary["budget"]["infra_used"] == 3
@@ -175,7 +200,7 @@ def test_network_errors_spend_the_infra_budget(fake_run_env, tmp_path):
     assert summary["budget"]["audit_used"] == 0
 
 
-def test_api_error_text_never_reaches_the_prompt(fake_run_env, tmp_path):
+def test_api_error_text_never_reaches_the_prompt(fake_run_env, out_root):
     """API 오류 문구는 모델이 고칠 수 있는 것이 아니다. 프롬프트에 넣지 않는다.
 
     고치기 전: 호출 실패 리포트를 `prev` 에 넣어서, 다음 프롬프트의 재시도
@@ -191,11 +216,9 @@ def test_api_error_text_never_reaches_the_prompt(fake_run_env, tmp_path):
         return {"text": GOOD_REPLY, "finish_reason": "stop", "seconds": 0.0,
                 "usage": None}
 
-    _code, _summary = run_loop(fake_run_env, tmp_path, flaky,
+    _code, _summary = run_loop(fake_run_env, out_root, flaky,
                                attempts=3, infra_attempts=3)
-    runs = sorted((tmp_path / "outputs" / "restructure_auto").iterdir())
-    prompts = [io.open(str(p), encoding="utf-8").read()
-               for p in sorted(runs[-1].glob("attempt_*.prompt.txt"))]
+    prompts = prompts_of(out_root)
     assert len(prompts) == 2
     assert all(secret not in p for p in prompts)
     assert all("APIConnectionError" not in p for p in prompts)
@@ -213,50 +236,50 @@ def failing_report():
                         "screens_expected": 2, "stopped_at": "done"}}
 
 
-def seed_promoted(tmp_path):
+def seed_promoted(out_root):
     """직전에 통과했던 빌드가 이미 자리에 있는 상태를 만든다."""
-    out = tmp_path / "outputs"
-    out.mkdir(parents=True, exist_ok=True)
+    import pathlib
+    out = pathlib.Path(out_root)
     (out / "restructured_auto.html").write_text("KEEP ME", encoding="utf-8")
     return out
 
 
-def test_a_failed_build_does_not_overwrite_the_promoted_copy(fake_run_env, tmp_path):
+def test_a_failed_build_does_not_overwrite_the_promoted_copy(fake_run_env, out_root):
     """`restructured_auto.html` 은 "지금 쓰는 재구성본" 이다. 떨어진 빌드가 그
     자리에 올라오면 마지막으로 통과한 빌드가 조용히 사라진다 - 떨어졌다는 사실은
     summary.json 에만 남고 그 자리의 파일은 멀쩡해 보인다.
 
     고치기 전: 통과 여부와 무관하게 마지막 빌드를 복사했다.
     """
-    out = seed_promoted(tmp_path)
+    out = seed_promoted(out_root)
     fake_run_env.setattr(loop, "run_audit", lambda *a, **kw: failing_report())
 
-    code, summary = run_loop(fake_run_env, tmp_path, always_reply, attempts=1)
+    code, summary = run_loop(fake_run_env, out_root, always_reply, attempts=1)
     assert summary["passed"] is False
     assert code == 1
     assert (out / "restructured_auto.html").read_text(encoding="utf-8") == "KEEP ME"
 
 
-def test_a_passing_build_is_promoted(fake_run_env, tmp_path):
-    out = seed_promoted(tmp_path)
-    _code, summary = run_loop(fake_run_env, tmp_path, always_reply, attempts=1)
+def test_a_passing_build_is_promoted(fake_run_env, out_root):
+    out = seed_promoted(out_root)
+    _code, summary = run_loop(fake_run_env, out_root, always_reply, attempts=1)
     assert summary["passed"] is True
     assert (out / "restructured_auto.html").read_text(encoding="utf-8") != "KEEP ME"
     assert (out / "restructured_auto.flow.json").exists()
     assert (out / "audit_auto.json").exists()
 
 
-def test_a_passing_build_also_leaves_a_copy_named_after_the_run(fake_run_env, tmp_path):
+def test_a_passing_build_also_leaves_a_copy_named_after_the_run(fake_run_env, out_root):
     """통과한 실행이 둘이면 나중 것이 앞의 것을 덮는다. 비교할 수 있어야 한다."""
-    out = seed_promoted(tmp_path)
-    _code, summary = run_loop(fake_run_env, tmp_path, always_reply, attempts=1)
+    out = seed_promoted(out_root)
+    _code, summary = run_loop(fake_run_env, out_root, always_reply, attempts=1)
     name = os.path.basename(summary["run_dir"])
     assert (out / ("restructured_auto.%s.html" % name)).exists()
     assert (out / ("restructured_auto.%s.flow.json" % name)).exists()
     assert (out / ("audit_auto.%s.json" % name)).exists()
 
 
-def test_the_run_writes_nothing_into_the_real_outputs_dir(fake_run_env, tmp_path):
+def test_the_run_writes_nothing_into_the_real_outputs_dir(fake_run_env, out_root):
     """테스트가 실제 outputs/ 를 mock 결과로 덮어쓰면 안 된다.
 
     고치기 전: OUTPUTS_DIR 이 상수여서 환경 변수로 옮길 수 없었고, 루프를 돌리는
@@ -266,8 +289,8 @@ def test_the_run_writes_nothing_into_the_real_outputs_dir(fake_run_env, tmp_path
     before = {n: os.path.getmtime(os.path.join(real, n))
               for n in os.listdir(real)} if os.path.isdir(real) else {}
 
-    _code, summary = run_loop(fake_run_env, tmp_path, always_reply, attempts=1)
-    assert summary["run_dir"].startswith(str(tmp_path))
+    _code, summary = run_loop(fake_run_env, out_root, always_reply, attempts=1)
+    assert summary["run_dir"].startswith(out_root)
 
     after = {n: os.path.getmtime(os.path.join(real, n))
              for n in os.listdir(real)} if os.path.isdir(real) else {}
@@ -291,13 +314,14 @@ def replies(*texts, finish="stop"):
     return call
 
 
-def prompts_of(tmp_path):
-    runs = sorted((tmp_path / "outputs" / "restructure_auto").iterdir())
-    return [io.open(str(p), encoding="utf-8").read()
-            for p in sorted(runs[-1].glob("attempt_*.prompt.txt"))]
+def prompts_of(out_root):
+    import glob
+    last = run_dirs(out_root)[-1]
+    return [io.open(p, encoding="utf-8").read()
+            for p in sorted(glob.glob(os.path.join(last, "attempt_*.prompt.txt")))]
 
 
-def test_parse_failure_keeps_the_last_audited_findings(fake_run_env, tmp_path):
+def test_parse_failure_keeps_the_last_audited_findings(fake_run_env, out_root):
     """파싱이 실패한 시도는 검사받은 적이 없다. 검사 결과는 그 전 시도의 것이다.
 
     고치기 전: 직전 HTML 은 그대로 두면서 그 HTML 의 검사 결과는 파싱 실패
@@ -307,26 +331,26 @@ def test_parse_failure_keeps_the_last_audited_findings(fake_run_env, tmp_path):
     fake_run_env.setattr(loop, "run_audit", lambda *a, **kw: failing_report())
     call = replies(GOOD_REPLY, BAD_REPLY, GOOD_REPLY)
 
-    _code, _summary = run_loop(fake_run_env, tmp_path, call, attempts=3)
-    third = prompts_of(tmp_path)[2]
+    _code, _summary = run_loop(fake_run_env, out_root, call, attempts=3)
+    third = prompts_of(out_root)[2]
     # 2번 시도의 파싱 실패와, 1번 시도에서 실제로 검사받은 실패가 둘 다 있어야
     # 한다 - 한쪽이 다른 쪽을 덮으면 안 된다.
     assert "```html 코드 블록이 없다" in third
     assert "금액이 틀렸다" in third
 
 
-def test_parse_failure_carries_the_html_that_was_audited(fake_run_env, tmp_path):
+def test_parse_failure_carries_the_html_that_was_audited(fake_run_env, out_root):
     """프롬프트에 실리는 HTML 과 흐름 명세는 그 실패 목록을 낸 바로 그 빌드다."""
     fake_run_env.setattr(loop, "run_audit", lambda *a, **kw: failing_report())
     call = replies(GOOD_REPLY, BAD_REPLY, GOOD_REPLY)
 
-    _code, _summary = run_loop(fake_run_env, tmp_path, call, attempts=3)
-    third = prompts_of(tmp_path)[2]
+    _code, _summary = run_loop(fake_run_env, out_root, call, attempts=3)
+    third = prompts_of(out_root)[2]
     assert "data-screen=\"start\"" in third      # 직전에 검사받은 HTML
     assert "\"required_ids\"" in third            # 그 HTML 과 짝인 흐름 명세
 
 
-def test_a_truncated_answer_is_called_out_on_the_retry(fake_run_env, tmp_path):
+def test_a_truncated_answer_is_called_out_on_the_retry(fake_run_env, out_root):
     """길이 제한에 잘린 답은 "짧게 써라" 가 아니라 "잘렸다" 를 알려야 한다.
 
     고치기 전: 잘린 답도 보통의 파싱 실패와 같은 한 줄로 들어갔고, 같은 길이의
@@ -334,26 +358,26 @@ def test_a_truncated_answer_is_called_out_on_the_retry(fake_run_env, tmp_path):
     """
     call = replies("```html\n<html>여기서 잘림", finish="length")
 
-    _code, summary = run_loop(fake_run_env, tmp_path, call, attempts=3)
-    second = prompts_of(tmp_path)[1]
+    _code, summary = run_loop(fake_run_env, out_root, call, attempts=3)
+    second = prompts_of(out_root)[1]
     assert "finish_reason=length" in second
     assert "[잘린 답]" in second
     assert summary["attempts"][0]["truncated"] is True
 
 
-def test_the_truncation_notice_counts_how_many_times_it_happened(fake_run_env, tmp_path):
+def test_the_truncation_notice_counts_how_many_times_it_happened(fake_run_env, out_root):
     """두 번째로 잘리면 그 사실이 보여야 한다 - 같은 지시를 반복해도 소용없다."""
     call = replies("```html\n<html>여기서 잘림", finish="length")
 
-    _code, _summary = run_loop(fake_run_env, tmp_path, call, attempts=3)
-    third = prompts_of(tmp_path)[2]
+    _code, _summary = run_loop(fake_run_env, out_root, call, attempts=3)
+    third = prompts_of(out_root)[2]
     assert "2번 연속" in third
 
 
 # ===================================================================== #
 # 3. 흐름 명세의 타입 검사
 # ===================================================================== #
-def test_a_flow_that_is_an_array_is_a_flow_problem(fake_run_env, tmp_path):
+def test_a_flow_that_is_an_array_is_a_flow_problem(fake_run_env, out_root):
     """흐름 명세가 배열이면 FLOW 문제다. 루프가 멈추는 일이 되면 안 된다.
 
     고치기 전: `flow.setdefault("name", "auto")` 가 AttributeError 로 터졌고,
@@ -362,7 +386,7 @@ def test_a_flow_that_is_an_array_is_a_flow_problem(fake_run_env, tmp_path):
     """
     call = replies(reply_text(GOOD_HTML, [{"screen": "start"}]))
 
-    code, summary = run_loop(fake_run_env, tmp_path, call, attempts=1)
+    code, summary = run_loop(fake_run_env, out_root, call, attempts=1)
     assert summary["attempts"][0]["stage"] == "flow"
     assert code == 1
     report = json.load(io.open(os.path.join(summary["run_dir"],
@@ -370,7 +394,7 @@ def test_a_flow_that_is_an_array_is_a_flow_problem(fake_run_env, tmp_path):
     assert [f["check"] for f in report["fatal"]] == ["FLOW"]
 
 
-def test_a_list_valued_screen_is_a_flow_problem(fake_run_env, tmp_path):
+def test_a_list_valued_screen_is_a_flow_problem(fake_run_env, out_root):
     """screen 이 목록이면 FLOW 문제다.
 
     고치기 전: `st["screen"] not in screens` 가 집합에 목록을 넣어
@@ -380,31 +404,31 @@ def test_a_list_valued_screen_is_a_flow_problem(fake_run_env, tmp_path):
     flow["steps"][1]["screen"] = ["done", "start"]
     call = replies(reply_text(GOOD_HTML, flow))
 
-    code, summary = run_loop(fake_run_env, tmp_path, call, attempts=1)
+    code, summary = run_loop(fake_run_env, out_root, call, attempts=1)
     assert summary["attempts"][0]["stage"] == "flow"
     assert code == 1
 
 
-def test_a_step_that_is_not_an_object_is_a_flow_problem(fake_run_env, tmp_path):
+def test_a_step_that_is_not_an_object_is_a_flow_problem(fake_run_env, out_root):
     flow = json.loads(json.dumps(GOOD_FLOW))
     flow["steps"][1] = "done"
     call = replies(reply_text(GOOD_HTML, flow))
 
-    _code, summary = run_loop(fake_run_env, tmp_path, call, attempts=1)
+    _code, summary = run_loop(fake_run_env, out_root, call, attempts=1)
     assert summary["attempts"][0]["stage"] == "flow"
 
 
-def test_shape_problems_are_phrased_for_the_model(fake_run_env, tmp_path):
+def test_shape_problems_are_phrased_for_the_model(fake_run_env, out_root):
     """FLOW 문제는 다음 프롬프트로 간다. 모델이 읽고 고칠 수 있는 글이어야 한다."""
     call = replies(reply_text(GOOD_HTML, [{"screen": "start"}]),
                    reply_text(GOOD_HTML, GOOD_FLOW))
 
-    _code, _summary = run_loop(fake_run_env, tmp_path, call, attempts=2)
-    second = prompts_of(tmp_path)[1]
+    _code, _summary = run_loop(fake_run_env, out_root, call, attempts=2)
+    second = prompts_of(out_root)[1]
     assert "객체" in second
 
 
-def test_summary_is_written_even_when_the_loop_dies(fake_run_env, tmp_path):
+def test_summary_is_written_even_when_the_loop_dies(fake_run_env, out_root):
     """요약은 실행의 기록이다. 루프가 터져도 남아야 한다.
 
     고치기 전: summary.json 을 try/finally 밖에서 썼다. 루프 안에서 예외가
@@ -414,9 +438,8 @@ def test_summary_is_written_even_when_the_loop_dies(fake_run_env, tmp_path):
         raise KeyboardInterrupt("사용자가 끊었다")
 
     with pytest.raises(KeyboardInterrupt):
-        run_loop(fake_run_env, tmp_path, explode, attempts=1)
-    runs = sorted((tmp_path / "outputs" / "restructure_auto").iterdir())
-    assert (runs[-1] / "summary.json").exists()
+        run_loop(fake_run_env, out_root, explode, attempts=1)
+    assert os.path.exists(os.path.join(run_dirs(out_root)[-1], "summary.json"))
 
 
 # ===================================================================== #
@@ -437,23 +460,23 @@ REPRO_KEYS = ["temperature", "seed", "response_model", "system_fingerprint",
               "openai_sdk", "prompt_template_sha256"]
 
 
-def test_temperature_and_seed_are_set_not_left_to_the_default(fake_run_env, tmp_path):
+def test_temperature_and_seed_are_set_not_left_to_the_default(fake_run_env, out_root):
     """지정하지 않으면 공급자의 기본값이 쓰이고, 그 값은 기록에 남지 않는다."""
     seen = []
-    _code, _summary = run_loop(fake_run_env, tmp_path, recording_reply(seen),
+    _code, _summary = run_loop(fake_run_env, out_root, recording_reply(seen),
                                attempts=1)
     assert seen[0]["temperature"] is not None
     assert seen[0]["seed"] is not None
 
 
-def test_every_attempt_records_what_it_would_take_to_repeat_it(fake_run_env, tmp_path):
+def test_every_attempt_records_what_it_would_take_to_repeat_it(fake_run_env, out_root):
     """시도 하나를 다시 돌리려면 무엇이 필요한가 - 그것이 시도 기록에 있어야 한다.
 
     고치기 전: 기록은 finish_reason · usage · seconds 뿐이었다. 같은 프롬프트를
     같은 모델에 보내도 다른 답이 나오는 이유(temperature·seed·실제 응답 모델·
     system_fingerprint)는 아무 데도 남지 않았다.
     """
-    _code, summary = run_loop(fake_run_env, tmp_path, recording_reply([]),
+    _code, summary = run_loop(fake_run_env, out_root, recording_reply([]),
                               attempts=1)
     repro = summary["attempts"][0]["repro"]
     assert sorted(repro) == sorted(REPRO_KEYS)
@@ -462,18 +485,18 @@ def test_every_attempt_records_what_it_would_take_to_repeat_it(fake_run_env, tmp
     assert repro["openai_sdk"]
 
 
-def test_the_summary_records_it_once_for_the_run(fake_run_env, tmp_path):
-    _code, summary = run_loop(fake_run_env, tmp_path, recording_reply([]),
+def test_the_summary_records_it_once_for_the_run(fake_run_env, out_root):
+    _code, summary = run_loop(fake_run_env, out_root, recording_reply([]),
                               attempts=1)
     assert sorted(summary["repro"]) == sorted(REPRO_KEYS)
     assert summary["repro"]["response_model"] is None    # 실행 자체는 모델이 없다
 
 
-def test_the_prompt_template_is_fingerprinted(fake_run_env, tmp_path):
+def test_the_prompt_template_is_fingerprinted(fake_run_env, out_root):
     """템플릿이 바뀌면 같은 입력도 다른 답을 낸다. 어느 템플릿이었는지 남긴다."""
     import hashlib
     fake_run_env.setattr(loop, "load_template", lambda: "바뀐 템플릿")
-    _code, summary = run_loop(fake_run_env, tmp_path, recording_reply([]),
+    _code, summary = run_loop(fake_run_env, out_root, recording_reply([]),
                               attempts=1)
     want = hashlib.sha256("바뀐 템플릿".encode("utf-8")).hexdigest()
     assert summary["repro"]["prompt_template_sha256"] == want
@@ -497,12 +520,12 @@ def driven_urls(fake_run_env, monkeypatch):
 
 
 def test_the_default_original_is_the_one_the_comparison_walks(driven_urls, monkeypatch,
-                                                              tmp_path):
-    _code, _summary = run_loop(monkeypatch, tmp_path, always_reply, attempts=1)
+                                                              out_root):
+    _code, _summary = run_loop(monkeypatch, out_root, always_reply, attempts=1)
     assert driven_urls[0].endswith("/inputs/original_transfer.html")
 
 
-def test_original_flag_moves_the_comparison_run_too(driven_urls, monkeypatch, tmp_path):
+def test_original_flag_moves_the_comparison_run_too(driven_urls, monkeypatch, out_root):
     """--original 로 다른 원본을 주면 비교 기준도 그 파일이어야 한다.
 
     고치기 전: 프롬프트에 넣는 HTML 만 그 파일에서 읽고, 브라우저로 걷는 것은
@@ -510,13 +533,13 @@ def test_original_flag_moves_the_comparison_run_too(driven_urls, monkeypatch, tm
     넣은 원본과 다른 문서가 된다 - 아무 경고 없이.
     """
     other = os.path.join(ROOT, "results", "restructured_transfer.html")
-    _code, _summary = run_loop(monkeypatch, tmp_path, always_reply, attempts=1,
+    _code, _summary = run_loop(monkeypatch, out_root, always_reply, attempts=1,
                                original=other)
     assert driven_urls[0].endswith("/results/restructured_transfer.html")
 
 
 def test_the_audit_compares_against_the_same_original(driven_urls, monkeypatch,
-                                                      tmp_path):
+                                                      out_root):
     """검사 리포트의 inputs.original 도 같은 URL 이어야 한다."""
     seen = {}
 
@@ -527,17 +550,18 @@ def test_the_audit_compares_against_the_same_original(driven_urls, monkeypatch,
 
     monkeypatch.setattr(loop, "run_audit", spy)
     other = os.path.join(ROOT, "results", "restructured_transfer.html")
-    run_loop(monkeypatch, tmp_path, always_reply, attempts=1, original=other)
+    run_loop(monkeypatch, out_root, always_reply, attempts=1, original=other)
     assert seen["url"].endswith("/results/restructured_transfer.html")
 
 
-def test_an_original_outside_the_repo_stops_the_run(driven_urls, monkeypatch, tmp_path):
+def test_an_original_outside_the_repo_stops_the_run(driven_urls, monkeypatch,
+                                                    out_root, tmp_path):
     """서버는 저장소 루트만 서빙한다. 밖의 파일은 브라우저가 열 수 없다 -
     못 연 채로 도는 대신 멈추고 그 이유를 말해야 한다."""
     other = tmp_path / "other_original.html"
     other.write_text("<html><body>다른 원본</body></html>", encoding="utf-8")
 
-    code, summary = run_loop(monkeypatch, tmp_path, always_reply, attempts=1,
+    code, summary = run_loop(monkeypatch, out_root, always_reply, attempts=1,
                              original=str(other))
     assert code == 2
     assert summary["stopped_reason"] == "cannot_start"
@@ -613,14 +637,14 @@ def test_a_server_that_does_not_have_the_file_at_all_stops_the_run(tmp_path):
             devserver.ensure_server(lambda m: None, port=port)
 
 
-def test_the_loop_stops_cleanly_when_the_port_is_someone_elses(monkeypatch, tmp_path,
-                                                               fake_run_env):
+def test_the_loop_stops_cleanly_when_the_port_is_someone_elses(fake_run_env,
+                                                               monkeypatch, out_root):
     """남의 서버를 만나면 역추적이 아니라 이유와 종료 코드 2 로 끝나야 한다."""
     def refuse(log, port=None):
         raise RuntimeError(":3003 에 이미 서버가 있지만 이 저장소를 서빙하지 않는다")
 
     monkeypatch.setattr(loop, "ensure_server", refuse)
-    code, summary = run_loop(monkeypatch, tmp_path, always_reply, attempts=1)
+    code, summary = run_loop(monkeypatch, out_root, always_reply, attempts=1)
     assert code == 2
     assert summary["stopped_reason"] == "cannot_start"
     assert summary["attempts"] == []
@@ -665,13 +689,13 @@ def test_a_file_that_is_not_utf8_says_so(envs_file):
 
 
 def test_an_unreadable_envs_stops_the_run_with_a_reason(fake_run_env, monkeypatch,
-                                                        tmp_path):
+                                                        out_root, tmp_path):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.setattr(model, "ROOT", str(tmp_path))
     (tmp_path / ".envs").write_bytes(
         "# 열쇠\nOPENAI_API_KEY=sk-x\n".encode("cp949"))
 
-    code, summary = run_loop(monkeypatch, tmp_path, always_reply, attempts=1)
+    code, summary = run_loop(monkeypatch, out_root, always_reply, attempts=1)
     assert code == 2
     assert summary["stopped_reason"] == "cannot_start"
 
@@ -679,7 +703,7 @@ def test_an_unreadable_envs_stops_the_run_with_a_reason(fake_run_env, monkeypatc
 # ===================================================================== #
 # 9. 레이트 리밋으로 멈췄을 때의 종료 코드
 # ===================================================================== #
-def test_a_rate_limited_run_exits_2(fake_run_env, tmp_path):
+def test_a_rate_limited_run_exits_2(fake_run_env, out_root):
     """429 로 멈춘 것은 "빌드가 떨어졌다" 가 아니라 "돌지 못했다" 다.
 
     문서는 2 = 아예 돌지 못했다 라고 적고 있었는데, 실제로는 통과만 보고 1 을
@@ -688,14 +712,78 @@ def test_a_rate_limited_run_exits_2(fake_run_env, tmp_path):
     def throttled(*a, **kw):
         raise model.RateLimited("429 Too Many Requests")
 
-    code, summary = run_loop(fake_run_env, tmp_path, throttled, attempts=3)
+    code, summary = run_loop(fake_run_env, out_root, throttled, attempts=3)
     assert summary["stopped_reason"] == "rate_limit"
     assert code == 2
 
 
-def test_a_build_that_simply_failed_still_exits_1(fake_run_env, tmp_path):
+def test_a_build_that_simply_failed_still_exits_1(fake_run_env, out_root):
     """구분이 서야 뜻이 있다. 떨어진 빌드는 그대로 1 이다."""
     fake_run_env.setattr(loop, "run_audit", lambda *a, **kw: failing_report())
-    code, summary = run_loop(fake_run_env, tmp_path, always_reply, attempts=1)
+    code, summary = run_loop(fake_run_env, out_root, always_reply, attempts=1)
     assert summary["stopped_reason"] == "budget_exhausted"
     assert code == 1
+
+
+# ===================================================================== #
+# 10. 콘솔 출력 인코딩
+# ===================================================================== #
+# `if __name__ == "__main__"` 이 있는 파일 전부. 하나라도 빠지면 그 CLI 는
+# cp949 콘솔에서 한글을 찍다 죽는다.
+CLI_FILES = ["senior_ui/audit/__main__.py", "senior_ui/audit/report.py",
+             "senior_ui/restructure/__main__.py", "senior_ui/collect_results.py",
+             "senior_ui/experiment/report.py", "senior_ui/experiment/server.py",
+             "senior_ui/viewer/build_index.py"]
+
+
+def test_the_list_of_clis_is_complete():
+    """CLI 가 늘면 이 목록도 늘어야 한다. 늘지 않으면 아래 검사가 헛돈다."""
+    import glob
+    found = set()
+    for path in glob.glob(os.path.join(ROOT, "senior_ui", "**", "*.py"),
+                          recursive=True):
+        if 'if __name__ == "__main__"' in io.open(path, encoding="utf-8").read():
+            found.add(os.path.relpath(path, ROOT).replace(os.sep, "/"))
+    assert found == set(CLI_FILES)
+
+
+def test_every_cli_calls_setup_stdout_first():
+    """CLI 마다 따로 쓰면 빠뜨린다. 실제로 재구성 루프가 빠뜨리고 있었다."""
+    for rel in CLI_FILES:
+        src = io.open(os.path.join(ROOT, rel), encoding="utf-8").read()
+        assert "setup_stdout()" in src, rel
+        assert "sys.stdout.reconfigure" not in src, "%s 가 아직 직접 맞춘다" % rel
+
+
+def test_setup_stdout_survives_a_stream_it_cannot_change():
+    """출력 인코딩을 맞추려다 프로그램을 죽이면 본말이 뒤집힌다."""
+    class Stubborn(object):
+        def reconfigure(self, **kw):
+            raise ValueError("이 스트림은 못 바꾼다")
+
+    cli = _api.cli_module
+    old = sys.stdout
+    try:
+        sys.stdout = Stubborn()
+        cli.setup_stdout()
+    finally:
+        sys.stdout = old
+
+
+def test_a_mock_run_survives_a_cp949_console(out_root):
+    """PYTHONUTF8 없이, PYTHONIOENCODING=cp949 로 --mock pass 가 끝까지 간다.
+
+    고치기 전: 요약을 찍는 마지막 단계에서 UnicodeEncodeError 로 죽었다.
+    결과 파일은 다 남았는데 종료 코드만 뒤집힌다 - 통과한 실행이 실패로 보인다.
+    """
+    env = dict(os.environ, PYTHONIOENCODING="cp949",
+               SENIOR_UI_OUTPUTS=out_root)
+    env.pop("PYTHONUTF8", None)
+    p = subprocess.run(
+        [sys.executable, "-m", "senior_ui.restructure", "--mock", "pass",
+         "--attempts", "1"],
+        cwd=ROOT, env=env, capture_output=True, text=True, encoding="utf-8",
+        errors="replace")
+    assert "UnicodeEncodeError" not in (p.stderr or ""), p.stderr[-2000:]
+    assert p.returncode in (0, 1), p.stderr[-2000:]
+    assert " summary: " in (p.stdout or "")

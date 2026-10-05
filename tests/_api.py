@@ -19,6 +19,7 @@ if ROOT not in sys.path:
 # 지금 위치 - 정리 단계에서 고칠 곳은 여기까지다.
 # ======================================================================= #
 from senior_ui import audit as _audit                        # noqa: E402
+from senior_ui import _cli                                   # noqa: E402
 from senior_ui import config as _config                      # noqa: E402
 from senior_ui import devserver as _devserver                # noqa: E402
 from senior_ui.audit import core as _audit_core              # noqa: E402
@@ -89,6 +90,7 @@ listening = _devserver.listening
 ensure_server = _devserver.ensure_server
 # 포트에 떠 있는 서버가 이 저장소를 서빙하는지 보는 부분까지 테스트가 본다.
 devserver_module = _devserver
+cli_module = _cli
 PORT = _config.PORT
 ROOT_DIR = _config.ROOT
 

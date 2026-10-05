@@ -33,6 +33,7 @@ import os
 import sys
 import traceback
 
+from .._cli import setup_stdout
 from ..config import ORIGINAL_FILE, ORIGINAL_URL, OUTPUTS_DIR
 from .core import audit
 from .drive import drive
@@ -55,6 +56,8 @@ def cannot_run(detail):
 
 
 def main(argv=None):
+    # 무엇이든 찍기 전에 맞춘다 (senior_ui/_cli.py).
+    setup_stdout()
     ap = argparse.ArgumentParser(prog="python -m senior_ui.audit")
     ap.add_argument("--original", default=ORIGINAL_URL)
     ap.add_argument("--build", "--repaired", dest="build", required=True,
@@ -71,11 +74,6 @@ def main(argv=None):
     ap.add_argument("--shots", default=None, help="directory to save screenshots in")
     args = ap.parse_args(argv)
 
-    # 무엇이든 찍기 전에 맞춘다. cannot_run 의 detail 에는 한글이 들어가므로,
-    # cp949 콘솔에서는 맞추지 않으면 JSON 을 찍다가 UnicodeEncodeError 로
-    # 죽는다 - 그러면 돌지 못한 이유 대신 역추적만 남는다.
-    if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(encoding="utf-8")
 
     try:
         orig_html = io.open(args.original_file, encoding="utf-8").read()

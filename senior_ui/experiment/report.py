@@ -30,6 +30,7 @@ import os
 import statistics as st
 import sys
 
+from senior_ui._cli import setup_stdout
 from senior_ui.config import ROOT
 
 # (key in metrics, 표시 이름, 단위, 낮을수록 좋은가)
@@ -267,8 +268,6 @@ def emit(md, rows, out, csv_path):
     if csv_path:
         write_csv(rows, csv_path)
 
-    if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(encoding="utf-8")
     sys.stdout.write(md)
     if out:
         sys.stdout.write("\n(저장: %s)\n" % out)
@@ -277,6 +276,8 @@ def emit(md, rows, out, csv_path):
 
 
 def main():
+    # 무엇이든 찍기 전에 맞춘다 (senior_ui/_cli.py).
+    setup_stdout()
     ap = argparse.ArgumentParser()
     ap.add_argument("--sessions", default=os.path.join(ROOT, "sessions"))
     ap.add_argument("--out", default=None, help="write the Markdown here as well")

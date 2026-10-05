@@ -27,6 +27,8 @@ import json
 import os
 import sys
 
+from .._cli import setup_stdout
+
 CHECKS = [
     ("A", "과업 완료 · 구조 보존"),
     ("B", "표시 정확성 · 주입된 대화상자"),
@@ -286,6 +288,8 @@ def render(builds, want_details, cap, title):
 
 
 def main():
+    # 무엇이든 찍기 전에 맞춘다 (senior_ui/_cli.py).
+    setup_stdout()
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("reports", nargs="+", help="audit JSON, or label=path")
     ap.add_argument("--details", action="store_true", help="list every finding by check")
@@ -300,8 +304,6 @@ def main():
         os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
         with io.open(args.out, "w", encoding="utf-8", newline="\n") as f:
             f.write(md)
-    if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(encoding="utf-8")
     sys.stdout.write(md)
     return 0
 

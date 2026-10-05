@@ -33,8 +33,18 @@ def outputs_dir():
     있으므로 테스트를 한 번 돌릴 때마다 실제 산출물이 mock 결과로 덮여 쓰였다.
     상수를 import 해 두면 테스트가 환경 변수를 세워도 이미 늦으므로, 쓰는
     자리에서 매번 읽는다.
+
+    옮길 자리는 저장소 루트 아래여야 한다. 검사기는 빌드를 file:// 이 아니라
+    :3003 이 서빙하는 http:// 로 열고, 그 서버는 ROOT 만 서빙한다. 밖에 두면
+    검사기가 빌드를 열지 못해 첫 화면에서 멈추고, 그것이 설계 실패처럼 보인다.
     """
     return os.environ.get(OUTPUTS_ENV) or OUTPUTS_DIR
+
+
+def inside_root(path):
+    """그 경로가 저장소 루트 안에 있는가. 서버가 서빙할 수 있는 범위다."""
+    rel = os.path.relpath(os.path.abspath(path), ROOT)
+    return not rel.startswith(os.pardir) and not os.path.isabs(rel)
 
 # 모든 갈래가 여기서 출발한다.
 ORIGINAL_FILE = os.path.join(ROOT, "inputs", "original_transfer.html")

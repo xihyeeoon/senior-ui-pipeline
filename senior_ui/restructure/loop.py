@@ -23,7 +23,7 @@ import sys
 import time
 
 from senior_ui import audit as A
-from senior_ui.config import ROOT, outputs_dir, url_for
+from senior_ui.config import OUTPUTS_ENV, ROOT, inside_root, outputs_dir, url_for
 from senior_ui.devserver import ensure_server
 
 from .audit_call import run_audit
@@ -485,6 +485,15 @@ def exit_code(summary):
 
 def run(args):
     """한 실행 전체. 돌려주는 것이 프로세스의 종료 코드다 - exit_code 참고."""
+    # 검사기는 빌드를 :3003 이 서빙하는 http:// 로 연다. 그 서버는 저장소
+    # 루트만 서빙하므로, 산출물 폴더가 밖에 있으면 검사기가 빌드를 열지 못해
+    # 첫 화면에서 멈춘다 - 그것이 설계 실패처럼 보인다.
+    if not inside_root(outputs_dir()):
+        print("cannot start: %s 가 저장소 루트 밖을 가리킨다 (%s). 검사기는 "
+              ":3003 이 서빙하는 %s 안의 파일만 열 수 있다."
+              % (OUTPUTS_ENV, outputs_dir(), ROOT), file=sys.stderr)
+        return 2
+
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     run_dir = os.path.join(runs_dir(),
                            stamp + ("-mock-" + args.mock if args.mock else ""))
