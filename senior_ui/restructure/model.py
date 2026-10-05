@@ -317,7 +317,16 @@ def mock_plan_reply(mode):
             "model": None, "system_fingerprint": None}
 
 
-def mock_reply(mode):
+# 재시도 답의 반성. 계획은 바꾸지 않는다 - mock 의 실패는 흐름 명세의 없는
+# 선택자이고, 계획과는 무관하다.
+MOCK_REFLECTION = {
+    "cause": "흐름 명세의 둘째 걸음이 HTML 에 없는 선택자를 누른다",
+    "plan_changes": [],
+    "keep": [c["id"] for c in MOCK_PLAN["changes"]],
+}
+
+
+def mock_reply(mode, reflect=False):
     """No API: Run 1 을 되읽는다. 모드마다 은행 목록 한 줄이 다르다 (MOCKS).
 
     'fail' 은 둘째 걸음이 없는 선택자를 클릭하는 흐름을 함께 내놓아, 모든 시도가
@@ -332,6 +341,11 @@ def mock_reply(mode):
         flow["steps"][1]["click"] = "[data-action='does-not-exist']"
     text = "```html\n%s\n```\n\n```json\n%s\n```\n" % (
         html, json.dumps(flow, ensure_ascii=False, indent=2))
+    if reflect:
+        # 재시도 답은 반성이 코드 블록보다 앞이다 (docs/restructure-prompt.md
+        # 의 REFLECT 블록).
+        text = "```json\n%s\n```\n\n" % json.dumps(
+            MOCK_REFLECTION, ensure_ascii=False, indent=2) + text
     return {"text": text, "finish_reason": "stop", "seconds": 0.0, "usage": None,
             "temperature": TEMPERATURE, "seed": SEED,
             "model": None, "system_fingerprint": None}

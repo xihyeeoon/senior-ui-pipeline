@@ -320,3 +320,148 @@ def test_a_build_off_its_plan_is_a_format_failure(fake_run_env, out_root):
     assert summary["budget"]["format_used"] >= 1
     second = prompts_of(out_root)[1]
     assert "begin" in second and "계획" in second
+
+
+# ===================================================================== #
+# 6. 반성 (재시도 때만)
+# ===================================================================== #
+def reflection(changes=(), cause="처리기가 선언하지 않은 이름을 읽었다", keep=("C1",)):
+    return {"cause": cause, "plan_changes": list(changes), "keep": list(keep)}
+
+
+def retry_text(refl, html=GOOD_HTML, flow=GOOD_FLOW):
+    """반성 → html → 흐름 명세 순서의 답."""
+    head = ("```json\n%s\n```\n\n" % json.dumps(refl, ensure_ascii=False)) \
+        if refl is not None else ""
+    return head + reply_text(html, flow)
+
+
+def answers(*texts):
+    """생성 호출에 차례로 답한다 (진단·계획은 run_loop 가 답한다)."""
+    seq = list(texts)
+
+    def call(*a, **kw):
+        text = seq.pop(0) if len(seq) > 1 else seq[0]
+        return {"text": text, "finish_reason": "stop", "seconds": 0.0, "usage": None}
+    return call
+
+
+def audit_fails_then_passes(fake_run_env):
+    reports = [failing_report(), passing_report()]
+    fake_run_env.setattr(loop, "run_audit",
+                         lambda *a, **kw: reports.pop(0) if len(reports) > 1
+                         else reports[0])
+
+
+def test_the_reflection_request_is_a_blank_form():
+    values = _example_values(_api.prompt_module.reflection_request())
+    assert values
+    assert all(v.startswith("<") and v.endswith(">") for v in values), values
+
+
+def test_only_the_retry_prompt_asks_for_a_reflection(fake_run_env, out_root):
+    fake_run_env.setattr(loop, "run_audit", lambda *a, **kw: failing_report())
+    run_loop(fake_run_env, out_root, always_reply, attempts=2)
+    first, second = prompts_of(out_root)
+    assert "반성" not in first
+    assert "반성 먼저" in second
+    # 반성 요청은 실패 목록보다 앞이다 - 코드보다 반성을 먼저 쓰게 한다
+    assert second.index("반성 먼저") < second.index("이전 시도의 실패")
+
+
+def test_the_reflection_is_saved(fake_run_env, out_root):
+    audit_fails_then_passes(fake_run_env)
+    _code, summary = run_loop(fake_run_env, out_root,
+                              answers(GOOD_REPLY, retry_text(reflection())),
+                              attempts=2)
+    d = last_run(out_root)
+    assert read_json(os.path.join(d, "attempt_2.reflection.json")) == reflection()
+    assert summary["attempts"][1]["reflection"].endswith("attempt_2.reflection.json")
+    assert summary["passed"] is True
+
+
+def test_a_plan_change_in_the_reflection_updates_the_plan(fake_run_env, out_root):
+    """반성이 화면을 더하면 그 화면을 가진 HTML 이 일치 검사를 지난다."""
+    audit_fails_then_passes(fake_run_env)
+    add = {"op": "add", "target": "screen", "after": "start",
+           "new": {"name": "middle", "purpose": "가운데", "from": []},
+           "why": "한 화면에 한 가지 일만"}
+    html = GOOD_HTML.replace('<div data-screen="done">',
+                             '<div data-screen="middle"></div><div data-screen="done">')
+    flow = json.loads(json.dumps(GOOD_FLOW))
+    flow["steps"].insert(1, {"screen": "middle", "click": "[data-action='go']"})
+    _code, summary = run_loop(fake_run_env, out_root,
+                              answers(GOOD_REPLY, retry_text(reflection([add]), html, flow)),
+                              attempts=2)
+    d = last_run(out_root)
+    names = [s["name"] for s in read_json(os.path.join(d, "attempt_2.plan.json"))["screens"]]
+    assert names == ["start", "middle", "done"]
+    assert read_json(os.path.join(d, "attempt_1.plan.json")) == GOOD_PLAN
+    assert summary["attempts"][1]["stage"] == "audit"
+    assert summary["attempts"][1]["plan_changes"] == 1
+    assert summary["final"]["plan"].endswith("attempt_2.plan.json")
+
+
+def test_a_plan_change_that_cannot_apply_is_a_format_failure(fake_run_env, out_root):
+    fake_run_env.setattr(loop, "run_audit", lambda *a, **kw: failing_report())
+    bad = {"op": "change", "target": "C9", "new": {"what": "x"}, "why": "y"}
+    _code, summary = run_loop(fake_run_env, out_root,
+                              answers(GOOD_REPLY, retry_text(reflection([bad]))),
+                              attempts=3)
+    assert summary["attempts"][1]["stage"] == "flow"
+    d = last_run(out_root)
+    assert read_json(os.path.join(d, "attempt_2.plan.json")) == GOOD_PLAN
+    assert "C9" in prompts_of(out_root)[2]
+
+
+def test_a_missing_reflection_is_recorded_not_failed(fake_run_env, out_root):
+    """반성이 없다고 재시도 한 번을 버리지는 않는다. 없다는 사실은 남긴다."""
+    audit_fails_then_passes(fake_run_env)
+    _code, summary = run_loop(fake_run_env, out_root,
+                              answers(GOOD_REPLY, retry_text(None)), attempts=2)
+    assert summary["passed"] is True
+    assert summary["attempts"][1]["reflection"] is None
+    assert summary["attempts"][1]["reflection_missing"] is True
+
+
+@pytest.mark.parametrize("change,want", [
+    ({"op": "change", "target": "C1", "new": {"what": "더 키운다"}, "why": "-"},
+     lambda p: p["changes"][0]["what"] == "더 키운다"),
+    ({"op": "remove", "target": "C1", "why": "-"},
+     lambda p: p["changes"] == []),
+    ({"op": "add", "target": "change", "why": "-",
+      "new": {"id": "C2", "what": "a", "why": "b", "addresses": ["D1"],
+              "from_screens": ["done"], "to_screens": ["done"]}},
+     lambda p: [c["id"] for c in p["changes"]] == ["C1", "C2"]),
+    ({"op": "add", "target": "screen", "why": "-",
+      "new": {"name": "tail", "purpose": "끝 다음", "from": []}},
+     lambda p: [s["name"] for s in p["screens"]] == ["start", "done", "tail"]),
+    ({"op": "change", "target": "screen:done", "new": {"purpose": "완료"}, "why": "-"},
+     lambda p: p["screens"][1]["purpose"] == "완료"),
+    ({"op": "remove", "target": "screen:done", "why": "-"},
+     lambda p: [s["name"] for s in p["screens"]] == ["start"]),
+])
+def test_plan_changes_apply(change, want):
+    new, problems = plan_mod.apply_changes(GOOD_PLAN, GOOD_DIAGNOSIS, [change], ORIGINAL)
+    assert problems == []
+    assert want(new)
+    assert [s["name"] for s in GOOD_PLAN["screens"]] == ["start", "done"]   # 원본 그대로
+
+
+@pytest.mark.parametrize("change,needle", [
+    ({"op": "change", "target": "C9", "new": {}, "why": "-"}, "C9"),
+    ({"op": "rename", "target": "C1", "why": "-"}, "op"),
+    ({"op": "remove", "target": "screen:ghost", "why": "-"}, "ghost"),
+    ({"op": "remove", "target": "screen:start", "why": "-"}, "to_screens"),
+])
+def test_plan_changes_that_cannot_apply_say_why(change, needle):
+    _new, problems = plan_mod.apply_changes(GOOD_PLAN, GOOD_DIAGNOSIS, [change], ORIGINAL)
+    assert any(needle in p for p in problems), problems
+
+
+def test_the_mock_retry_answer_starts_with_a_reflection():
+    text = model.mock_reply("fail", reflect=True)["text"]
+    refl, problems = plan_mod.parse_reflection(text)
+    assert problems == [] and refl["plan_changes"] == []
+    html, _flow, _t = _api.parse_reply(text)            # 흐름은 여전히 마지막 json
+    assert "<html" in html.lower()

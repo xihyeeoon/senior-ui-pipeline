@@ -34,11 +34,12 @@ from senior_ui.devserver import ensure_server
 from .audit_call import load_allowed_removals, run_audit
 from .model import (TEMPERATURE, SEED, ApiRejected, InfraFailed, RateLimited,
                     call_model, load_env, mock_plan_reply, mock_reply, sdk_version)
-from .plan import (PlanProblems, match_problems, parse_plan, plan_report, screens_in,
-                   unaddressed)
+from .plan import (PlanProblems, apply_changes, match_problems, parse_plan,
+                   parse_reflection, plan_report, screens_in, unaddressed)
 from .preserve import inject, names_read, preserved_data
 from .prompt import (build_plan_prompt, build_prompt, choices_block, load_plan_template,
-                     load_template, one_line, plan_retry_block, retry_block)
+                     load_template, one_line, plan_retry_block, retry_block,
+                     with_reflection)
 from .reply import (FlowShape, failure_report, parse_reply,
                     preserved_problems, problems_report, validate_flow)
 
@@ -124,6 +125,8 @@ class Run:
         self.plan = None
         # 직전 진단·계획 답의 문제. 다음 진단·계획 프롬프트로 간다.
         self.plan_error = None
+        # 이번 생성 프롬프트가 반성을 요청했는가 (재시도일 때).
+        self.asked_reflection = False
         # 못박아 두는 값. 지정하지 않으면 공급자의 기본값이 쓰이고 그 값은
         # 기록에 남지 않는다 - 나중에 "그때 무엇이 달랐나" 를 물을 수 없다.
         self.temperature = getattr(args, "temperature", TEMPERATURE)
@@ -341,11 +344,16 @@ def request_reply(r, n, p):
     block = retry_block(r.last["report"], r.last["html"], r.last["flow_text"],
                         error=r.last_error, truncated=r.truncated) \
         if (r.last["report"] or r.last_error or r.truncated) else ""
+    # 재시도에서는 코드보다 반성을 먼저 쓰게 한다. 그래서 실패 목록보다 앞이다.
+    r.asked_reflection = bool(block)
+    block = with_reflection(block)
     prompt = build_prompt(r.template, r.original_html, block, r.choices, plan_text(r))
     io.open(p + ".prompt.txt", "w", encoding="utf-8", newline="\n").write(prompt)
     r.log("prompt: %d chars%s" % (len(prompt), " (with retry block)" if block else ""))
 
-    reply, outcome = ask_model(r, n, p, prompt, r.args.max_tokens, mock_reply)
+    reflect = r.asked_reflection
+    reply, outcome = ask_model(r, n, p, prompt, r.args.max_tokens,
+                               lambda mode: mock_reply(mode, reflect=reflect))
     if reply is None:
         return None, outcome
     io.open(p + ".response.txt", "w", encoding="utf-8", newline="\n").write(reply["text"])
@@ -377,11 +385,63 @@ def drop_declared_removals(r, flow):
     return names
 
 
-def check_reply(r, p, entry, reply):
+def note_reflection(r, p, entry, text):
+    """재시도 답의 반성을 읽어 남긴다. `(반성, 문제들)`.
+
+    반성이 없다고 이 시도를 버리지는 않는다 - 빌드는 멀쩡할 수 있고, 반성
+    하나 때문에 재시도 예산을 쓰는 것은 기록을 얻으려다 설계를 잃는 일이다.
+    없었다는 사실만 남긴다."""
+    refl, problems = parse_reflection(text)
+    if refl is None:
+        entry["reflection"], entry["reflection_missing"] = None, True
+        r.log("reflection: 없음 — 재시도 답이 반성 블록 없이 왔다")
+        return None, []
+    entry["reflection"] = p + ".reflection.json"
+    _dump(refl, entry["reflection"])
+    r.log("reflection: %s (계획 변경 %s건)"
+          % (one_line(str(refl.get("cause")))[:160],
+             len(refl.get("plan_changes") or []) if isinstance(
+                 refl.get("plan_changes"), list) else "?"))
+    return refl, problems
+
+
+def revise_plan(r, n, p, entry, refl, problems):
+    """반성의 plan_changes 를 계획에 적용한다. 돌려주는 것은 형식 문제들.
+
+    적용하지 못하면 계획은 그대로 두고 문제를 돌려준다 - 그 문제는 흐름 명세
+    문제와 같은 형식 실패로 다음 프롬프트에 간다. 적용하면 이 시도의
+    attempt_N.plan.json 이 바뀐 계획이 된다 (앞 시도의 파일은 그대로다)."""
+    if problems:
+        return list(problems)
+    changes = refl.get("plan_changes") or []
+    if not changes:
+        entry["plan_changes"] = 0
+        return []
+    new, bad = apply_changes(r.plan, r.diagnosis, changes, r.original_screens)
+    if bad:
+        entry["plan_changes_rejected"] = bad
+        r.log("reflection: 계획 변경을 적용하지 못했다 — %s" % " | ".join(bad)[:300])
+        return bad
+    r.plan = new
+    _dump(new, p + ".plan.json")
+    entry["plan_changes"] = len(changes)
+    if r.summary.get("plan") is not None:
+        r.summary["plan"].setdefault("revised_on", []).append(n)
+        r.summary["plan"]["screens"] = [sc["name"] for sc in new["screens"]]
+        r.summary["plan"]["changes"] = len(new["changes"])
+    r.log("reflection: 계획을 고쳤다 (%d건) — 화면 %s"
+          % (len(changes), ", ".join(sc["name"] for sc in new["screens"])))
+    return []
+
+
+def check_reply(r, p, entry, reply, n=None):
     """답을 HTML + 흐름 명세로 가르고 모양을 본다. 파일로도 남긴다.
 
     돌려주는 것은 (build, outcome). build 가 None 이면 파싱이 실패해 이 시도가
     끝난 것이다."""
+    refl, refl_problems = None, []
+    if r.asked_reflection:
+        refl, refl_problems = note_reflection(r, p, entry, reply["text"])
     truncated = reply["finish_reason"] == "length"
     try:
         if truncated:
@@ -433,6 +493,11 @@ def check_reply(r, p, entry, reply):
 
     # 여기까지 왔으면 답은 읽을 수 있는 모양이다. 형식 오류는 해결되었다.
     r.truncated, r.last_error = 0, None
+
+    # 반성이 계획을 바꿨으면 그것부터 반영한다 - 아래 일치 검사는 바뀐 계획과
+    # 비교해야 한다. 답 자체를 읽지 못한 시도에서는 계획을 바꾸지 않는다.
+    if refl is not None:
+        problems = problems + revise_plan(r, n, p, entry, refl, refl_problems)
 
     # 생성물이 계획의 화면을 그대로 가졌는지. 어긋나면 계획이 생성물을 설명하지
     # 못한다 (plan.match_problems). 흐름 명세 문제와 같은 형식 실패다.
@@ -597,7 +662,7 @@ def attempt(r, n):
              "plan": p + ".plan.json"}
     if plan_call:
         entry["plan_call"] = plan_call
-    build, outcome = check_reply(r, p, entry, reply)
+    build, outcome = check_reply(r, p, entry, reply, n)
     if build is None:
         return outcome
     report = audit_build(r, n, entry, build)

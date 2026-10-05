@@ -85,6 +85,8 @@
         "prompt_template_sha256": "9a4646c4503ba1f183fc6edd0c2cd74aff257ead6e6194fc1a72aa871304a7e8"
       },
       "plan": "<run>/attempt_2.plan.json",
+      "reflection": "<run>/attempt_2.reflection.json",
+      "plan_changes": 0,
       "preserved": {
         "injected": {
           "BANKS": 38,

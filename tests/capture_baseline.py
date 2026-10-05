@@ -289,7 +289,8 @@ def capture_prompt(out):
     dump_text(os.path.join(d, "attempt_1.txt"),
               _api.build_prompt(template, orig_html, "", choices, plan))
     dump_text(os.path.join(d, "retry_%s.txt" % PROMPT_RETRY_CASE),
-              _api.build_prompt(template, orig_html, retry, choices, plan))
+              _api.build_prompt(template, orig_html, _api.prompt_module.with_reflection(retry),
+                                choices, plan))
     say("  prompt: choices_block, 진단·계획, 첫 시도, 재시도(%s)" % PROMPT_RETRY_CASE)
 
 

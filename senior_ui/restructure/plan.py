@@ -69,9 +69,9 @@ def parse_plan(text, original_screens):
     return diagnosis, plan
 
 
-def _items(problems, where, value, keys):
+def _items(problems, where, value, keys, allow_empty=False):
     """목록이고, 원소가 객체이고, 필요한 키가 있는지. 쓸 수 있는 원소만 돌려준다."""
-    if not isinstance(value, list) or not value:
+    if not isinstance(value, list) or not (value or allow_empty):
         problems.append("%s 가 비어 있지 않은 목록이 아니다 (지금은 %s)"
                         % (where, type_of(value)))
         return []
@@ -111,11 +111,14 @@ def _unique_ids(problems, where, items, pattern, form):
     return ids
 
 
-def plan_problems(diagnosis, plan, original_screens):
+def plan_problems(diagnosis, plan, original_screens, revised=False):
     """진단·계획의 모양과, 서로 가리키는 이름이 실제로 있는지.
 
     어느 진단에도 대응하지 않는 변경, 대응이 없는 진단은 문제로 세지 않는다 -
     설계 판단이지 형식이 아니다. 기록에는 그대로 남는다.
+
+    revised 는 반성으로 고친 계획이다. 처음 세운 계획은 변경이 하나는 있어야
+    하지만, 반성이 변경을 모두 거둬들이는 것은 막지 않는다.
     """
     problems = []
     orig = set(original_screens)
@@ -147,7 +150,8 @@ def plan_problems(diagnosis, plan, original_screens):
             problems.append("plan.screens[%d].from 의 %s 는 원본의 화면이 아니다 "
                             "(원본: %s)" % (i, ", ".join(bad), ", ".join(original_screens)))
 
-    changes = _items(problems, "plan.changes", plan.get("changes"), CHANGE_KEYS)
+    changes = _items(problems, "plan.changes", plan.get("changes"), CHANGE_KEYS,
+                     allow_empty=revised)
     _unique_ids(problems, "plan.changes", changes, CHANGE_ID, "C숫자")
     for i, c in enumerate(changes):
         where = "plan.changes[%d]" % i
@@ -195,6 +199,132 @@ def match_problems(plan, html):
             '<section class="screen" data-screen="이름"> 으로 만들거나, 계획을 '
             "바꿔야 한다면 반성의 plan_changes 에 적어라." % ", ".join(missing))
     return problems
+
+
+# --------------------------------------------------------------------------- #
+# 반성 (재시도 때만)
+# --------------------------------------------------------------------------- #
+# 재시도 답은 ```json(반성) → ```html → ```json(흐름 명세) 순서다. 반성은 "왜
+# 떨어졌는가" 와 "그래서 계획의 무엇을 바꾸는가" 의 기록이고, 계획을 바꾸는
+# 유일한 길이다 - 생성 답이 말없이 계획과 다른 화면을 만들면 일치 검사에서
+# 떨어진다.
+OPS = ("add", "change", "remove")
+
+
+def parse_reflection(text):
+    """`(반성, 문제들)`. 반성 블록이 없으면 `(None, [])`.
+
+    반성은 `cause` 를 가진 첫 json 블록이다. 흐름 명세는 마지막 json 블록이므로
+    (reply.parse_reply) 둘이 섞이지 않는다.
+    """
+    for kind, body in FENCE.findall(text or ""):
+        if kind != "json":
+            continue
+        try:
+            data = json.loads(body)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(data, dict) and "cause" in data:
+            return data, reflection_problems(data)
+    return None, []
+
+
+def reflection_problems(refl):
+    problems = []
+    if not isinstance(refl.get("cause"), str) or not refl["cause"].strip():
+        problems.append("반성의 cause 가 비어 있다. 실패의 원인을 한 문장으로 적어라.")
+    changes = refl.get("plan_changes", [])
+    if not isinstance(changes, list):
+        problems.append("반성의 plan_changes 가 목록이 아니다 (지금은 %s). 바꿀 것이 "
+                        "없으면 [] 로 둔다." % type_of(changes))
+    if not isinstance(refl.get("keep", []), list):
+        problems.append("반성의 keep 이 목록이 아니다 (지금은 %s)"
+                        % type_of(refl.get("keep")))
+    return problems
+
+
+def _find(items, key, value):
+    for i, it in enumerate(items):
+        if it.get(key) == value:
+            return i
+    return None
+
+
+def apply_changes(plan, diagnosis, changes, original_screens):
+    """반성의 plan_changes 를 계획에 적용한다. `(새 계획, 문제들)`.
+
+    받은 계획은 고치지 않는다 - 시도마다 따른 계획이 파일로 남아야 하므로,
+    앞 시도의 계획이 뒤에서 바뀌면 기록이 거짓이 된다. 하나라도 적용하지 못하면
+    문제를 돌려주고, 부르는 쪽은 계획을 바꾸지 않는다.
+
+        change + C번호         그 변경의 칸을 new 로 고친다
+        remove + C번호         그 변경을 뺀다
+        add    + change        new 가 새 변경 하나
+        add    + screen        new 가 새 화면 하나 (after 가 있으면 그 화면 뒤)
+        change + screen:이름   그 화면의 칸을 new 로 고친다
+        remove + screen:이름   그 화면을 뺀다
+    """
+    new = json.loads(json.dumps(plan))
+    screens, items = new.setdefault("screens", []), new.setdefault("changes", [])
+    problems = []
+    for i, ch in enumerate(changes or []):
+        where = "plan_changes[%d]" % i
+        if not isinstance(ch, dict):
+            problems.append("%s 가 객체가 아니다" % where)
+            continue
+        op, target, body = ch.get("op"), ch.get("target"), ch.get("new")
+        if op not in OPS:
+            problems.append("%s.op=%r 은 add · change · remove 중 하나가 아니다"
+                            % (where, op))
+            continue
+        if not isinstance(target, str):
+            problems.append("%s.target 이 문자열이 아니다" % where)
+            continue
+        if op != "remove" and not isinstance(body, dict):
+            problems.append("%s.new 가 객체가 아니다 (%s 에는 new 가 필요하다)"
+                            % (where, op))
+            continue
+        if op == "add" and target == "change":
+            items.append(body)
+        elif op == "add" and target == "screen":
+            after = ch.get("after")
+            at = _find(screens, "name", after) if after else None
+            if after and at is None:
+                problems.append("%s.after=%r 은 계획에 없는 화면이다" % (where, after))
+                continue
+            screens.insert(len(screens) if at is None else at + 1, body)
+        elif target.startswith("screen:"):
+            at = _find(screens, "name", target[len("screen:"):])
+            if at is None:
+                problems.append("%s.target=%r - 계획에 그런 화면이 없다" % (where, target))
+            elif op == "remove":
+                screens.pop(at)
+            elif op == "change":
+                screens[at].update(body)
+            else:
+                problems.append("%s: 화면을 더할 때는 target 을 \"screen\" 으로 쓴다"
+                                % where)
+        elif CHANGE_ID.match(target):
+            at = _find(items, "id", target)
+            if at is None:
+                problems.append("%s.target=%s - 계획에 그런 변경이 없다" % (where, target))
+            elif op == "remove":
+                items.pop(at)
+            elif op == "change":
+                items[at].update(body)
+            else:
+                problems.append("%s: 변경을 더할 때는 target 을 \"change\" 로 쓴다"
+                                % where)
+        else:
+            problems.append("%s.target=%r 은 C번호 · change · screen · screen:이름 "
+                            "중 하나가 아니다" % (where, target))
+    if problems:
+        return plan, problems
+    after = plan_problems(diagnosis, new, original_screens, revised=True)
+    if after:
+        return plan, ["반성의 plan_changes 를 적용한 계획이 맞지 않는다: " + p
+                      for p in after]
+    return new, []
 
 
 def plan_report(problems):

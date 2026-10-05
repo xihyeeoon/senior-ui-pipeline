@@ -69,6 +69,17 @@ def build_plan_prompt(template, original_html, choices, original_screens,
                     .replace("{{ORIGINAL_SCREENS}}", ", ".join(original_screens)))
 
 
+def reflection_request():
+    """재시도 프롬프트의 맨 앞에 붙는 반성 요청 (REFLECT 블록)."""
+    return load_block("REFLECT")
+
+
+def with_reflection(block):
+    """재시도 블록 앞에 반성 요청을 붙인다. 코드보다 반성을 먼저 쓰게 하려는
+    것이므로 실패 목록보다 앞이다. 빈 블록(첫 시도)은 그대로다."""
+    return reflection_request() + "\n" + block if block else block
+
+
 def plan_retry_block(problems):
     """진단·계획 답을 쓸 수 없었을 때의 재시도 블록. 이 단계에는 검사 결과가
     없으므로 무엇이 틀렸는지만 적는다."""
