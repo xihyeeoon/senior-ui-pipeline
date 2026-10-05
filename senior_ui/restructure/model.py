@@ -12,15 +12,38 @@ import time
 from senior_ui.config import FLOWS_DIR, OUTPUTS_DIR, RESULTS_DIR, ROOT, outputs_dir
 
 
+ENVS = ".envs"
+
+
+def read_envs(path):
+    """.envs 의 줄들. utf-8-sig 로 읽는다.
+
+    BOM 을 떼는 이유는 메모장이다. Windows 의 메모장이 UTF-8 로 저장하면 파일이
+    BOM 으로 시작하고, utf-8 로 읽으면 첫 줄의 키 이름이 '﻿OPENAI_API_KEY'
+    가 된다 - 키는 파일에 분명히 있는데 "no OPENAI_API_KEY" 로 끝난다. 그 한
+    글자는 눈에 보이지도 않는다.
+
+    cp949 로 저장된 파일은 읽을 수 없다. 역추적만 남기면 무슨 파일이 문제인지도
+    알 수 없으므로 어느 파일을 어떻게 저장해야 하는지로 바꿔 올린다.
+    """
+    try:
+        return io.open(path, encoding="utf-8-sig").read().splitlines()
+    except UnicodeDecodeError as e:
+        raise RuntimeError(
+            "%s 를 UTF-8 로 읽지 못했다 (%s 번째 바이트). 이 파일은 UTF-8 로 "
+            "저장해야 한다 - 메모장이면 '다른 이름으로 저장'에서 인코딩을 "
+            "UTF-8 로 고른다." % (path, e.start))
+
+
 def load_env():
     """OPENAI_API_KEY from .envs if the environment does not have it. The file
     is KEY=value lines, quotes optional, '#' comments."""
     if os.environ.get("OPENAI_API_KEY"):
         return
-    path = os.path.join(ROOT, ".envs")
+    path = os.path.join(ROOT, ENVS)
     if not os.path.exists(path):
         return
-    for line in io.open(path, encoding="utf-8"):
+    for line in read_envs(path):
         line = line.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue

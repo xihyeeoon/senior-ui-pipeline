@@ -624,3 +624,53 @@ def test_the_loop_stops_cleanly_when_the_port_is_someone_elses(monkeypatch, tmp_
     assert code == 2
     assert summary["stopped_reason"] == "cannot_start"
     assert summary["attempts"] == []
+
+
+# ===================================================================== #
+# 8. .envs 읽기
+# ===================================================================== #
+@pytest.fixture
+def envs_file(monkeypatch, tmp_path):
+    """.envs 를 임시 파일로 바꾸고 키를 비운다."""
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setattr(model, "ROOT", str(tmp_path))
+    return tmp_path / ".envs"
+
+
+def test_a_bom_does_not_hide_the_first_key(envs_file, monkeypatch):
+    """메모장이 저장한 .envs 는 BOM 으로 시작한다.
+
+    고치기 전: utf-8 로 읽어서 첫 줄의 키 이름이 '\ufeffOPENAI_API_KEY' 가
+    되었다. 키는 파일에 분명히 있는데 "no OPENAI_API_KEY" 로 끝난다.
+    """
+    envs_file.write_bytes("OPENAI_API_KEY=sk-test-1\n".encode("utf-8-sig"))
+    model.load_env()
+    assert os.environ.get("OPENAI_API_KEY") == "sk-test-1"
+
+
+def test_a_plain_utf8_envs_still_works(envs_file):
+    envs_file.write_bytes("OPENAI_API_KEY=sk-test-2\n".encode("utf-8"))
+    model.load_env()
+    assert os.environ.get("OPENAI_API_KEY") == "sk-test-2"
+
+
+def test_a_file_that_is_not_utf8_says_so(envs_file):
+    """cp949 로 저장된 .envs 는 UnicodeDecodeError 로 터졌다. 역추적만 남으면
+    사용자는 무슨 파일이 문제인지도 모른다."""
+    envs_file.write_bytes("# 주석\nOPENAI_API_KEY=sk-test-3\n".encode("cp949"))
+    with pytest.raises(RuntimeError) as e:
+        model.load_env()
+    assert ".envs" in str(e.value)
+    assert "utf-8" in str(e.value).lower()
+
+
+def test_an_unreadable_envs_stops_the_run_with_a_reason(fake_run_env, monkeypatch,
+                                                        tmp_path):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setattr(model, "ROOT", str(tmp_path))
+    (tmp_path / ".envs").write_bytes(
+        "# 열쇠\nOPENAI_API_KEY=sk-x\n".encode("cp949"))
+
+    code, summary = run_loop(monkeypatch, tmp_path, always_reply, attempts=1)
+    assert code == 2
+    assert summary["stopped_reason"] == "cannot_start"

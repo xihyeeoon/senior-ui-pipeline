@@ -491,7 +491,16 @@ def run(args):
     os.makedirs(run_dir, exist_ok=True)
     log = make_logger(os.path.join(run_dir, "run.log"))
 
-    load_env()
+    try:
+        load_env()
+    except RuntimeError as e:
+        log("cannot start: %s" % e)
+        print("cannot start: %s" % e, file=sys.stderr)
+        _dump({"run_dir": run_dir, "passed": False, "attempts": [],
+               "stopped_reason": "cannot_start", "error": str(e)},
+              os.path.join(run_dir, "summary.json"))
+        log("summary: %s" % os.path.join(run_dir, "summary.json"))
+        return 2
     model = pick_model(args)
     if not args.mock and not os.environ.get("OPENAI_API_KEY"):
         print("no OPENAI_API_KEY in the environment or .envs", file=sys.stderr)
