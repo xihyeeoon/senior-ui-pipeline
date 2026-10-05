@@ -24,7 +24,9 @@
 셋 다 fatal 0 / warning 0. 갈라지는 것은 검사기 밖의 지표(돈 나가기 전 확인
 3·1·3, 탭 수 30·28·30)다. 세 재구성본은 같은 조건을 받았으므로 이 비교는 유효하다.
 
-(검사 I 추가 이전 기준. 현재 기준은 아래 산출물 표와 그 밑의 주를 참고한다.)
+(검사 I 추가 이전 기준. 현재 기준은 아래 산출물 표와 그 밑의 주를 참고한다.
+옛 검사기: 셋 다 fatal 0 / warning 0 · 통과 / 현재(v3): 셋 다 fatal 3 / warning 3 ·
+통과 못 함. 셋의 수치가 서로 같다는 점은 v3 에서도 그대로다.)
 
 **DesignRepair 계열은 연구에서 뺐다 (2026-09-30).** 도구의 목적이 다르고(완성된
 화면의 시각 품질 vs 구조 시안), 같은 입력 단위를 줄 수 없어(전체 파일은 TPM 한도
@@ -34,10 +36,10 @@
 | 산출물 | 위치 | 상태 |
 |---|---|---|
 | 원본 프로토타입 (8화면, 실제 캡처 반영) | `inputs/original_transfer.html` | 완료 |
-| LLM 재구성 Run 1 (9화면) | `results/restructured_transfer.html` + `flows/restructured.json` | audit **fatal 0 / warning 0** |
-| LLM 재구성 Run 2 (7화면) | `results/restructured_run2.html` + `flows/run2.json` | audit **fatal 0 / warning 0** |
-| LLM 재구성 Run 3 (8화면) | `results/restructured_run3.html` + `flows/run3.json` | audit **fatal 0 / warning 0** |
-| LLM 재구성 Run 4 (7화면, 자동 파이프라인) | `results/restructured_run4.html` + `flows/run4.json` | 당시 통과 / 현재 검사기 기준 **I fatal 2** |
+| LLM 재구성 Run 1 (9화면) | `results/restructured_transfer.html` + `flows/restructured.json` | audit 옛 검사기: **fatal 0 / warning 0** · 통과 / 현재(v3): **fatal 3 / warning 3** · 통과 못 함 |
+| LLM 재구성 Run 2 (7화면) | `results/restructured_run2.html` + `flows/run2.json` | audit 옛 검사기: **fatal 0 / warning 0** · 통과 / 현재(v3): **fatal 3 / warning 3** · 통과 못 함 |
+| LLM 재구성 Run 3 (8화면) | `results/restructured_run3.html` + `flows/run3.json` | audit 옛 검사기: **fatal 0 / warning 0** · 통과 / 현재(v3): **fatal 3 / warning 3** · 통과 못 함 |
+| LLM 재구성 Run 4 (7화면, 자동 파이프라인) | `results/restructured_run4.html` + `flows/run4.json` | 옛 검사기: **fatal 0 / warning 8** · 통과 / 현재(v3): **fatal 2 (검사 I) / warning 8** · 통과 못 함 |
 | 3회 비교 | `docs/restructure-runs.md` | 완료 (탭 수·확인 횟수는 손으로 셈) |
 | 검사기 | `senior_ui/audit/` + `flows/*.json` | 완료, 다섯 흐름 모두 동작 |
 | 변경 기록 (28건, SDF 대조) | `docs/restructure-changelog.md` | 완료 |

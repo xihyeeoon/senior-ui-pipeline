@@ -1,0 +1,20 @@
+{
+  "passed": false,
+  "warning": [],
+  "metrics": {
+    "flow": "auto",
+    "not_audited": true
+  },
+  "fatal": [
+    {
+      "check": "FLOW",
+      "screen": null,
+      "detail": "data-action 이 있지만 `a==='…'` 분기가 없는 것: acc-input, amt-input, pw, pw-del, pw-shuffle, quick"
+    },
+    {
+      "check": "FLOW",
+      "screen": null,
+      "detail": "steps[6] (done) 에 click 도 do 도 없다"
+    }
+  ]
+}

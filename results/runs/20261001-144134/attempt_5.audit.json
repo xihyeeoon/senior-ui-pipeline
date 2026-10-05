@@ -1,0 +1,15 @@
+{
+  "passed": false,
+  "fatal": [
+    {
+      "check": "AUDIT",
+      "screen": null,
+      "detail": "검사기가 흐름 명세를 실행하지 못했다: Error: Page.evaluate: TypeError: Cannot read properties of undefined (reading 'screen')\n    at window.__screen (http://localhost:3003/outputs/restructure_auto/20261001-144134/attempt_5.html:241:39)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:33)\n    at UtilityScript.evaluate (<anonymous>:318:18)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+    }
+  ],
+  "warning": [],
+  "metrics": {
+    "flow": "auto",
+    "not_audited": true
+  }
+}
