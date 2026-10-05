@@ -54,7 +54,7 @@
 | D3 | 전체메뉴 데이터: 은행 탭 69항목, 카드 › 대표 생활요금 4항목 (B 판). 전체 293항목은 `docs/bill-menu-full.json` | L406–428 | 더미앱 `sh_menu_data.dart`. 더미앱이 캡처 43장을 전사한 것이다. 캡처 사이가 빠진 섹션이 있다 (`has_gap`) |
 | D4 | B 판에서 어떤 탭을 넣고 뺄지 | L424–428 | 판단 (범위 결정, `original-bill-scope.md`) |
 | D5 | 납부 항목 18개와 부제 셋 (지방세 "주민세, 재산세, 자동차세 등" …) | L497–504 | 캡처 `메인(0~3).png` 로 보인다 — 다만 스크롤 캡처 넉 장을 이어야 한다. 순서와 섹션은 더미앱 `a1_bill_home.dart` `_sections` |
-| D6 | 정답 값(흐름 `truth`): BANK 신한 · ACCOUNT 110-000-000000 (출금계좌) · AMOUNT 2160 · NAME 홍길동 (고객명) · ENO 1700000000 · QUERY 공과 | `flows/original_bill.json` | 판단. 공과금 과제에는 사용자가 넣는 값이 없다 — 고지서에서 읽힌 값을 확인할 뿐이다. 검사기가 BANK · ACCOUNT · NAME 을 꼭 요구해서(이체 전용, 보고서 참고) 출금계좌와 고객명을 넣었다 |
+| D6 | 정답 값(흐름 `truth`): AMOUNT 2160 · ENO 1700000000 · MONTH 202607 · QUERY 공과 · CUSTOMER 홍길동 (고객명) · PAY_BANK 신한 · PAY_ACCOUNT 110-000-000000 (출금계좌) | `flows/original_bill.json` | 판단. 공과금 과제에는 사용자가 넣는 값이 없다 — 고지서에서 읽힌 값을 확인할 뿐이다. 필수 키는 과제가 정한다 (`tasks/bill.json`: AMOUNT · ENO). 10번에서는 검사기가 이체의 BANK · ACCOUNT · NAME 을 요구해 그 이름으로 넣었고, 11번에서 공과금 이름으로 바꿨다 |
 | D7 | 오류 팝업이 없다 (`error_paths: []`, 틀린 값 없음) | 흐름 파일 | 더미앱: 공과금 화면 어디에도 판정이 없다. 캡처로는 "없다" 를 알 수 없다 |
 
 ## 5. 기술 계약에 맞추려고 정한 것 (다)
@@ -62,7 +62,7 @@
 | # | 무엇을 | 원본의 자리 | 어디서 |
 |---|---|---|---|
 | T1 | `data-screen` 이름: home · menu · search · bill-home · camera · info · password · done | 각 section | 판단 (앞단이 짓는다) |
-| T2 | `data-action` 이름과 id (`search-input`, `bill-list`, `bi-*`, `dn-*`, `pwpad`, `pw-dots` …). 완료 금액은 이체와 같은 `dn-amt` | 전체 | 판단. `dn-amt` 는 검사기·재구성 루프가 요구하는 이름이다 (이체 전용) |
+| T2 | `data-action` 이름과 id (`search-input`, `bill-list`, `bi-*`, `dn-*`, `pwpad`, `pw-dots` …). 완료 금액은 `dn-paid` | 전체 | 판단. 10번에서는 검사기·재구성 루프가 이체의 `dn-amt` 를 요구해 그 이름이었고, 11번에서 공과금 이름으로 바꿨다. 완료 화면에서 확인할 값은 `tasks/bill.json` 의 `done_expect` (`#dn-paid` · `#dn-eno` — 더미앱 `A1BillPayDone` 에 전자납부번호가 보인다) |
 | T3 | 고르는 목록은 탭별 배열 · `'#'` 로 시작하는 원소가 소분류 · 한 탭의 소분류 제목과 항목은 한 부모 아래 형제 | L402–428, L497 | 판단. 검사 I · 데이터 보존이 "같은 부모 아래 형제 둘 이상" 만 선택지로 세기 때문에, 항목 하나짜리 소분류도 빠지지 않게 했다 |
 | T4 | 과제 밖 목록(메뉴 항목 · 납부 항목)에도 `data-action` 을 붙이고 처리기는 아무것도 하지 않는다 | L452, L506, L550 | 결정 (`input-contract.md` 규칙) |
 | T5 | 부제처럼 쉼표가 든 글은 배열이 아니라 객체(`BILL_SUB`)에 둔다 | L502 | 판단. `preserve.ARRAY_DECL` 은 원소를 쉼표로 가른다 |

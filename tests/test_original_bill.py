@@ -349,7 +349,11 @@ def test_flow_file_shape():
     raw = json.load(io.open(FLOW, encoding="utf-8"))
     assert raw["truth"]["AMOUNT"] == "2160"
     assert raw["truth"]["ENO"] == "1700000000"
-    assert raw["truth"]["NAME"] == "홍길동"
+    assert raw["truth"]["CUSTOMER"] == "홍길동"
+    assert raw["task"] == "bill"
+    # 이체에 맞춰 넣었던 이름은 걷어 냈다 (11번 단계)
+    assert not {"ACCOUNT", "BANK", "NAME"} & set(raw["truth"])
+    assert raw["done_amount"] == "#dn-paid"
     assert raw["error_paths"] == []
     assert not [k for k in raw["truth"] if k.endswith("_WRONG")]
     flow = load_flow()

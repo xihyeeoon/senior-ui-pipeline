@@ -171,7 +171,7 @@
 | 그 경로가 통과하는 조건 (은행 먼저 고르고 계좌 입력) | 위 B 의 "넘어가는 조건" | (나) | |
 | 오류 경로 `error_paths` — 오류마다 `id` · `about` · `condition` · `uses` · `notice_any` · `from_step` · `inputs` · `expect_screen` · `recover` · `back_to` | 프롬프트 `{{ERRORS}}` (`about` · `condition` · `uses` 의 이름만), 형식 검사 (빠진 id), 검사 J (`notice_any` 로 알림 글 판정), 설명서 오류 표 | (나) | 어떤 입력이 오류인지, 원본이 무엇을 보이고 어디로 돌려보내는지는 캡처 순서만으로는 모른다. 원본의 경로 둘은 `wrong-account` · `wrong-bank` |
 | 틀린 값 (`truth` 의 `ACCOUNT_WRONG` · `BANK_WRONG`) | 걷기가 `{ACCOUNT_WRONG}` 자리에 넣는다. **모델에게는 보이지 않는다** | (나) | 이름은 과제가 정한다 (코드는 이름을 모른다). 값을 모델이 알면 그 값일 때만 오류를 띄우는 HTML 로 검사를 지날 수 있다 |
-| **[공과금]** 사용자가 넣는 값이 없는 과제의 `truth` (출금계좌 · 고객명 · 전자납부번호 · 검색어) | `flow.make_truth`, 흐름 `expect` | (나) | 검사기가 `BANK` · `ACCOUNT` · `NAME` · `AMOUNT` 를 꼭 요구한다 (이체 전용 — 11번 단계). 공과금은 출금계좌와 고객명을 넣었다 |
+| **[공과금]** 사용자가 넣는 값이 없는 과제의 `truth` (출금계좌 · 고객명 · 전자납부번호 · 검색어) | `flow.make_truth`, 흐름 `expect` | (나) | 꼭 있어야 할 키는 과제가 정한다 (`tasks/bill.json` 의 `required_truth`: `AMOUNT` · `ENO`). 고객명 `CUSTOMER`, 출금계좌 `PAY_BANK` · `PAY_ACCOUNT`, 검색어 `QUERY` 는 `expect` 가 쓰는 값이다. 10번에서 이체 이름(`BANK` · `ACCOUNT` · `NAME`)에 맞췄던 것을 11번에서 걷어 냈다 |
 | **[공과금]** `steps` 가 어느 길을 가나 (화면 덮기 규칙) | 기준값 걷기 | (나) | 오류 경로가 없으면 모든 화면을 정답 경로 하나가 지나야 한다. 공과금은 검색을 거친다 — 메뉴에서 바로 가는 길은 검색 화면을 지나지 않는다 |
 
 ### 분류별 개수

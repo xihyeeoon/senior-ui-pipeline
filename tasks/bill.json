@@ -8,9 +8,9 @@
   ],
   "original": "inputs/original_bill.html",
   "flow": "flows/original_bill.json",
-  "done_expect": [["#dn-amt", "{AMOUNT_SHOWN}"]],
-  "required_truth": ["ACCOUNT", "AMOUNT", "BANK", "NAME"],
-  "keep_on_screen": {"NAME": "customer name"},
+  "done_expect": [["#dn-paid", "{AMOUNT_SHOWN}"], ["#dn-eno", "{ENO}"]],
+  "required_truth": ["AMOUNT", "ENO"],
+  "keep_on_screen": {"CUSTOMER": "customer name"},
   "dialog_ok_values": ["AMOUNT_SHOWN", "AMOUNT", "ENO"],
   "required_error_paths": []
 }

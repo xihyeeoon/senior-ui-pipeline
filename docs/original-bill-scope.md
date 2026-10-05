@@ -221,6 +221,10 @@ A 로 가려면 분당 한도가 약 3.2만 이상이어야 한다 (입력 26,80
 
 검사기 · 재구성 루프 코드는 고치지 않았다. 아래는 확인만 한 것이다.
 
+> 11번 단계(`feat/task-generic`)에서 아래 자리를 과제 파일(`tasks/<과제>.json`)을
+> 읽게 바꾸고, 공과금 쪽의 맞춤(1·2)을 걷어 냈다 — `truth` 는 `CUSTOMER` ·
+> `PAY_BANK` · `PAY_ACCOUNT`, 완료 금액은 `#dn-paid` 다. 이 절은 10번 당시의 기록이다.
+
 **원본 대 원본 (공과금).** `python -m senior_ui.audit --original/--build …/original_bill.html
 --flow flows/original_bill.json` → **통과**. fatal 0, warning 2 (홈 마이신한포인트 띠의
 그라디언트 위 글자 — 이체 원본과 같은 두 건), 8화면 모두 도달, 완료 금액 2,160. 검사 J 는
