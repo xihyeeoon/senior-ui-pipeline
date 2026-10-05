@@ -10,6 +10,7 @@ r"""과제에 묶이지 않는다 - 이체 말고 다른 과제(공과금)도 �
 import io
 import json
 import os
+import re
 
 import pytest
 
@@ -277,3 +278,48 @@ def test_allowed_removals_are_read_for_the_task(fake_run_env, out_root):  # noqa
                          lambda task="transfer": seen.append(task) or {})
     bill_run(fake_run_env, out_root)
     assert seen == ["bill"]
+
+
+# --------------------------------------------------------------------- #
+# 5. 프롬프트 - 과제마다 다른 문단
+# --------------------------------------------------------------------- #
+TRANSFER_ONLY = ["다른 사람의 계좌로 돈을 보낸다", "dn-amt", "32,000", "110234567890",
+                 "{ACCOUNT}", "{NAME}", "계좌번호를 넣는 화면", "예금주",
+                 "처음 보내는 계좌", "acc-num"]
+
+
+@pytest.mark.parametrize("load", ["load_template", "load_plan_template"])
+def test_the_bill_prompt_has_no_transfer_text(load):
+    """고치기 전: 과제 설명 말고도 기술 계약 · 흐름 명세 규칙 · 예시에 이체
+    문구가 박혀 있었다 (완료 화면 dn-amt 에 32,000, 치환 문자열, 계좌 입력 화면)."""
+    text = getattr(_api, load)("bill")
+    left = [w for w in TRANSFER_ONLY if w in text]
+    assert left == []
+    assert "{{" not in text.replace("{{ORIGINAL_HTML}}", "").replace(
+        "{{RETRY_BLOCK}}", "").replace("{{CHOICES}}", "").replace(
+        "{{ERRORS}}", "").replace("{{PLAN}}", "").replace("{{ORIGINAL_SCREENS}}", "")
+
+
+def test_the_bill_prompt_names_the_bill_done_values():
+    text = _api.load_template("bill")
+    assert '"#dn-paid", "{AMOUNT_SHOWN}"' in text
+    assert '"#dn-eno", "{ENO}"' in text
+
+
+def placeholder_pairs(text):
+    """프롬프트의 "치환 문자열" 항목에 적힌 (키, 값)."""
+    m = re.search(r"^- 치환 문자열: (.*?)(?=\n- |\n  [^`\s])", text, re.S | re.M)
+    body = " ".join(m.group(1).split())
+    return re.findall(r"`\{(\w+)\}` = (.*?)(?=,\s*`\{|[.,]?\s*$|\.\s)", body)
+
+
+@pytest.mark.parametrize("name", ["transfer", "bill"])
+def test_the_placeholder_line_agrees_with_the_truth(name):
+    """프롬프트에 손으로 적은 치환 값이 흐름의 truth 와 어긋나지 않는다."""
+    pairs = placeholder_pairs(_api.load_template(name))
+    assert len(pairs) >= 4
+    truth = F.task_truth(name)
+    for key, val in pairs:
+        assert truth[key] == val, (key, val)
+    # 틀린 값(*_WRONG)은 모델에게 보이지 않는다
+    assert not [k for k, _ in pairs if k.endswith("_WRONG")]

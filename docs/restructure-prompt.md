@@ -14,6 +14,11 @@
 **과제 설명은 이 파일에 없다.** 아래 두 프롬프트의 `{{TASK}}` 에는 과제 파일
 (`tasks/<과제>.json` 의 `description`)이 들어간다 — 과제를 바꿀 때 그 한 곳만 고친다.
 과제는 `python -m senior_ui.restructure --task bill` 로 고르고, 기본은 `transfer` 다.
+과제마다 다른 문단 — 완료 화면의 id 와 값, 과업 한 줄, 입력·확인 화면 규칙, 흐름 명세
+예시, 치환 문자열, 오류 경로 규칙 — 도 이 파일에는 `{{TASK_<칸>}}` 슬롯만 있고 글은 과제
+파일의 `prompt.<칸>` 에 있다 (`notes` · `rules` · `flow_example` · `flow_values` ·
+`flow_errors` · `flow_done` · `plan_errors` · `plan_error_rule`). 칸이 빠진 과제는
+프롬프트를 만들지 않고 멈춘다.
 `<!-- PLAN_PROMPT -->` 는 첫 호출(진단·계획, JSON 하나)이고, `<!-- PROMPT -->` 는 둘째
 호출(생성)과 재시도에 쓴다. 두 단계로 나눈 이유와 루프는 `senior_ui/restructure/loop.py`
 머리말에 있다.
@@ -66,8 +71,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 
 {{ERRORS}}
 
-원본의 오류 화면도 진단 대상이다. 오류를 어디서 어떻게 알리고 어디로 돌아가게 할지는
-계획의 `errors` 에 오류마다 하나씩 적는다.
+{{TASK_PLAN_ERRORS}}
 
 선택지 데이터를 계획에서 언급할 때는 `window.PRESERVED.<이름>` 의 이름으로만 말하고,
 값을 다시 나열하지 마라.
@@ -109,9 +113,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 - `from` · `from_screens` 에는 원본의 화면 이름만 쓴다. 원본에 없던 새 화면이면 `from` 은 `[]`.
 - `to_screens` 에는 `screens` 에 있는 이름만 쓴다.
 - `addresses` 에는 `diagnosis` 에 있는 id 만 쓴다.
-- `errors` 에는 위 "원본의 오류 조건" 의 id 를 하나도 빠뜨리지 않는다. `screen` 과
-  `back_to` 는 `screens` 에 있는 이름이다. 오류만 보이는 화면을 따로 둔다면 그 화면도
-  `screens` 에 넣는다.
+{{TASK_PLAN_ERROR_RULE}}
 
 {{RETRY_BLOCK}}
 
@@ -134,7 +136,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   돌아온다.
 - 계획에 없는 큰 변경(화면 추가·삭제·순서 변경, 과업 경로 변경)은 하지 마라. 글자·크기·
   배치 같은 세부는 네가 정한다.
-- 시제품이므로 서버는 없다. 예금주 조회처럼 서버가 하던 조회는 원본에 있는 동작만, 원본이 보여 주는 값으로 흉내 낸다.
+{{TASK_NOTES}}
 - 화면의 모든 글은 한국어로 쓴다. 영어 단어를 새로 넣지 않는다.
 
 ## 2. 지켜야 할 기술 계약 (검사기가 이 형식으로 화면을 몰고 다닌다)
@@ -150,13 +152,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 - 숫자판은 버튼마다 `data-action` 과 `data-v="숫자"` 를 둔다.
 - 전역에 `window.__screen()` (현재 화면 이름 반환), `window.__log` (배열), `window.__startTask()`,
   `window.__dump()` 를 둔다. 화면이 바뀔 때마다 `__log` 에 `{type:'screen_enter', to:이름}` 을 넣는다.
-- 완료 화면에는 보낸 금액을 담는 `id="dn-amt"` 요소가 있어야 하고, 그 텍스트는 `32,000` 처럼
-  천 단위 쉼표 숫자여야 한다.
-- 과업: **다른 사람의 계좌로 돈을 보낸다.** 받는 은행, 계좌번호, 금액은 사용자가
-  그때그때 입력한다. 시제품이므로 잔액은 1,000,000원으로 둔다.
-- **사용자가 입력해야 하는 값을 미리 채워 넣지 마라.** 계좌번호나 금액이 이미
-  들어 있는 화면, 읽기 전용으로 값이 박힌 칸을 만들지 마라.
-- **입력 화면을 생략하지 마라.** 계좌번호를 넣는 화면과 금액을 넣는 화면이 있어야 한다.
+{{TASK_RULES}}
 - **원본에 있던 선택지는 하나도 빠뜨리지 마라.** 스크립트 배열로 그려지는 목록은 도구가
   `window.PRESERVED.<이름>` 으로 넣어 준다 (아래 "원본이 가진 선택지" 참고). 그 목록을
   직접 타이핑하지 말고 그 이름을 참조해 그려라 - 넣어 준 이름을 하나라도 읽지 않으면
@@ -185,36 +181,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 갈 수 있도록 **흐름 명세 JSON** 을 HTML 과 함께 출력하라. 형식은 다음과 같다.
 
 ```json
-{
-  "name": "auto",
-  "note": "한 줄 설명",
-  "derived_from_original": false,
-  "required_ids": ["phone", "dn-amt", "..."],
-  "steps": [
-    {"screen": "start"},
-    {"screen": "who", "click": "[data-action='go-who']"},
-    {"screen": "amount", "do": [
-      {"type": "{ACCOUNT}", "key": "[data-action='acc-num'][data-v='%s']"},
-      {"click": "#acc-next"}
-    ]},
-    {"screen": "done", "do": [
-      {"repeat": 4, "click": "#pwpad [data-action='pw']", "wait": 0.15}
-    ]}
-  ],
-  "expect": {
-    "done": [["#dn-amt", "{AMOUNT_SHOWN}"]]
-  },
-  "done_amount": "#dn-amt",
-  "error_paths": [
-    {"id": "<오류 id>",
-     "from_step": "<갈라지는 곳: steps 의 screen 이름>",
-     "inputs": [{"<동작>": "<steps 의 do 와 같은 형식, 잘못된 값은 자리표시자로>"}],
-     "expect_screen": "<잘못된 입력 뒤에 있어야 할 화면 이름>",
-     "expect_text_any": ["<알림 글에 들어 있는 낱말>"],
-     "recover": [{"<동작>": "<되돌아가는 조작>"}],
-     "back_to": "<되돌아간 뒤의 화면 이름>"}
-  ]
-}
+{{TASK_FLOW_EXAMPLE}}
 ```
 
 규칙:
@@ -223,20 +190,9 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 - 한 단계의 동작은 `click` 하나이거나 `do` 배열이다. `do` 의 항목은 `{"click": 선택자}`,
   `{"type": 문자열, "key": 선택자틀}` (문자열의 글자마다 `%s` 자리에 넣어 클릭),
   `{"repeat": n, "click": 선택자, "wait": 초}`, `{"wait": 초}` 중 하나.
-- 치환 문자열: `{ACCOUNT}` = 110234567890, `{AMOUNT}` = 32000, `{AMOUNT_SHOWN}` = 32,000,
-  `{BANK}` = 신한, `{NAME}` = 김철수.
-  이 값들은 **검사기가 과업을 수행할 때 눌러 넣을 값**이다. 설계에 미리 채워 두라는
-  뜻이 아니다. 사용자는 빈 화면에서 시작해 이 값을 직접 입력한다.
-- `steps` 는 처음 보내는 계좌를 직접 입력하는 가장 긴 경로다. HTML 의 모든 화면은
-  `steps` 나 `error_paths` (`expect_screen` · `back_to`) 중 하나가 지나가야 한다.
-- `error_paths` 에는 "원본의 오류 조건" 의 오류마다 하나씩 적는다. 검사기는 정답대로
-  `from_step` 까지 간 뒤 `inputs` 를 실행하고, `expect_screen` 에서 새로 나타난 글을
-  찾고, `recover` 를 실행해 `back_to` 에 있는지 본다. `inputs` 의 잘못된 값은 위의
-  자리표시자로만 넣는다. 버튼을 꺼서 막는 설계라면 꺼진 버튼은 누르지 않는다 —
-  `expect_screen` 은 그 화면 그대로이고, 새로 보인 이유 글이 오류 상태다.
-- `back_to` 는 오류가 나타난 화면이거나 `steps` 에서 그보다 앞의 화면이다.
-- `required_ids` 는 네 HTML 에 실제로 있는 id 만 적는다. `phone` 과 `dn-amt` 는 반드시 포함.
-- `expect` 의 `done` 에는 반드시 `["#dn-amt", "{AMOUNT_SHOWN}"]` 이 있어야 한다.
+{{TASK_FLOW_VALUES}}
+{{TASK_FLOW_ERRORS}}
+{{TASK_FLOW_DONE}}
 - `derived_from_original` 은 `false`.
 - 선택자는 네 HTML 에 있는 것만 쓴다. 검사기는 없는 선택자에서 멈춘다.
 

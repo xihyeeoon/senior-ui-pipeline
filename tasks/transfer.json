@@ -8,9 +8,103 @@
   ],
   "original": "inputs/original_transfer.html",
   "flow": "flows/original.json",
-  "done_expect": [["#dn-amt", "{AMOUNT_SHOWN}"]],
-  "required_truth": ["ACCOUNT", "AMOUNT", "BANK", "NAME"],
-  "keep_on_screen": {"NAME": "recipient name"},
-  "dialog_ok_values": ["AMOUNT_SHOWN", "AMOUNT", "ACCOUNT"],
-  "required_error_paths": ["wrong-account", "wrong-bank"]
+  "done_expect": [
+    [
+      "#dn-amt",
+      "{AMOUNT_SHOWN}"
+    ]
+  ],
+  "required_truth": [
+    "ACCOUNT",
+    "AMOUNT",
+    "BANK",
+    "NAME"
+  ],
+  "keep_on_screen": {
+    "NAME": "recipient name"
+  },
+  "dialog_ok_values": [
+    "AMOUNT_SHOWN",
+    "AMOUNT",
+    "ACCOUNT"
+  ],
+  "required_error_paths": [
+    "wrong-account",
+    "wrong-bank"
+  ],
+  "prompt": {
+    "plan_errors": [
+      "원본의 오류 화면도 진단 대상이다. 오류를 어디서 어떻게 알리고 어디로 돌아가게 할지는",
+      "계획의 `errors` 에 오류마다 하나씩 적는다."
+    ],
+    "plan_error_rule": [
+      "- `errors` 에는 위 \"원본의 오류 조건\" 의 id 를 하나도 빠뜨리지 않는다. `screen` 과",
+      "  `back_to` 는 `screens` 에 있는 이름이다. 오류만 보이는 화면을 따로 둔다면 그 화면도",
+      "  `screens` 에 넣는다."
+    ],
+    "notes": [
+      "- 시제품이므로 서버는 없다. 예금주 조회처럼 서버가 하던 조회는 원본에 있는 동작만, 원본이 보여 주는 값으로 흉내 낸다."
+    ],
+    "rules": [
+      "- 완료 화면에는 보낸 금액을 담는 `id=\"dn-amt\"` 요소가 있어야 하고, 그 텍스트는 `32,000` 처럼",
+      "  천 단위 쉼표 숫자여야 한다.",
+      "- 과업: **다른 사람의 계좌로 돈을 보낸다.** 받는 은행, 계좌번호, 금액은 사용자가",
+      "  그때그때 입력한다. 시제품이므로 잔액은 1,000,000원으로 둔다.",
+      "- **사용자가 입력해야 하는 값을 미리 채워 넣지 마라.** 계좌번호나 금액이 이미",
+      "  들어 있는 화면, 읽기 전용으로 값이 박힌 칸을 만들지 마라.",
+      "- **입력 화면을 생략하지 마라.** 계좌번호를 넣는 화면과 금액을 넣는 화면이 있어야 한다."
+    ],
+    "flow_example": [
+      "{",
+      "  \"name\": \"auto\",",
+      "  \"note\": \"한 줄 설명\",",
+      "  \"derived_from_original\": false,",
+      "  \"required_ids\": [\"phone\", \"dn-amt\", \"...\"],",
+      "  \"steps\": [",
+      "    {\"screen\": \"start\"},",
+      "    {\"screen\": \"who\", \"click\": \"[data-action='go-who']\"},",
+      "    {\"screen\": \"amount\", \"do\": [",
+      "      {\"type\": \"{ACCOUNT}\", \"key\": \"[data-action='acc-num'][data-v='%s']\"},",
+      "      {\"click\": \"#acc-next\"}",
+      "    ]},",
+      "    {\"screen\": \"done\", \"do\": [",
+      "      {\"repeat\": 4, \"click\": \"#pwpad [data-action='pw']\", \"wait\": 0.15}",
+      "    ]}",
+      "  ],",
+      "  \"expect\": {",
+      "    \"done\": [[\"#dn-amt\", \"{AMOUNT_SHOWN}\"]]",
+      "  },",
+      "  \"done_amount\": \"#dn-amt\",",
+      "  \"error_paths\": [",
+      "    {\"id\": \"<오류 id>\",",
+      "     \"from_step\": \"<갈라지는 곳: steps 의 screen 이름>\",",
+      "     \"inputs\": [{\"<동작>\": \"<steps 의 do 와 같은 형식, 잘못된 값은 자리표시자로>\"}],",
+      "     \"expect_screen\": \"<잘못된 입력 뒤에 있어야 할 화면 이름>\",",
+      "     \"expect_text_any\": [\"<알림 글에 들어 있는 낱말>\"],",
+      "     \"recover\": [{\"<동작>\": \"<되돌아가는 조작>\"}],",
+      "     \"back_to\": \"<되돌아간 뒤의 화면 이름>\"}",
+      "  ]",
+      "}"
+    ],
+    "flow_values": [
+      "- 치환 문자열: `{ACCOUNT}` = 110234567890, `{AMOUNT}` = 32000, `{AMOUNT_SHOWN}` = 32,000,",
+      "  `{BANK}` = 신한, `{NAME}` = 김철수.",
+      "  이 값들은 **검사기가 과업을 수행할 때 눌러 넣을 값**이다. 설계에 미리 채워 두라는",
+      "  뜻이 아니다. 사용자는 빈 화면에서 시작해 이 값을 직접 입력한다.",
+      "- `steps` 는 처음 보내는 계좌를 직접 입력하는 가장 긴 경로다. HTML 의 모든 화면은",
+      "  `steps` 나 `error_paths` (`expect_screen` · `back_to`) 중 하나가 지나가야 한다."
+    ],
+    "flow_errors": [
+      "- `error_paths` 에는 \"원본의 오류 조건\" 의 오류마다 하나씩 적는다. 검사기는 정답대로",
+      "  `from_step` 까지 간 뒤 `inputs` 를 실행하고, `expect_screen` 에서 새로 나타난 글을",
+      "  찾고, `recover` 를 실행해 `back_to` 에 있는지 본다. `inputs` 의 잘못된 값은 위의",
+      "  자리표시자로만 넣는다. 버튼을 꺼서 막는 설계라면 꺼진 버튼은 누르지 않는다 —",
+      "  `expect_screen` 은 그 화면 그대로이고, 새로 보인 이유 글이 오류 상태다.",
+      "- `back_to` 는 오류가 나타난 화면이거나 `steps` 에서 그보다 앞의 화면이다."
+    ],
+    "flow_done": [
+      "- `required_ids` 는 네 HTML 에 실제로 있는 id 만 적는다. `phone` 과 `dn-amt` 는 반드시 포함.",
+      "- `expect` 의 `done` 에는 반드시 `[\"#dn-amt\", \"{AMOUNT_SHOWN}\"]` 이 있어야 한다."
+    ]
+  }
 }

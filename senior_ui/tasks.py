@@ -17,6 +17,9 @@ r"""과제 정의 읽기. 과제 하나가 tasks/<이름>.json 하나다.
      "dialog_ok_values": ["AMOUNT_SHOWN", "AMOUNT", "ACCOUNT"],
      "required_error_paths": ["wrong-account", "wrong-bank"]}
 
+그 밖에 `prompt` 칸이 재구성 프롬프트의 과제 문단을 담는다 - 문서의
+`{{TASK_<칸>}}` 슬롯 하나에 줄 목록 하나 (restructure/prompt.py 의 _with_task).
+
 경로는 저장소 루트 기준이고 구분자는 '/' 다. 기본 과제는 이체다 - 과제를
 고르지 않은 실행은 전과 같아야 한다.
 """

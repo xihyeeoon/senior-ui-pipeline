@@ -41,8 +41,25 @@ def load_block(name, text=None):
     return m.group(1)
 
 
+TASK_SLOT = re.compile(r"\{\{TASK_([A-Z_]+)\}\}")
+
+
 def _with_task(name, task=None):
-    return load_block(name).replace("{{TASK}}", load_task(task)["description"])
+    """블록의 `{{TASK}}` 는 과제 설명으로, `{{TASK_<칸>}}` 은 과제 파일 prompt 의
+    그 칸(줄 목록)으로 채운다. 칸이 없는 슬롯이 남으면 멈춘다 - 빈 문자열로
+    두면 과제의 규칙 한 덩이가 말없이 프롬프트에서 사라진다."""
+    t = load_task(task)
+    text = load_block(name).replace("{{TASK}}", t["description"])
+    parts = t.get("prompt") or {}
+
+    def fill(m):
+        key = m.group(1).lower()
+        if key not in parts:
+            raise RuntimeError("과제 %s 의 prompt 에 %r 칸이 없다 (%s 의 {{TASK_%s}})"
+                               % (t["id"], key, PROMPT_FILE, m.group(1)))
+        v = parts[key]
+        return "\n".join(v) if isinstance(v, list) else str(v)
+    return TASK_SLOT.sub(fill, text)
 
 
 def load_template(task=None):
