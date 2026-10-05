@@ -161,3 +161,5 @@ flow_module = _audit.flow
 # 따로 보기 위해 내보낸다.
 from senior_ui.audit.checks import j_errors                  # noqa: E402
 from senior_ui.audit.context import AuditContext             # noqa: E402
+# 검사 B (표시 정확도). 과제가 정한 값으로 보는지 손으로 만든 스냅샷으로 본다.
+from senior_ui.audit.checks import b_display                 # noqa: E402

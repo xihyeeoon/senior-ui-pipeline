@@ -10,5 +10,7 @@
   "flow": "flows/original.json",
   "done_expect": [["#dn-amt", "{AMOUNT_SHOWN}"]],
   "required_truth": ["ACCOUNT", "AMOUNT", "BANK", "NAME"],
+  "keep_on_screen": {"NAME": "recipient name"},
+  "dialog_ok_values": ["AMOUNT_SHOWN", "AMOUNT", "ACCOUNT"],
   "required_error_paths": ["wrong-account", "wrong-bank"]
 }

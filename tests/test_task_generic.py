@@ -41,7 +41,9 @@ def demo_task(tmp_path, monkeypatch):
         "id": "demo", "description": ["demo"], "original": "inputs/original_bill.html",
         "flow": str(flow).replace(os.sep, "/"),
         "done_expect": [["#dn-x", "{AMOUNT_SHOWN}"]],
-        "required_truth": ["AMOUNT", "CODE"], "required_error_paths": []}),
+        "required_truth": ["AMOUNT", "CODE"], "required_error_paths": [],
+        "keep_on_screen": {"CODE": "code"},
+        "dialog_ok_values": ["AMOUNT_SHOWN", "AMOUNT", "CODE"]}),
         encoding="utf-8")
     monkeypatch.setattr(T, "TASKS_DIR", str(tasks))
     F._task_truth.clear()
@@ -105,3 +107,43 @@ def test_transfer_is_unchanged_without_a_task():
     flow = _api.load_flow(None)
     assert flow["done_amount"] == "#dn-amt"
     assert flow["task"] == "transfer"
+
+
+# --------------------------------------------------------------------- #
+# 2. 검사 B - 화면에서 사라지면 안 되는 값, 대화상자 속 숫자
+# --------------------------------------------------------------------- #
+def run_b(flow, orig_text, rep_text, dialogs=()):
+    orig = {"screens": {"done": {"text": orig_text}}, "truth": F.truth_of(flow)}
+    rep = {"screens": {"done": {"text": rep_text, "shown": []}},
+           "dialogs": list(dialogs)}
+    flow = dict(flow, expect={"done": []})
+    ctx = _api.AuditContext(orig=orig, rep=rep, orig_html="", rep_html="",
+                            flow=flow, derived=True, want=["done"], shared=[])
+    _api.b_display.run(ctx)
+    return ctx
+
+
+def test_b_watches_the_tasks_own_value(demo_task):
+    """고치기 전: truth 에 NAME 이 없는 과제는 검사 B 가 KeyError 로 멈췄다."""
+    flow = {"task": "demo"}
+    ctx = run_b(flow, "코드 77", "코드 없음")
+    assert [w["detail"] for w in ctx.warning] == \
+        ["code '77' no longer appears on this screen"]
+    assert run_b(flow, "코드 77", "코드 77").warning == []
+
+
+def test_b_dialog_numbers_follow_the_task(demo_task):
+    """고치기 전: 대화상자 속 숫자를 늘 ACCOUNT 와 견줬다 (공과금에는 없다)."""
+    ctx = run_b({"task": "demo"}, "", "",
+                dialogs=[{"type": "alert", "message": "77 / 500 / 9", "screen": "done"}])
+    assert ctx.fatal[0]["numbers"] == ["9"]
+
+
+def test_b_is_unchanged_for_transfer():
+    flow = {}
+    ctx = run_b(flow, "받는 분 김철수", "받는 분")
+    assert [w["detail"] for w in ctx.warning] == \
+        ["recipient name '김철수' no longer appears on this screen"]
+    ctx = run_b(flow, "", "", dialogs=[
+        {"type": "alert", "message": "32,000 110234567890 5", "screen": "done"}])
+    assert ctx.fatal[0]["numbers"] == ["5"]

@@ -13,6 +13,8 @@ r"""과제 정의 읽기. 과제 하나가 tasks/<이름>.json 하나다.
      "flow": "flows/original.json",
      "done_expect": [["#dn-amt", "{AMOUNT_SHOWN}"]],
      "required_truth": ["ACCOUNT", "AMOUNT", "BANK", "NAME"],
+     "keep_on_screen": {"NAME": "recipient name"},
+     "dialog_ok_values": ["AMOUNT_SHOWN", "AMOUNT", "ACCOUNT"],
      "required_error_paths": ["wrong-account", "wrong-bank"]}
 
 경로는 저장소 루트 기준이고 구분자는 '/' 다. 기본 과제는 이체다 - 과제를
@@ -27,8 +29,14 @@ from .config import ROOT, TASKS_DIR
 DEFAULT_TASK = "transfer"
 
 # 과제 파일에 꼭 있어야 할 칸. 빠진 칸을 다른 과제의 값으로 메우지 않는다.
+#
+#   keep_on_screen    원본 화면에 있던 그 값이 빌드 화면에서 사라지면 검사 B 가
+#                     경고한다. {truth 키: 경고에 쓸 이름}
+#   dialog_ok_values  대화상자가 말해도 되는 숫자 (truth 키). 그 밖의 숫자를
+#                     말하는 대화상자는 검사 B 가 그 숫자를 함께 적는다
 KEYS = ("id", "description", "original", "flow", "done_expect",
-        "required_truth", "required_error_paths")
+        "required_truth", "required_error_paths", "keep_on_screen",
+        "dialog_ok_values")
 
 
 def task_names():
