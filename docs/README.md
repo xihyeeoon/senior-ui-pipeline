@@ -142,6 +142,34 @@ LLM 이 쓴 것이라 다시 만들려면 API 비용이 들고 바이트까지 �
 이름은 `senior_ui/preserved.py` 한 곳에만 있다. API 없이 확인하려면
 `--mock preserved-all` / `preserved-some` / `preserved-none` 셋을 돌린다.
 
+### 오류 경로 (`error_paths`, 검사 J)
+
+원본에는 잘못된 입력에서 뜨는 오류가 둘 있다 — 계좌번호가 틀림(`wrong-account`),
+은행이 틀림(`wrong-bank`). 정답 경로만 걸으면 재설계에서 오류 처리가 통째로 빠져도
+보이지 않으므로, 흐름 파일에 오류 경로를 적고 검사기가 그것을 따로 걷는다.
+
+- **무엇이 오류인가는 과제가 정한다.** `flows/original.json` 의 `error_paths` 가
+  오류마다 `about` · `condition` · 쓰는 틀린 값(`uses`) · 알림 글로 인정할 단어
+  (`notice_any`)를 갖고, 틀린 값 자체는 `truth` 에 있다 (`ACCOUNT_WRONG` ·
+  `BANK_WRONG`). 프롬프트(`{{ERRORS}}`)에는 조건과 자리표시자 **이름** 만 들어간다.
+- **어떻게 알릴지는 모델이 정한다.** 모델의 흐름 명세는 오류마다 `from_step` ·
+  `inputs` · `expect_screen` · `recover` · `back_to` 를 적는다. 팝업이 아니어도,
+  같은 화면에서 바로 알려도, [다음] 을 끄고 이유를 보여도 된다.
+- **검사 J** 는 오류 경로마다 새 페이지에서 정답대로 `from_step` 까지 간 뒤 잘못된
+  입력을 넣는다. `expect_screen` 에 있고 새 글이 나타나야 하며(fatal), `recover`
+  뒤에 `back_to` 에 있어야 하고(fatal), `back_to` 는 오류가 나타난 화면이거나
+  그보다 앞이어야 한다(fatal). 새 글에 `notice_any` 단어가 없으면 warning 이다.
+  눌러 넣은 값이 화면에 되비친 것은 새 글로 세지 않는다.
+- 흐름에 오류 경로가 없으면 J 는 물러난다 — 옛 흐름(Run 1~4)의 판정은 그대로다.
+  재구성 루프는 과제의 오류 경로를 모두 요구한다 (빠지면 형식 검사에서 떨어진다).
+- 화면 덮기 규칙은 "모든 화면은 정답 경로나 오류 경로가 지나가야 한다" 다.
+- 통과한 실행의 `designer_brief.md` 에 오류 경로 표가 생기고, 걷기는 오류 상태를
+  `shots/attempt_N/audit_error_<id>.png` 로 남긴다.
+
+API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 않음 → 형식 검사
+실패)와 `--mock errors-unhandled` (적었지만 오류 처리가 없음 → 검사 J 실패)를
+돌린다. 나머지 다섯 mock 은 Run 1 빌드에 화면 안 오류 안내를 바꿔 끼운다.
+
 ### 빼도 되는 선택지 (`flows/allowed_removals.json`)
 
 검사 I 는 원본에 있던 선택지가 생성물에 없으면 fatal 을 낸다. 안전을 이유로
@@ -271,8 +299,8 @@ separate wrapper.
 
 | stage | checks | why |
 |---|---|---|
-| `wireframe` | A 과제 완주 · B 표시 정확성 · C 죽은 컨트롤 · F 언어 · I 선택지 보존 | contrast, layout, state colour and undefined classes are about detail nobody has filled in yet |
-| `styled` | A~I | everything |
+| `wireframe` | A 과제 완주 · B 표시 정확성 · C 죽은 컨트롤 · F 언어 · I 선택지 보존 · J 오류 경로 | contrast, layout, state colour and undefined classes are about detail nobody has filled in yet |
+| `styled` | A~J | everything |
 
 ```powershell
 .\.venv\Scripts\python.exe -m senior_ui.audit `
@@ -297,7 +325,7 @@ while working:
 |---|---|
 | 대시보드 | one row per build: passed, fatal, warning, screens, low-contrast before→after, flow |
 | 화면 비교 | 2-4 builds side by side at 390px, each with its own screen picker. Screen names differ between designs (original `account` vs Run 1 `accno`+`bank`), so nothing is auto-synced. A screenshot mode swaps the iframes for the png in `outputs/shots`, which needs no server and shows the state as captured. |
-| 검사 결과 | audits side by side, folded per check A-I. Findings link to that screen's screenshot; stood-down checks say why; the metric table is folded away because a count is not a grade. |
+| 검사 결과 | audits side by side, folded per check A-J. Findings link to that screen's screenshot; stood-down checks say why; the metric table is folded away because a count is not a grade. |
 | 변경 추적 | the changelog's changes with rule filters, and all 46 KB rules split by whether a table actually cites them |
 
 It reads one file, `outputs/index.json`, written by
