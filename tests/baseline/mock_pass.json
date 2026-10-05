@@ -47,6 +47,22 @@
         "prompt_template_sha256": "9a4646c4503ba1f183fc6edd0c2cd74aff257ead6e6194fc1a72aa871304a7e8"
       },
       "plan": "<run>/attempt_1.plan.json",
+      "calls": [
+        {
+          "stage": "plan",
+          "estimated_prompt": 11657,
+          "method": "tiktoken:o200k_base",
+          "max_tokens": 6000,
+          "usage": null
+        },
+        {
+          "stage": "generate",
+          "estimated_prompt": 13579,
+          "method": "tiktoken:o200k_base",
+          "max_tokens": 14000,
+          "usage": null
+        }
+      ],
       "plan_call": {
         "finish_reason": "stop",
         "usage": null,
@@ -113,5 +129,44 @@
       "screens": "9/9",
       "stopped_at": null
     }
-  ]
+  ],
+  "git": {
+    "commit": "<commit>",
+    "branch": "<branch>",
+    "dirty": "<dirty>",
+    "dirty_files": "<dirty_files>"
+  },
+  "tokens": {
+    "method": "tiktoken:o200k_base",
+    "by_stage": {
+      "plan": {
+        "calls": 1,
+        "estimated_prompt": 11657,
+        "max_tokens": 6000,
+        "prompt": null,
+        "completion": null
+      },
+      "generate": {
+        "calls": 1,
+        "estimated_prompt": 13579,
+        "max_tokens": 14000,
+        "prompt": null,
+        "completion": null
+      }
+    },
+    "total": {
+      "calls": 2,
+      "estimated_prompt": 25236,
+      "max_tokens": 20000,
+      "prompt": null,
+      "completion": null
+    },
+    "first_attempt": {
+      "calls": 2,
+      "estimated_prompt": 25236,
+      "max_tokens": 20000,
+      "prompt": null,
+      "completion": null
+    }
+  }
 }

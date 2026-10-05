@@ -68,9 +68,7 @@ from .loop import PLAN_MAX_TOKENS, run
 from .model import MODES, SEED, TEMPERATURE
 
 
-def main():
-    # 무엇이든 찍기 전에 맞춘다 (senior_ui/_cli.py).
-    setup_stdout()
+def build_parser():
     ap = argparse.ArgumentParser()
     ap.add_argument("--attempts", type=int, default=3,
                     help="두 예산의 기본값")
@@ -85,8 +83,10 @@ def main():
                     help="못박아 보낸다. 기본 %s - 재현에 가장 가깝다" % TEMPERATURE)
     ap.add_argument("--seed", type=int, default=SEED,
                     help="못박아 보낸다. 기본 %s" % SEED)
-    ap.add_argument("--max-tokens", type=int, default=16000,
-                    help="completion cap; the HTML alone is ~12k tokens")
+    ap.add_argument("--max-tokens", type=int, default=14000,
+                    help="생성 호출의 completion cap. 분당 한도는 입력에 이것을 더해 "
+                         "센다 - 생성 프롬프트(~15,000)에 16,000 을 붙이면 요청 하나가 "
+                         "30,000 을 넘는다")
     ap.add_argument("--plan-max-tokens", type=int, default=PLAN_MAX_TOKENS,
                     help="진단·계획 호출의 completion cap (JSON 하나)")
     ap.add_argument("--mock", choices=MODES, default=None,
@@ -95,9 +95,17 @@ def main():
     ap.add_argument("--original", default=ORIGINAL_FILE)
     ap.add_argument("--stage", choices=sorted(STAGES), default="styled",
                     help="검사 단계. wireframe 은 A·B·C·F·I 만 본다")
-    ap.add_argument("--delay", type=float, default=15.0,
-                    help="시도 사이 대기(초). 프롬프트가 커서 TPM 한도에 걸리기 쉽다")
-    return run(ap.parse_args())
+    ap.add_argument("--delay", type=float, default=60.0,
+                    help="모델 호출 사이 대기(초) - 진단·계획과 생성 사이, 시도와 "
+                         "시도 사이. 원본 HTML 이 두 호출에 모두 들어가서 같은 1분 "
+                         "안에 보내면 분당 한도(30,000)를 넘는다")
+    return ap
+
+
+def main():
+    # 무엇이든 찍기 전에 맞춘다 (senior_ui/_cli.py).
+    setup_stdout()
+    return run(build_parser().parse_args())
 
 
 if __name__ == "__main__":

@@ -30,6 +30,7 @@ from senior_ui.restructure import audit_call as _audit_call  # noqa: E402
 from senior_ui.restructure import loop as _loop              # noqa: E402
 from senior_ui.restructure import model as _model            # noqa: E402
 from senior_ui.restructure import plan as _plan              # noqa: E402
+from senior_ui.restructure import __main__ as _restructure_cli  # noqa: E402
 from senior_ui.restructure import preserve as _preserve      # noqa: E402
 from senior_ui.restructure import prompt as _prompt          # noqa: E402
 from senior_ui.restructure import reply as _reply            # noqa: E402
@@ -86,6 +87,9 @@ brief_failure = _prompt.brief_failure
 load_plan_template = _prompt.load_plan_template
 build_plan_prompt = _prompt.build_plan_prompt
 prompt_module = _prompt
+
+# ---- senior_ui/restructure/__main__.py (명령줄 기본값) ------------------ #
+restructure_parser = _restructure_cli.build_parser
 
 # ---- senior_ui/restructure/plan.py (진단·계획 · 일치 검사 · 반성) ------- #
 plan_module = _plan

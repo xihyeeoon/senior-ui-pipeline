@@ -7,6 +7,7 @@ mock_reply 가 여기 있다. 돌려주는 모양은 셋 다 같다:
 import io
 import json
 import os
+import re
 import time
 
 from senior_ui.config import FLOWS_DIR, OUTPUTS_DIR, RESULTS_DIR, ROOT, outputs_dir
@@ -93,11 +94,77 @@ def sdk_version():
         return None
 
 
+# --------------------------------------------------------------------------- #
+# 토큰 어림과 분당 한도
+# --------------------------------------------------------------------------- #
+# tiktoken 이 없을 때의 대비. 이 저장소의 원본 HTML 에서 잰 비율이다 (글자
+# 30,966 / o200k 토큰 10,546 = 2.94). 한글이 많은 글일수록 정확하다.
+CHARS_PER_TOKEN = 2.9
+
+
+def _encoder():
+    """gpt-4o 계열의 토크나이저. tiktoken 이 없거나 사전을 받지 못하면 None."""
+    try:
+        import tiktoken
+        return tiktoken.get_encoding("o200k_base")
+    except Exception:                                # 설치 안 됨 · 오프라인
+        return None
+
+
+def estimate_tokens(text):
+    """`(토큰 수, 어떻게 셌는가)`. 보내기 전에 로그에 남기려는 것이다."""
+    enc = _encoder()
+    if enc is not None:
+        return len(enc.encode(text or "", disallowed_special=())), "tiktoken:o200k_base"
+    return int(round(len(text or "") / CHARS_PER_TOKEN)), "chars/%s" % CHARS_PER_TOKEN
+
+
+# 요청 하나가 분당 한도보다 크면 429 의 문구가 "Request too large … Limit N,
+# Requested M" 이다. 분당 한도는 입력에 max_tokens 를 더해 세므로, 재시도처럼
+# 입력이 2만을 넘는 프롬프트에 14,000 을 붙이면 이렇게 된다. 기다려도 풀리지
+# 않는다 - 줄여서 보내야 한다.
+TOO_LARGE = re.compile(r"Request too large.*?Limit (\d+), Requested (\d+)", re.S)
+# 줄여도 이보다 작으면 보내지 않는다. 답(HTML + 흐름 명세)이 이보다 짧은 적이
+# 없다 - 자동 Run 4·5 의 답이 3,300~3,500 토큰이었다. 더 줄이면 잘린 답만 온다.
+MIN_COMPLETION = 4000
+# 한도에 꼭 맞추지 않고 남겨 두는 몫. 서버가 세는 입력이 우리 어림과 조금 다르다.
+MARGIN = 500
+
+
+def shrink_for_minute(message, cap, log=None):
+    """요청 하나가 분당 한도보다 크다는 429 이면 줄인 max_tokens 를, 아니면 None.
+
+    줄여도 MIN_COMPLETION 에 못 미치면 RateLimited 를 바로 올린다 - 기다리는
+    동안 풀릴 일이 아니므로 백오프를 다 쓰고 멈추는 것은 몇 분을 버릴 뿐이다.
+    """
+    m = TOO_LARGE.search(message or "")
+    if not m:
+        return None
+    limit, requested = int(m.group(1)), int(m.group(2))
+    if requested <= limit:
+        return None
+    smaller = cap - (requested - limit) - MARGIN
+    if smaller < MIN_COMPLETION:
+        raise RateLimited(
+            "요청 하나가 분당 한도보다 크다 (한도 %d, 요청 %d). max_tokens 를 %d 까지 "
+            "줄여야 하는데 답에 필요한 %d 보다 작다 - 기다려도 풀리지 않는다. 입력을 "
+            "줄이거나 한도가 큰 계정이 필요하다." % (limit, requested, smaller,
+                                                MIN_COMPLETION))
+    if log:
+        log("429 — 요청 하나가 분당 한도보다 크다 (한도 %d, 요청 %d). max_tokens 를 "
+            "%d → %d 로 줄여 바로 다시 보낸다" % (limit, requested, cap, smaller))
+    return smaller
+
+
 def call_model(model, prompt, max_tokens, log=None, backoff=(20, 45, 90, 180),
                temperature=TEMPERATURE, seed=SEED):
     """시도마다 직전 HTML 전체를 다시 보내므로 프롬프트가 크다. 이 계정은 전에
     TPM 30,000 한도에 걸린 적이 있으므로 429 를 지수적으로 기다렸다 다시 친다.
     그래도 안 되면 RateLimited 를 올려 설계 실패와 섞이지 않게 한다.
+
+    429 가운데 "요청 하나가 분당 한도보다 크다" 는 기다려서 풀리지 않으므로
+    max_tokens 를 줄여 바로 다시 보낸다 (shrink_for_minute). 둘 다 시도 실패로
+    세지 않는다 - 루프는 RateLimited 를 받으면 예산을 깎지 않고 멈춘다.
 
     429 가 아닌 실패는 ApiRejected 와 InfraFailed 로 갈라 올린다 - 어느 쪽인지는
     여기서만 알 수 있다 (openai 의 예외 종류). 루프는 그 종류만 보고 판단한다."""
@@ -110,29 +177,34 @@ def call_model(model, prompt, max_tokens, log=None, backoff=(20, 45, 90, 180),
     except OpenAIError as e:
         raise ApiRejected("%s: %s" % (type(e).__name__, e))
     t0 = time.time()
-    for i, wait in enumerate((0,) + tuple(backoff)):
-        if wait:
-            if log:
-                log("429 — %d초 기다렸다 다시 시도 (%d/%d)" % (wait, i, len(backoff)))
-            time.sleep(wait)
+    waits, cap = list(backoff), max_tokens
+    while True:
         try:
             resp = client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
-                max_completion_tokens=max_tokens,
+                max_completion_tokens=cap,
                 temperature=temperature,
                 seed=seed,
             )
             break
         except RateLimitError as e:
-            last = e
+            smaller = shrink_for_minute(str(e), cap, log)
+            if smaller is not None:
+                cap = smaller                    # 기다리지 않고 바로 다시 보낸다
+                continue
+            if not waits:
+                raise RateLimited(str(e))
+            wait = waits.pop(0)
+            if log:
+                log("429 — %d초 기다렸다 다시 시도 (%d/%d)"
+                    % (wait, len(backoff) - len(waits), len(backoff)))
+            time.sleep(wait)
         except (AuthenticationError, PermissionDeniedError, BadRequestError,
                 NotFoundError) as e:
             raise ApiRejected("%s: %s" % (type(e).__name__, e))
         except APIConnectionError as e:          # APITimeoutError 도 이 아래다
             raise InfraFailed("%s: %s" % (type(e).__name__, e))
-    else:
-        raise RateLimited(str(last))
     choice = resp.choices[0]
     usage = getattr(resp, "usage", None)
     return {
@@ -148,6 +220,8 @@ def call_model(model, prompt, max_tokens, log=None, backoff=(20, 45, 90, 180),
         "seed": seed,
         "model": getattr(resp, "model", None),
         "system_fingerprint": getattr(resp, "system_fingerprint", None),
+        # 실제로 보낸 길이 제한. 분당 한도에 맞추느라 줄였으면 요청한 값과 다르다.
+        "max_tokens": cap,
     }
 
 

@@ -3,9 +3,12 @@
 #   playwright  검사기가 페이지를 걷는다 (senior_ui/audit/drive.py)
 #               설치 후 브라우저도 받아야 한다: python -m playwright install chromium
 #   openai      재구성 루프가 모델을 부른다 (senior_ui/restructure/__main__.py)
+#   tiktoken    호출마다 보내기 전에 토큰을 어림해 로그에 남긴다
+#               (senior_ui/restructure/model.py). 없으면 글자 수로 어림한다
 #   pytest      회귀 테스트 (tests/)
 #
 # 서버·세션 저장·색인은 전부 표준 라이브러리로 돈다.
 playwright==1.62.0
 openai==3.8.0
 pytest==9.1.1
+tiktoken==0.14.0

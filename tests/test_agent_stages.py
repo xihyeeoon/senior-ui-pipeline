@@ -465,3 +465,218 @@ def test_the_mock_retry_answer_starts_with_a_reflection():
     assert problems == [] and refl["plan_changes"] == []
     html, _flow, _t = _api.parse_reply(text)            # 흐름은 여전히 마지막 json
     assert "<html" in html.lower()
+
+
+# ===================================================================== #
+# 7. 실행 기록 - 커밋 · 작업 트리 · 토큰
+# ===================================================================== #
+CLEAN = {"commit": "a" * 40, "branch": "feat/x", "dirty": False, "dirty_files": []}
+DIRTY = {"commit": "b" * 40, "branch": "feat/x", "dirty": True,
+         "dirty_files": ["senior_ui/restructure/loop.py"]}
+
+
+def run_log(summary):
+    return io.open(os.path.join(summary["run_dir"], "run.log"),
+                   encoding="utf-8").read().splitlines()
+
+
+def test_git_state_reads_this_repo():
+    got = loop.git_state()
+    assert re.match(r"^[0-9a-f]{40}$", got["commit"])
+    assert isinstance(got["dirty"], bool)
+    assert isinstance(got["dirty_files"], list)
+
+
+def test_the_summary_records_the_commit_and_a_clean_tree(fake_run_env, out_root):
+    fake_run_env.setattr(loop, "git_state", lambda: dict(CLEAN))
+    _code, summary = run_loop(fake_run_env, out_root, always_reply, attempts=1)
+    assert summary["git"] == CLEAN
+    assert "경고" not in run_log(summary)[0]
+
+
+def test_a_dirty_tree_is_warned_on_the_first_line_and_still_runs(fake_run_env, out_root):
+    """자동 실행 7회가 모두 커밋되지 않은 코드에서 돌아 조건을 되짚을 수 없었다."""
+    fake_run_env.setattr(loop, "git_state", lambda: dict(DIRTY))
+    code, summary = run_loop(fake_run_env, out_root, always_reply, attempts=1)
+    first = run_log(summary)[0]
+    assert "경고" in first and "깨끗하지 않다" in first and "b" * 7 in first
+    assert summary["git"]["dirty"] is True
+    assert summary["passed"] is True and code == 0
+
+
+def test_no_git_is_recorded_as_unknown(monkeypatch):
+    def boom(*a, **kw):
+        raise OSError("git 없음")
+    monkeypatch.setattr(loop.subprocess, "run", boom)
+    got = loop.git_state()
+    assert got["commit"] is None and got["dirty"] is None
+
+
+def test_tokens_are_estimated_with_tiktoken():
+    n, method = model.estimate_tokens("이체 과업을 끝낼 수 있도록 다시 설계하라")
+    assert n > 0 and method.startswith("tiktoken")
+
+
+def test_without_tiktoken_the_estimate_falls_back_to_characters(monkeypatch):
+    monkeypatch.setattr(model, "_encoder", lambda: None)
+    n, method = model.estimate_tokens("가" * 290)
+    assert n == 100 and method.startswith("chars")
+
+
+def usage_reply(prompt_tokens, completion_tokens):
+    def call(model_, prompt, *a, **kw):
+        if is_plan_prompt(prompt):
+            text, u = GOOD_PLAN_REPLY, {"prompt": 900, "completion": 100}
+        else:
+            text, u = GOOD_REPLY, {"prompt": prompt_tokens,
+                                   "completion": completion_tokens}
+        return {"text": text, "finish_reason": "stop", "seconds": 0.0, "usage": u}
+    return call
+
+
+def test_the_summary_records_tokens_by_stage(fake_run_env, out_root):
+    reports = [failing_report(), passing_report()]
+    fake_run_env.setattr(loop, "run_audit", lambda *a, **kw: reports.pop(0))
+    _code, summary = run_loop(fake_run_env, out_root, usage_reply(1000, 300),
+                              plan_reply=False, attempts=2)
+    t = summary["tokens"]
+    assert set(t["by_stage"]) == {"plan", "generate", "retry"}
+    assert t["by_stage"]["plan"]["prompt"] == 900
+    assert t["by_stage"]["generate"]["completion"] == 300
+    assert t["by_stage"]["retry"]["calls"] == 1
+    assert all(s["estimated_prompt"] > 0 for s in t["by_stage"].values())
+    assert t["total"]["prompt"] == 900 + 1000 + 1000
+    # 첫 시도 = 진단·계획 + 생성
+    first = t["first_attempt"]
+    assert first["prompt"] == 1900 and first["completion"] == 400
+    assert first["estimated_prompt"] == (t["by_stage"]["plan"]["estimated_prompt"]
+                                         + t["by_stage"]["generate"]["estimated_prompt"])
+
+
+def test_every_call_logs_its_estimate_before_it_is_sent(fake_run_env, out_root):
+    _code, summary = run_loop(fake_run_env, out_root, always_reply, attempts=1,
+                              max_tokens=14000, plan_max_tokens=6000)
+    lines = [l for l in run_log(summary) if "tokens:" in l]
+    assert any("plan" in l and "6000" in l for l in lines)
+    assert any("generate" in l and "14000" in l for l in lines)
+    assert summary["attempts"][0]["calls"][0]["stage"] == "plan"
+
+
+def test_mock_usage_stays_unknown_not_zero(fake_run_env, out_root):
+    _code, summary = run_loop(fake_run_env, out_root, always_reply, attempts=1)
+    assert summary["tokens"]["by_stage"]["generate"]["prompt"] is None
+
+
+def test_the_loop_waits_between_the_two_calls(fake_run_env, out_root):
+    slept = []
+    fake_run_env.setattr(loop.time, "sleep", slept.append)
+    run_loop(fake_run_env, out_root, always_reply, attempts=1, delay=60)
+    assert slept == [60]
+
+
+def test_the_new_defaults():
+    args = _api.restructure_parser().parse_args([])
+    assert args.delay == 60
+    assert args.max_tokens == 14000
+    assert args.plan_max_tokens == 6000
+
+
+# ===================================================================== #
+# 8. 분당 한도 (429) - 재시도 프롬프트가 커서 생긴다
+# ===================================================================== #
+def fake_openai(monkeypatch, outcomes):
+    """openai.OpenAI 를 바꿔 끼운다. outcomes 의 각 항목은 429 의 문구이거나
+    "ok". 보낸 max_completion_tokens 를 차례로 돌려준다."""
+    import openai
+    sent = []
+
+    def make_429(msg):
+        e = openai.RateLimitError.__new__(openai.RateLimitError)
+        Exception.__init__(e, msg)
+        return e
+
+    class Resp:
+        def __init__(self):
+            msg = type("M", (), {"content": GOOD_REPLY})()
+            self.choices = [type("C", (), {"message": msg, "finish_reason": "stop"})()]
+            self.usage = type("U", (), {"prompt_tokens": 25000,
+                                        "completion_tokens": 3000})()
+            self.model, self.system_fingerprint = "gpt-4o-x", "fp"
+
+    class Completions:
+        def create(self, **kw):
+            sent.append(kw["max_completion_tokens"])
+            out = outcomes.pop(0)
+            if out != "ok":
+                raise make_429(out)
+            return Resp()
+
+    class Client:
+        def __init__(self):
+            self.chat = type("Ch", (), {"completions": Completions()})()
+
+    monkeypatch.setattr(openai, "OpenAI", Client)
+    return sent
+
+
+TOO_LARGE = ("Error code: 429 - Request too large for gpt-4o in organization org-x "
+             "on tokens per min (TPM): Limit 30000, Requested 40000. The input or "
+             "output tokens must be reduced in order to run successfully.")
+BUSY = ("Error code: 429 - Rate limit reached for gpt-4o on tokens per min (TPM): "
+        "Limit 30000, Used 25000, Requested 14000. Please try again in 18s.")
+
+
+def test_a_busy_minute_is_waited_out_not_counted(monkeypatch):
+    """보통의 429 는 기다렸다 다시 보낸다. 시도 실패가 아니다."""
+    slept = []
+    monkeypatch.setattr(model.time, "sleep", slept.append)
+    sent = fake_openai(monkeypatch, [BUSY, BUSY, "ok"])
+    reply = model.call_model("gpt-4o", "p", 14000, backoff=(20, 45, 90))
+    assert reply["text"] == GOOD_REPLY
+    assert slept == [20, 45]
+    assert sent == [14000, 14000, 14000]
+
+
+def test_a_request_too_large_for_the_minute_shrinks_its_cap(monkeypatch):
+    """프롬프트 + max_tokens 가 분당 한도 하나를 넘으면 기다려도 풀리지 않는다.
+    재시도는 입력이 2만~2만 6천이라 14,000 을 더하면 그렇게 된다."""
+    slept, lines = [], []
+    monkeypatch.setattr(model.time, "sleep", slept.append)
+    sent = fake_openai(monkeypatch,
+                       [TOO_LARGE.replace("Requested 40000", "Requested 38000"), "ok"])
+    reply = model.call_model("gpt-4o", "p", 14000, log=lines.append,
+                             backoff=(20, 45))
+    assert reply["text"] == GOOD_REPLY
+    assert slept == []                                   # 기다리지 않았다
+    assert sent == [14000, 14000 - 8000 - model.MARGIN]
+    assert reply["max_tokens"] == sent[1]
+    assert any("분당 한도" in l for l in lines)
+
+
+def test_a_request_that_cannot_fit_at_all_stops_at_once(monkeypatch):
+    slept = []
+    monkeypatch.setattr(model.time, "sleep", slept.append)
+    huge = TOO_LARGE.replace("Requested 40000", "Requested 50000")
+    fake_openai(monkeypatch, [huge])
+    with pytest.raises(model.RateLimited) as e:
+        model.call_model("gpt-4o", "p", 14000, backoff=(20, 45, 90, 180))
+    assert slept == []
+    assert "분당 한도" in str(e.value)
+
+
+def test_a_rate_limit_on_a_retry_does_not_spend_the_budget(fake_run_env, out_root):
+    """재시도에서 429 로 멈춰도 설계 실패로 세지 않는다 - 예산은 그대로, 종료 2."""
+    fake_run_env.setattr(loop, "run_audit", lambda *a, **kw: failing_report())
+    calls = []
+
+    def call(*a, **kw):
+        calls.append(1)
+        if len(calls) == 1:
+            return always_reply()
+        raise model.RateLimited("429 Too Many Requests")
+
+    code, summary = run_loop(fake_run_env, out_root, call, attempts=3)
+    assert summary["stopped_reason"] == "rate_limit" and code == 2
+    assert summary["budget"]["audit_used"] == 1           # 첫 시도의 검사 실패뿐
+    assert summary["budget"]["format_used"] == 0
+    assert summary["attempts"][-1]["stage"] == "rate_limit"

@@ -24,6 +24,7 @@ import io
 import json
 import os
 import shutil
+import subprocess
 import sys
 import time
 
@@ -33,7 +34,8 @@ from senior_ui.devserver import ensure_server
 
 from .audit_call import load_allowed_removals, run_audit
 from .model import (TEMPERATURE, SEED, ApiRejected, InfraFailed, RateLimited,
-                    call_model, load_env, mock_plan_reply, mock_reply, sdk_version)
+                    call_model, estimate_tokens, load_env, mock_plan_reply, mock_reply,
+                    sdk_version)
 from .plan import (PlanProblems, apply_changes, match_problems, parse_plan,
                    parse_reflection, plan_report, screens_in, unaddressed)
 from .preserve import inject, names_read, preserved_data
@@ -127,6 +129,10 @@ class Run:
         self.plan_error = None
         # 이번 생성 프롬프트가 반성을 요청했는가 (재시도일 때).
         self.asked_reflection = False
+        # 이 시도의 모델 호출들, 그리고 실행 전체의 (시도 번호, 호출) 목록.
+        # 단계별 토큰은 끝에 이것으로 센다 (tally_tokens).
+        self.calls = []
+        self.all_calls = []
         # 못박아 두는 값. 지정하지 않으면 공급자의 기본값이 쓰이고 그 값은
         # 기록에 남지 않는다 - 나중에 "그때 무엇이 달랐나" 를 물을 수 없다.
         self.temperature = getattr(args, "temperature", TEMPERATURE)
@@ -154,7 +160,8 @@ class Run:
                         "repro": repro(template, temperature=self.temperature,
                                        seed=self.seed),
                         "attempts": [], "passed": False, "final": None,
-                        "budget": {}, "stopped_reason": None, "trend": []}
+                        "budget": {}, "stopped_reason": None, "trend": [],
+                        "git": None, "tokens": None}
 
 
 # --------------------------------------------------------------------------- #
@@ -215,6 +222,74 @@ def _dump(obj, path):
     json.dump(obj, io.open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
 
 
+def git_state():
+    """실행 당시의 커밋과 작업 트리가 깨끗했는지.
+
+    자동 실행 7회가 모두 커밋되지 않은 코드에서 돌아서, 나중에 그 조건을
+    되짚을 수 없었다 (docs/variance-notes.md). 커밋 해시만으로는 부족하다 -
+    작업 트리가 깨끗하지 않으면 그 해시가 실행된 코드를 가리키지 않는다.
+
+    git 이 없거나 저장소가 아니면 모두 None 이다. 모른다는 것도 기록이다.
+    """
+    def git(*args):
+        return subprocess.run(["git"] + list(args), cwd=ROOT, capture_output=True,
+                              text=True, encoding="utf-8", errors="replace",
+                              check=True).stdout
+    try:
+        commit = git("rev-parse", "HEAD").strip()
+        branch = git("rev-parse", "--abbrev-ref", "HEAD").strip()
+        status = git("status", "--porcelain")
+    except (OSError, subprocess.CalledProcessError):
+        return {"commit": None, "branch": None, "dirty": None, "dirty_files": []}
+    files = [line[3:] for line in status.splitlines() if line.strip()]
+    return {"commit": commit, "branch": branch, "dirty": bool(files),
+            "dirty_files": files[:50]}
+
+
+def dirty_warning(git):
+    """run.log 첫 줄에 쓰는 경고. 깨끗하면 None. 실행은 막지 않는다."""
+    if not git or not git.get("dirty"):
+        return None
+    files = git.get("dirty_files") or []
+    return ("경고: 작업 트리가 깨끗하지 않다 — 커밋 %s 에 없는 변경 %d건 위에서 "
+            "돈다 (%s%s). 이 실행의 조건을 커밋 해시만으로 되짚을 수 없다."
+            % ((git.get("commit") or "?")[:12], len(files), ", ".join(files[:5]),
+               " …" if len(files) > 5 else ""))
+
+
+def _sum(calls, key):
+    """호출들의 usage 합. 하나도 모르면 None - 0 과 "모른다" 는 다르다."""
+    vals = [(c.get("usage") or {}).get(key) for c in calls]
+    vals = [v for v in vals if v is not None]
+    return sum(vals) if vals else None
+
+
+def _tally(calls):
+    return {"calls": len(calls),
+            "estimated_prompt": sum(c["estimated_prompt"] for c in calls),
+            "max_tokens": sum(c["max_tokens"] for c in calls),
+            "prompt": _sum(calls, "prompt"),
+            "completion": _sum(calls, "completion")}
+
+
+def tally_tokens(r):
+    """단계별 · 전체 · 첫 시도의 토큰. 예상(보내기 전 어림)과 실측(usage)을 함께.
+
+    단계는 셋이다 - plan (진단·계획), generate (첫 생성), retry (반성 + 생성).
+    """
+    calls = [c for _n, c in r.all_calls]
+    if not calls:
+        return None
+    stages = {}
+    for c in calls:
+        stages.setdefault(c["stage"], []).append(c)
+    first = [c for n, c in r.all_calls if n == 1]
+    return {"method": calls[0].get("method"),
+            "by_stage": {k: _tally(v) for k, v in stages.items()},
+            "total": _tally(calls),
+            "first_attempt": _tally(first) if first else None}
+
+
 # --------------------------------------------------------------------------- #
 # 한 번의 시도
 # --------------------------------------------------------------------------- #
@@ -236,7 +311,7 @@ def request_plan(r, n, p):
                                        " (with retry block)" if r.plan_error else ""))
     reply, outcome = ask_model(r, n, p, prompt,
                                getattr(r.args, "plan_max_tokens", PLAN_MAX_TOKENS),
-                               mock_plan_reply)
+                               mock_plan_reply, "plan")
     if reply is None:
         return None, outcome
     io.open(p + ".plan_response.txt", "w", encoding="utf-8",
@@ -253,7 +328,8 @@ def request_plan(r, n, p):
     except PlanProblems as e:
         r.log("plan: %d problem(s): %s" % (len(e.problems),
                                            " | ".join(e.problems)[:300]))
-        entry = dict(call, n=n, stage="plan", passed=False, fatal=len(e.problems))
+        entry = dict(call, n=n, stage="plan", passed=False, fatal=len(e.problems),
+                     calls=list(r.calls))
         _dump(plan_report(e.problems), p + ".audit.json")
         r.summary["attempts"].append(entry)
         r.plan_error = list(e.problems)
@@ -280,11 +356,22 @@ def request_plan(r, n, p):
     return call, None
 
 
-def ask_model(r, n, p, prompt, max_tokens, mock):
+def ask_model(r, n, p, prompt, max_tokens, mock, stage):
     """모델에 한 번 묻는다. 진단·계획과 생성이 같은 길을 쓴다.
+
+    보내기 전에 예상 토큰을 로그에 남긴다. 분당 한도는 입력에 max_tokens 를
+    더해 세므로 그 합도 적는다 - 한도에 걸렸을 때 어느 호출이 얼마였는지를
+    로그만 보고 알 수 있어야 한다.
 
     돌려주는 것은 (reply, outcome). reply 가 None 이면 이 시도가 모델 호출에서
     끝난 것이고 outcome 이 다음에 할 일이다."""
+    est, method = estimate_tokens(prompt)
+    call = {"stage": stage, "estimated_prompt": est, "method": method,
+            "max_tokens": max_tokens, "usage": None}
+    r.calls.append(call)
+    r.all_calls.append((n, call))
+    r.log("tokens: %s 예상 입력 %d (%s) + max_tokens %d = 분당 한도 계산 %d"
+          % (stage, est, method, max_tokens, est + max_tokens))
     if r.args.mock:
         reply = mock(r.args.mock)
     else:
@@ -297,7 +384,8 @@ def ask_model(r, n, p, prompt, max_tokens, mock):
             r.summary["stopped_reason"] = "rate_limit"
             _dump(failure_report("INFRA", "인프라 한도로 중단: %s" % e), p + ".audit.json")
             r.summary["attempts"].append({"n": n, "stage": "rate_limit",
-                                          "passed": False, "error": str(e)})
+                                          "passed": False, "error": str(e),
+                                          "calls": list(r.calls)})
             return None, STOP
         except ApiRejected as e:
             # 키·권한·요청 자체가 틀렸다. 다시 보내도 같은 답이 오므로, 여기서
@@ -307,7 +395,8 @@ def ask_model(r, n, p, prompt, max_tokens, mock):
             _dump(failure_report("INFRA", "API 가 요청을 거절했다: %s" % e),
                   p + ".audit.json")
             r.summary["attempts"].append({"n": n, "stage": "api_rejected",
-                                          "passed": False, "error": str(e)})
+                                          "passed": False, "error": str(e),
+                                          "calls": list(r.calls)})
             return None, STOP
         except Exception as e:                       # 연결 실패·타임아웃·그 밖
             # 설계 실패가 아니므로 형식·검사 예산은 건드리지 않는다. 대신 인프라
@@ -323,13 +412,18 @@ def ask_model(r, n, p, prompt, max_tokens, mock):
             _dump(failure_report("INFRA", "모델 호출 실패: %s: %s" % (kind, e)),
                   p + ".audit.json")
             r.summary["attempts"].append({"n": n, "stage": "call", "passed": False,
-                                          "error": "%s: %s" % (kind, e)})
+                                          "error": "%s: %s" % (kind, e),
+                                          "calls": list(r.calls)})
             if r.budget.out_of("infra"):
                 r.log("인프라 재시도 예산 소진 (%d회) — 모델에 닿지 못했다"
                       % r.budget.infra_used)
                 r.summary["stopped_reason"] = "infra_exhausted"
                 return None, STOP
             return None, GO_ON
+    call["usage"] = reply.get("usage")
+    if reply.get("max_tokens") not in (None, max_tokens):
+        # 분당 한도에 맞추느라 줄여서 보냈다 (model.shrink_for_minute)
+        call["max_tokens_sent"] = reply["max_tokens"]
     if reply.get("model") or reply.get("system_fingerprint"):
         r.log("model: 응답 %s (fingerprint %s)"
               % (reply.get("model"), reply.get("system_fingerprint")))
@@ -353,7 +447,8 @@ def request_reply(r, n, p):
 
     reflect = r.asked_reflection
     reply, outcome = ask_model(r, n, p, prompt, r.args.max_tokens,
-                               lambda mode: mock_reply(mode, reflect=reflect))
+                               lambda mode: mock_reply(mode, reflect=reflect),
+                               "retry" if reflect else "generate")
     if reply is None:
         return None, outcome
     io.open(p + ".response.txt", "w", encoding="utf-8", newline="\n").write(reply["text"])
@@ -640,6 +735,7 @@ def attempt(r, n):
     r.log("---- attempt %d (형식 %d/%d · 검사 %d/%d)"
           % (n, b.format_used, b.budget["format"], b.audit_used, b.budget["audit"]))
     p = os.path.join(r.run_dir, "attempt_%d" % n)
+    r.calls = []
 
     plan_call = None
     if r.plan is None:
@@ -659,7 +755,7 @@ def attempt(r, n):
         return outcome
     entry = {"n": n, "finish_reason": reply["finish_reason"], "usage": reply["usage"],
              "seconds": reply["seconds"], "repro": repro(r.template, reply),
-             "plan": p + ".plan.json"}
+             "plan": p + ".plan.json", "calls": r.calls}
     if plan_call:
         entry["plan_call"] = plan_call
     build, outcome = check_reply(r, p, entry, reply, n)
@@ -683,6 +779,23 @@ def log_trend(r):
         r.log("  %4s | %5s | %4s | %4s | %-7s | %s"
               % (t["attempt"], t["fatal_total"], t["fatal_root"],
                  t["fatal_derived"], t["screens"], t["stopped_at"] or "-"))
+
+
+def log_tokens(r):
+    """단계별 토큰을 한 줄씩. 예상은 늘 있고, 실측은 API 가 알려 준 것만."""
+    t = r.summary.get("tokens")
+    if not t:
+        return
+    r.log("")
+    r.log("토큰 (예상 입력 / 실측 입력 / 실측 출력, %s)" % t["method"])
+    rows = [(k, v) for k, v in t["by_stage"].items()] + [("total", t["total"])]
+    if t["first_attempt"]:
+        rows.append(("첫 시도", t["first_attempt"]))
+    for name, v in rows:
+        r.log("  %-8s 호출 %d | %6d | %6s | %6s"
+              % (name, v["calls"], v["estimated_prompt"],
+                 "-" if v["prompt"] is None else v["prompt"],
+                 "-" if v["completion"] is None else v["completion"]))
 
 
 # outputs/ 안에서 "지금 쓰는 것" 을 가리키는 이름들. 실행 이름이 붙은 사본은
@@ -771,6 +884,12 @@ def run(args):
                            stamp + ("-mock-" + args.mock if args.mock else ""))
     os.makedirs(run_dir, exist_ok=True)
     log = make_logger(os.path.join(run_dir, "run.log"))
+    # 첫 줄. 작업 트리가 깨끗하지 않으면 그 사실이 run.log 를 여는 사람에게 가장
+    # 먼저 보여야 한다. 실행은 막지 않는다.
+    git = git_state()
+    warning = dirty_warning(git)
+    if warning:
+        log(warning)
 
     try:
         load_env()
@@ -778,7 +897,7 @@ def run(args):
         log("cannot start: %s" % e)
         print("cannot start: %s" % e, file=sys.stderr)
         _dump({"run_dir": run_dir, "passed": False, "attempts": [],
-               "stopped_reason": "cannot_start", "error": str(e)},
+               "stopped_reason": "cannot_start", "error": str(e), "git": git},
               os.path.join(run_dir, "summary.json"))
         log("summary: %s" % os.path.join(run_dir, "summary.json"))
         return 2
@@ -797,7 +916,7 @@ def run(args):
         log("cannot start: %s" % e)
         print("cannot start: %s" % e, file=sys.stderr)
         _dump({"run_dir": run_dir, "passed": False, "attempts": [],
-               "stopped_reason": "cannot_start", "error": str(e)},
+               "stopped_reason": "cannot_start", "error": str(e), "git": git},
               os.path.join(run_dir, "summary.json"))
         log("summary: %s" % os.path.join(run_dir, "summary.json"))
         return 2
@@ -806,6 +925,7 @@ def run(args):
         % (run_dir, model, args.attempts, args.stage, args.mock, orig_url))
     r = Run(args, log, run_dir, model, template, original_html, orig_url,
             plan_template=plan_template)
+    r.summary["git"] = git
     r.allowed_removals = allowed
     if allowed:
         log("선택지 제거 허용 (연구자 파일): %s" % ", ".join(sorted(allowed)))
@@ -859,6 +979,8 @@ def run(args):
         # 사용자가 끊는다) 남아야 한다 - 밖에 두면 그런 실행은 run.log 조각
         # 말고는 아무것도 남기지 않는다.
         r.summary["budget"] = r.budget.as_dict()
+        r.summary["tokens"] = tally_tokens(r)
+        log_tokens(r)
         copy_final(r)
         _dump(r.summary, os.path.join(run_dir, "summary.json"))
         log("summary: %s" % os.path.join(run_dir, "summary.json"))

@@ -360,6 +360,10 @@ def strip_volatile(summary):
         for k, v in list(a.items()):
             if isinstance(v, str):
                 a[k] = fix(v)
+    # 커밋과 작업 트리는 기준값을 뽑을 때마다 다르다. 자리만 남긴다 - 값은
+    # 비교하지 않되 "기록이 있다" 는 것은 비교한다.
+    if isinstance(s.get("git"), dict):
+        s["git"] = {k: "<%s>" % k for k in s["git"]}
     for key in ("final", "plan"):
         for k, v in list((s.get(key) or {}).items()):
             if isinstance(v, str):
