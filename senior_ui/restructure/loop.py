@@ -575,8 +575,9 @@ def check_reply(r, p, entry, reply, n=None):
         dropped = drop_declared_removals(r, flow)
         if dropped:
             entry["choices_removed_dropped"] = dropped
-        # 과제가 정한 오류 경로를 모두 적었는지도 본다 (과제의 원본 흐름).
-        problems = validate_flow(flow, html, r.errors)
+        # 과제가 정한 오류 경로를 모두 적었는지, 완료 화면에서 과제의 값을
+        # 확인하는지도 본다 (과제 파일 · 과제의 원본 흐름).
+        problems = validate_flow(flow, html, r.errors, r.task["done_expect"])
     except FlowShape as e:
         # 타입이 틀린 흐름 명세. 답의 형식 문제(PARSE)가 아니라 FLOW 문제다.
         r.log("flow: %d problem(s): %s" % (len(e.problems),

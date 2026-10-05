@@ -194,6 +194,24 @@ def test_the_loop_walks_the_original_with_the_tasks_flow(fake_run_env, out_root)
     assert seen[0] == (None, "bill")
 
 
+def test_a_bill_reply_passes_the_format_check(fake_run_env, out_root):  # noqa: F811
+    """고치기 전: 이체의 오류 경로 둘(wrong-account · wrong-bank)과 #dn-amt 가
+    없다는 형식 오류로 떨어졌다. 계획도 plan.errors 에 이체 오류가 없다고
+    떨어졌다."""
+    code, summary = bill_run(fake_run_env, out_root)
+    assert summary["attempts"][-1]["stage"] == "audit", summary["attempts"]
+    assert code == 0
+
+
+def test_a_bill_reply_still_needs_the_bill_done_ids(fake_run_env, out_root):  # noqa: F811
+    code, summary = bill_run(fake_run_env, out_root, call=always_reply)
+    report = json.load(io.open(summary["attempts"][-1]["html"].replace(
+        ".html", ".audit.json"), encoding="utf-8"))
+    details = [f["detail"] for f in report["fatal"]]
+    assert "required_ids 에 'dn-paid' 이 없다" in details
+    assert 'expect.done 에 ["#dn-eno", "{ENO}"] 이 없다' in details
+
+
 def test_the_bill_prompts_carry_the_bill_task_and_no_transfer_errors(
         fake_run_env, out_root):  # noqa: F811
     """고치기 전: 오류 조건 절이 늘 이체의 두 오류였다."""
@@ -209,6 +227,15 @@ def test_the_bill_prompts_carry_the_bill_task_and_no_transfer_errors(
         assert _api.load_task("bill")["description"] in text
         assert "## 원본의 오류 조건" not in text
         assert "wrong-account" not in text
+
+
+def test_validate_flow_reads_the_done_values_from_the_task():
+    assert _api.validate_flow(dict(BILL_FLOW), BILL_HTML, [],
+                              _api.load_task("bill")["done_expect"]) == []
+    # 과제를 주지 않으면 이체 - 문구도 전과 같다
+    got = _api.validate_flow(dict(BILL_FLOW), BILL_HTML)
+    assert "required_ids 에 'dn-amt' 이 없다" in got
+    assert 'expect.done 에 ["#dn-amt", "{AMOUNT_SHOWN}"] 이 없다' in got
 
 
 def test_required_errors_follow_the_task():
