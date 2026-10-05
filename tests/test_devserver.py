@@ -93,3 +93,47 @@ def test_이미_떠_있으면_새로_띄우지_않는다():
         lines = []
         assert _api.ensure_server(lines.append, port=port) is None
         assert any("reusing" in x for x in lines), lines
+
+
+# --------------------------------------------------------------------- #
+# 테스트가 띄우는 서버도 LAN 에 열리지 않는다
+# --------------------------------------------------------------------- #
+# 기준값 캡처 · 브라우저 테스트가 띄우는 http.server 도 같은 약속을 지켜야 한다.
+# 고치기 전: capture_baseline · test_drive · test_audit_accuracy 가 --bind 없이
+# 띄워 0.0.0.0 에 열렸다.
+def test_테스트가_띄우는_http_server_는_모두_루프백에만_묶인다():
+    import glob
+    import re
+    here = os.path.dirname(os.path.abspath(__file__))
+    bad = []
+    for path in sorted(glob.glob(os.path.join(here, "*.py"))):
+        src = io.open(path, encoding="utf-8").read()
+        for m in re.finditer(r'"http\.server"', src):
+            call = src[m.start(): src.find("]", m.start()) + 1]   # 명령 목록 끝까지
+            if '"--bind", "127.0.0.1"' not in call and "server_cmd" not in src[m.start() - 200: m.start()]:
+                bad.append("%s:%d" % (os.path.basename(path), src.count("\n", 0, m.start()) + 1))
+    assert bad == [], "http.server 를 --bind 127.0.0.1 없이 띄운다: %s" % ", ".join(bad)
+
+
+def test_기준값_캡처의_서버는_LAN_에_열리지_않는다():
+    import subprocess
+    import sys
+    import time
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import capture_baseline as C
+    ip = lan_ip()
+    if ip == "127.0.0.1":
+        pytest.skip("LAN 주소가 없는 PC")
+    port = free_port()
+    proc = subprocess.Popen(C.server_cmd(port), stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL)
+    try:
+        for _ in range(50):
+            if reachable("127.0.0.1", port):
+                break
+            time.sleep(0.1)
+        assert reachable("127.0.0.1", port)
+        assert not reachable(ip, port), "LAN 주소로 들어올 수 있다 - %s:%d" % (ip, port)
+    finally:
+        proc.kill()
+        proc.wait(timeout=10)

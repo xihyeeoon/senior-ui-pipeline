@@ -15,7 +15,6 @@ import asyncio
 import io
 import os
 import subprocess
-import sys
 import time
 
 import pytest
@@ -40,9 +39,8 @@ def server():
     if C.listening(C.PORT):
         yield None
         return
-    proc = subprocess.Popen(
-        [sys.executable, "-m", "http.server", str(C.PORT), "--directory", ROOT],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    proc = subprocess.Popen(C.server_cmd(C.PORT),
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     for _ in range(50):
         if C.listening(C.PORT):
             break

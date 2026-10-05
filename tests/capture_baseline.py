@@ -91,6 +91,15 @@ def listening(port):
         return s.connect_ex(("127.0.0.1", port)) == 0
 
 
+def server_cmd(port):
+    """테스트가 띄우는 http.server 의 명령. 루프백에만 묶는다 - 아무것도 주지
+    않으면 0.0.0.0 에 열려, 같은 망의 누구나 .envs 를 포함한 프로젝트 루트를
+    받아 갈 수 있다 (senior_ui/devserver.py 와 같은 약속). 기준값 캡처와 브라우저
+    테스트가 모두 이것을 쓴다."""
+    return [sys.executable, "-m", "http.server", str(port), "--bind", "127.0.0.1",
+            "--directory", ROOT]
+
+
 def start_server():
     """프로젝트 루트를 :3003 에 띄운다. 이미 떠 있으면 멈춘다 - 남이 띄운 서버가
     무엇을 서빙하는지 알 수 없고, 기준값은 서빙 내용에 전적으로 달려 있다."""
@@ -101,9 +110,8 @@ def start_server():
             "  그대로 쓰면 기준값이 무엇을 기준으로 한 것인지 알 수 없게 됩니다.\n"
             "  그 서버를 끄고 다시 실행하세요 (확인: netstat -ano | findstr :%d)."
             % (PORT, PORT))
-    proc = subprocess.Popen(
-        [sys.executable, "-m", "http.server", str(PORT), "--directory", ROOT],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    proc = subprocess.Popen(server_cmd(PORT),
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     for _ in range(50):
         if listening(PORT):
             say("서버: http.server :%d 시작 (pid %d)" % (PORT, proc.pid))
