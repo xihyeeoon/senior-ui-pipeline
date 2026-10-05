@@ -544,7 +544,7 @@ def test_the_audit_compares_against_the_same_original(driven_urls, monkeypatch,
     seen = {}
 
     def spy(orig_snapshot, orig_html, html_path, flow_path, url, shots, stage,
-            original_url=None):
+            original_url=None, allowed_removals=None):
         seen["url"] = original_url
         return passing_report()
 
@@ -787,3 +787,94 @@ def test_a_mock_run_survives_a_cp949_console(out_root):
     assert "UnicodeEncodeError" not in (p.stderr or ""), p.stderr[-2000:]
     assert p.returncode in (0, 1), p.stderr[-2000:]
     assert " summary: " in (p.stdout or "")
+
+
+# ===================================================================== #
+# 11. "의도한 제거" 선언은 모델이 쓸 수 없다
+# ===================================================================== #
+REMOVED_FLOW = dict(GOOD_FLOW, choices_removed={
+    "pick-bank": {"values": ["나은행", "다은행"], "reason": "화면을 줄이려고 뺐다"}})
+
+
+def one_missing_choice(**flow_kw):
+    """원본에 세 개짜리 선택지가 있고 빌드에는 하나만 있다 -> 검사 I 가 본다.
+
+    스냅샷 만드는 helper 는 test_audit_bugs 의 것을 그대로 쓴다. 검사 I 를
+    보는 입력이 두 파일에서 갈라지면 안 된다.
+    """
+    import test_audit_bugs as AB
+    orig = AB.snap({"start": AB.row("start", choices={
+        "pick-bank": ["가은행", "나은행", "다은행"]})})
+    rep = AB.snap({"start": AB.done_row("start")})
+    return _api.audit(orig, rep, "", "<html>가은행</html>",
+                      AB.flow(["start"], **flow_kw))
+
+
+def test_check_I_catches_values_the_model_declared_removed(fake_run_env, out_root):
+    """모델이 쓴 choices_removed 는 검사 I 를 피해 가는 장치가 된다.
+
+    검사 I 는 흐름 명세의 choices_removed 를 읽어 그 값을 누락으로 세지 않는다
+    (4-1 에서 더한 것이다). 그 선언은 연구자가 하는 것인데, 재구성 루프에서는
+    흐름 명세를 모델이 쓴다 - 모델이 스스로 "일부러 뺐다" 고 적으면 검사가
+    꺼진다.
+    """
+    seen = {}
+
+    def spy(orig_snapshot, orig_html, html_path, flow_path, url, shots, stage,
+            original_url=None, allowed_removals=None):
+        seen["flow"] = json.load(io.open(flow_path, encoding="utf-8"))
+        return passing_report()
+
+    fake_run_env.setattr(loop, "run_audit", spy)
+    call = replies(reply_text(GOOD_HTML, REMOVED_FLOW))
+    _code, summary = run_loop(fake_run_env, out_root, call, attempts=1)
+
+    # 검사기에 가는 흐름 명세에는 모델이 쓴 선언이 없어야 한다
+    assert "choices_removed" not in seen["flow"]
+    assert summary["attempts"][0]["choices_removed_dropped"] == ["pick-bank"]
+
+
+def test_dropping_the_declaration_is_written_down(fake_run_env, out_root):
+    """조용히 지우면 "검사가 통과했다" 와 "선언을 지웠다" 를 구분할 수 없다."""
+    call = replies(reply_text(GOOD_HTML, REMOVED_FLOW))
+    _code, summary = run_loop(fake_run_env, out_root, call, attempts=1)
+    log = io.open(os.path.join(summary["run_dir"], "run.log"),
+                  encoding="utf-8").read()
+    assert "choices_removed" in log
+    assert "pick-bank" in log
+
+
+def test_a_flow_without_the_declaration_is_untouched(fake_run_env, out_root):
+    _code, summary = run_loop(fake_run_env, out_root, always_reply, attempts=1)
+    assert "choices_removed_dropped" not in summary["attempts"][0]
+
+
+def test_the_allowed_list_comes_from_the_researchers_file():
+    """허용하는 제거는 연구자가 관리하는 파일 하나에서만 읽는다."""
+    allowed = _api.load_allowed_removals("transfer")
+    assert allowed == {}          # 지금은 비어 있다 - 무엇을 넣을지는 연구자가 정한다
+
+
+def test_the_allowed_list_is_merged_just_before_the_audit(tmp_path):
+    """합치는 자리는 검사 직전이다 - 모델이 쓴 흐름 명세에 섞이지 않는다."""
+    flow = {"name": "auto", "steps": [{"screen": "start"}]}
+    path = tmp_path / "flow.json"
+    path.write_text(json.dumps(flow), encoding="utf-8")
+    allowed = {"quick": {"values": ["all"], "reason": "연구자가 허용했다"}}
+
+    merged = _api.merge_allowed_removals(_api.load_flow(str(path)), allowed)
+    assert merged["choices_removed"] == allowed
+
+
+def test_the_declared_values_are_still_counted_when_nobody_allowed_them():
+    """모델이 쓴 선언이 지워졌으면, 그 값은 그대로 누락이다."""
+    report = one_missing_choice()
+    assert [f["check"] for f in report["fatal"]] == ["I"]
+    assert report["metrics"]["choice_values_missing"]["pick-bank"] == ["나은행", "다은행"]
+
+
+def test_a_researcher_allowed_removal_is_still_honoured():
+    """장치 자체를 없애는 것이 아니다. 연구자가 적은 것은 그대로 빠진다."""
+    report = one_missing_choice(choices_removed={
+        "pick-bank": {"values": ["나은행", "다은행"], "reason": "연구자가 허용했다"}})
+    assert report["fatal"] == []

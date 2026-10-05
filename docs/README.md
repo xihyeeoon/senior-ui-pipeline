@@ -37,7 +37,7 @@ LLM 을 부르는 것은 재구성 루프 하나뿐이고, 키는 `.envs` 의 `O
 |---|---|---|
 | `senior_ui/` | 이 프로젝트에서 쓴 코드 전부 — 재구성 루프, 검사기, 뷰어 색인, 실험 서버. 모두 `python -m senior_ui.…` 로 실행한다. | yes |
 | `web/` | 브라우저에서 열리는 것 — `dashboard.html`(내부 확인용 4화면), `session.html`(HTML 실험 장치 - 본실험에 쓰지 않는다. `--session` 을 줄 때만 서빙된다). | yes |
-| `flows/` | 흐름 파일. 검사기가 화면을 어떤 순서로 어떻게 몰고 다니는지의 명세. `original.json` 과 재구성본별 `restructured`·`run2`·`run3`·`run4`. | yes |
+| `flows/` | 흐름 파일. 검사기가 화면을 어떤 순서로 어떻게 몰고 다니는지의 명세. `original.json` 과 재구성본별 `restructured`·`run2`·`run3`·`run4`. `allowed_removals.json` 은 그것들과 다르다 — 과제별로 "빼도 되는 선택지" 를 적는 곳이고, **연구자만** 손으로 고친다 (아래 참고). | yes |
 | `inputs/` | 파이프라인이 읽는 것. `original_transfer.html` 이 8화면 이체 시제품이고 모든 갈래가 여기서 출발한다. `*.png` 는 실제 SOL 캡처라 추적하지 않는다 (실명이 보인다). | html 만 |
 | `kb/` | 재구성본 사후 대조용 규칙 46개. 생성에는 쓰지 않는다. | yes |
 | `results/` | 남겨야 할 증거. 재구성본 html, 그 검사 JSON, 스크린샷, 자동 실행 폴더 사본. `python -m senior_ui.collect_results` 가 `outputs/` 에서 복사해 온다. | **yes** |
@@ -63,14 +63,16 @@ LLM 이 쓴 것이라 다시 만들려면 API 비용이 들고 바이트까지 �
 되먹임, 통과하거나 예산이 끝날 때까지:
 
 ```powershell
-$env:PYTHONUTF8 = "1"
 .\.venv\Scripts\python.exe -m senior_ui.restructure --stage wireframe
 .\.venv\Scripts\python.exe -m senior_ui.restructure --mock pass    # API 없이 확인
 ```
 
-루프만 `PYTHONUTF8=1` 이 필요하다. 로그를 찍는 쪽이 stdout 을 UTF-8 로 맞추지
-않아서, cp949 콘솔에서는 마지막 요약을 찍다가 `UnicodeEncodeError` 로 죽는다.
-다른 도구는 스스로 맞추므로 필요 없다.
+`PYTHONUTF8=1` 은 더 이상 필요 없다. 모든 명령줄이 맨 앞에서
+`senior_ui._cli.setup_stdout()` 을 불러 stdout 을 UTF-8 로 맞춘다.
+
+종료 코드는 `0` = 통과한 빌드가 있다, `1` = 전부 실패, `2` = 아예 돌지 못했다
+(레이트 리밋 · API 가 요청을 거절함 · 인프라 예산 소진 · 시작 자체를 못 함).
+떨어진 빌드는 다시 만들고, 돌지 못한 실행은 다시 만들 것이 없다.
 
 한 실행의 모든 것이 `outputs/restructure_auto/<타임스탬프>/` 에 남는다 — 보낸
 프롬프트 전문, 받은 답 전문, 시도별 html·흐름·검사 결과, 화면별 스크린샷,
@@ -94,6 +96,30 @@ $env:PYTHONUTF8 = "1"
 .\.venv\Scripts\python.exe -m senior_ui.experiment.server             # 대시보드 서버 (또는 시작.bat)
 .\.venv\Scripts\python.exe -m senior_ui.experiment.report             # 세션 집계
 ```
+
+### 빼도 되는 선택지 (`flows/allowed_removals.json`)
+
+검사 I 는 원본에 있던 선택지가 생성물에 없으면 fatal 을 낸다. 안전을 이유로
+일부러 뺀 것까지 세면 고칠 수 없는 fatal 이 루프에 계속 남으므로, 흐름 파일의
+`choices_removed` 로 "일부러 뺐다" 를 선언할 수 있다.
+
+그 선언은 **연구자의 판단**이다. 그런데 재구성 루프에서는 흐름 명세를 모델이
+쓴다 — 모델이 스스로 `choices_removed` 를 적으면 자기가 뺀 선택지를 자기가
+면제해 검사 I 를 피해 간다. 그래서 루프는 모델이 쓴 `choices_removed` 를 지우고
+(지웠다는 사실은 `run.log` 와 `summary.json` 의 시도 기록에 남는다), 허용하는
+제거는 이 파일 하나에서만 읽어 **검사 직전에** 흐름에 합친다.
+
+```json
+{
+  "transfer": {
+    "quick": {"values": ["all"], "reason": "왜 빼도 되는지 — 반드시 적는다"}
+  }
+}
+```
+
+지금은 비어 있다 (`{"transfer": {}}`). 무엇을 넣을지는 연구자가 정한다. 모양이
+틀린 파일은 조용히 무시되지 않고 실행이 멈춘다 — 적어 두었는데 무시되면
+연구자는 적었다고 믿고 결과는 다르게 나온다.
 
 ## The auditor
 

@@ -26,7 +26,7 @@ from senior_ui import audit as A
 from senior_ui.config import OUTPUTS_ENV, ROOT, inside_root, outputs_dir, url_for
 from senior_ui.devserver import ensure_server
 
-from .audit_call import run_audit
+from .audit_call import load_allowed_removals, run_audit
 from .model import (TEMPERATURE, SEED, ApiRejected, InfraFailed, RateLimited,
                     call_model, load_env, mock_reply, sdk_version)
 from .prompt import build_prompt, choices_block, load_template, one_line, retry_block
@@ -107,6 +107,8 @@ class Run:
         self.temperature = getattr(args, "temperature", TEMPERATURE)
         self.seed = getattr(args, "seed", SEED)
         self.choices = ""
+        # 연구자가 관리하는 "빼도 되는 선택지" 목록. 검사 직전에 흐름에 합친다.
+        self.allowed_removals = {}
         self.orig_snapshot = None
         self.budget = Budget(
             args.format_attempts if args.format_attempts is not None else args.attempts,
@@ -254,6 +256,29 @@ def request_reply(r, n, p):
     return reply, None
 
 
+def drop_declared_removals(r, flow):
+    """모델이 쓴 choices_removed 를 지운다. 지운 action 이름을 돌려준다.
+
+    검사 I 는 흐름 명세의 choices_removed 를 읽어 그 값을 누락으로 세지 않는다.
+    그 선언은 "연구자가 안전을 이유로 뺐다" 는 뜻인데, 여기서는 흐름 명세를
+    모델이 쓴다 - 모델이 스스로 그것을 적으면 자기가 뺀 선택지를 자기가 면제해
+    검사 I 를 피해 간다.
+
+    허용하는 제거는 연구자가 관리하는 파일에서만 온다 (audit_call). 그 목록은
+    검사 직전에 합쳐지므로, 여기서 지우는 것은 모델의 말뿐이다.
+
+    조용히 지우지 않는다. 남기지 않으면 "모델이 적지 않았다" 와 "적었는데
+    지웠다" 를 구분할 수 없고, 모델이 검사를 피하려 했다는 사실 자체가 결과다.
+    """
+    spec = flow.pop("choices_removed", None)
+    if not spec:
+        return []
+    names = sorted(spec) if isinstance(spec, dict) else [str(spec)]
+    r.log("flow: 모델이 쓴 choices_removed 를 지웠다 (%s). 허용하는 제거는 "
+          "flows/allowed_removals.json 에서만 읽는다." % ", ".join(names))
+    return names
+
+
 def check_reply(r, p, entry, reply):
     """답을 HTML + 흐름 명세로 가르고 모양을 본다. 파일로도 남긴다.
 
@@ -267,6 +292,9 @@ def check_reply(r, p, entry, reply):
         html, flow, flow_text = parse_reply(reply["text"])
         flow.setdefault("name", "auto")
         flow["derived_from_original"] = False
+        dropped = drop_declared_removals(r, flow)
+        if dropped:
+            entry["choices_removed_dropped"] = dropped
         problems = validate_flow(flow, html)
     except FlowShape as e:
         # 타입이 틀린 흐름 명세. 답의 형식 문제(PARSE)가 아니라 FLOW 문제다.
@@ -346,7 +374,8 @@ def _drive_audit(r, n, build):
     try:
         return run_audit(r.orig_snapshot, r.original_html, build["html_path"],
                          build["flow_path"], url_for(rel), shots, r.args.stage,
-                         original_url=r.original_url)
+                         original_url=r.original_url,
+                         allowed_removals=r.allowed_removals)
     except Exception as e:                           # a flow the audit cannot drive
         r.log("audit: crashed: %s: %s" % (type(e).__name__, e))
         return failure_report("AUDIT", "검사기가 흐름 명세를 실행하지 못했다: %s: %s"
@@ -519,6 +548,7 @@ def run(args):
         template = load_template()
         original_html = io.open(args.original, encoding="utf-8").read()
         orig_url = original_url(args.original)
+        allowed = load_allowed_removals()
     except (OSError, RuntimeError) as e:
         log("cannot start: %s" % e)
         print("cannot start: %s" % e, file=sys.stderr)
@@ -531,6 +561,9 @@ def run(args):
     log("run: %s | model=%s | attempts=%d | stage=%s | mock=%s | original=%s"
         % (run_dir, model, args.attempts, args.stage, args.mock, orig_url))
     r = Run(args, log, run_dir, model, template, original_html, orig_url)
+    r.allowed_removals = allowed
+    if allowed:
+        log("선택지 제거 허용 (연구자 파일): %s" % ", ".join(sorted(allowed)))
     server = None
     try:
         # 띄우지 못했거나, 떠 있는 것이 이 저장소를 서빙하지 않는다. 둘 다

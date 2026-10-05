@@ -26,6 +26,7 @@ from senior_ui.audit import core as _audit_core              # noqa: E402
 from senior_ui.audit import __main__ as _audit_cli           # noqa: E402
 from senior_ui.audit import stage as _audit_stage            # noqa: E402
 from senior_ui.audit import report as _audit_report          # noqa: E402
+from senior_ui.restructure import audit_call as _audit_call  # noqa: E402
 from senior_ui.restructure import loop as _loop              # noqa: E402
 from senior_ui.restructure import model as _model            # noqa: E402
 from senior_ui.restructure import prompt as _prompt          # noqa: E402
@@ -84,6 +85,11 @@ model_module = _model
 # 버그 재현 테스트는 단계 함수를 하나씩 부르고 루프 안의 이름을 바꿔 끼우므로
 # 모듈째로 내보낸다.
 loop_module = _loop
+
+# ---- senior_ui/restructure/audit_call.py -------------------------------- #
+# 허용하는 제거 목록을 읽고 검사 직전에 합치는 곳.
+load_allowed_removals = _audit_call.load_allowed_removals
+merge_allowed_removals = _audit_call.merge_allowed_removals
 
 # ---- senior_ui/devserver.py · senior_ui/config.py ---------------------- #
 listening = _devserver.listening
