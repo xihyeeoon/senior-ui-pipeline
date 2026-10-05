@@ -168,8 +168,16 @@ def test_first_prompt_matches_baseline():
     블록이 모두 제자리에 들어갔는지를 한 번에 못박는다."""
     want = load_text("prompt", "attempt_1.txt")
     choices = _api.choices_block(orig_snapshot(), original_html())
-    got = _api.build_prompt(_api.load_template(), original_html(), "", choices)
+    got = _api.build_prompt(_api.load_template(), original_html(), "", choices,
+                            C.prompt_plan())
     assert got == want
+
+
+def test_plan_prompt_matches_baseline():
+    """진단·계획 프롬프트 전문."""
+    want = load_text("prompt", "plan.txt")
+    choices = _api.choices_block(orig_snapshot(), original_html())
+    assert C.plan_prompt(original_html(), choices) == want
 
 
 def test_retry_prompt_matches_baseline():
@@ -178,19 +186,21 @@ def test_retry_prompt_matches_baseline():
     want = load_text("prompt", "retry_%s.txt" % case)
     retry = load_text("retry_block", "%s.txt" % case)
     choices = _api.choices_block(orig_snapshot(), original_html())
-    got = _api.build_prompt(_api.load_template(), original_html(), retry, choices)
+    got = _api.build_prompt(_api.load_template(), original_html(), retry, choices,
+                            C.prompt_plan())
     assert got == want
 
 
 def test_prompt_slots_are_all_filled():
-    """계약: 템플릿의 세 슬롯이 하나도 남지 않아야 한다. 슬롯 이름이 바뀌면
+    """계약: 템플릿의 네 슬롯이 하나도 남지 않아야 한다. 슬롯 이름이 바뀌면
     build_prompt 는 조용히 아무것도 치환하지 않으므로 전문 비교만으로는
     "기준값도 같이 다시 뽑으면" 통과해 버린다."""
     template = _api.load_template()
-    for slot in ("{{ORIGINAL_HTML}}", "{{RETRY_BLOCK}}", "{{CHOICES}}"):
+    slots = ("{{ORIGINAL_HTML}}", "{{RETRY_BLOCK}}", "{{CHOICES}}", "{{PLAN}}")
+    for slot in slots:
         assert slot in template, "템플릿에 %s 슬롯이 없습니다" % slot
     got = load_text("prompt", "attempt_1.txt")
-    for slot in ("{{ORIGINAL_HTML}}", "{{RETRY_BLOCK}}", "{{CHOICES}}"):
+    for slot in slots + ("{{TASK}}",):
         assert slot not in got
 
 

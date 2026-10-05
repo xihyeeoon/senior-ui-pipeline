@@ -64,7 +64,7 @@ from senior_ui._cli import setup_stdout
 from senior_ui.audit.stage import STAGES
 from senior_ui.config import ORIGINAL_FILE
 
-from .loop import run
+from .loop import PLAN_MAX_TOKENS, run
 from .model import MODES, SEED, TEMPERATURE
 
 
@@ -87,6 +87,8 @@ def main():
                     help="못박아 보낸다. 기본 %s" % SEED)
     ap.add_argument("--max-tokens", type=int, default=16000,
                     help="completion cap; the HTML alone is ~12k tokens")
+    ap.add_argument("--plan-max-tokens", type=int, default=PLAN_MAX_TOKENS,
+                    help="진단·계획 호출의 completion cap (JSON 하나)")
     ap.add_argument("--mock", choices=MODES, default=None,
                     help="API 없이 Run 1 을 되읽는다. 모드마다 은행 목록 "
                          "한 줄이 다르다 - model.MOCKS 참고")

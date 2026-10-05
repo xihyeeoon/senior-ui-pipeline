@@ -100,6 +100,7 @@ def fake_run_env(monkeypatch, out_root):
     monkeypatch.setattr(loop, "choices_block", lambda snap, html: "")
     monkeypatch.setattr(loop, "load_template", lambda: "TEMPLATE {{ORIGINAL_HTML}} "
                                                        "{{RETRY_BLOCK}} {{CHOICES}}")
+    monkeypatch.setattr(loop, "load_plan_template", lambda: PLAN_TEMPLATE)
     monkeypatch.setattr(loop, "run_audit",
                         lambda *a, **kw: passing_report())
     return monkeypatch
@@ -111,9 +112,32 @@ def run_dirs(out_root):
     return [os.path.join(d, n) for n in sorted(os.listdir(d))]
 
 
-def run_loop(monkeypatch, out_root, call_model, **kw):
-    """`call_model` 을 바꿔 끼우고 루프를 한 번 돌린다. (종료 코드, summary)."""
-    monkeypatch.setattr(loop, "call_model", call_model)
+# 진단·계획 프롬프트의 대역. 이것으로 시작하는 프롬프트가 진단·계획 호출이다.
+PLAN_TEMPLATE = ("PLAN_TEMPLATE {{ORIGINAL_HTML}} {{RETRY_BLOCK}} {{CHOICES}} "
+                 "{{ORIGINAL_SCREENS}}")
+
+
+def is_plan_prompt(prompt):
+    return prompt.startswith("PLAN_TEMPLATE")
+
+
+def run_loop(monkeypatch, out_root, call_model, plan_reply=None, **kw):
+    """`call_model` 을 바꿔 끼우고 루프를 한 번 돌린다. (종료 코드, summary).
+
+    진단·계획 호출에는 GOOD_PLAN_REPLY 로 답한다 - 이 파일의 테스트 대부분은
+    생성 단계를 보고, 그 앞에 계획이 서 있기만 하면 된다. 진단·계획 호출까지
+    `call_model` 이 받게 하려면 plan_reply=False 를 준다."""
+    if plan_reply is False:
+        fake = call_model
+    else:
+        text = plan_reply or GOOD_PLAN_REPLY
+
+        def fake(model_, prompt, *a, **k):
+            if is_plan_prompt(prompt):
+                return {"text": text, "finish_reason": "stop", "seconds": 0.0,
+                        "usage": None}
+            return call_model(model_, prompt, *a, **k)
+    monkeypatch.setattr(loop, "call_model", fake)
     code = loop.run(make_args(out_root, **kw))
     last = run_dirs(out_root)[-1]
     summary = json.load(io.open(os.path.join(last, "summary.json"),
@@ -143,6 +167,18 @@ GOOD_FLOW = {"name": "auto", "required_ids": ["phone", "dn-amt"],
              "expect": {"done": [["#dn-amt", "{AMOUNT_SHOWN}"]]}}
 
 GOOD_REPLY = reply_text(GOOD_HTML, GOOD_FLOW)
+
+# GOOD_HTML 에 맞는 진단·계획. from 은 실제 원본(inputs/original_transfer.html)
+# 의 화면 이름이다 - 루프는 --original 의 파일을 읽는다.
+GOOD_DIAGNOSIS = [{"id": "D1", "screen": "home", "element": "이체 버튼",
+                   "problem": "작아서 못 찾는다", "evidence": "카드 안의 작은 버튼"}]
+GOOD_PLAN = {"screens": [{"name": "start", "purpose": "시작", "from": ["home"]},
+                         {"name": "done", "purpose": "끝", "from": ["done"]}],
+             "changes": [{"id": "C1", "what": "버튼을 키운다", "why": "찾게",
+                          "addresses": ["D1"], "from_screens": ["home"],
+                          "to_screens": ["start"]}]}
+GOOD_PLAN_REPLY = "```json\n%s\n```\n" % json.dumps(
+    {"diagnosis": GOOD_DIAGNOSIS, "plan": GOOD_PLAN}, ensure_ascii=False)
 
 
 def always_reply(*a, **kw):
@@ -550,7 +586,10 @@ def test_the_audit_compares_against_the_same_original(driven_urls, monkeypatch,
 
     monkeypatch.setattr(loop, "run_audit", spy)
     other = os.path.join(ROOT, "results", "restructured_transfer.html")
-    run_loop(monkeypatch, out_root, always_reply, attempts=1, original=other)
+    # 계획의 from 은 그 원본의 화면 이름이어야 한다 - 다른 원본이면 이름도 다르다.
+    plan = GOOD_PLAN_REPLY.replace('"home"', '"start"')
+    run_loop(monkeypatch, out_root, always_reply, attempts=1, original=other,
+             plan_reply=plan)
     assert seen["url"].endswith("/results/restructured_transfer.html")
 
 

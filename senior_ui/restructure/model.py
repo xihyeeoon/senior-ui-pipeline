@@ -237,6 +237,86 @@ def mock_build(mode):
     return html
 
 
+# --------------------------------------------------------------------------- #
+# mock 의 진단·계획
+# --------------------------------------------------------------------------- #
+# Run 1 빌드에 맞춘 진단과 계획. 화면은 그 빌드의 data-screen 아홉 개 그대로다 -
+# 계획과 생성물이 어긋나면 일치 검사에서 떨어지므로, mock 이 생성 단계까지 가려면
+# 계획이 빌드와 맞아야 한다. 내용은 docs/restructure-changelog.md 에서 옮겼다.
+# 다섯 모드가 같은 계획을 쓴다 - 모드는 생성 답의 은행 목록 한 줄에서만 다르다.
+MOCK_DIAGNOSIS = [
+    {"id": "D1", "screen": "home", "element": "이체 입구",
+     "problem": "이체 버튼이 첫 카드 안의 작은 버튼 하나라 시작점을 찾지 못한다",
+     "evidence": "home 에 카드·블록 8개와 탭바 5개가 있고 이체는 그 중 하나의 작은 버튼"},
+    {"id": "D2", "screen": "recipient", "element": "받는 사람 목록",
+     "problem": "같은 이름이 두 번 나와 무엇이 다른지에서 멈춘다",
+     "evidence": "김시현 카카오뱅크 행이 두 번 있다"},
+    {"id": "D3", "screen": "bank", "element": "은행·증권사 타일 격자",
+     "problem": "67개를 눈으로 훑어야 해서 찾다가 멈춘다",
+     "evidence": "BANKS 38 + SECS 29 를 탭 두 개의 격자로 그린다"},
+    {"id": "D4", "screen": "account", "element": "계좌번호 입력",
+     "problem": "13자리를 넣는 동안 자릿수를 놓치고, 은행을 먼저 고르지 않으면 다음이 "
+                "말없이 꺼져 있다",
+     "evidence": "계좌 화면 [다음] 은 계좌 1자리와 은행 선택이 모두 있어야 켜진다"},
+    {"id": "D5", "screen": "confirm", "element": "확인 표",
+     "problem": "메모 두 줄이 섞여 무엇을 확인해야 하는지 흐려진다",
+     "evidence": "받는분 메모 / 내통장 메모 행"},
+    {"id": "D6", "screen": "done", "element": "완료 버튼 4개",
+     "problem": "끝난 건지, 무엇을 더 해야 하는지에서 멈춘다",
+     "evidence": "추가이체·상세보기·공유·확인 네 버튼"},
+]
+
+MOCK_PLAN = {
+    "screens": [
+        {"name": "start", "purpose": "잔액을 보고 보내기를 시작한다", "from": ["home"]},
+        {"name": "who", "purpose": "받는 사람을 고르거나 새 계좌로 간다",
+         "from": ["recipient"]},
+        {"name": "accno", "purpose": "계좌번호만 넣는다", "from": ["account"]},
+        {"name": "bank", "purpose": "은행을 고른다", "from": ["bank"]},
+        {"name": "whoconfirm", "purpose": "받는 사람이 맞는지 확인한다", "from": []},
+        {"name": "amount", "purpose": "금액을 넣는다", "from": ["amount"]},
+        {"name": "review", "purpose": "보낼 내용을 한 번 더 본다", "from": ["confirm"]},
+        {"name": "auth", "purpose": "비밀번호로 본인 확인", "from": ["password"]},
+        {"name": "done", "purpose": "보냈다는 것을 확인하고 처음으로", "from": ["done"]},
+    ],
+    "changes": [
+        {"id": "C1", "what": "첫 화면을 잔액 한 줄과 버튼 둘로 줄인다",
+         "why": "시작점이 화면에서 하나만 보이게", "addresses": ["D1"],
+         "from_screens": ["home"], "to_screens": ["start"]},
+        {"id": "C2", "what": "받는 사람 목록의 중복 행을 없앤다",
+         "why": "같은 이름 두 줄에서 멈추지 않게", "addresses": ["D2"],
+         "from_screens": ["recipient"], "to_screens": ["who"]},
+        {"id": "C3", "what": "계좌번호 입력과 은행 선택을 두 화면으로 나눈다",
+         "why": "한 화면에 한 가지 일만", "addresses": ["D4"],
+         "from_screens": ["account", "bank"], "to_screens": ["accno", "bank"]},
+        {"id": "C4", "what": "은행 화면에 검색을 두고 window.PRESERVED.BANKS · SECS "
+                             "전체를 그 아래에 둔다",
+         "why": "67개를 훑지 않고 찾게", "addresses": ["D3"],
+         "from_screens": ["bank"], "to_screens": ["bank"]},
+        {"id": "C5", "what": "받는 사람 확인 화면을 더한다",
+         "why": "잘못 보내기 전에 이름으로 한 번 확인", "addresses": ["D4"],
+         "from_screens": [], "to_screens": ["whoconfirm"]},
+        {"id": "C6", "what": "확인 화면에서 메모 행을 뺀다",
+         "why": "확인할 것만 남긴다", "addresses": ["D5"],
+         "from_screens": ["confirm"], "to_screens": ["review"]},
+        {"id": "C7", "what": "완료 화면의 버튼을 [처음으로] 하나로 줄인다",
+         "why": "끝났다는 것이 분명하게", "addresses": ["D6"],
+         "from_screens": ["done"], "to_screens": ["done"]},
+    ],
+}
+
+
+def mock_plan_reply(mode):
+    """No API: 진단·계획 단계의 답. 다섯 모드가 같은 답을 쓴다."""
+    if mode not in MOCKS:
+        raise ValueError("mock 모드가 아니다: %s" % mode)
+    text = "```json\n%s\n```\n" % json.dumps(
+        {"diagnosis": MOCK_DIAGNOSIS, "plan": MOCK_PLAN}, ensure_ascii=False, indent=2)
+    return {"text": text, "finish_reason": "stop", "seconds": 0.0, "usage": None,
+            "temperature": TEMPERATURE, "seed": SEED,
+            "model": None, "system_fingerprint": None}
+
+
 def mock_reply(mode):
     """No API: Run 1 을 되읽는다. 모드마다 은행 목록 한 줄이 다르다 (MOCKS).
 

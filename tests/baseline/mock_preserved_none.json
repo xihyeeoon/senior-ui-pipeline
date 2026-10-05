@@ -7,13 +7,31 @@
     "SECS": 29,
     "nums": 10
   },
+  "plan": {
+    "attempt": 1,
+    "diagnosis": "<run>/attempt_1.diagnosis.json",
+    "diagnosis_count": 6,
+    "screens": [
+      "start",
+      "who",
+      "accno",
+      "bank",
+      "whoconfirm",
+      "amount",
+      "review",
+      "auth",
+      "done"
+    ],
+    "changes": 7,
+    "unaddressed": []
+  },
   "repro": {
     "temperature": 0.0,
     "seed": 20260101,
     "response_model": null,
     "system_fingerprint": null,
     "openai_sdk": "<sdk>",
-    "prompt_template_sha256": "e1e41f97a7360d875510f3b8476c3b5b9abcca71bc7b021057a5761397f2bf7d"
+    "prompt_template_sha256": "9a4646c4503ba1f183fc6edd0c2cd74aff257ead6e6194fc1a72aa871304a7e8"
   },
   "attempts": [
     {
@@ -26,7 +44,13 @@
         "response_model": null,
         "system_fingerprint": null,
         "openai_sdk": "<sdk>",
-        "prompt_template_sha256": "e1e41f97a7360d875510f3b8476c3b5b9abcca71bc7b021057a5761397f2bf7d"
+        "prompt_template_sha256": "9a4646c4503ba1f183fc6edd0c2cd74aff257ead6e6194fc1a72aa871304a7e8"
+      },
+      "plan": "<run>/attempt_1.plan.json",
+      "plan_call": {
+        "finish_reason": "stop",
+        "usage": null,
+        "seconds": 0.0
       },
       "preserved": {
         "injected": {
@@ -53,6 +77,8 @@
     "html": "<run>/attempt_1.html",
     "flow": "<run>/attempt_1.flow.json",
     "audit": "<run>/attempt_1.audit.json",
+    "plan": "<run>/attempt_1.plan.json",
+    "diagnosis": "<run>/attempt_1.diagnosis.json",
     "preserved": {
       "injected": {
         "BANKS": 38,

@@ -1,9 +1,14 @@
-r"""재시도 루프. 한 번의 시도는 네 단계다.
+r"""재시도 루프. 한 번의 시도는 다섯 단계다.
 
-    request_reply  프롬프트를 만들어 보내고 답을 받아 적는다
+    request_plan   진단·계획을 받는다 (계획이 아직 없을 때만 - 보통 첫 시도)
+    request_reply  계획을 넣은 프롬프트를 보내고 HTML + 흐름 명세를 받는다
     check_reply    답을 HTML + 흐름 명세로 가르고 모양을 본다
     audit_build    검사기를 돌린다 (형식 문제로 멈췄으면 검사 전에 끝난다)
     record         리포트를 쓰고, 통과·예산을 보고 계속할지 정한다
+
+진단·계획을 따로 받는 이유는 기록이다. 한 번에 받으면 모델이 무엇을 보고 무엇을
+바꿨는지가 HTML 안에 묻힌다 - 따로 받으면 attempt_N.diagnosis.json ·
+attempt_N.plan.json 으로 남는다 (plan.py).
 
 예산은 둘이다 (Budget). 형식 오류(흐름 명세가 규격에 안 맞음)와 검사 fatal
 (설계가 과제를 통과 못 함)은 다른 종류의 실패이고, 한쪽이 예산을 다 쓰면 다른
@@ -28,15 +33,22 @@ from senior_ui.devserver import ensure_server
 
 from .audit_call import load_allowed_removals, run_audit
 from .model import (TEMPERATURE, SEED, ApiRejected, InfraFailed, RateLimited,
-                    call_model, load_env, mock_reply, sdk_version)
+                    call_model, load_env, mock_plan_reply, mock_reply, sdk_version)
+from .plan import PlanProblems, parse_plan, plan_report, screens_in, unaddressed
 from .preserve import inject, names_read, preserved_data
-from .prompt import build_prompt, choices_block, load_template, one_line, retry_block
+from .prompt import (build_plan_prompt, build_prompt, choices_block, load_plan_template,
+                     load_template, one_line, plan_retry_block, retry_block)
 from .reply import (FlowShape, failure_report, parse_reply,
                     preserved_problems, problems_report, validate_flow)
 
 def runs_dir():
     """실행 폴더들이 쌓이는 곳. 산출물 폴더와 같이 움직인다 (config.outputs_dir)."""
     return os.path.join(outputs_dir(), "restructure_auto")
+
+# 진단·계획 호출의 길이 제한. 생성 호출(--max-tokens)과 따로 둔다 - 분당
+# 한도는 max_tokens 를 미리 잡아 두고 세므로, 계획 JSON 에 생성과 같은 한도를
+# 주면 쓰지도 않을 토큰이 한도를 먹는다.
+PLAN_MAX_TOKENS = 6000
 
 # 한 번의 시도가 끝나는 방식
 STOP = "stop"            # 루프를 끝낸다
@@ -94,7 +106,7 @@ class Run:
     """한 실행이 공유하는 것들. 단계 함수들은 이것만 주고받는다."""
 
     def __init__(self, args, log, run_dir, model, template, original_html,
-                 original_url):
+                 original_url=None, plan_template=""):
         self.args = args
         # 프롬프트에 넣는 원본과 브라우저가 걷는 원본은 같은 문서다.
         self.original_url = original_url
@@ -102,7 +114,15 @@ class Run:
         self.run_dir = run_dir
         self.model = model
         self.template = template
+        self.plan_template = plan_template
         self.original_html = original_html
+        # 원본의 화면 이름. 계획의 from 이 가리킬 수 있는 이름들이다.
+        self.original_screens = screens_in(original_html)
+        # 진단과 지금의 계획. 계획은 실행에 하나이고 재시도에서 고쳐진다.
+        self.diagnosis = None
+        self.plan = None
+        # 직전 진단·계획 답의 문제. 다음 진단·계획 프롬프트로 간다.
+        self.plan_error = None
         # 못박아 두는 값. 지정하지 않으면 공급자의 기본값이 쓰이고 그 값은
         # 기록에 남지 않는다 - 나중에 "그때 무엇이 달랐나" 를 물을 수 없다.
         self.temperature = getattr(args, "temperature", TEMPERATURE)
@@ -126,7 +146,7 @@ class Run:
         # 길이 제한에 잘린 답이 연속 몇 번인지. 둘째 번부터는 안내가 달라진다.
         self.truncated = 0
         self.summary = {"run_dir": run_dir, "model": model, "mock": args.mock,
-                        "stage": args.stage, "preserved": {},
+                        "stage": args.stage, "preserved": {}, "plan": None,
                         "repro": repro(template, temperature=self.temperature,
                                        seed=self.seed),
                         "attempts": [], "passed": False, "final": None,
@@ -194,23 +214,78 @@ def _dump(obj, path):
 # --------------------------------------------------------------------------- #
 # 한 번의 시도
 # --------------------------------------------------------------------------- #
-def request_reply(r, n, p):
-    """프롬프트를 만들어 보내고 답을 받아 적는다.
+def plan_text(r):
+    """프롬프트에 넣는 계획. 사람도 읽으므로 들여 쓴다."""
+    return json.dumps(r.plan, ensure_ascii=False, indent=2) if r.plan else ""
+
+
+def request_plan(r, n, p):
+    """진단·계획을 받는다. 돌려주는 것은 (호출 기록, outcome).
+
+    outcome 이 None 이면 계획이 섰다 (r.diagnosis · r.plan). 아니면 이 시도는
+    여기서 끝났고 outcome 이 다음에 할 일이다. 쓸 수 없는 답은 형식 실패다 -
+    모델이 고칠 수 있는 것이므로 형식 예산을 쓴다."""
+    prompt = build_plan_prompt(r.plan_template, r.original_html, r.choices,
+                               r.original_screens, plan_retry_block(r.plan_error))
+    io.open(p + ".plan_prompt.txt", "w", encoding="utf-8", newline="\n").write(prompt)
+    r.log("plan prompt: %d chars%s" % (len(prompt),
+                                       " (with retry block)" if r.plan_error else ""))
+    reply, outcome = ask_model(r, n, p, prompt,
+                               getattr(r.args, "plan_max_tokens", PLAN_MAX_TOKENS),
+                               mock_plan_reply)
+    if reply is None:
+        return None, outcome
+    io.open(p + ".plan_response.txt", "w", encoding="utf-8",
+            newline="\n").write(reply["text"])
+    r.log("plan: %s chars, finish=%s, %ss, usage=%s"
+          % (len(reply["text"]), reply["finish_reason"], reply["seconds"], reply["usage"]))
+    call = {"finish_reason": reply["finish_reason"], "usage": reply["usage"],
+            "seconds": reply["seconds"]}
+    try:
+        if reply["finish_reason"] == "length":
+            raise PlanProblems(["답이 길이 제한에서 잘렸다 (finish_reason=length). "
+                                "진단과 변경의 문장을 짧게 써서 JSON 을 끝까지 닫아라."])
+        diagnosis, plan = parse_plan(reply["text"], r.original_screens)
+    except PlanProblems as e:
+        r.log("plan: %d problem(s): %s" % (len(e.problems),
+                                           " | ".join(e.problems)[:300]))
+        entry = dict(call, n=n, stage="plan", passed=False, fatal=len(e.problems))
+        _dump(plan_report(e.problems), p + ".audit.json")
+        r.summary["attempts"].append(entry)
+        r.plan_error = list(e.problems)
+        r.budget.spend("format")
+        if r.budget.out_of("format"):
+            r.log("형식 재시도 예산 소진 (%d회) — 계획을 세우지 못했다"
+                  % r.budget.format_used)
+            return None, STOP
+        return None, GO_ON
+
+    r.plan_error = None
+    r.diagnosis, r.plan = diagnosis, plan
+    _dump(diagnosis, p + ".diagnosis.json")
+    left = unaddressed(diagnosis, plan)
+    r.summary["plan"] = {"attempt": n, "diagnosis": p + ".diagnosis.json",
+                         "diagnosis_count": len(diagnosis),
+                         "screens": [sc["name"] for sc in plan["screens"]],
+                         "changes": len(plan["changes"]),
+                         "unaddressed": left}
+    r.log("plan: 진단 %d · 화면 %d (%s) · 변경 %d%s"
+          % (len(diagnosis), len(plan["screens"]),
+             ", ".join(sc["name"] for sc in plan["screens"]), len(plan["changes"]),
+             (" / 대응하는 변경이 없는 진단: %s" % ", ".join(left)) if left else ""))
+    return call, None
+
+
+def ask_model(r, n, p, prompt, max_tokens, mock):
+    """모델에 한 번 묻는다. 진단·계획과 생성이 같은 길을 쓴다.
 
     돌려주는 것은 (reply, outcome). reply 가 None 이면 이 시도가 모델 호출에서
     끝난 것이고 outcome 이 다음에 할 일이다."""
-    block = retry_block(r.last["report"], r.last["html"], r.last["flow_text"],
-                        error=r.last_error, truncated=r.truncated) \
-        if (r.last["report"] or r.last_error or r.truncated) else ""
-    prompt = build_prompt(r.template, r.original_html, block, r.choices)
-    io.open(p + ".prompt.txt", "w", encoding="utf-8", newline="\n").write(prompt)
-    r.log("prompt: %d chars%s" % (len(prompt), " (with retry block)" if block else ""))
-
     if r.args.mock:
-        reply = mock_reply(r.args.mock)
+        reply = mock(r.args.mock)
     else:
         try:
-            reply = call_model(r.model, prompt, r.args.max_tokens, r.log,
+            reply = call_model(r.model, prompt, max_tokens, r.log,
                                temperature=r.temperature, seed=r.seed)
         except RateLimited as e:
             # 설계 실패가 아니다. 예산을 깎지 않고 여기서 멈춘다.
@@ -251,12 +326,30 @@ def request_reply(r, n, p):
                 r.summary["stopped_reason"] = "infra_exhausted"
                 return None, STOP
             return None, GO_ON
-    io.open(p + ".response.txt", "w", encoding="utf-8", newline="\n").write(reply["text"])
-    r.log("model: %s chars, finish=%s, %ss, usage=%s"
-          % (len(reply["text"]), reply["finish_reason"], reply["seconds"], reply["usage"]))
     if reply.get("model") or reply.get("system_fingerprint"):
         r.log("model: 응답 %s (fingerprint %s)"
               % (reply.get("model"), reply.get("system_fingerprint")))
+    return reply, None
+
+
+def request_reply(r, n, p):
+    """계획을 넣은 프롬프트를 보내고 답을 받아 적는다.
+
+    돌려주는 것은 (reply, outcome). reply 가 None 이면 이 시도가 모델 호출에서
+    끝난 것이고 outcome 이 다음에 할 일이다."""
+    block = retry_block(r.last["report"], r.last["html"], r.last["flow_text"],
+                        error=r.last_error, truncated=r.truncated) \
+        if (r.last["report"] or r.last_error or r.truncated) else ""
+    prompt = build_prompt(r.template, r.original_html, block, r.choices, plan_text(r))
+    io.open(p + ".prompt.txt", "w", encoding="utf-8", newline="\n").write(prompt)
+    r.log("prompt: %d chars%s" % (len(prompt), " (with retry block)" if block else ""))
+
+    reply, outcome = ask_model(r, n, p, prompt, r.args.max_tokens, mock_reply)
+    if reply is None:
+        return None, outcome
+    io.open(p + ".response.txt", "w", encoding="utf-8", newline="\n").write(reply["text"])
+    r.log("model: %s chars, finish=%s, %ss, usage=%s"
+          % (len(reply["text"]), reply["finish_reason"], reply["seconds"], reply["usage"]))
     return reply, None
 
 
@@ -437,6 +530,9 @@ def record(r, n, p, entry, report, build):
     r.summary["final"] = {"attempt": n, "html": build["html_path"],
                           "flow": build["flow_path"],
                           "audit": p + ".audit.json",
+                          # 이 빌드를 만들 때 쓴 계획과, 그 계획의 바탕인 진단
+                          "plan": entry.get("plan"),
+                          "diagnosis": (r.summary.get("plan") or {}).get("diagnosis"),
                           # 이 빌드에 도구가 무엇을 넣고 무엇을 고쳤는지.
                           # 시도 기록에만 두면, 승격된 산출물만 보는 사람은
                           # 그 파일의 어느 부분이 모델의 것인지 알 수 없다.
@@ -472,11 +568,27 @@ def attempt(r, n):
           % (n, b.format_used, b.budget["format"], b.audit_used, b.budget["audit"]))
     p = os.path.join(r.run_dir, "attempt_%d" % n)
 
+    plan_call = None
+    if r.plan is None:
+        plan_call, outcome = request_plan(r, n, p)
+        if outcome is not None:
+            return outcome
+        # 두 호출이 같은 1분 안에 들어가면 분당 한도를 넘는다 - 원본 HTML 이
+        # 두 프롬프트에 다 들어 있다.
+        if r.args.delay and not r.args.mock:
+            r.log("대기 %ss (진단·계획 → 생성)" % r.args.delay)
+            time.sleep(r.args.delay)
+    # 이 시도가 따른 계획. 재시도에서 계획이 바뀌면 시도마다 다른 파일이 된다.
+    _dump(r.plan, p + ".plan.json")
+
     reply, outcome = request_reply(r, n, p)
     if reply is None:
         return outcome
     entry = {"n": n, "finish_reason": reply["finish_reason"], "usage": reply["usage"],
-             "seconds": reply["seconds"], "repro": repro(r.template, reply)}
+             "seconds": reply["seconds"], "repro": repro(r.template, reply),
+             "plan": p + ".plan.json"}
+    if plan_call:
+        entry["plan_call"] = plan_call
     build, outcome = check_reply(r, p, entry, reply)
     if build is None:
         return outcome
@@ -505,6 +617,10 @@ def log_trend(r):
 PROMOTED = [("html", "restructured_auto%s.html"),
             ("flow", "restructured_auto%s.flow.json"),
             ("audit", "audit_auto%s.json"),
+            # 이 빌드를 만든 진단과 계획. 승격된 산출물만 보는 사람도 "무엇을
+            # 근거로 무엇을 바꿨는지" 를 같은 자리에서 찾을 수 있어야 한다.
+            ("plan", "restructured_auto%s.plan.json"),
+            ("diagnosis", "restructured_auto%s.diagnosis.json"),
             # 주입 전, 모델이 쓴 그대로. 승격된 산출물에는 도구가 넣은
             # 데이터 블록과 고친 선언이 들어 있으므로, 둘을 나란히 두지
             # 않으면 "모델이 만든 것" 을 되찾을 수 없다. 뽑을 데이터가
@@ -547,7 +663,7 @@ def copy_final(r):
         r.log("final: 주의 - 이 산출물은 모델이 쓴 그대로가 아니다. 도구가 "
               "%s 의 선언을 입력의 데이터로 바꿨다. 모델이 쓴 것은 %s 다."
               % (", ".join(pres["redeclared"]),
-                 PROMOTED[-1][1] % ""))
+                 dict(PROMOTED)["model_html"] % ""))
 
 
 # --------------------------------------------------------------------------- #
@@ -600,6 +716,7 @@ def run(args):
 
     try:
         template = load_template()
+        plan_template = load_plan_template()
         original_html = io.open(args.original, encoding="utf-8").read()
         orig_url = original_url(args.original)
         allowed = load_allowed_removals()
@@ -614,7 +731,8 @@ def run(args):
 
     log("run: %s | model=%s | attempts=%d | stage=%s | mock=%s | original=%s"
         % (run_dir, model, args.attempts, args.stage, args.mock, orig_url))
-    r = Run(args, log, run_dir, model, template, original_html, orig_url)
+    r = Run(args, log, run_dir, model, template, original_html, orig_url,
+            plan_template=plan_template)
     r.allowed_removals = allowed
     if allowed:
         log("선택지 제거 허용 (연구자 파일): %s" % ", ".join(sorted(allowed)))
