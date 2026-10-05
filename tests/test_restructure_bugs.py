@@ -347,3 +347,72 @@ def test_the_truncation_notice_counts_how_many_times_it_happened(fake_run_env, t
     _code, _summary = run_loop(fake_run_env, tmp_path, call, attempts=3)
     third = prompts_of(tmp_path)[2]
     assert "2번 연속" in third
+
+
+# ===================================================================== #
+# 3. 흐름 명세의 타입 검사
+# ===================================================================== #
+def test_a_flow_that_is_an_array_is_a_flow_problem(fake_run_env, tmp_path):
+    """흐름 명세가 배열이면 FLOW 문제다. 루프가 멈추는 일이 되면 안 된다.
+
+    고치기 전: `flow.setdefault("name", "auto")` 가 AttributeError 로 터졌고,
+    그 예외는 ValueError 가 아니어서 아무도 받지 못했다 - 루프 전체가 역추적만
+    남기고 죽었다.
+    """
+    call = replies(reply_text(GOOD_HTML, [{"screen": "start"}]))
+
+    code, summary = run_loop(fake_run_env, tmp_path, call, attempts=1)
+    assert summary["attempts"][0]["stage"] == "flow"
+    assert code == 1
+    report = json.load(io.open(os.path.join(summary["run_dir"],
+                                            "attempt_1.audit.json"), encoding="utf-8"))
+    assert [f["check"] for f in report["fatal"]] == ["FLOW"]
+
+
+def test_a_list_valued_screen_is_a_flow_problem(fake_run_env, tmp_path):
+    """screen 이 목록이면 FLOW 문제다.
+
+    고치기 전: `st["screen"] not in screens` 가 집합에 목록을 넣어
+    TypeError: unhashable type 으로 터졌다 - 역시 아무도 받지 못했다.
+    """
+    flow = json.loads(json.dumps(GOOD_FLOW))
+    flow["steps"][1]["screen"] = ["done", "start"]
+    call = replies(reply_text(GOOD_HTML, flow))
+
+    code, summary = run_loop(fake_run_env, tmp_path, call, attempts=1)
+    assert summary["attempts"][0]["stage"] == "flow"
+    assert code == 1
+
+
+def test_a_step_that_is_not_an_object_is_a_flow_problem(fake_run_env, tmp_path):
+    flow = json.loads(json.dumps(GOOD_FLOW))
+    flow["steps"][1] = "done"
+    call = replies(reply_text(GOOD_HTML, flow))
+
+    _code, summary = run_loop(fake_run_env, tmp_path, call, attempts=1)
+    assert summary["attempts"][0]["stage"] == "flow"
+
+
+def test_shape_problems_are_phrased_for_the_model(fake_run_env, tmp_path):
+    """FLOW 문제는 다음 프롬프트로 간다. 모델이 읽고 고칠 수 있는 글이어야 한다."""
+    call = replies(reply_text(GOOD_HTML, [{"screen": "start"}]),
+                   reply_text(GOOD_HTML, GOOD_FLOW))
+
+    _code, _summary = run_loop(fake_run_env, tmp_path, call, attempts=2)
+    second = prompts_of(tmp_path)[1]
+    assert "객체" in second
+
+
+def test_summary_is_written_even_when_the_loop_dies(fake_run_env, tmp_path):
+    """요약은 실행의 기록이다. 루프가 터져도 남아야 한다.
+
+    고치기 전: summary.json 을 try/finally 밖에서 썼다. 루프 안에서 예외가
+    나면 그 실행은 run.log 조각만 남기고 아무 기록도 남기지 않았다.
+    """
+    def explode(*a, **kw):
+        raise KeyboardInterrupt("사용자가 끊었다")
+
+    with pytest.raises(KeyboardInterrupt):
+        run_loop(fake_run_env, tmp_path, explode, attempts=1)
+    runs = sorted((tmp_path / "outputs" / "restructure_auto").iterdir())
+    assert (runs[-1] / "summary.json").exists()

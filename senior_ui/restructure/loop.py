@@ -29,7 +29,8 @@ from .audit_call import run_audit
 from .model import (ApiRejected, InfraFailed, RateLimited, call_model,
                     load_env, mock_reply)
 from .prompt import build_prompt, choices_block, load_template, one_line, retry_block
-from .reply import failure_report, parse_reply, validate_flow
+from .reply import (FlowShape, failure_report, parse_reply,
+                    problems_report, validate_flow)
 
 def runs_dir():
     """실행 폴더들이 쌓이는 곳. 산출물 폴더와 같이 움직인다 (config.outputs_dir)."""
@@ -217,6 +218,19 @@ def check_reply(r, p, entry, reply):
         flow.setdefault("name", "auto")
         flow["derived_from_original"] = False
         problems = validate_flow(flow, html)
+    except FlowShape as e:
+        # 타입이 틀린 흐름 명세. 답의 형식 문제(PARSE)가 아니라 FLOW 문제다.
+        r.log("flow: %d problem(s): %s" % (len(e.problems),
+                                           " | ".join(e.problems)[:300]))
+        entry.update(stage="flow", passed=False, fatal=len(e.problems))
+        _dump(problems_report(e.problems), p + ".audit.json")
+        r.summary["attempts"].append(entry)
+        r.truncated, r.last_error = 0, list(e.problems)
+        r.budget.spend("format")
+        if r.budget.out_of("format"):
+            r.log("형식 재시도 예산 소진 (%d회)" % r.budget.format_used)
+            return None, STOP
+        return None, GO_ON
     except ValueError as e:
         r.log("parse: %s" % e)
         report = failure_report("PARSE", str(e))
@@ -261,10 +275,7 @@ def audit_build(r, n, entry, build):
         r.log("flow: %d problem(s): %s" % (len(problems), " | ".join(problems)[:300]))
         entry.update(stage="flow", passed=False, fatal=len(problems))
         r.budget.spend("format")
-        return {"passed": False, "warning": [],
-                "metrics": {"flow": "auto", "not_audited": True},
-                "fatal": [{"check": "FLOW", "screen": None, "detail": d}
-                          for d in problems]}
+        return problems_report(problems)
 
     report = _drive_audit(r, n, build)
     entry.update(stage="audit", passed=bool(report.get("passed")),
@@ -471,13 +482,15 @@ def run(args):
             if r.summary["stopped_reason"] is None:
                 r.summary["stopped_reason"] = "budget_exhausted"
         log_trend(r)
-        r.summary["budget"] = r.budget.as_dict()
     finally:
         if server:
             server.terminate()
             log("server: stopped (pid %d)" % server.pid)
-
-    copy_final(r)
-    _dump(r.summary, os.path.join(run_dir, "summary.json"))
-    log("summary: %s" % os.path.join(run_dir, "summary.json"))
+        # 요약은 이 실행의 기록이다. 루프가 터져도(흐름 명세가 검사기를 터뜨린다,
+        # 사용자가 끊는다) 남아야 한다 - 밖에 두면 그런 실행은 run.log 조각
+        # 말고는 아무것도 남기지 않는다.
+        r.summary["budget"] = r.budget.as_dict()
+        copy_final(r)
+        _dump(r.summary, os.path.join(run_dir, "summary.json"))
+        log("summary: %s" % os.path.join(run_dir, "summary.json"))
     return exit_code(r.summary)

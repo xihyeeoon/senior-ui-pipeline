@@ -181,7 +181,8 @@ def error_part(error, has_build):
     실패가 사라진다. 둘은 다른 것이므로 따로 적고, 아래 목록이 어느 빌드의
     것인지도 한 줄로 밝힌다.
     """
-    out = ["[이번 답의 형식 오류]", "  " + one_line(error)]
+    items = error if isinstance(error, (list, tuple)) else [error]
+    out = ["[이번 답의 형식 오류]"] + ["  " + one_line(x) for x in items]
     if has_build:
         out.append("  아래 [고칠 것] 과 직전 HTML·흐름 명세는 그 전에 검사까지 간 "
                    "빌드의 것이다. 그 빌드를 고쳐서, 이번에는 형식에 맞게 출력하라.")
