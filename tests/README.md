@@ -13,8 +13,8 @@
 ## 쓰는 법
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest                # 빠름, 브라우저 없음 (32건, 0.3초)
-.\.venv\Scripts\python.exe -m pytest -m browser     # 실제로 다시 걷는다 (18건, 2분 15초)
+.\.venv\Scripts\python.exe -m pytest                # 빠름, 브라우저 없음 (172건, 41초)
+.\.venv\Scripts\python.exe -m pytest -m browser     # 실제로 다시 걷는다 (89건, 2분 40초)
 ```
 
 기준값을 다시 뽑을 일이 생기면 (= 동작을 의도적으로 바꿨을 때만):
@@ -36,6 +36,7 @@
 | `capture_baseline.py` | 기준값을 한 번 뽑는 스크립트 |
 | `test_baseline.py` | 저장된 스냅샷으로 다시 계산해 비교 (브라우저 없음) |
 | `test_drive.py` | 브라우저로 실제로 다시 걷고 비교 (`-m browser`) |
+| `test_restructure_bugs.py` | 재구성 루프의 버그 재현. 모델도 브라우저도 부르지 않는다 |
 | `baseline/` | 기준값. 마지막 캡처 실행의 결과다 |
 | `fixtures/sessions/` | `session_report` 용 가짜 세션 4건 |
 | `fixtures/report/` | `audit.report` 의 입력으로 고정해 둔 audit JSON 4건 |
@@ -78,7 +79,8 @@
 - `parse_reply.json` — `mock_reply` 의 답을 `parse_reply` 로 되읽은 결과
   (HTML 은 28KB 라 해시만 남긴다)
 - `mock_pass.json` / `mock_fail.json` — `--mock pass --attempts 1` 과
-  `--mock fail --attempts 2 --delay 0` 의 `summary.json`
+  `--mock fail --attempts 2 --delay 0` 의 `summary.json`. 둘 다 `passed=false`,
+  종료 코드 1 이다
 - `session_report.md` / `.csv`
 - `report/four_runs.md` / `report/four_runs.details.md` —
   `senior_ui.audit.report` 가 `fixtures/report/` 의 audit JSON 네 개를 나란히
@@ -186,6 +188,11 @@ F(언어)가 보는 값이다.
 - `attempts[].html` / `.flow`, `final.{html,flow,audit}` — 경로 안에 그 타임스탬프가
   들어 있어서 `<run>/attempt_1.html` 로 바꾼다
 - `attempts[].seconds` — 걸린 시간
+- `repro.openai_sdk` (요약과 시도 기록 양쪽) — 설치된 SDK 판이라 PC 마다 다르다.
+  지우지 않고 `<sdk>` 로 바꾼다 — 값은 비교하지 않되 **기록이 있다**는 것은 비교한다.
+  나머지 재현 기록(`temperature` · `seed` · `response_model` ·
+  `system_fingerprint` · `prompt_template_sha256`)은 그대로 비교한다. 템플릿 해시는
+  `docs/restructure-prompt.md` 가 바뀌면 달라지므로, 그때는 기준값도 같이 다시 뽑는다.
 
 ## `outputs/` 에 대해
 
