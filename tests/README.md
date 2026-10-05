@@ -13,8 +13,8 @@
 ## 쓰는 법
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest                # 빠름, 브라우저 없음 (172건, 41초)
-.\.venv\Scripts\python.exe -m pytest -m browser     # 실제로 다시 걷는다 (89건, 2분 40초)
+.\.venv\Scripts\python.exe -m pytest                # 빠름, 브라우저 없음 (333건, 53초)
+.\.venv\Scripts\python.exe -m pytest -m browser     # 실제로 다시 걷는다 (97건, 4분 16초)
 ```
 
 기준값을 다시 뽑을 일이 생기면 (= 동작을 의도적으로 바꿨을 때만):
@@ -78,13 +78,15 @@
   넣은 것이다 (`capture_baseline.PROMPT_RETRY_CASE`)
 - `parse_reply.json` — `mock_reply` 의 답을 `parse_reply` 로 되읽은 결과
   (HTML 은 28KB 라 해시만 남긴다)
-- `mock_*.json` — `--mock` 다섯 모드의 `summary.json`
-  (`capture_baseline.MOCK_RUNS`). 다섯은 Run 1 빌드의 은행 목록 한 줄과
-  `00`·`전액` 을 채우는 방법(배열을 읽는가, 마크업에 쓰는가)에서만 다르고,
-  그 차이 때문에 각각 다른 자리에서 갈린다.
+- `mock_*.json` — `--mock` 일곱 모드의 `summary.json`
+  (`capture_baseline.MOCK_RUNS`). 일곱은 Run 1 빌드의 은행 목록 한 줄과
+  `00`·`전액` 을 채우는 방법(배열을 읽는가, 마크업에 쓰는가)과 오류 처리
+  (`model.ERRORS`)에서만 다르고, 그 차이 때문에 각각 다른 자리에서 갈린다.
   `mock_fail` 은 검사까지 가서 떨어진다 (`passed=false`, 종료 코드 1).
   `mock_pass` 와 `mock_preserved_all` 은 통과한다 (`passed=true`, 종료 코드 0),
   `mock_preserved_some` 은 검사 I 에서, `mock_preserved_none` 은 형식 검사에서
+  떨어진다. `mock_errors_undeclared` 는 오류 경로를 적지 않아 형식 검사에서,
+  `mock_errors_unhandled` 는 오류 경로는 적었지만 오류 처리가 없어 검사 J 에서
   떨어진다. mock 실행은 `.mock-outputs/` 를 쓴다 — 통과한 빌드가
   `outputs/restructured_auto.*` 를 덮지 않게 떼어 놓았다 (이제 `--mock` 의
   기본값이기도 하다. 캡처는 같은 폴더를 환경 변수로 한 번 더 못박는다)
@@ -206,3 +208,19 @@ F(언어)가 보는 값이다.
 `mock_reply` 는 `outputs/restructured_transfer.html` 을 읽는다. `outputs/` 는
 추적하지 않으므로 그 파일이 없을 수 있다. 없을 때만 `capture_baseline.py` 가
 `results/` 의 사본을 복사하고, 복사했으면 마지막에 그렇다고 알린다.
+
+## 오류 경로 기준값 (2026-10-05, `feat/error-paths`)
+
+검사 J 와 원본 흐름의 오류 경로를 더하며 다시 뽑았다. 정규화(`ignore.py`) 뒤에
+남은 차이는 아래가 전부이고, Run 1~3 의 `passed` · fatal · warning 은 그대로다.
+
+| 파일 | 차이 | 이유 |
+|---|---|---|
+| `run1~3/audit*.json` | `checks_stood_down` 끝에 `J/흐름에 오류 경로가 없다 …` 한 줄, 와이어프레임의 `stage_checks` 에 `J` | 옛 흐름에는 오류 경로가 없어 J 가 물러난다 |
+| `*/snapshots.json` | `truth` 에 `ACCOUNT_WRONG` · `BANK_WRONG` | 원본 흐름의 truth 에 틀린 값을 더했다 |
+| `original_vs_original/*` | `error_paths` (걷기 · metrics), warning 하나 (J, wrong-bank) | 원본의 은행 오류 문구("과목코드 오류")에 '은행' 이 없다 |
+| `prompt/*.txt` | 오류 조건 절 · 흐름 명세의 `error_paths` 틀 · 새 화면 덮기 규칙 · 계획의 `errors` | `{{ERRORS}}` 슬롯. 틀린 값의 실제 값은 없다 (`test_error_paths.py` 가 본다) |
+| `mock_*.json` | 예상 입력 토큰, 계획의 진단 7 · 변경 8, `mock_fail` 의 fatal 8 → 10 | 프롬프트가 길어졌다. MOCK_PLAN 에 오류 팝업 진단·변경. `fail` 의 둘은 J 의 파생 fatal |
+| `mock_errors_*.json` | 새 파일 | 새 mock 두 모드 |
+| `parse_reply.json` | 흐름의 `error_paths`, HTML 해시 | mock 빌드에 오류 안내를 바꿔 끼웠다 |
+| `report/four_runs*.md` | 제목 `A~J`, 표에 J 줄 | 리포트 표에 J |

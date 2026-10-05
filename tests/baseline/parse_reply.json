@@ -1,9 +1,9 @@
 {
   "pass": {
     "reply_finish_reason": "stop",
-    "reply_text_sha256": "51ce15d3a20b940d3847395a9e7e5035d2403d07c9753e98ca4b3490b11ef367",
-    "html_len": 26585,
-    "html_sha256": "27705166bdcd1eae87080f6a892e9994995b4cbbcca9a2f683cb908a29e265d3",
+    "reply_text_sha256": "c233b3bcf2707372a520131f5a74c1f343e1f433cdff2c775b23639bac16c2e7",
+    "html_len": 27117,
+    "html_sha256": "e4bcd30b20c0548a3b7a60c2a300660359ede3f4952a46c86a54c6e5dcb1243d",
     "flow": {
       "name": "auto",
       "truth": {
@@ -130,15 +130,85 @@
           ]
         ]
       },
-      "done_amount": "#dn-amt"
+      "done_amount": "#dn-amt",
+      "error_paths": [
+        {
+          "id": "wrong-account",
+          "from_step": "accno",
+          "inputs": [
+            {
+              "type": "{ACCOUNT_WRONG}",
+              "key": "[data-action='acc-num'][data-v='%s']"
+            },
+            {
+              "click": "#acc-next"
+            }
+          ],
+          "expect_screen": "accno",
+          "expect_text_any": [
+            "계좌번호"
+          ],
+          "recover": [
+            {
+              "click": "[data-action='acc-del']"
+            }
+          ],
+          "back_to": "accno"
+        },
+        {
+          "id": "wrong-bank",
+          "from_step": "accno",
+          "inputs": [
+            {
+              "type": "{ACCOUNT}",
+              "key": "[data-action='acc-num'][data-v='%s']"
+            },
+            {
+              "click": "#acc-next"
+            },
+            {
+              "click": "[data-action='bank-other']"
+            },
+            {
+              "wait": 0.2
+            },
+            {
+              "click": "[data-action='pick-bank'][data-bank='{BANK_WRONG}']"
+            },
+            {
+              "click": "[data-action='who-yes']"
+            },
+            {
+              "type": "{AMOUNT}",
+              "key": "[data-action='amt-num'][data-v='%s']"
+            },
+            {
+              "click": "#amt-next"
+            },
+            {
+              "click": "[data-action='send']"
+            }
+          ],
+          "expect_screen": "review",
+          "expect_text_any": [
+            "은행"
+          ],
+          "recover": [
+            {
+              "click": "[data-action='edit-who']"
+            }
+          ],
+          "back_to": "accno"
+        }
+      ]
     },
-    "flow_text_sha256": "21eac125e6312035521ca237dd1ac31bdc060c339c1e9745290b1f6b6d37772b"
+    "flow_text_sha256": "303805ea22f3f3dfaf0abfd2996463f7096bea0cb8f79797701e406b3f51ac98"
   },
   "fail": {
     "reply_finish_reason": "stop",
-    "reply_text_sha256": "f538ef4fc4391a31068e68ace422df6de461734110a243b9a070b158ea5e320e",
-    "html_len": 26585,
-    "html_sha256": "27705166bdcd1eae87080f6a892e9994995b4cbbcca9a2f683cb908a29e265d3",
+    "reply_text_sha256": "7aef1885432a1b7bece2bf4ec8b1547a3db5c9f4e6cc313d81de54ad30bcafae",
+    "html_len": 27117,
+    "html_sha256": "e4bcd30b20c0548a3b7a60c2a300660359ede3f4952a46c86a54c6e5dcb1243d",
     "flow": {
       "name": "auto",
       "truth": {
@@ -265,8 +335,78 @@
           ]
         ]
       },
-      "done_amount": "#dn-amt"
+      "done_amount": "#dn-amt",
+      "error_paths": [
+        {
+          "id": "wrong-account",
+          "from_step": "accno",
+          "inputs": [
+            {
+              "type": "{ACCOUNT_WRONG}",
+              "key": "[data-action='acc-num'][data-v='%s']"
+            },
+            {
+              "click": "#acc-next"
+            }
+          ],
+          "expect_screen": "accno",
+          "expect_text_any": [
+            "계좌번호"
+          ],
+          "recover": [
+            {
+              "click": "[data-action='acc-del']"
+            }
+          ],
+          "back_to": "accno"
+        },
+        {
+          "id": "wrong-bank",
+          "from_step": "accno",
+          "inputs": [
+            {
+              "type": "{ACCOUNT}",
+              "key": "[data-action='acc-num'][data-v='%s']"
+            },
+            {
+              "click": "#acc-next"
+            },
+            {
+              "click": "[data-action='bank-other']"
+            },
+            {
+              "wait": 0.2
+            },
+            {
+              "click": "[data-action='pick-bank'][data-bank='{BANK_WRONG}']"
+            },
+            {
+              "click": "[data-action='who-yes']"
+            },
+            {
+              "type": "{AMOUNT}",
+              "key": "[data-action='amt-num'][data-v='%s']"
+            },
+            {
+              "click": "#amt-next"
+            },
+            {
+              "click": "[data-action='send']"
+            }
+          ],
+          "expect_screen": "review",
+          "expect_text_any": [
+            "은행"
+          ],
+          "recover": [
+            {
+              "click": "[data-action='edit-who']"
+            }
+          ],
+          "back_to": "accno"
+        }
+      ]
     },
-    "flow_text_sha256": "229d50674df569f4563fc44563f33c06aeec6c7edac23d402a3f9d019eb355fd"
+    "flow_text_sha256": "fda34e4a31181ba546ecd6803ff674c044bff28a267ba4b9f9723de03031ba05"
   }
 }

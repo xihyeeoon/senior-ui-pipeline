@@ -1,6 +1,6 @@
 {
   "model": "gpt-4o",
-  "mock": "fail",
+  "mock": "errors-undeclared",
   "stage": "styled",
   "preserved": {
     "BANKS": 38,
@@ -91,68 +91,18 @@
       "html": "<run>/attempt_1.html",
       "flow": "<run>/attempt_1.flow.json",
       "model_html": "<run>/attempt_1.model.html",
-      "stage": "audit",
+      "stage": "flow",
       "passed": false,
-      "fatal": 10,
-      "warning": 0
-    },
-    {
-      "n": 2,
-      "finish_reason": "stop",
-      "usage": null,
-      "repro": {
-        "temperature": 0.0,
-        "seed": 20260101,
-        "response_model": null,
-        "system_fingerprint": null,
-        "openai_sdk": "<sdk>",
-        "prompt_template_sha256": "b426753a611f1faf0a08c0459bca4be784375cca9104b3fa2755127c638b47b0"
-      },
-      "plan": "<run>/attempt_2.plan.json",
-      "calls": [
-        {
-          "stage": "retry",
-          "estimated_prompt": 25775,
-          "method": "tiktoken:o200k_base",
-          "max_tokens": 14000,
-          "usage": null
-        }
-      ],
-      "reflection": "<run>/attempt_2.reflection.json",
-      "plan_changes": 0,
-      "preserved": {
-        "injected": {
-          "BANKS": 38,
-          "SECS": 29,
-          "AMT_KEYS": 11,
-          "ACC_KEYS": 10,
-          "PW_KEYS": 10,
-          "QUICK": 4
-        },
-        "redeclared": [],
-        "read": [
-          "BANKS",
-          "SECS",
-          "AMT_KEYS",
-          "QUICK"
-        ]
-      },
-      "html": "<run>/attempt_2.html",
-      "flow": "<run>/attempt_2.flow.json",
-      "model_html": "<run>/attempt_2.model.html",
-      "stage": "audit",
-      "passed": false,
-      "fatal": 10,
-      "warning": 0
+      "fatal": 2
     }
   ],
   "passed": false,
   "final": {
-    "attempt": 2,
-    "html": "<run>/attempt_2.html",
-    "flow": "<run>/attempt_2.flow.json",
-    "audit": "<run>/attempt_2.audit.json",
-    "plan": "<run>/attempt_2.plan.json",
+    "attempt": 1,
+    "html": "<run>/attempt_1.html",
+    "flow": "<run>/attempt_1.flow.json",
+    "audit": "<run>/attempt_1.audit.json",
+    "plan": "<run>/attempt_1.plan.json",
     "diagnosis": "<run>/attempt_1.diagnosis.json",
     "preserved": {
       "injected": {
@@ -171,35 +121,18 @@
         "QUICK"
       ]
     },
-    "model_html": "<run>/attempt_2.model.html"
+    "model_html": "<run>/attempt_1.model.html"
   },
   "budget": {
-    "format_used": 0,
-    "format_budget": 2,
-    "audit_used": 2,
-    "audit_budget": 2,
+    "format_used": 1,
+    "format_budget": 1,
+    "audit_used": 0,
+    "audit_budget": 1,
     "infra_used": 0,
     "infra_budget": 3
   },
   "stopped_reason": "budget_exhausted",
-  "trend": [
-    {
-      "attempt": 1,
-      "fatal_total": 10,
-      "fatal_root": 1,
-      "fatal_derived": 9,
-      "screens": "1/9",
-      "stopped_at": "who"
-    },
-    {
-      "attempt": 2,
-      "fatal_total": 10,
-      "fatal_root": 1,
-      "fatal_derived": 9,
-      "screens": "1/9",
-      "stopped_at": "who"
-    }
-  ],
+  "trend": [],
   "git": {
     "commit": "<commit>",
     "branch": "<branch>",
@@ -222,19 +155,12 @@
         "max_tokens": 14000,
         "prompt": null,
         "completion": null
-      },
-      "retry": {
-        "calls": 1,
-        "estimated_prompt": 25775,
-        "max_tokens": 14000,
-        "prompt": null,
-        "completion": null
       }
     },
     "total": {
-      "calls": 3,
-      "estimated_prompt": 53775,
-      "max_tokens": 34000,
+      "calls": 2,
+      "estimated_prompt": 28000,
+      "max_tokens": 20000,
       "prompt": null,
       "completion": null
     },

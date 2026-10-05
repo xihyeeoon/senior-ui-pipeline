@@ -127,16 +127,16 @@
             "0"
           ],
           "pw": [
+            "6",
+            "9",
+            "2",
             "1",
             "5",
-            "7",
             "0",
-            "8",
-            "2",
-            "6",
-            "4",
             "3",
-            "9"
+            "7",
+            "8",
+            "4"
           ]
         },
         "contrast": [
@@ -863,16 +863,16 @@
             "0"
           ],
           "pw": [
+            "6",
+            "9",
+            "2",
             "1",
             "5",
-            "7",
             "0",
-            "8",
-            "2",
-            "6",
-            "4",
             "3",
-            "9"
+            "7",
+            "8",
+            "4"
           ]
         },
         "contrast": [
@@ -1100,16 +1100,16 @@
             "0"
           ],
           "pw": [
+            "6",
+            "9",
+            "2",
             "1",
             "5",
-            "7",
             "0",
-            "8",
-            "2",
-            "6",
-            "4",
             "3",
-            "9"
+            "7",
+            "8",
+            "4"
           ]
         },
         "contrast": [
@@ -1376,16 +1376,16 @@
             "0"
           ],
           "pw": [
+            "6",
+            "9",
+            "2",
             "1",
             "5",
-            "7",
             "0",
-            "8",
-            "2",
-            "6",
-            "4",
             "3",
-            "9"
+            "7",
+            "8",
+            "4"
           ]
         },
         "contrast": [
@@ -2240,16 +2240,16 @@
             "0"
           ],
           "pw": [
+            "6",
+            "9",
+            "2",
             "1",
             "5",
-            "7",
             "0",
-            "8",
-            "2",
-            "6",
-            "4",
             "3",
-            "9"
+            "7",
+            "8",
+            "4"
           ]
         },
         "contrast": [
@@ -2489,16 +2489,16 @@
             "0"
           ],
           "pw": [
+            "6",
+            "9",
+            "2",
             "1",
             "5",
-            "7",
             "0",
-            "8",
-            "2",
-            "6",
-            "4",
             "3",
-            "9"
+            "7",
+            "8",
+            "4"
           ]
         },
         "contrast": [
@@ -2682,7 +2682,7 @@
           "err-bank"
         ],
         "onclicks": [],
-        "text": "4:31\n67\n✕\n계좌 비밀번호\n1\n6\n8\n0\n9\n7\n3\n2\n4\n재배열\n5\n⌫",
+        "text": "4:31\n67\n✕\n계좌 비밀번호\n2\n1\n6\n5\n9\n3\n0\n4\n7\n재배열\n8\n⌫",
         "height": 844,
         "choices": {
           "pick-bank": [
@@ -2786,16 +2786,16 @@
             "0"
           ],
           "pw": [
+            "2",
             "1",
             "6",
-            "8",
-            "0",
+            "5",
             "9",
-            "7",
             "3",
-            "2",
+            "0",
             "4",
-            "5"
+            "7",
+            "8"
           ]
         },
         "contrast": [],
@@ -2953,16 +2953,16 @@
             "0"
           ],
           "pw": [
+            "2",
             "1",
             "6",
-            "8",
-            "0",
+            "5",
             "9",
-            "7",
             "3",
-            "2",
+            "0",
             "4",
-            "5"
+            "7",
+            "8"
           ]
         },
         "contrast": [],
@@ -3119,9 +3119,61 @@
       "AMOUNT": "32000",
       "BANK": "신한",
       "NAME": "김철수",
-      "AMOUNT_SHOWN": "32,000"
+      "AMOUNT_SHOWN": "32,000",
+      "ACCOUNT_WRONG": "110234567891",
+      "BANK_WRONG": "국민"
     },
-    "undefined_classes": []
+    "undefined_classes": [],
+    "error_paths": {
+      "wrong-account": {
+        "from_step": "bank",
+        "expect_screen": "err-account",
+        "back_to": "account",
+        "error": null,
+        "trigger": {
+          "landed_on": "account",
+          "dom_screen": "account"
+        },
+        "before_text": "4:31\n67\n‹\n✕\n누구에게 보낼까요?\n계좌번호\n110234567891\nⓧ\n신한\n⌄\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n⌫\n다음",
+        "settled": true,
+        "after": {
+          "landed_on": "err-account",
+          "dom_screen": "err-account"
+        },
+        "after_text": "4:31\n67\nELB00016\n계좌번호[110234567891]\n입력하신 계좌번호가 올바르지 않습니다.\n계좌번호를 확인하시기 바랍니다.\n확인",
+        "recovered": true,
+        "recover": {
+          "landed_on": "account",
+          "dom_screen": "account"
+        },
+        "js_errors": [],
+        "dialogs": []
+      },
+      "wrong-bank": {
+        "from_step": "bank",
+        "expect_screen": "err-bank",
+        "back_to": "confirm",
+        "error": null,
+        "trigger": {
+          "landed_on": "confirm",
+          "dom_screen": "confirm"
+        },
+        "before_text": "4:31\n67\n‹\n✕\n국\n아래 계좌로\n32,000원 보낼까요?\n수수료 무료\n보내는 계좌\n신한 110-000-000000\n받는 계좌\n국민 110234567890\n받는분 메모\n김철수 ✎\n내통장 메모\n김철수 ✎\n보내기",
+        "settled": true,
+        "after": {
+          "landed_on": "err-bank",
+          "dom_screen": "err-bank"
+        },
+        "after_text": "4:31\n67\nETA00325\n해당 계좌번호내 과목코드 오류입니다.\n입력하신 계좌번호를 확인해주세요.\n확인",
+        "recovered": true,
+        "recover": {
+          "landed_on": "confirm",
+          "dom_screen": "confirm"
+        },
+        "js_errors": [],
+        "dialogs": []
+      }
+    }
   },
   "rep": {
     "screens": {
@@ -3251,16 +3303,16 @@
             "0"
           ],
           "pw": [
-            "7",
-            "0",
             "3",
+            "5",
+            "0",
+            "7",
             "1",
             "2",
             "6",
-            "4",
+            "9",
             "8",
-            "5",
-            "9"
+            "4"
           ]
         },
         "contrast": [
@@ -3987,16 +4039,16 @@
             "0"
           ],
           "pw": [
-            "7",
-            "0",
             "3",
+            "5",
+            "0",
+            "7",
             "1",
             "2",
             "6",
-            "4",
+            "9",
             "8",
-            "5",
-            "9"
+            "4"
           ]
         },
         "contrast": [
@@ -4224,16 +4276,16 @@
             "0"
           ],
           "pw": [
-            "7",
-            "0",
             "3",
+            "5",
+            "0",
+            "7",
             "1",
             "2",
             "6",
-            "4",
+            "9",
             "8",
-            "5",
-            "9"
+            "4"
           ]
         },
         "contrast": [
@@ -4500,16 +4552,16 @@
             "0"
           ],
           "pw": [
-            "7",
-            "0",
             "3",
+            "5",
+            "0",
+            "7",
             "1",
             "2",
             "6",
-            "4",
+            "9",
             "8",
-            "5",
-            "9"
+            "4"
           ]
         },
         "contrast": [
@@ -5364,16 +5416,16 @@
             "0"
           ],
           "pw": [
-            "7",
-            "0",
             "3",
+            "5",
+            "0",
+            "7",
             "1",
             "2",
             "6",
-            "4",
+            "9",
             "8",
-            "5",
-            "9"
+            "4"
           ]
         },
         "contrast": [
@@ -5613,16 +5665,16 @@
             "0"
           ],
           "pw": [
-            "7",
-            "0",
             "3",
+            "5",
+            "0",
+            "7",
             "1",
             "2",
             "6",
-            "4",
+            "9",
             "8",
-            "5",
-            "9"
+            "4"
           ]
         },
         "contrast": [
@@ -5806,7 +5858,7 @@
           "err-bank"
         ],
         "onclicks": [],
-        "text": "4:31\n67\n✕\n계좌 비밀번호\n7\n1\n5\n0\n6\n3\n2\n9\n4\n재배열\n8\n⌫",
+        "text": "4:31\n67\n✕\n계좌 비밀번호\n7\n1\n2\n4\n5\n9\n0\n8\n6\n재배열\n3\n⌫",
         "height": 844,
         "choices": {
           "pick-bank": [
@@ -5912,14 +5964,14 @@
           "pw": [
             "7",
             "1",
-            "5",
-            "0",
-            "6",
-            "3",
             "2",
-            "9",
             "4",
-            "8"
+            "5",
+            "9",
+            "0",
+            "8",
+            "6",
+            "3"
           ]
         },
         "contrast": [],
@@ -6079,14 +6131,14 @@
           "pw": [
             "7",
             "1",
-            "5",
-            "0",
-            "6",
-            "3",
             "2",
-            "9",
             "4",
-            "8"
+            "5",
+            "9",
+            "0",
+            "8",
+            "6",
+            "3"
           ]
         },
         "contrast": [],
@@ -6243,8 +6295,60 @@
       "AMOUNT": "32000",
       "BANK": "신한",
       "NAME": "김철수",
-      "AMOUNT_SHOWN": "32,000"
+      "AMOUNT_SHOWN": "32,000",
+      "ACCOUNT_WRONG": "110234567891",
+      "BANK_WRONG": "국민"
     },
-    "undefined_classes": []
+    "undefined_classes": [],
+    "error_paths": {
+      "wrong-account": {
+        "from_step": "bank",
+        "expect_screen": "err-account",
+        "back_to": "account",
+        "error": null,
+        "trigger": {
+          "landed_on": "account",
+          "dom_screen": "account"
+        },
+        "before_text": "4:31\n67\n‹\n✕\n누구에게 보낼까요?\n계좌번호\n110234567891\nⓧ\n신한\n⌄\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n⌫\n다음",
+        "settled": true,
+        "after": {
+          "landed_on": "err-account",
+          "dom_screen": "err-account"
+        },
+        "after_text": "4:31\n67\nELB00016\n계좌번호[110234567891]\n입력하신 계좌번호가 올바르지 않습니다.\n계좌번호를 확인하시기 바랍니다.\n확인",
+        "recovered": true,
+        "recover": {
+          "landed_on": "account",
+          "dom_screen": "account"
+        },
+        "js_errors": [],
+        "dialogs": []
+      },
+      "wrong-bank": {
+        "from_step": "bank",
+        "expect_screen": "err-bank",
+        "back_to": "confirm",
+        "error": null,
+        "trigger": {
+          "landed_on": "confirm",
+          "dom_screen": "confirm"
+        },
+        "before_text": "4:31\n67\n‹\n✕\n국\n아래 계좌로\n32,000원 보낼까요?\n수수료 무료\n보내는 계좌\n신한 110-000-000000\n받는 계좌\n국민 110234567890\n받는분 메모\n김철수 ✎\n내통장 메모\n김철수 ✎\n보내기",
+        "settled": true,
+        "after": {
+          "landed_on": "err-bank",
+          "dom_screen": "err-bank"
+        },
+        "after_text": "4:31\n67\nETA00325\n해당 계좌번호내 과목코드 오류입니다.\n입력하신 계좌번호를 확인해주세요.\n확인",
+        "recovered": true,
+        "recover": {
+          "landed_on": "confirm",
+          "dom_screen": "confirm"
+        },
+        "js_errors": [],
+        "dialogs": []
+      }
+    }
   }
 }

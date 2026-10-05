@@ -13,7 +13,7 @@
   "plan": {
     "attempt": 1,
     "diagnosis": "<run>/attempt_1.diagnosis.json",
-    "diagnosis_count": 6,
+    "diagnosis_count": 7,
     "screens": [
       "start",
       "who",
@@ -25,7 +25,7 @@
       "auth",
       "done"
     ],
-    "changes": 7,
+    "changes": 8,
     "unaddressed": []
   },
   "repro": {
@@ -34,7 +34,7 @@
     "response_model": null,
     "system_fingerprint": null,
     "openai_sdk": "<sdk>",
-    "prompt_template_sha256": "4d46b9548c7821f64326bb65d015d8060a59327e57ca4cdb16bfd33cbd1e328f"
+    "prompt_template_sha256": "b426753a611f1faf0a08c0459bca4be784375cca9104b3fa2755127c638b47b0"
   },
   "attempts": [
     {
@@ -47,20 +47,20 @@
         "response_model": null,
         "system_fingerprint": null,
         "openai_sdk": "<sdk>",
-        "prompt_template_sha256": "4d46b9548c7821f64326bb65d015d8060a59327e57ca4cdb16bfd33cbd1e328f"
+        "prompt_template_sha256": "b426753a611f1faf0a08c0459bca4be784375cca9104b3fa2755127c638b47b0"
       },
       "plan": "<run>/attempt_1.plan.json",
       "calls": [
         {
           "stage": "plan",
-          "estimated_prompt": 12242,
+          "estimated_prompt": 12831,
           "method": "tiktoken:o200k_base",
           "max_tokens": 6000,
           "usage": null
         },
         {
           "stage": "generate",
-          "estimated_prompt": 14166,
+          "estimated_prompt": 15169,
           "method": "tiktoken:o200k_base",
           "max_tokens": 14000,
           "usage": null
@@ -157,14 +157,14 @@
     "by_stage": {
       "plan": {
         "calls": 1,
-        "estimated_prompt": 12242,
+        "estimated_prompt": 12831,
         "max_tokens": 6000,
         "prompt": null,
         "completion": null
       },
       "generate": {
         "calls": 1,
-        "estimated_prompt": 14166,
+        "estimated_prompt": 15169,
         "max_tokens": 14000,
         "prompt": null,
         "completion": null
@@ -172,14 +172,14 @@
     },
     "total": {
       "calls": 2,
-      "estimated_prompt": 26408,
+      "estimated_prompt": 28000,
       "max_tokens": 20000,
       "prompt": null,
       "completion": null
     },
     "first_attempt": {
       "calls": 2,
-      "estimated_prompt": 26408,
+      "estimated_prompt": 28000,
       "max_tokens": 20000,
       "prompt": null,
       "completion": null
