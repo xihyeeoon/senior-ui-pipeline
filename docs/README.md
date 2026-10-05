@@ -77,6 +77,14 @@ LLM 이 쓴 것이라 다시 만들려면 API 비용이 들고 바이트까지 �
 `outputs/restructured_auto.*` 는 그대로다 — 그 자리는 실제 실행만 쓴다. 다른
 폴더에 쓰려면 환경변수 `SENIOR_UI_OUTPUTS` 를 준다 (주면 그것이 이긴다).
 
+승격 이름은 과제마다 따로다. 이체는 `restructured_auto.*` · `audit_auto.json`
+그대로이고, 공과금(`--task bill`)은 `restructured_auto_bill.*` ·
+`audit_auto_bill.json` 이다 (`.model.html` · `.plan.json` · `.diagnosis.json` ·
+`.designer_brief.md` 와 실행 이름 사본도 같은 규칙 — `loop.promoted_name`). 두
+과제를 번갈아 돌려도 한 과제의 "지금 쓰는 재구성본" 이 다른 과제 것으로 덮이지
+않는다. 대시보드 색인은 audit 이 비교한 원본으로 과제를 알아보고 (`task`),
+같은 id 의 행은 실행 폴더 이름으로 가른다.
+
 `PYTHONUTF8=1` 은 더 이상 필요 없다. 모든 명령줄이 맨 앞에서
 `senior_ui._cli.setup_stdout()` 을 불러 stdout 을 UTF-8 로 맞춘다.
 

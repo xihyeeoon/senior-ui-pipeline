@@ -831,19 +831,38 @@ def log_tokens(r):
 
 
 # outputs/ 안에서 "지금 쓰는 것" 을 가리키는 이름들. 실행 이름이 붙은 사본은
-# 같은 이름에 실행 폴더 이름이 하나 끼어든다.
-PROMOTED = [("html", "restructured_auto%s.html"),
-            ("flow", "restructured_auto%s.flow.json"),
-            ("audit", "audit_auto%s.json"),
+# 같은 이름에 실행 폴더 이름이 하나 끼어든다 (%s). {task} 자리에는 과제가
+# 들어간다 - 이체는 빈 글자라 이름이 전과 같고, 공과금은 _bill 이다
+# (restructured_auto_bill.html). 과제를 넣지 않으면 두 과제를 번갈아 돌릴 때
+# 나중 과제가 앞 과제의 "지금 쓰는 재구성본" 을 말없이 덮는다.
+PROMOTED = [("html", "restructured_auto{task}%s.html"),
+            ("flow", "restructured_auto{task}%s.flow.json"),
+            ("audit", "audit_auto{task}%s.json"),
             # 이 빌드를 만든 진단과 계획. 승격된 산출물만 보는 사람도 "무엇을
             # 근거로 무엇을 바꿨는지" 를 같은 자리에서 찾을 수 있어야 한다.
-            ("plan", "restructured_auto%s.plan.json"),
-            ("diagnosis", "restructured_auto%s.diagnosis.json"),
+            ("plan", "restructured_auto{task}%s.plan.json"),
+            ("diagnosis", "restructured_auto{task}%s.diagnosis.json"),
             # 주입 전, 모델이 쓴 그대로. 승격된 산출물에는 도구가 넣은
             # 데이터 블록과 고친 선언이 들어 있으므로, 둘을 나란히 두지
             # 않으면 "모델이 만든 것" 을 되찾을 수 없다. 뽑을 데이터가
             # 없는 입력에서는 이 자리가 비고, 그때는 건너뛴다.
-            ("model_html", "restructured_auto%s.model.html")]
+            ("model_html", "restructured_auto{task}%s.model.html")]
+
+# 승격된 설명서의 이름. 다른 산출물과 같이 restructured_auto{task} 로 시작한다.
+BRIEF = "designer_brief.md"
+PROMOTED_BRIEF = "restructured_auto{task}%s.designer_brief.md"
+
+
+def task_tag(task_id):
+    """승격 이름에 끼우는 과제 표시. 기본 과제(이체)는 빈 글자다."""
+    return "" if task_id == DEFAULT_TASK else "_" + task_id
+
+
+def promoted_name(key, task_id, suffix=""):
+    """그 과제의 승격 파일 이름. key 는 PROMOTED 의 칸이거나 "brief" 다.
+    suffix 는 "" (지금 쓰는 것) 또는 "." + 실행 이름 (사본)."""
+    pattern = PROMOTED_BRIEF if key == "brief" else dict(PROMOTED)[key]
+    return pattern.format(task=task_tag(task_id)) % suffix
 
 
 def copy_final(r):
@@ -856,22 +875,26 @@ def copy_final(r):
 
     실행 이름이 붙은 사본을 함께 두는 이유는 그 반대다. 통과한 실행이 둘 이상
     이면 나중 것이 앞의 것을 덮는데, 둘을 비교할 수 있어야 한다.
+
+    이름은 과제마다 따로다 (promoted_name).
     """
     f = r.summary["final"]
     if not f:
         return
+    tid = r.task["id"]
     if not r.summary.get("passed"):
-        r.log("final: 통과한 빌드가 없다 — outputs/restructured_auto.* 는 그대로 둔다")
+        r.log("final: 통과한 빌드가 없다 — outputs/%s 는 그대로 둔다"
+              % (promoted_name("html", tid).rsplit(".", 1)[0] + ".*"))
         return
     out, name = outputs_dir(bool(r.args.mock)), os.path.basename(r.run_dir)
     os.makedirs(out, exist_ok=True)
     promoted = []
-    for key, pattern in PROMOTED:
+    for key, _pattern in PROMOTED:
         if not f.get(key):
             continue
-        shutil.copy2(f[key], os.path.join(out, pattern % ""))
-        shutil.copy2(f[key], os.path.join(out, pattern % ("." + name)))
-        promoted.append(pattern % "")
+        shutil.copy2(f[key], os.path.join(out, promoted_name(key, tid)))
+        shutil.copy2(f[key], os.path.join(out, promoted_name(key, tid, "." + name)))
+        promoted.append(promoted_name(key, tid))
     r.log("final: attempt %d -> %s (+ .%s 사본)"
           % (f["attempt"], ", ".join(promoted), name))
     # 도구가 모델의 목록을 고쳤다면, 통과한 산출물이 모델이 쓴 그대로가
@@ -880,16 +903,10 @@ def copy_final(r):
     if pres.get("redeclared"):
         r.log("final: 주의 - 이 산출물은 모델이 쓴 그대로가 아니다. 도구가 "
               "%s 의 선언을 입력의 데이터로 바꿨다. 모델이 쓴 것은 %s 다."
-              % (", ".join(pres["redeclared"]),
-                 dict(PROMOTED)["model_html"] % ""))
+              % (", ".join(pres["redeclared"]), promoted_name("model_html", tid)))
     if f.get("model_html"):
-        f["model_html_promoted"] = os.path.join(out, dict(PROMOTED)["model_html"] % "")
+        f["model_html_promoted"] = os.path.join(out, promoted_name("model_html", tid))
     write_briefs(r, out, name)
-
-
-# 승격된 설명서의 이름. 다른 산출물과 같이 restructured_auto 로 시작한다.
-BRIEF = "designer_brief.md"
-PROMOTED_BRIEF = "restructured_auto%s.designer_brief.md"
 
 
 def write_briefs(r, out, name):
@@ -897,6 +914,7 @@ def write_briefs(r, out, name):
     하나(+ 실행 이름 사본). 링크가 설명서의 폴더 기준이므로 복사하지 않고 따로
     쓴다 - 같은 스크린샷을 가리키되 링크 글자가 다르다."""
     f = r.summary["final"]
+    tid = r.task["id"]
     path = write_brief(r.summary, r.original_screens, os.path.join(r.run_dir, BRIEF),
                        errors=r.errors)
     if not path:
@@ -904,10 +922,10 @@ def write_briefs(r, out, name):
         return
     f["brief"] = path
     promoted = write_brief(r.summary, r.original_screens,
-                           os.path.join(out, PROMOTED_BRIEF % ""), errors=r.errors)
-    shutil.copy2(promoted, os.path.join(out, PROMOTED_BRIEF % ("." + name)))
+                           os.path.join(out, promoted_name("brief", tid)), errors=r.errors)
+    shutil.copy2(promoted, os.path.join(out, promoted_name("brief", tid, "." + name)))
     f["brief_promoted"] = promoted
-    r.log("final: 디자이너용 설명서 -> %s (+ %s)" % (path, PROMOTED_BRIEF % ""))
+    r.log("final: 디자이너용 설명서 -> %s (+ %s)" % (path, promoted_name("brief", tid)))
 
 
 # --------------------------------------------------------------------------- #

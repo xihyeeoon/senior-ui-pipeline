@@ -342,9 +342,36 @@ def build_row(build_rel, path, d, dirs, alts):
     }
 
 
+def task_of_audit(d):
+    """그 audit 이 어느 과제의 것인지 - 비교 기준으로 쓴 원본이 어느 과제
+    파일의 original 인가. 모르면 기본 과제(이체)다."""
+    orig = url_to_rel((d.get("inputs") or {}).get("original")) or ""
+    for name in task_names():
+        if load_task(name)["original"] == orig:
+            return name
+    return DEFAULT_TASK
+
+
+def mark_task(row, d, used):
+    """기본 과제가 아닌 빌드에 과제를 적고, 이미 쓰인 id 와 겹치면 실행 폴더
+    이름으로 가른다. 재구성 루프의 승격 audit 은 과제와 상관없이 실행 폴더의
+    attempt_N.html 을 가리켜서, 이체와 공과금의 행이 같은 id 가 될 수 있다 -
+    그러면 대시보드가 공과금 빌드를 이체 것으로 연다. 이체 행은 그대로다."""
+    task = task_of_audit(d)
+    if task != DEFAULT_TASK:
+        row["task"] = task
+        row["name"] = "%s · %s" % (row["name"], load_task(task).get("label", task))
+    if row["id"] in used:
+        parent = os.path.basename(os.path.dirname(row["html"]))
+        row["id"] = "%s-%s" % (parent, row["id"])
+    used.add(row["id"])
+    return row
+
+
 def collect_builds():
     dirs = shot_dirs()
     found = {}          # build rel path -> record
+    audit_of = {}       # build rel path -> 그 record 를 만든 audit
     for name, path, d, build_rel in audited_builds():
         prev = found.get(build_rel)
         if prev is None:
@@ -354,8 +381,10 @@ def collect_builds():
             if alts is None:
                 continue
         found[build_rel] = build_row(build_rel, path, d, dirs, alts)
+        audit_of[build_rel] = d
 
-    builds = list(found.values())
+    used = set()
+    builds = [mark_task(row, audit_of[k], used) for k, row in found.items()]
     builds.sort(key=lambda b: (ORDER.index(b["id"]) if b["id"] in ORDER else 99, b["id"]))
     return builds, dirs
 
@@ -569,6 +598,12 @@ def build():
     builds, dirs = collect_builds()
     baseline = collect_baseline(dirs)
     originals = collect_originals(dirs)
+    # 다른 과제의 원본 카드와 그 원본을 검사한 audit 의 행이 같은 id 가 되지
+    # 않게 한다 (원본 대 원본 audit 은 inputs/original_bill.html 을 가리킨다).
+    taken = {o["id"] for o in originals}
+    for b in builds:
+        if b["id"] in taken:
+            b["id"] = "%s-%s" % (os.path.basename(os.path.dirname(b["html"])), b["id"])
     changes = parse_changelog()
     claims = parse_claims()
     rules = parse_kb(changes, claims)

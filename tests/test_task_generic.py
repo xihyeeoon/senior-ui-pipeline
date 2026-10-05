@@ -459,3 +459,92 @@ def test_a_mock_of_another_task_does_not_start(fake_run_env, out_root):  # noqa:
     code = loop.run(_api.restructure_parser().parse_args(
         ["--task", "bill", "--mock", "pass", "--attempts", "1", "--delay", "0"]))
     assert code == 2
+
+
+# --------------------------------------------------------------------- #
+# 10. 승격 산출물 - 과제마다 따로 (12번에서 이체·공과금을 번갈아 돌린다)
+# --------------------------------------------------------------------- #
+PROMOTED_TRANSFER = ["restructured_auto.html", "restructured_auto.flow.json",
+                     "audit_auto.json", "restructured_auto.plan.json",
+                     "restructured_auto.diagnosis.json",
+                     "restructured_auto.designer_brief.md"]
+
+
+def test_a_bill_run_does_not_overwrite_the_transfer_promotion(fake_run_env, out_root):  # noqa: F811
+    """고치기 전: 승격 이름에 과제가 없어, 통과한 공과금 실행이 이체의
+    outputs/restructured_auto.* (뷰어와 실험 조건이 "지금 쓰는 재구성본" 으로
+    읽는 것) 를 말없이 덮었다."""
+    code, _ = run_loop(fake_run_env, out_root, always_reply, attempts=1)
+    assert code == 0
+    before = {n: open(os.path.join(out_root, n), "rb").read() for n in PROMOTED_TRANSFER}
+
+    code, summary = bill_run(fake_run_env, out_root)
+    assert code == 0
+    after = {n: open(os.path.join(out_root, n), "rb").read() for n in PROMOTED_TRANSFER}
+    assert after == before
+    run_name = os.path.basename(summary["run_dir"])
+    for n in PROMOTED_TRANSFER:
+        bill = n.replace("_auto", "_auto_bill", 1)
+        assert os.path.exists(os.path.join(out_root, bill)), bill
+        stem, ext = bill.split(".", 1)
+        assert os.path.exists(os.path.join(out_root, "%s.%s.%s" % (stem, run_name, ext)))
+    assert summary["final"]["brief_promoted"].endswith("restructured_auto_bill.designer_brief.md")
+
+
+def test_every_promoted_name_follows_the_task_rule():
+    """함께 승격되는 파일(model.html · plan · diagnosis · 설명서 포함) 모두 같은
+    규칙이다. 이체는 지금 이름 그대로."""
+    for key, _pattern in loop.PROMOTED:
+        t = loop.promoted_name(key, "transfer", "")
+        b = loop.promoted_name(key, "bill", "")
+        assert "_auto_bill" in b and "_auto_bill" not in t, key
+        assert b == t.replace("_auto", "_auto_bill", 1)
+    assert loop.promoted_name("model_html", "transfer", "") == "restructured_auto.model.html"
+    assert loop.promoted_name("brief", "bill", ".r1") == "restructured_auto_bill.r1.designer_brief.md"
+
+
+def test_the_index_keeps_transfer_and_bill_auto_builds_apart(monkeypatch):
+    """두 과제의 승격 audit 이 모두 attempt_1.html 을 가리켜도, 색인이 공과금
+    빌드를 이체 것으로(같은 id 로) 읽지 않는다. 이체 행은 전과 같다."""
+    BI = _api.build_index_module
+    base = os.path.join(_api.ROOT_DIR, ".pytest-outputs", "index_two_tasks")
+    import shutil
+    shutil.rmtree(base, ignore_errors=True)
+    rows = {}
+    for name, task, run in (("audit_auto.json", "transfer", "20261005-100000"),
+                            ("audit_auto_bill.json", "bill", "20261005-100100-bill")):
+        d = os.path.join(base, "restructure_auto", run)
+        os.makedirs(d)
+        open(os.path.join(d, "attempt_1.html"), "w", encoding="utf-8").write(
+            '<section data-screen="home"></section>')
+        rel = os.path.relpath(os.path.join(d, "attempt_1.html"), _api.ROOT_DIR)
+        orig = _api.load_task(task)["original"]
+        json.dump({"passed": True, "fatal": [], "warning": [], "metrics": {"flow": "auto"},
+                   "inputs": {"original": "http://localhost:3003/" + orig,
+                              "repaired": "http://localhost:3003/" + rel.replace(os.sep, "/"),
+                              "flow": "(none)"}},
+                  open(os.path.join(base, name), "w", encoding="utf-8"))
+        rows[task] = rel.replace(os.sep, "/")
+    # 같은 빌드를 가리키는 audit 이 하나 더 있어도 (CLI 의 _stdout 사본) 색인이
+    # 멈추지 않는다
+    shutil.copy(os.path.join(base, "audit_auto_bill.json"),
+                os.path.join(base, "audit_auto_bill_stdout.json"))
+    monkeypatch.setattr(BI, "OUTPUTS", base)
+    monkeypatch.setattr(BI, "SHOTS", os.path.join(base, "shots"))
+    builds, _ = BI.collect_builds()
+    by_html = {b["html"]: b for b in builds}
+    t, b = by_html[rows["transfer"]], by_html[rows["bill"]]
+    assert t["id"] == "attempt_1" and "task" not in t
+    assert b["id"] != t["id"]
+    assert b["task"] == "bill"
+    # 공과금 원본 대 원본 audit 의 행이 공과금 원본 카드와 id 가 겹치지 않는다
+    json.dump({"passed": True, "fatal": [], "warning": [], "metrics": {"flow": "original_bill"},
+               "inputs": {"original": "http://localhost:3003/inputs/original_bill.html",
+                          "repaired": "http://localhost:3003/inputs/original_bill.html",
+                          "flow": "flows/original_bill.json"}},
+              open(os.path.join(base, "audit_original_bill.json"), "w", encoding="utf-8"))
+    ix = BI.build()
+    ids = [x["id"] for x in [ix["baseline"]] + ix["originals"] + ix["builds"]]
+    assert len(ids) == len(set(ids)), ids
+    assert ix["baseline"]["id"] == "original_transfer"
+    shutil.rmtree(base, ignore_errors=True)
