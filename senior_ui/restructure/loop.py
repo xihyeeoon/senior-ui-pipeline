@@ -26,7 +26,8 @@ from senior_ui.config import ORIGINAL_URL, ROOT, outputs_dir, url_for
 from senior_ui.devserver import ensure_server
 
 from .audit_call import run_audit
-from .model import RateLimited, call_model, load_env, mock_reply
+from .model import (ApiRejected, InfraFailed, RateLimited, call_model,
+                    load_env, mock_reply)
 from .prompt import build_prompt, choices_block, load_template, one_line, retry_block
 from .reply import failure_report, parse_reply, validate_flow
 
@@ -43,11 +44,20 @@ GO_ON = "go_on"          # 다음 시도로
 # 예산
 # --------------------------------------------------------------------------- #
 class Budget:
-    """형식 오류와 검사 fatal 에 따로 주는 재시도 예산."""
+    """재시도 예산 셋. 셋인 이유는 실패의 종류가 셋이기 때문이다.
 
-    def __init__(self, fmt, aud):
-        self.budget = {"format": fmt, "audit": aud}
-        self.used = {"format": 0, "audit": 0}
+        format  흐름 명세가 규격에 안 맞는다      - 모델이 고칠 수 있다
+        audit   설계가 과제를 통과 못 한다        - 모델이 고칠 수 있다
+        infra   연결이 되지 않았다                - 모델과 무관하다
+
+    앞의 둘을 가른 이유는 Run 2 다 - 한쪽이 예산을 다 쓰면 다른 쪽은 재시도를
+    한 번도 못 받았다. infra 를 더한 이유는 그 반대다. 호출 실패는 예산을 전혀
+    쓰지 않아서, 키가 틀리면 루프가 끝나지 않았다.
+    """
+
+    def __init__(self, fmt, aud, infra=3):
+        self.budget = {"format": fmt, "audit": aud, "infra": infra}
+        self.used = {"format": 0, "audit": 0, "infra": 0}
 
     @property
     def format_used(self):
@@ -57,6 +67,10 @@ class Budget:
     def audit_used(self):
         return self.used["audit"]
 
+    @property
+    def infra_used(self):
+        return self.used["infra"]
+
     def spend(self, kind):
         self.used[kind] += 1
 
@@ -64,11 +78,13 @@ class Budget:
         return self.used[kind] >= self.budget[kind]
 
     def exhausted(self):
+        """설계를 고칠 기회가 더 없다. infra 는 설계와 무관하므로 세지 않는다."""
         return self.out_of("format") and self.out_of("audit")
 
     def as_dict(self):
         return {"format_used": self.used["format"], "format_budget": self.budget["format"],
-                "audit_used": self.used["audit"], "audit_budget": self.budget["audit"]}
+                "audit_used": self.used["audit"], "audit_budget": self.budget["audit"],
+                "infra_used": self.used["infra"], "infra_budget": self.budget["infra"]}
 
 
 class Run:
@@ -85,7 +101,8 @@ class Run:
         self.orig_snapshot = None
         self.budget = Budget(
             args.format_attempts if args.format_attempts is not None else args.attempts,
-            args.audit_attempts if args.audit_attempts is not None else args.attempts)
+            args.audit_attempts if args.audit_attempts is not None else args.attempts,
+            getattr(args, "infra_attempts", 3))
         self.prev = {"report": None, "html": None, "flow_text": None}
         self.summary = {"run_dir": run_dir, "model": model, "mock": args.mock,
                         "stage": args.stage, "attempts": [], "passed": False,
@@ -142,16 +159,36 @@ def request_reply(r, n, p):
             r.summary["attempts"].append({"n": n, "stage": "rate_limit",
                                           "passed": False, "error": str(e)})
             return None, STOP
-        except Exception as e:                       # network, auth
-            # TODO 버그: 429 가 아닌 호출 실패는 예산을 쓰지 않고 다음 시도로 간다.
-            # 키가 틀리면 같은 실패가 영원히 반복되고 루프가 끝나지 않는다.
-            r.log("model: call failed: %s" % e)
-            report = failure_report("LLM", "모델 호출 실패: %s" % e)
-            _dump(report, p + ".audit.json")
+        except ApiRejected as e:
+            # 키·권한·요청 자체가 틀렸다. 다시 보내도 같은 답이 오므로, 여기서
+            # 멈추지 않으면 예산과 무관하게 같은 실패만 반복된다.
+            r.log("중단: API 가 요청을 거절했다 — 다시 보내도 같은 답이 온다 (%s)" % e)
+            r.summary["stopped_reason"] = "api_rejected"
+            _dump(failure_report("INFRA", "API 가 요청을 거절했다: %s" % e),
+                  p + ".audit.json")
+            r.summary["attempts"].append({"n": n, "stage": "api_rejected",
+                                          "passed": False, "error": str(e)})
+            return None, STOP
+        except Exception as e:                       # 연결 실패·타임아웃·그 밖
+            # 설계 실패가 아니므로 형식·검사 예산은 건드리지 않는다. 대신 인프라
+            # 예산을 쓴다 - 다시 될 수도 있지만 무한히 기다리지는 않는다.
+            #
+            # 오류 문구는 프롬프트로 가지 않는다 (r.prev 를 그대로 둔다). 모델이
+            # 고칠 수 있는 것이 아니고, 직전에 검사받은 빌드의 실패 목록을
+            # API 오류로 덮으면 다음 시도가 고칠 것을 잃는다.
+            kind = "InfraFailed" if isinstance(e, InfraFailed) else type(e).__name__
+            r.budget.spend("infra")
+            r.log("model: 호출 실패 (인프라 %d/%d) — %s: %s"
+                  % (r.budget.infra_used, r.budget.budget["infra"], kind, e))
+            _dump(failure_report("INFRA", "모델 호출 실패: %s: %s" % (kind, e)),
+                  p + ".audit.json")
             r.summary["attempts"].append({"n": n, "stage": "call", "passed": False,
-                                          "error": str(e)})
-            r.prev = {"report": report, "html": r.prev["html"],
-                      "flow_text": r.prev["flow_text"]}
+                                          "error": "%s: %s" % (kind, e)})
+            if r.budget.out_of("infra"):
+                r.log("인프라 재시도 예산 소진 (%d회) — 모델에 닿지 못했다"
+                      % r.budget.infra_used)
+                r.summary["stopped_reason"] = "infra_exhausted"
+                return None, STOP
             return None, GO_ON
     io.open(p + ".response.txt", "w", encoding="utf-8", newline="\n").write(reply["text"])
     r.log("model: %s chars, finish=%s, %ss, usage=%s"
@@ -350,9 +387,23 @@ def copy_final(r):
 
 
 # --------------------------------------------------------------------------- #
+# 종료 코드
+# --------------------------------------------------------------------------- #
+# 이 이유로 멈춘 실행은 "빌드가 떨어졌다" 가 아니라 "돌지 못했다" 다. 부르는
+# 쪽은 둘을 구분해야 한다 - 떨어진 빌드는 다시 만들고, 돌지 못한 실행은 다시
+# 만들 것이 없다. senior_ui.audit 의 종료 코드 규약과 같다 (docs/README.md).
+CANNOT_RUN = {"api_rejected", "infra_exhausted"}
+
+
+def exit_code(summary):
+    """0 = 통과한 빌드가 있다, 1 = 전부 실패, 2 = 아예 돌지 못했다."""
+    if summary.get("passed"):
+        return 0
+    return 2 if summary.get("stopped_reason") in CANNOT_RUN else 1
+
+
 def run(args):
-    """한 실행 전체. 돌려주는 것이 프로세스의 종료 코드다 -
-    0 = 통과한 빌드가 있다, 1 = 전부 실패, 2 = 아예 돌지 못했다."""
+    """한 실행 전체. 돌려주는 것이 프로세스의 종료 코드다 - exit_code 참고."""
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     run_dir = os.path.join(runs_dir(),
                            stamp + ("-mock-" + args.mock if args.mock else ""))
@@ -410,4 +461,4 @@ def run(args):
     copy_final(r)
     _dump(r.summary, os.path.join(run_dir, "summary.json"))
     log("summary: %s" % os.path.join(run_dir, "summary.json"))
-    return 0 if r.summary["passed"] else 1
+    return exit_code(r.summary)

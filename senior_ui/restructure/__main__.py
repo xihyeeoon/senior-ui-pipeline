@@ -58,6 +58,8 @@ def main():
                     help="흐름 명세 형식 오류에 쓸 재시도 횟수 (기본: --attempts)")
     ap.add_argument("--audit-attempts", type=int, default=None,
                     help="검사 fatal 에 쓸 재시도 횟수 (기본: --attempts)")
+    ap.add_argument("--infra-attempts", type=int, default=3,
+                    help="모델에 닿지 못했을 때(연결 실패) 쓸 재시도 횟수")
     ap.add_argument("--model", default=None)
     ap.add_argument("--max-tokens", type=int, default=16000,
                     help="completion cap; the HTML alone is ~12k tokens")

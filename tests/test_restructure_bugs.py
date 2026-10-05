@@ -34,7 +34,7 @@ model = _api.model_module
 def make_args(tmp_path, **kw):
     """`senior_ui.restructure.__main__` 이 만드는 것과 같은 모양의 args."""
     d = dict(attempts=2, format_attempts=None, audit_attempts=None,
-             model="test-model", max_tokens=1000, mock=None,
+             infra_attempts=3, model="test-model", max_tokens=1000, mock=None,
              original=os.path.join(ROOT, "inputs", "original_transfer.html"),
              stage="styled", delay=0)
     d.update(kw)
@@ -122,6 +122,82 @@ GOOD_REPLY = reply_text(GOOD_HTML, GOOD_FLOW)
 def always_reply(*a, **kw):
     return {"text": GOOD_REPLY, "finish_reason": "stop", "seconds": 0.0,
             "usage": None}
+
+
+# ===================================================================== #
+# 1. 429 가 아닌 모델 호출 실패
+# ===================================================================== #
+def test_rejected_key_stops_the_loop(fake_run_env, tmp_path):
+    """인증 오류는 다시 보내도 같은 답이 온다. 첫 실패에서 멈춰야 한다.
+
+    고치기 전: 예산을 쓰지 않고 다음 시도로 넘어갔다 - 키가 틀리면 루프가
+    끝나지 않았다.
+    """
+    calls = []
+
+    def boom(*a, **kw):
+        calls.append(1)
+        raise model.ApiRejected("AuthenticationError: invalid api key")
+
+    code, summary = run_loop(fake_run_env, tmp_path, boom, attempts=5)
+    assert len(calls) == 1
+    assert summary["stopped_reason"] == "api_rejected"
+    assert code == 2
+
+
+def test_rejected_key_does_not_spend_the_retry_budget(fake_run_env, tmp_path):
+    """설계 실패가 아니므로 형식·검사 예산은 그대로 남아야 한다."""
+    def boom(*a, **kw):
+        raise model.ApiRejected("BadRequestError: model not found")
+
+    _code, summary = run_loop(fake_run_env, tmp_path, boom, attempts=5)
+    assert summary["budget"]["format_used"] == 0
+    assert summary["budget"]["audit_used"] == 0
+
+
+def test_network_errors_spend_the_infra_budget(fake_run_env, tmp_path):
+    """네트워크 오류는 다음에 될 수 있다 - 다시 시도하되 끝은 있어야 한다."""
+    calls = []
+
+    def boom(*a, **kw):
+        calls.append(1)
+        raise model.InfraFailed("APIConnectionError: connection reset")
+
+    code, summary = run_loop(fake_run_env, tmp_path, boom,
+                             attempts=10, infra_attempts=3)
+    assert len(calls) == 3
+    assert summary["budget"]["infra_used"] == 3
+    assert summary["stopped_reason"] == "infra_exhausted"
+    assert code == 2
+    # 설계 실패가 아니므로 다른 두 예산은 건드리지 않는다
+    assert summary["budget"]["format_used"] == 0
+    assert summary["budget"]["audit_used"] == 0
+
+
+def test_api_error_text_never_reaches_the_prompt(fake_run_env, tmp_path):
+    """API 오류 문구는 모델이 고칠 수 있는 것이 아니다. 프롬프트에 넣지 않는다.
+
+    고치기 전: 호출 실패 리포트를 `prev` 에 넣어서, 다음 프롬프트의 재시도
+    블록에 "모델 호출 실패: Connection reset" 이 그대로 실렸다.
+    """
+    state = {"n": 0}
+    secret = "APIConnectionError: proxy 10.0.0.1 refused"
+
+    def flaky(_model, _prompt, _max_tokens, _log=None, **kw):
+        state["n"] += 1
+        if state["n"] == 1:
+            raise model.InfraFailed(secret)
+        return {"text": GOOD_REPLY, "finish_reason": "stop", "seconds": 0.0,
+                "usage": None}
+
+    _code, _summary = run_loop(fake_run_env, tmp_path, flaky,
+                               attempts=3, infra_attempts=3)
+    runs = sorted((tmp_path / "outputs" / "restructure_auto").iterdir())
+    prompts = [io.open(str(p), encoding="utf-8").read()
+               for p in sorted(runs[-1].glob("attempt_*.prompt.txt"))]
+    assert len(prompts) == 2
+    assert all(secret not in p for p in prompts)
+    assert all("APIConnectionError" not in p for p in prompts)
 
 
 # ===================================================================== #

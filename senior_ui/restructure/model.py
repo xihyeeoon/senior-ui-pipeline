@@ -28,17 +28,47 @@ def load_env():
         os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
 
 
-class RateLimited(Exception):
+class ModelError(Exception):
+    """모델 호출이 실패했다. 어느 것도 "설계가 과제를 통과 못 했다" 가 아니다.
+
+    세 갈래를 가르는 이유는 부르는 쪽이 할 일이 전부 다르기 때문이다.
+
+      RateLimited  429 가 백오프를 다 쓰고도 계속된다 - 지금은 못 돈다
+      ApiRejected  키·권한·요청 자체가 틀렸다 - 다시 보내도 같은 답이 온다
+      InfraFailed  연결이 되지 않았다 - 같은 요청이 다음에는 될 수 있다
+
+    가르지 않으면 틀린 키 하나로 루프가 끝나지 않는다. 같은 호출이 같은 이유로
+    실패하는데 그것이 "다음 시도로 넘어갈 일" 로 취급되기 때문이다.
+    """
+
+
+class RateLimited(ModelError):
     """백오프를 다 쓰고도 429 가 계속된 경우. 설계 실패가 아니라 인프라 한도다."""
+
+
+class ApiRejected(ModelError):
+    """인증·권한·잘못된 요청. 같은 요청을 다시 보내도 결과가 같으므로 멈춘다."""
+
+
+class InfraFailed(ModelError):
+    """연결 실패·타임아웃. 다시 시도할 값은 있지만 무한히 하지는 않는다."""
 
 
 def call_model(model, prompt, max_tokens, log=None, backoff=(20, 45, 90, 180)):
     """시도마다 직전 HTML 전체를 다시 보내므로 프롬프트가 크다. 이 계정은 전에
     TPM 30,000 한도에 걸린 적이 있으므로 429 를 지수적으로 기다렸다 다시 친다.
-    그래도 안 되면 RateLimited 를 올려 설계 실패와 섞이지 않게 한다."""
-    from openai import OpenAI
-    from openai import RateLimitError
-    client = OpenAI()
+    그래도 안 되면 RateLimited 를 올려 설계 실패와 섞이지 않게 한다.
+
+    429 가 아닌 실패는 ApiRejected 와 InfraFailed 로 갈라 올린다 - 어느 쪽인지는
+    여기서만 알 수 있다 (openai 의 예외 종류). 루프는 그 종류만 보고 판단한다."""
+    from openai import (OpenAI, APIConnectionError, AuthenticationError,
+                        BadRequestError, NotFoundError, OpenAIError,
+                        PermissionDeniedError, RateLimitError)
+    # 키가 아예 없으면 생성자부터 OpenAIError 다. 그것도 "다시 보내도 같다" 다.
+    try:
+        client = OpenAI()
+    except OpenAIError as e:
+        raise ApiRejected("%s: %s" % (type(e).__name__, e))
     t0 = time.time()
     for i, wait in enumerate((0,) + tuple(backoff)):
         if wait:
@@ -54,6 +84,11 @@ def call_model(model, prompt, max_tokens, log=None, backoff=(20, 45, 90, 180)):
             break
         except RateLimitError as e:
             last = e
+        except (AuthenticationError, PermissionDeniedError, BadRequestError,
+                NotFoundError) as e:
+            raise ApiRejected("%s: %s" % (type(e).__name__, e))
+        except APIConnectionError as e:          # APITimeoutError 도 이 아래다
+            raise InfraFailed("%s: %s" % (type(e).__name__, e))
     else:
         raise RateLimited(str(last))
     choice = resp.choices[0]
