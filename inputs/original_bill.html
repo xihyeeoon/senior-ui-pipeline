@@ -150,6 +150,9 @@
     margin:16px auto 18px; display:flex; align-items:center; justify-content:center;}
   .donet{text-align:center; font-size:26px; font-weight:800; margin-bottom:24px;}
   .note{font-size:16px; line-height:1.45; color:#6A6A6F; margin:12px 0 20px;}
+  /* 납부완료는 실제 앱 캡처처럼 안내 문구까지 한 화면에 들어간다 (행 간격을 좁히고 라벨을 꺾지 않는다) */
+  [data-screen='done'] .kv{padding:7px 0;}
+  [data-screen='done'] .kv .k{white-space:nowrap;}
 
   /* ---------- 7. 계좌 비밀번호 ---------- */
   .pwtitle{text-align:center; font-size:26px; font-weight:800; margin-top:150px;}
