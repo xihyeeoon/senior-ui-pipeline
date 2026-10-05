@@ -326,7 +326,9 @@ def request_plan(r, n, p):
         if reply["finish_reason"] == "length":
             raise PlanProblems(["답이 길이 제한에서 잘렸다 (finish_reason=length). "
                                 "진단과 변경의 문장을 짧게 써서 JSON 을 끝까지 닫아라."])
-        diagnosis, plan = parse_plan(reply["text"], r.original_screens)
+        diagnosis, plan = parse_plan(reply["text"], r.original_screens,
+                                     [e["id"] for e in original_error_paths()
+                                      if "id" in e])
     except PlanProblems as e:
         r.log("plan: %d problem(s): %s" % (len(e.problems),
                                            " | ".join(e.problems)[:300]))

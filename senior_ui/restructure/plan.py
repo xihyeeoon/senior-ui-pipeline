@@ -26,6 +26,8 @@ CHANGE_ID = re.compile(r"^C\d+$")
 DIAG_KEYS = ("id", "screen", "element", "problem", "evidence")
 SCREEN_KEYS = ("name", "purpose", "from")
 CHANGE_KEYS = ("id", "what", "why", "addresses", "from_screens", "to_screens")
+# 오류를 어떻게 보일지. id 는 과제가 정한 오류(원본 흐름의 error_paths)다.
+ERROR_KEYS = ("id", "screen", "how", "back_to")
 
 
 class PlanProblems(ValueError):
@@ -52,8 +54,11 @@ def _json_text(text):
     return blocks[0] if blocks else (text or "").strip()
 
 
-def parse_plan(text, original_screens):
-    """`(diagnosis, plan)`. 쓸 수 없으면 PlanProblems."""
+def parse_plan(text, original_screens, error_ids=None):
+    """`(diagnosis, plan)`. 쓸 수 없으면 PlanProblems.
+
+    `error_ids` 는 과제가 정한 오류다. 주면 계획이 오류마다 어떻게 보일지
+    (`plan.errors`) 를 적어야 한다."""
     try:
         data = json.loads(_json_text(text))
     except json.JSONDecodeError as e:
@@ -63,7 +68,8 @@ def parse_plan(text, original_screens):
         raise PlanProblems(["최상위가 객체가 아니다 (지금은 %s). diagnosis 와 plan "
                             "을 가진 객체 하나여야 한다." % type_of(data)])
     diagnosis, plan = data.get("diagnosis"), data.get("plan")
-    problems = plan_problems(diagnosis, plan, original_screens)
+    problems = plan_problems(diagnosis, plan, original_screens,
+                             error_ids=error_ids)
     if problems:
         raise PlanProblems(problems)
     return diagnosis, plan
@@ -111,7 +117,8 @@ def _unique_ids(problems, where, items, pattern, form):
     return ids
 
 
-def plan_problems(diagnosis, plan, original_screens, revised=False):
+def plan_problems(diagnosis, plan, original_screens, revised=False,
+                  error_ids=None):
     """진단·계획의 모양과, 서로 가리키는 이름이 실제로 있는지.
 
     어느 진단에도 대응하지 않는 변경, 대응이 없는 진단은 문제로 세지 않는다 -
@@ -119,6 +126,11 @@ def plan_problems(diagnosis, plan, original_screens, revised=False):
 
     revised 는 반성으로 고친 계획이다. 처음 세운 계획은 변경이 하나는 있어야
     하지만, 반성이 변경을 모두 거둬들이는 것은 막지 않는다.
+
+    error_ids 는 과제가 정한 오류다. 주면 `plan.errors` 가 오류마다 하나씩 -
+    어느 화면에서(`screen`) 어떻게(`how`) 알리고 어디로 돌아가는지(`back_to`) -
+    있어야 한다. 두 화면 이름은 plan.screens 의 것이다. 주지 않아도
+    `plan.errors` 가 있으면 화면 이름은 본다.
     """
     problems = []
     orig = set(original_screens)
@@ -170,6 +182,32 @@ def plan_problems(diagnosis, plan, original_screens, revised=False):
         if bad:
             problems.append("%s.to_screens 의 %s 는 plan.screens 에 없다"
                             % (where, ", ".join(bad)))
+    problems += _error_problems(plan, names, error_ids)
+    return problems
+
+
+def _error_problems(plan, names, error_ids):
+    """plan.errors 의 모양. 과제의 오류가 모두 있고, 화면 이름이 계획에 있는지."""
+    problems = []
+    errs = plan.get("errors")
+    if not error_ids and errs is None:
+        return problems
+    items = _items(problems, "plan.errors", errs, ERROR_KEYS,
+                   allow_empty=not error_ids)
+    have = [e.get("id") for e in items]
+    for eid in error_ids or []:
+        if eid not in have:
+            problems.append("plan.errors 에 오류 %s 가 없다. 이 오류를 어느 화면에서 "
+                            "어떻게 알리고 어디로 돌아가게 할지 적어라." % eid)
+    for i, e in enumerate(items):
+        where = "plan.errors[%d]" % i
+        if error_ids and e.get("id") not in error_ids:
+            problems.append("%s.id=%r 은 과제의 오류가 아니다 (있는 것: %s)"
+                            % (where, e.get("id"), ", ".join(error_ids)))
+        for key in ("screen", "back_to"):
+            if e.get(key) not in names:
+                problems.append("%s.%s=%r 은 plan.screens 에 없다"
+                                % (where, key, e.get(key)))
     return problems
 
 
@@ -263,6 +301,9 @@ def apply_changes(plan, diagnosis, changes, original_screens):
         add    + screen        new 가 새 화면 하나 (after 가 있으면 그 화면 뒤)
         change + screen:이름   그 화면의 칸을 new 로 고친다
         remove + screen:이름   그 화면을 뺀다
+        change + error:id      그 오류를 보이는 방법(plan.errors)을 고친다
+
+    오류는 더하거나 뺄 수 없다 - 무엇이 오류인지는 과제가 정한다.
     """
     new = json.loads(json.dumps(plan))
     screens, items = new.setdefault("screens", []), new.setdefault("changes", [])
@@ -304,6 +345,17 @@ def apply_changes(plan, diagnosis, changes, original_screens):
             else:
                 problems.append("%s: 화면을 더할 때는 target 을 \"screen\" 으로 쓴다"
                                 % where)
+        elif target.startswith("error:"):
+            errs = new.setdefault("errors", [])
+            at = _find(errs, "id", target[len("error:"):])
+            if at is None:
+                problems.append("%s.target=%r - 계획에 그런 오류가 없다" % (where, target))
+            elif op == "change":
+                body.pop("id", None)
+                errs[at].update(body)
+            else:
+                problems.append("%s: 오류는 change 로 고치기만 한다 - 더하거나 뺄 수 "
+                                "없다" % where)
         elif CHANGE_ID.match(target):
             at = _find(items, "id", target)
             if at is None:
@@ -316,11 +368,14 @@ def apply_changes(plan, diagnosis, changes, original_screens):
                 problems.append("%s: 변경을 더할 때는 target 을 \"change\" 로 쓴다"
                                 % where)
         else:
-            problems.append("%s.target=%r 은 C번호 · change · screen · screen:이름 "
-                            "중 하나가 아니다" % (where, target))
+            problems.append("%s.target=%r 은 C번호 · change · screen · screen:이름 · "
+                            "error:id 중 하나가 아니다" % (where, target))
     if problems:
         return plan, problems
-    after = plan_problems(diagnosis, new, original_screens, revised=True)
+    # 고치기 전의 계획이 가졌던 오류는 고친 뒤에도 모두 있어야 한다.
+    ids = [e.get("id") for e in plan.get("errors") or [] if isinstance(e, dict)]
+    after = plan_problems(diagnosis, new, original_screens, revised=True,
+                          error_ids=ids or None)
     if after:
         return plan, ["반성의 plan_changes 를 적용한 계획이 맞지 않는다: " + p
                       for p in after]

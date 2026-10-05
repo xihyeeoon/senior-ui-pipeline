@@ -5,6 +5,7 @@ r"""오류 경로 - 흐름 명세의 error_paths 와 검사 J.
 여기 있는 테스트는 브라우저 없이 도는 것들이다 - 걷기까지 하는 것은
 test_error_paths_browser.py 에 있다.
 """
+import io
 import json
 
 import _api
@@ -315,3 +316,122 @@ def test_back_to_after_an_on_path_error_screen_is_a_format_problem():
 def test_error_paths_of_the_wrong_type_are_a_shape_problem():
     probs = _api.validate_flow(model_flow({"id": "x"}), HTML)
     assert any("error_paths" in p for p in probs)
+
+
+# --------------------------------------------------------------------- #
+# 진단·계획 - plan.errors
+# --------------------------------------------------------------------- #
+P = _api.plan_module
+ORIG_SCREENS = ["home", "account", "confirm", "err-account", "err-bank"]
+DIAG = [{"id": "D1", "screen": "err-account", "element": "오류 팝업",
+         "problem": "코드만 보인다", "evidence": "ELB00016"}]
+
+
+def plan_with(errors, screens=("start", "account", "review")):
+    p = {"screens": [{"name": n, "purpose": "p", "from": []} for n in screens],
+         "changes": [{"id": "C1", "what": "w", "why": "y", "addresses": ["D1"],
+                      "from_screens": ["err-account"], "to_screens": ["account"]}]}
+    if errors is not None:
+        p["errors"] = errors
+    return p
+
+
+ERRS = [{"id": "wrong-account", "screen": "account", "how": "같은 화면에 빨간 글",
+         "back_to": "account"},
+        {"id": "wrong-bank", "screen": "review", "how": "확인 화면 위에 안내",
+         "back_to": "account"}]
+IDS = ["wrong-account", "wrong-bank"]
+
+
+def test_plan_must_say_how_each_error_is_shown():
+    assert P.plan_problems(DIAG, plan_with(ERRS), ORIG_SCREENS, error_ids=IDS) == []
+    probs = P.plan_problems(DIAG, plan_with(None), ORIG_SCREENS, error_ids=IDS)
+    assert any("plan.errors" in p for p in probs)
+    probs = P.plan_problems(DIAG, plan_with(ERRS[:1]), ORIG_SCREENS, error_ids=IDS)
+    assert any("wrong-bank" in p for p in probs)
+
+
+def test_plan_error_screens_must_be_planned_screens():
+    bad = [dict(ERRS[0], screen="popup"), dict(ERRS[1], back_to="nowhere")]
+    probs = P.plan_problems(DIAG, plan_with(bad), ORIG_SCREENS, error_ids=IDS)
+    text = " | ".join(probs)
+    assert "popup" in text and "nowhere" in text
+
+
+def test_plan_without_error_ids_is_checked_as_before():
+    """오류 정의를 넘기지 않으면(옛 계획) plan.errors 를 요구하지 않는다."""
+    assert P.plan_problems(DIAG, plan_with(None), ORIG_SCREENS) == []
+
+
+def test_reflection_can_change_how_an_error_is_shown():
+    new, probs = P.apply_changes(
+        plan_with(ERRS), DIAG,
+        [{"op": "change", "target": "error:wrong-bank",
+          "new": {"screen": "account", "how": "계좌 화면에서 알린다"}}],
+        ORIG_SCREENS)
+    assert probs == []
+    assert [e for e in new["errors"] if e["id"] == "wrong-bank"][0]["screen"] == "account"
+
+
+def test_reflection_cannot_drop_a_screen_an_error_uses():
+    _new, probs = P.apply_changes(
+        plan_with(ERRS), DIAG, [{"op": "remove", "target": "screen:review"}],
+        ORIG_SCREENS)
+    assert any("review" in p for p in probs)
+
+
+# --------------------------------------------------------------------- #
+# 프롬프트 - 조건과 자리표시자 이름만, 실제 값은 없다
+# --------------------------------------------------------------------- #
+import glob  # noqa: E402
+import os  # noqa: E402
+import re  # noqa: E402
+
+BASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "baseline")
+
+
+def wrong_values():
+    t = original()["truth"]
+    return {k: t[k] for e in original()["error_paths"] for k in e["uses"]}
+
+
+def errors_section(text):
+    m = re.search(r"## 원본의 오류 조건\n(.*?)(?=\n## |\Z)", text, re.S)
+    assert m, "프롬프트에 오류 조건 절이 없다"
+    return m.group(1)
+
+
+def test_errors_block_names_placeholders_but_never_the_values():
+    block = _api.prompt_module.errors_block(original()["error_paths"])
+    for key, value in wrong_values().items():
+        assert "{%s}" % key in block
+        assert value not in block, key
+    assert "wrong-account" in block and "wrong-bank" in block
+
+
+def prompts():
+    html = io.open(os.path.join(_api.ROOT_DIR, "inputs", "original_transfer.html"),
+                   encoding="utf-8").read()
+    yield "plan", _api.build_plan_prompt(_api.load_plan_template(), html, "",
+                                         P.screens_in(html))
+    yield "generate", _api.build_prompt(_api.load_template(), html, "", "", "{}")
+
+
+def test_built_prompts_carry_the_conditions_without_the_values():
+    for name, text in prompts():
+        sec = errors_section(text)
+        for key, value in wrong_values().items():
+            assert "{%s}" % key in sec, (name, key)
+            assert value not in sec, (name, key)
+        # 계좌번호는 원본 어디에도 없는 값이다 - 프롬프트 전체에 없어야 한다.
+        assert wrong_values()["ACCOUNT_WRONG"] not in text, name
+
+
+def test_prompt_baselines_do_not_leak_the_wrong_values():
+    files = glob.glob(os.path.join(BASE, "prompt", "*.txt"))
+    assert files
+    for path in files:
+        text = io.open(path, encoding="utf-8").read()
+        assert wrong_values()["ACCOUNT_WRONG"] not in text, path
+        if "## 원본의 오류 조건" in text:
+            assert wrong_values()["BANK_WRONG"] not in errors_section(text), path

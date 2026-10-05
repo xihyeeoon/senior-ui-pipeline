@@ -16,11 +16,17 @@
 (진단·계획, JSON 하나)이고, `<!-- PROMPT -->` 는 둘째 호출(생성)과 재시도에 쓴다.
 두 단계로 나눈 이유와 루프는 `senior_ui/restructure/loop.py` 머리말에 있다.
 
-생성 프롬프트의 치환 자리 넷: `{{ORIGINAL_HTML}}` (원본 파일 전체), `{{RETRY_BLOCK}}`
+생성 프롬프트의 치환 자리 다섯: `{{ORIGINAL_HTML}}` (원본 파일 전체), `{{RETRY_BLOCK}}`
 (재시도일 때만 채워짐, 첫 시도는 빈 문자열), `{{CHOICES}}` (원본이 가진 선택지 요약 —
-검사 I 가 세는 바로 그 집합이다), `{{PLAN}}` (첫 호출이 세운 계획, 재시도에서 고쳐진
-것). 진단·계획 프롬프트는 `{{PLAN}}` 대신 `{{ORIGINAL_SCREENS}}` (원본의 화면 이름)를
-쓴다.
+검사 I 가 세는 바로 그 집합이다), `{{ERRORS}}` (원본의 오류 조건 — 검사 J 가 걷는
+바로 그 오류들이다), `{{PLAN}}` (첫 호출이 세운 계획, 재시도에서 고쳐진 것).
+진단·계획 프롬프트는 `{{PLAN}}` 대신 `{{ORIGINAL_SCREENS}}` (원본의 화면 이름)를 쓴다.
+
+**오류 조건.** `{{ERRORS}}` 는 원본 흐름(`flows/original.json`)의 `error_paths` 에서
+도구가 만든다 (`prompt.errors_block`). 넣는 것은 오류 id · 무엇이 틀렸는가 · 원본이
+어떻게 하는가 · 잘못된 값의 **자리표시자 이름** 뿐이다. 잘못된 값의 실제 값
+(`truth` 의 `ACCOUNT_WRONG` 등)은 넣지 않는다 — 모델이 그 값을 알면 "그 값일 때만
+오류를 띄우는" HTML 로 검사 J 를 지날 수 있다 (`tests/test_error_paths.py` 가 확인한다).
 
 **예시는 빈칸 틀로만 쓴다.** 프롬프트 안의 JSON 예시에 구체적인 디자인 아이디어를
 적으면 모델이 그것을 베낀다 — "규칙 목록을 주지 않는다" 원칙과도 어긋난다
@@ -62,6 +68,11 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 
 {{CHOICES}}
 
+{{ERRORS}}
+
+원본의 오류 화면도 진단 대상이다. 오류를 어디서 어떻게 알리고 어디로 돌아가게 할지는
+계획의 `errors` 에 오류마다 하나씩 적는다.
+
 선택지 데이터를 계획에서 언급할 때는 `window.PRESERVED.<이름>` 의 이름으로만 말하고,
 값을 다시 나열하지 마라.
 
@@ -86,6 +97,10 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
       {"id": "C1", "what": "<무엇을 바꾸는가>", "why": "<왜>",
        "addresses": ["<진단 id>"], "from_screens": ["<원본 data-screen>"],
        "to_screens": ["<새 화면 이름>"]}
+    ],
+    "errors": [
+      {"id": "<오류 id>", "screen": "<오류를 알리는 화면 이름>",
+       "how": "<어떻게 알리는가>", "back_to": "<고치러 돌아갈 화면 이름>"}
     ]
   }
 }
@@ -98,6 +113,9 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 - `from` · `from_screens` 에는 원본의 화면 이름만 쓴다. 원본에 없던 새 화면이면 `from` 은 `[]`.
 - `to_screens` 에는 `screens` 에 있는 이름만 쓴다.
 - `addresses` 에는 `diagnosis` 에 있는 id 만 쓴다.
+- `errors` 에는 위 "원본의 오류 조건" 의 id 를 하나도 빠뜨리지 않는다. `screen` 과
+  `back_to` 는 `screens` 에 있는 이름이다. 오류만 보이는 화면을 따로 둔다면 그 화면도
+  `screens` 에 넣는다.
 
 {{RETRY_BLOCK}}
 
@@ -155,11 +173,15 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 
 {{CHOICES}}
 
+{{ERRORS}}
+
 ## 계획
 
 ```json
 {{PLAN}}
 ```
+
+오류는 계획의 `errors` 대로 알린다.
 
 ## 3. 흐름 명세도 함께 출력하라
 
@@ -186,7 +208,16 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   "expect": {
     "done": [["#dn-amt", "{AMOUNT_SHOWN}"]]
   },
-  "done_amount": "#dn-amt"
+  "done_amount": "#dn-amt",
+  "error_paths": [
+    {"id": "<오류 id>",
+     "from_step": "<갈라지는 곳: steps 의 screen 이름>",
+     "inputs": [{"<동작>": "<steps 의 do 와 같은 형식, 잘못된 값은 자리표시자로>"}],
+     "expect_screen": "<잘못된 입력 뒤에 있어야 할 화면 이름>",
+     "expect_text_any": ["<알림 글에 들어 있는 낱말>"],
+     "recover": [{"<동작>": "<되돌아가는 조작>"}],
+     "back_to": "<되돌아간 뒤의 화면 이름>"}
+  ]
 }
 ```
 
@@ -200,7 +231,14 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   `{BANK}` = 신한, `{NAME}` = 김철수.
   이 값들은 **검사기가 과업을 수행할 때 눌러 넣을 값**이다. 설계에 미리 채워 두라는
   뜻이 아니다. 사용자는 빈 화면에서 시작해 이 값을 직접 입력한다.
-- 모든 화면을 최소 한 번 지나가야 한다 (처음 보내는 계좌를 직접 입력하는 가장 긴 경로).
+- `steps` 는 처음 보내는 계좌를 직접 입력하는 가장 긴 경로다. HTML 의 모든 화면은
+  `steps` 나 `error_paths` (`expect_screen` · `back_to`) 중 하나가 지나가야 한다.
+- `error_paths` 에는 "원본의 오류 조건" 의 오류마다 하나씩 적는다. 검사기는 정답대로
+  `from_step` 까지 간 뒤 `inputs` 를 실행하고, `expect_screen` 에서 새로 나타난 글을
+  찾고, `recover` 를 실행해 `back_to` 에 있는지 본다. `inputs` 의 잘못된 값은 위의
+  자리표시자로만 넣는다. 버튼을 꺼서 막는 설계라면 꺼진 버튼은 누르지 않는다 —
+  `expect_screen` 은 그 화면 그대로이고, 새로 보인 이유 글이 오류 상태다.
+- `back_to` 는 오류가 나타난 화면이거나 `steps` 에서 그보다 앞의 화면이다.
 - `required_ids` 는 네 HTML 에 실제로 있는 id 만 적는다. `phone` 과 `dn-amt` 는 반드시 포함.
 - `expect` 의 `done` 에는 반드시 `["#dn-amt", "{AMOUNT_SHOWN}"]` 이 있어야 한다.
 - `derived_from_original` 은 `false`.
