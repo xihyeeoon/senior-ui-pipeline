@@ -6,15 +6,17 @@ it returns, run audit.py, read the JSON, ask again - is one command:
 
   1. serve the project root on :3003 (only if nothing is listening already)
   2. up to --attempts times:
-       a. build the prompt from docs/restructure-prompt.md (+ the previous
-          attempt's fatal list on a retry), call the model
-       b. split the reply into HTML + flow JSON, save both under outputs/
-       c. audit it - senior_ui.audit is imported and called, never edited
-       d. stop on pass; otherwise carry the fatal list into the next prompt
+       a. 진단·계획 (처음 한 번): 원본을 주고 {diagnosis, plan} JSON 하나를
+          받는다 - 규칙으로 모양을 보고, --delay 만큼 기다린다
+       b. 생성: 원본 + 계획을 주고 HTML + 흐름 명세를 받는다. 재시도면
+          반성 JSON 이 먼저 오고, 그 plan_changes 가 계획을 고친다
+       c. 형식 검사 + 계획-결과 일치 검사 (브라우저 없음)
+       d. audit it - senior_ui.audit is imported and called, never edited
+       e. stop on pass; otherwise carry the fatal list into the next prompt
   3. stop the server if this script started it
   4. copy the final build to outputs/restructured_auto.html (+ .flow.json,
-     audit_auto.json, .model.html) and write summary.json next to the
-     per-attempt files
+     audit_auto.json, .plan.json, .diagnosis.json, .model.html,
+     .designer_brief.md) and write summary.json next to the per-attempt files
 
 Everything from a run lands in outputs/restructure_auto/<timestamp>/:
   attempt_N.prompt.txt   the exact prompt sent
@@ -23,14 +25,22 @@ Everything from a run lands in outputs/restructure_auto/<timestamp>/:
   attempt_N.model.html   넣기 전, 모델이 쓴 그대로 (넣을 데이터가 있을 때만)
   attempt_N.flow.json
   attempt_N.audit.json   the audit's report (or the parse/validation failure)
+  attempt_N.plan_prompt.txt · .plan_response.txt   진단·계획 호출 (처음 한 번)
+  attempt_N.diagnosis.json   진단 (계획을 세운 시도에만)
+  attempt_N.plan.json        이 시도가 따른 계획 (반성이 고쳤으면 고친 것)
+  attempt_N.reflection.json  반성 (재시도에만)
   shots/attempt_N/       one screenshot per screen reached
-  run.log, summary.json
+  designer_brief.md      디자이너용 변경 설명서 (통과한 실행에만)
+  run.log, summary.json  run.log 첫 줄 = 작업 트리 경고 (깨끗하지 않을 때)
+                         summary.json 의 git · tokens = 커밋 · 단계별 토큰
 
 This file is the command line and nothing else. The work is split up:
 
-  prompt.py      프롬프트 조립 (템플릿 · 선택지 · 재시도 블록)
-  model.py       모델 호출 · 키 읽기 · mock
+  prompt.py      프롬프트 조립 (템플릿 · 선택지 · 재시도 블록 · 반성 요청)
+  model.py       모델 호출 · 키 읽기 · 토큰 어림 · mock
   reply.py       답 가르기 · 흐름 명세 모양 검사
+  plan.py        진단·계획 읽기 · 계획-결과 일치 검사 · 반성 적용
+  brief.py       디자이너용 변경 설명서
   audit_call.py  검사기를 라이브러리로 부른다
   loop.py        재시도 루프 · 예산 · 요약 (run)
 
@@ -41,6 +51,8 @@ Usage:
   python -m senior_ui.restructure --mock fail     # no API: a broken flow, every attempt fails
 
 mock 모드는 다섯이고 Run 1 빌드의 은행 목록 한 줄에서만 다르다 (model.MOCKS).
+
+  다섯 모두 진단·계획 답은 같다 (model.MOCK_PLAN - Run 1 빌드의 아홉 화면).
 
   pass            목록을 window.PRESERVED 로 바꿔 끼운다 - 검사까지 가고 떨어진다
   fail            같은 빌드 + 둘째 걸음이 없는 선택자를 클릭하는 흐름
