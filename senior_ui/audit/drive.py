@@ -305,8 +305,9 @@ async def drive(url, flow, want_shots=None, errors=True):
             if paths:
                 data["error_paths"] = {}
                 for ep in paths:
-                    data["error_paths"][ep["id"]] = await walk_error_path(
-                        browser, url, flow, ep)
+                    data["error_paths"][ep["id"]] = (
+                        _not_walked(data, ep)
+                        or await walk_error_path(browser, url, flow, ep))
         finally:
             await browser.close()
     return data
@@ -355,6 +356,20 @@ async def walk(page, flow, data, want_shots, url):
                 want_shots, "audit_%s.png" % SHOT_SAFE.sub("_", visit)))
 
 
+def _not_walked(data, ep):
+    """정답 경로가 갈라지는 곳(from_step)에 닿기 전에 멈췄으면 오류 경로를 걷지
+    않는다. 다시 걸어도 같은 자리에서 막히고, 막힌 선택자마다 클릭 제한 시간
+    (30초)을 다 기다린다. 판정은 같다 - 검사 J 가 파생으로 적는다."""
+    row = data["screens"].get(ep.get("from_step"))
+    if ep.get("from_step") in data["screens"] and "error" not in row:
+        return None
+    return {"from_step": ep.get("from_step"), "expect_screen": ep.get("expect_screen"),
+            "back_to": ep.get("back_to"), "js_errors": [], "dialogs": [],
+            "error": {"phase": "replay",
+                      "detail": "정답 경로가 %r 에 닿기 전에 멈췄다 - 오류 경로를 "
+                                "걷지 않았다" % ep.get("from_step")}}
+
+
 # 오류 경로에서 "보이는 글" 을 긁는다. 켜진 화면의 글과 켜진 화면 밖에 떠 있는
 # 것(모달·토스트)을 함께 본다 - 오류를 어떻게 보일지는 설계가 정하므로, 화면
 # 하나로 보이든 덮개로 보이든 사용자 눈에 닿는 글이면 된다.
@@ -378,7 +393,8 @@ async def walk_error_path(browser, url, flow, ep):
          "새로 나타난 글" 을 가르는 기준이다. 틀린 값을 넣는 즉시 알리는
          설계라면 마지막 동작이 타이핑이고, 그때도 같은 규칙이다.
       3. `expect_screen` 이 켜지기를 기다리고 보이는 글을 긁는다.
-      4. `recover` 를 실행하고 `back_to` 가 켜지기를 기다린다.
+      4. `recover` 를 실행하고 `back_to` 가 켜지기를 기다린다. 3 에서
+         `expect_screen` 이 켜지지 않았으면 하지 않는다.
 
     단계마다 실패하면 거기서 멈추고 `error` 에 어느 단계였는지 적는다.
     """
@@ -435,6 +451,11 @@ async def walk_error_path(browser, url, flow, ep):
         row["settled"] = await settle(page, ep.get("expect_screen"))
         row["after"] = await _where(page)
         row["after_text"] = await _visible_text(page)
+        if not row["settled"]:
+            # 오류 상태가 나타나지 않았다. 되돌아가는 조작은 그 상태에서 누를
+            # 것이므로 눌러 보지 않는다 - 없는 버튼마다 30초를 기다리게 된다.
+            # 판정(검사 J)은 여기서 이미 정해진다.
+            return row
 
         try:
             await run_actions(page, ep.get("recover") or [], None, truth)

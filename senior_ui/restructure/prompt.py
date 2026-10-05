@@ -364,7 +364,9 @@ def retry_block(report, prev_html, prev_flow_text, error=None, truncated=0):
 
     # 규칙 3: 파생은 한 줄로 묶는다.
     if derived:
-        names = " · ".join(f.get("screen") or "?" for f in derived)
+        # 같은 화면이 두 검사(A 의 도달 못 함 · J 의 오류 경로)에서 함께 파생될
+        # 수 있다. 이름은 한 번만 적는다.
+        names = " · ".join(dict.fromkeys(f.get("screen") or "?" for f in derived))
         head = "[아래는 위 원인의 결과다. 따로 고치지 마라]" if (cause or other) \
             else "[도달하지 못한 화면]"
         parts += [head, "  %s — 도달 못 함" % names, ""]

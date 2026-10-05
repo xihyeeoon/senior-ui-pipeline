@@ -28,7 +28,7 @@ model = _api.model_module
 __all__ = ["fake_run_env", "out_root"]          # pytest 가 fixture 로 찾는다
 
 ORIGINAL = ["home", "recipient", "account", "bank", "amount", "confirm",
-            "password", "done"]
+            "password", "done", "err-account", "err-bank"]
 
 
 def plan_json(diagnosis=None, plan=None):

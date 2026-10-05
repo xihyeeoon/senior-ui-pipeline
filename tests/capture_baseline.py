@@ -395,6 +395,10 @@ MOCK_RUNS = [
     ("mock_preserved_all", ["--mock", "preserved-all", "--attempts", "1"]),
     ("mock_preserved_some", ["--mock", "preserved-some", "--attempts", "1"]),
     ("mock_preserved_none", ["--mock", "preserved-none", "--attempts", "1"]),
+    # 오류 경로의 두 경우. pass 빌드에서 오류 처리를 뺀 것이고, 오류 경로를
+    # 흐름에 적지 않았으면 형식 검사가, 적었으면 검사 J 가 잡는다.
+    ("mock_errors_undeclared", ["--mock", "errors-undeclared", "--attempts", "1"]),
+    ("mock_errors_unhandled", ["--mock", "errors-unhandled", "--attempts", "1"]),
 ]
 
 # mock 실행이 쓸 산출물 폴더. 실제 outputs/ 와 떼어 놓는다.

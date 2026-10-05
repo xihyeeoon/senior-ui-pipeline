@@ -435,3 +435,27 @@ def test_prompt_baselines_do_not_leak_the_wrong_values():
         assert wrong_values()["ACCOUNT_WRONG"] not in text, path
         if "## 원본의 오류 조건" in text:
             assert wrong_values()["BANK_WRONG"] not in errors_section(text), path
+
+
+# --------------------------------------------------------------------- #
+# mock 일곱 모드 - 형식 검사까지 (브라우저 없이)
+# --------------------------------------------------------------------- #
+M = _api.model_module
+
+
+def test_mock_modes_split_on_error_paths_at_the_format_check():
+    """errors-undeclared 만 오류 경로가 없어 형식에서 떨어진다. 나머지는 오류
+    경로를 적었다 (errors-unhandled 는 HTML 에 처리가 없어 검사 J 에서
+    떨어진다 - 브라우저 테스트 test_drive.test_mock_run_matches_baseline)."""
+    required = _api.flow_module.original_error_paths()
+    for mode in M.MODES:
+        html, flow, _ = _api.parse_reply(M.mock_reply(mode)["text"])
+        flow["derived_from_original"] = False
+        errs = [p for p in _api.validate_flow(flow, html, required)
+                if "오류 경로" in p or "error_paths" in p]
+        if mode == "errors-undeclared":
+            assert len(errs) == 2, errs
+        else:
+            assert errs == [], (mode, errs)
+        handled = "mock-acc-err" in html
+        assert handled == (M.MOCKS[mode][3] == "handled"), mode

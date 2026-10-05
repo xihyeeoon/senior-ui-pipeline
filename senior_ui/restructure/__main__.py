@@ -50,12 +50,15 @@ Usage:
   python -m senior_ui.restructure --mock pass     # no API: replays Run 1
   python -m senior_ui.restructure --mock fail     # no API: a broken flow, every attempt fails
 
-mock 모드는 다섯이고 Run 1 빌드를 되읽는다. 모드마다 은행 목록 한 줄과,
+mock 모드는 일곱이고 Run 1 빌드를 되읽는다. 모드마다 은행 목록 한 줄과,
 원본에 있고 Run 1 에 없는 두 값(금액 숫자판의 00 · 빠른 금액의 전액)을 채우는
-방법이 다르다 (model.MOCKS). 받는 사람 이름은 다섯 모두 지금 원본의 정답으로
-바꿔 끼운다 (model.NAME_SWAP).
+방법과, 원본의 두 오류(계좌번호 틀림 · 은행 틀림)를 다루는 방법이 다르다
+(model.MOCKS). 받는 사람 이름은 일곱 모두 지금 원본의 정답으로 바꿔 끼운다
+(model.NAME_SWAP). Run 1 에는 오류 처리가 없으므로, errors-* 가 아닌 다섯은 두
+오류를 같은 화면 안의 안내 글로 알리게 바꿔 끼우고 흐름에 오류 경로를 적는다
+(model.error_swaps · MOCK_ERROR_PATHS).
 
-  다섯 모두 진단·계획 답은 같다 (model.MOCK_PLAN - Run 1 빌드의 아홉 화면).
+  일곱 모두 진단·계획 답은 같다 (model.MOCK_PLAN - Run 1 빌드의 아홉 화면).
 
   pass            은행 목록 · 금액 숫자판 · 빠른 금액을 window.PRESERVED 의
                   배열(BANKS·SECS · AMT_KEYS · QUICK)을 읽어 그린다  -> 통과.
@@ -65,6 +68,10 @@ mock 모드는 다섯이고 Run 1 빌드를 되읽는다. 모드마다 은행 �
   preserved-all   목록은 참조하고 '00'·'전액' 은 마크업에 직접 쓴다  -> 통과
   preserved-some  참조는 하지만 slice(0, 4) 로 일부만 그린다  -> 검사 I 에서 실패
   preserved-none  참조하지 않고 직접 네 개를 쓴다  -> 형식 검사에서 실패
+  errors-undeclared  pass 에서 오류 처리와 오류 경로를 모두 뺐다 (Run 1 그대로)
+                  -> 형식 검사에서 실패 (오류 경로가 없다)
+  errors-unhandled   오류 경로는 적었지만 HTML 에 오류 처리가 없다
+                  -> 검사 J 에서 실패 (틀린 값으로 다음 화면에 넘어간다)
 
 The key comes from .envs (OPENAI_API_KEY=...) or the environment. The model
 comes from --model, then RESTRUCTURE_MODEL, then DESIGNREPAIR_MODEL, then gpt-4o.
