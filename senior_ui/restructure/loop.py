@@ -361,6 +361,14 @@ def check_reply(r, p, entry, reply):
     io.open(flow_path, "w", encoding="utf-8", newline="\n").write(
         json.dumps(flow, ensure_ascii=False, indent=2))
     entry["html"], entry["flow"] = html_path, flow_path
+    if names:
+        # 주입하기 **전**, 모델이 쓴 그대로. 연구에서 "모델이 만든 것" 과
+        # "도구가 고친 것" 을 가르려면 둘이 파일로 나란히 있어야 한다 -
+        # 답 전문(.response.txt)은 실행 폴더에만 있고 승격된 산출물 옆에는
+        # 없다.
+        entry["model_html"] = p + ".model.html"
+        io.open(entry["model_html"], "w", encoding="utf-8",
+                newline="\n").write(html)
     # `html` 은 **모델이 쓴** 것이다. 재시도 블록에 그대로 들어가므로 주입한
     # 것을 넣으면 모델이 자기가 쓰지 않은 데이터 블록을 프롬프트로 돌려받는다 -
     # 입력의 목록 전체가 프롬프트에 두 번 들어가고, 고칠 것도 아니다.
@@ -427,7 +435,13 @@ def record(r, n, p, entry, report, build):
     _dump(report, p + ".audit.json")
     r.summary["attempts"].append(entry)
     r.summary["final"] = {"attempt": n, "html": build["html_path"],
-                          "flow": build["flow_path"], "audit": p + ".audit.json"}
+                          "flow": build["flow_path"],
+                          "audit": p + ".audit.json",
+                          # 이 빌드에 도구가 무엇을 넣고 무엇을 고쳤는지.
+                          # 시도 기록에만 두면, 승격된 산출물만 보는 사람은
+                          # 그 파일의 어느 부분이 모델의 것인지 알 수 없다.
+                          "preserved": entry.get("preserved"),
+                          "model_html": entry.get("model_html")}
     if report.get("passed"):
         r.summary["passed"] = True
         r.log("PASSED on attempt %d" % n)
@@ -490,7 +504,12 @@ def log_trend(r):
 # 같은 이름에 실행 폴더 이름이 하나 끼어든다.
 PROMOTED = [("html", "restructured_auto%s.html"),
             ("flow", "restructured_auto%s.flow.json"),
-            ("audit", "audit_auto%s.json")]
+            ("audit", "audit_auto%s.json"),
+            # 주입 전, 모델이 쓴 그대로. 승격된 산출물에는 도구가 넣은
+            # 데이터 블록과 고친 선언이 들어 있으므로, 둘을 나란히 두지
+            # 않으면 "모델이 만든 것" 을 되찾을 수 없다. 뽑을 데이터가
+            # 없는 입력에서는 이 자리가 비고, 그때는 건너뛴다.
+            ("model_html", "restructured_auto%s.model.html")]
 
 
 def copy_final(r):
@@ -512,11 +531,23 @@ def copy_final(r):
         return
     out, name = outputs_dir(), os.path.basename(r.run_dir)
     os.makedirs(out, exist_ok=True)
+    promoted = []
     for key, pattern in PROMOTED:
+        if not f.get(key):
+            continue
         shutil.copy2(f[key], os.path.join(out, pattern % ""))
         shutil.copy2(f[key], os.path.join(out, pattern % ("." + name)))
+        promoted.append(pattern % "")
     r.log("final: attempt %d -> %s (+ .%s 사본)"
-          % (f["attempt"], ", ".join(p % "" for _k, p in PROMOTED), name))
+          % (f["attempt"], ", ".join(promoted), name))
+    # 도구가 모델의 목록을 고쳤다면, 통과한 산출물이 모델이 쓴 그대로가
+    # 아니다. 조용히 넘기면 연구에서 그 둘을 구분할 길이 없다.
+    pres = f.get("preserved") or {}
+    if pres.get("redeclared"):
+        r.log("final: 주의 - 이 산출물은 모델이 쓴 그대로가 아니다. 도구가 "
+              "%s 의 선언을 입력의 데이터로 바꿨다. 모델이 쓴 것은 %s 다."
+              % (", ".join(pres["redeclared"]),
+                 PROMOTED[-1][1] % ""))
 
 
 # --------------------------------------------------------------------------- #

@@ -895,6 +895,12 @@ READS_HTML = GOOD_HTML.replace(
     "const a = el.dataset.action;",
     "const a = el.dataset.action; window.PRESERVED.PICKS.forEach(x=>x);")
 
+# 데이터를 읽기도 하고, 같은 이름을 배열 리터럴로 다시 선언하기도 한 답.
+# 참조 검사는 통과하므로 검사까지 가고, 도구가 그 선언을 고친 HTML 이
+# 통과한 산출물이 된다.
+REDECLARED_HTML = READS_HTML.replace(
+    "<script>", "<script>\nconst PICKS = ['가'];", 1)
+
 
 @pytest.fixture
 def preserving(fake_run_env):
@@ -975,11 +981,10 @@ def test_the_summary_records_the_names_and_counts(preserving, out_root):
 
 def test_the_summary_records_a_redeclaration(preserving, out_root):
     """모델이 같은 이름을 다시 타이핑했다는 사실 자체가 결과다."""
-    html = READS_HTML.replace(
-        "<script>", "<script>\nconst PICKS = ['가'];", 1)
     preserving.setattr(loop, "run_audit", lambda *a, **kw: passing_report())
     _code, summary = run_loop(preserving, out_root,
-                              replies(reply_text(html, GOOD_FLOW)), attempts=1)
+                              replies(reply_text(REDECLARED_HTML, GOOD_FLOW)),
+                              attempts=1)
     assert summary["attempts"][0]["preserved"]["redeclared"] == ["PICKS"]
 
 
@@ -993,3 +998,47 @@ def test_an_input_without_script_drawn_choices_changes_nothing(fake_run_env,
                               attempts=1)
     assert summary["passed"] is True
     assert summary["preserved"] == {}
+
+
+def test_a_rewritten_declaration_is_recorded_on_the_final_build(preserving,
+                                                               out_root):
+    """통과한 산출물이 모델이 쓴 그대로가 아닐 수 있다.
+
+    모델이 데이터를 읽으면서 같은 이름을 배열로도 선언하면, 참조 검사는
+    통과하고 도구가 그 선언을 고친다. 그 빌드가 통과하면 승격되는 산출물이
+    모델의 것이 아니다 - 연구에서 둘을 구분해야 하므로 그 사실이 승격된
+    파일 옆과 기록에 남아야 한다.
+    """
+    preserving.setattr(loop, "run_audit", lambda *a, **kw: passing_report())
+    _code, summary = run_loop(preserving, out_root,
+                              replies(reply_text(REDECLARED_HTML, GOOD_FLOW)),
+                              attempts=1)
+    assert summary["passed"] is True
+    assert summary["final"]["preserved"]["redeclared"] == ["PICKS"]
+
+    build = io.open(os.path.join(out_root, "restructured_auto.html"),
+                    encoding="utf-8").read()
+    assert 'id="preserved-data"' in build
+    assert "도구가 바꿨다" in build          # 파일이 스스로 말한다
+
+    model = os.path.join(out_root, "restructured_auto.model.html")
+    assert os.path.exists(model), "모델이 쓴 HTML 이 승격되지 않았다"
+    assert "const PICKS = ['가']" in io.open(model, encoding="utf-8").read()
+
+    log = io.open(os.path.join(summary["run_dir"], "run.log"),
+                  encoding="utf-8").read()
+    assert "모델이 쓴 그대로가 아니다" in log
+
+
+def test_nothing_extra_is_promoted_when_there_is_no_data(fake_run_env,
+                                                        out_root):
+    """뽑을 데이터가 없는 입력에서는 승격되는 파일이 전과 같다."""
+    fake_run_env.setattr(loop, "preserved_data", lambda snap, html: {})
+    fake_run_env.setattr(loop, "run_audit", lambda *a, **kw: passing_report())
+    _code, summary = run_loop(fake_run_env, out_root,
+                              replies(reply_text(GOOD_HTML, GOOD_FLOW)),
+                              attempts=1)
+    assert summary["passed"] is True
+    assert summary["final"]["preserved"] is None
+    assert not os.path.exists(os.path.join(out_root,
+                                           "restructured_auto.model.html"))

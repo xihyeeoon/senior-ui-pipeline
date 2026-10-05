@@ -47,6 +47,11 @@ READ = (r"(?:window\s*\.\s*)?%s\s*(?:\.\s*%s\b|\[\s*[\"']%s[\"']\s*\])"
 
 FIRST_SCRIPT = re.compile(r"<script\b", re.I)
 
+# 고친 자리에 남기는 표시. 산출물을 그냥 열어 본 사람이 "이 줄은 모델이 쓴
+# 것이 아니다" 를 파일 안에서 알 수 있어야 한다 - 연구에서 모델이 만든 것과
+# 도구가 고친 것을 구분해야 하기 때문이다.
+REWRITE_MARK = " /* 도구가 바꿨다: 모델이 쓴 목록을 입력의 것으로 */"
+
 
 def scripts(html):
     """문서 안의 스크립트 본문을 모두 이어 붙인 것."""
@@ -140,7 +145,12 @@ def data_block(data):
     # 된다. `<` 를 전부 JSON 이스케이프로 바꾸면 그 일이 생기지 않고, JSON 으로
     # 읽은 값은 원래 글자 그대로다. 입력이 무엇이든 돌아야 하므로 막아 둔다.
     body = body.replace("<", "\\u003c")
-    return ('<script id="%s">window.%s = %s;</script>'
+    # 블록이 스스로 무엇인지 말하게 한다. 이 파일은 디자이너와 연구자가 그냥
+    # 열어 보는 산출물이고, 그때 "이 줄은 모델이 쓴 것이 아니다" 가 파일 안에
+    # 적혀 있어야 한다 - summary.json 을 같이 열어 보지는 않는다.
+    return ('<script id="%s">/* 도구가 넣었다: 입력 HTML 이 가진 선택지 데이터. '
+            '모델이 쓴 것이 아니다. */\n'
+            'window.%s = %s;</script>'
             % (DATA_BLOCK_ID, GLOBAL_NAME, body))
 
 
@@ -165,8 +175,8 @@ def redeclare(html, names):
     for name in names:
         pattern = re.compile(DECL_LITERAL % re.escape(name))
         html, n = pattern.subn(
-            lambda m: "%s%swindow.%s.%s" % (m.group(1), m.group(2), GLOBAL_NAME,
-                                            name),
+            lambda m: "%s%swindow.%s.%s%s" % (m.group(1), m.group(2), GLOBAL_NAME,
+                                              name, REWRITE_MARK),
             html)
         if n:
             changed.append(name)

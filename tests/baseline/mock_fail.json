@@ -42,6 +42,7 @@
       },
       "html": "<run>/attempt_1.html",
       "flow": "<run>/attempt_1.flow.json",
+      "model_html": "<run>/attempt_1.model.html",
       "stage": "audit",
       "passed": false,
       "fatal": 10,
@@ -73,6 +74,7 @@
       },
       "html": "<run>/attempt_2.html",
       "flow": "<run>/attempt_2.flow.json",
+      "model_html": "<run>/attempt_2.model.html",
       "stage": "audit",
       "passed": false,
       "fatal": 10,
@@ -84,7 +86,20 @@
     "attempt": 2,
     "html": "<run>/attempt_2.html",
     "flow": "<run>/attempt_2.flow.json",
-    "audit": "<run>/attempt_2.audit.json"
+    "audit": "<run>/attempt_2.audit.json",
+    "preserved": {
+      "injected": {
+        "BANKS": 38,
+        "SECS": 29,
+        "nums": 10
+      },
+      "redeclared": [],
+      "read": [
+        "BANKS",
+        "SECS"
+      ]
+    },
+    "model_html": "<run>/attempt_2.model.html"
   },
   "budget": {
     "format_used": 0,

@@ -44,6 +44,7 @@ LLM 을 부르는 것은 재구성 루프 하나뿐이고, 키는 `.envs` 의 `O
 | `tests/` | 회귀 테스트와 기준값. 구조를 정리해도 동작이 그대로인지 파일 비교로 확인한다. 자세한 것은 `tests/README.md`. | yes |
 | `docs/` | 이 문서들. 재구성 프롬프트 템플릿(`restructure-prompt.md`)도 여기 있고 루프가 그 파일을 읽어 모델에 보낸다. | yes |
 | `outputs/` | 실행 산출물. 크고 대부분 재생성 가능하므로 ignore 한다 — 그래서 `results/` 가 있다. | no |
+| `.mock-outputs/` | `--mock` 실행이 쓰는 산출물 폴더 (`tests/capture_baseline.py` 의 `MOCK_OUTPUTS`). `outputs/` 와 떼어 놓는다 — `--mock preserved-all` 은 실제로 통과하므로, 같은 폴더를 쓰면 기준값을 뽑거나 테스트를 돌릴 때마다 `outputs/restructured_auto.*` 가 mock 결과로 덮인다. | no |
 | `sessions/` | 피험자 세션 기록. 사람에게서 받은 자료라 저장소에 넣지 않는다. | no |
 | `.venv/`, `.envs` | Python 환경과 `OPENAI_API_KEY`. | no |
 
@@ -120,6 +121,14 @@ LLM 이 쓴 것이라 다시 만들려면 API 비용이 들고 바이트까지 �
   DOM 에서 모은 선택지 값을 함께 본다. `choice_values_kept` 가 판정 기준이고
   `choice_values_selectable` 는 그중 DOM 에서 고를 수 있던 수다 — 둘이 다르면
   경고가 난다 (fatal 아님).
+
+**모델이 만든 것과 도구가 고친 것은 파일로 갈라 둔다.** 검사기가 여는 파일과
+승격되는 산출물(`outputs/restructured_auto.html`)에는 데이터 블록이 들어 있다 —
+그래야 디자이너가 그 파일만 열어도 목록이 그려진다. 넣기 전의 HTML 은
+`attempt_N.model.html` 로 남고 `outputs/restructured_auto.model.html` 로도
+승격된다. 도구가 바꾼 자리는 파일 안에 주석으로 표시되고
+(`/* 도구가 바꿨다: … */`), 그 사실은 `run.log` 와 `summary.json` 의
+`attempts[n].preserved` · `final.preserved` 에 남는다.
 
 이름은 `senior_ui/preserved.py` 한 곳에만 있다. API 없이 확인하려면
 `--mock preserved-all` / `preserved-some` / `preserved-none` 셋을 돌린다.

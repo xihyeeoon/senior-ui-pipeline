@@ -13,12 +13,15 @@ it returns, run audit.py, read the JSON, ask again - is one command:
        d. stop on pass; otherwise carry the fatal list into the next prompt
   3. stop the server if this script started it
   4. copy the final build to outputs/restructured_auto.html (+ .flow.json,
-     audit_auto.json) and write summary.json next to the per-attempt files
+     audit_auto.json, .model.html) and write summary.json next to the
+     per-attempt files
 
 Everything from a run lands in outputs/restructure_auto/<timestamp>/:
   attempt_N.prompt.txt   the exact prompt sent
   attempt_N.response.txt the raw reply
-  attempt_N.html / attempt_N.flow.json
+  attempt_N.html         도구가 선택지 데이터를 넣은 뒤 - 검사기가 여는 것
+  attempt_N.model.html   넣기 전, 모델이 쓴 그대로 (넣을 데이터가 있을 때만)
+  attempt_N.flow.json
   attempt_N.audit.json   the audit's report (or the parse/validation failure)
   shots/attempt_N/       one screenshot per screen reached
   run.log, summary.json

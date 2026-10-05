@@ -336,16 +336,18 @@ def strip_volatile(summary):
             return p
         return p.replace("\\", "/").replace(run_dir, "<run>")
 
+    # 실행 폴더 아래를 가리키는 경로는 모두 <run> 으로 바꾼다. 키를 손으로
+    # 적어 두면 새 산출물(model_html 등)이 늘 때마다 PC 마다 다른 절대
+    # 경로가 기준값에 섞인다 - 그러면 기준값이 PC 를 따라 흔들린다.
     for a in s.get("attempts") or []:
         a.pop("seconds", None)
         fix_repro(a)
-        for k in ("html", "flow"):
-            if k in a:
-                a[k] = fix(a[k])
-    if s.get("final"):
-        for k in ("html", "flow", "audit"):
-            if k in s["final"]:
-                s["final"][k] = fix(s["final"][k])
+        for k, v in list(a.items()):
+            if isinstance(v, str):
+                a[k] = fix(v)
+    for k, v in list((s.get("final") or {}).items()):
+        if isinstance(v, str):
+            s["final"][k] = fix(v)
     return s
 
 
