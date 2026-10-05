@@ -837,3 +837,54 @@ def test_the_prompt_does_not_suggest_features_the_original_lacks():
     for t in (_api.load_template(), _api.load_plan_template()):
         assert "은행 추정" not in t
     assert "원본에 있는 동작만, 원본이 보여 주는 값으로 흉내 낸다" in _api.load_template()
+
+
+# ===================================================================== #
+# 11. 길이 제한에서 잘린 답 - 일반 형식 실패와 따로 남긴다
+# ===================================================================== #
+def cut(text="```html\n<html>여기서 잘", max_tokens=None):
+    def call(*a, **kw):
+        out = {"text": text, "finish_reason": "length", "seconds": 0.0, "usage": None}
+        if max_tokens:
+            out["max_tokens"] = max_tokens
+        return out
+    return call
+
+
+def test_a_cut_generation_is_recorded_as_truncated(fake_run_env, out_root):
+    _code, summary = run_loop(fake_run_env, out_root, cut(), attempts=1,
+                              max_tokens=14000)
+    a = summary["attempts"][0]
+    assert a["stage"] == "truncated" and a["truncated"] is True
+    assert a["phase"] == "generate"
+    assert a["max_tokens"] == 14000
+    assert summary["budget"]["format_used"] == 1           # 형식 예산은 쓴다
+    lines = [l for l in run_log(summary) if "잘림" in l]
+    assert lines and "14000" in lines[0] and "generate" in lines[0]
+
+
+def test_the_cap_actually_sent_is_the_one_recorded(fake_run_env, out_root):
+    """분당 한도에 맞추느라 줄여 보냈으면 그 값이 잘린 자리다."""
+    _code, summary = run_loop(fake_run_env, out_root, cut(max_tokens=5711),
+                              attempts=1, max_tokens=14000)
+    assert summary["attempts"][0]["max_tokens"] == 5711
+    assert any("5711" in l for l in run_log(summary) if "잘림" in l)
+
+
+def test_a_cut_plan_is_recorded_as_truncated(fake_run_env, out_root):
+    _code, summary = run_loop(fake_run_env, out_root, cut('{"diagnosis": ['),
+                              plan_reply=False, attempts=1, plan_max_tokens=6000)
+    a = summary["attempts"][0]
+    assert a["stage"] == "truncated" and a["phase"] == "plan"
+    assert a["max_tokens"] == 6000
+    assert any("plan" in l and "6000" in l for l in run_log(summary) if "잘림" in l)
+
+
+def test_an_ordinary_format_failure_is_not_called_truncated(fake_run_env, out_root):
+    _code, summary = run_loop(fake_run_env, out_root,
+                              lambda *a, **kw: {"text": "설명만", "finish_reason": "stop",
+                                                "seconds": 0.0, "usage": None},
+                              attempts=1)
+    a = summary["attempts"][0]
+    assert a["stage"] == "parse" and "truncated" not in a
+    assert not [l for l in run_log(summary) if "잘림" in l]

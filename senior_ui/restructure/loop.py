@@ -331,6 +331,8 @@ def request_plan(r, n, p):
                                            " | ".join(e.problems)[:300]))
         entry = dict(call, n=n, stage="plan", passed=False, fatal=len(e.problems),
                      calls=list(r.calls))
+        if reply["finish_reason"] == "length":
+            note_truncated(r, entry, "plan")
         _dump(plan_report(e.problems), p + ".audit.json")
         r.summary["attempts"].append(entry)
         r.plan_error = list(e.problems)
@@ -429,6 +431,21 @@ def ask_model(r, n, p, prompt, max_tokens, mock, stage):
         r.log("model: 응답 %s (fingerprint %s)"
               % (reply.get("model"), reply.get("system_fingerprint")))
     return reply, None
+
+
+def note_truncated(r, entry, phase):
+    """답이 길이 제한에서 잘렸다. 일반 형식 실패와 따로 남긴다.
+
+    잘린 답은 겉모양이 형식 실패와 같다 - 블록이 닫히지 않았으니 "블록이 없다"
+    로 보인다. 그러나 원인은 내용이 아니라 길이 제한이고, 그 제한은 분당 한도에
+    맞추느라 줄였을 수도 있다 (model.shrink_for_minute). 그래서 그때 실제로 보낸
+    max_tokens 를 함께 적는다. 형식 예산은 그대로 쓴다 - 다시 물어야 하는 것은
+    같다."""
+    call = r.calls[-1] if r.calls else {}
+    cap = call.get("max_tokens_sent", call.get("max_tokens"))
+    entry.update(stage="truncated", phase=phase, truncated=True, max_tokens=cap)
+    r.log("잘림: %s 답이 max_tokens %s 에서 잘렸다 (finish_reason=length) — 형식 "
+          "실패로 세고 다시 묻는다" % (phase, cap))
 
 
 def request_reply(r, n, p):
@@ -568,7 +585,7 @@ def check_reply(r, p, entry, reply, n=None):
         report = failure_report("PARSE", str(e))
         entry.update(stage="parse", passed=False, fatal=1)
         if truncated:
-            entry["truncated"] = True
+            note_truncated(r, entry, "retry" if r.asked_reflection else "generate")
         _dump(report, p + ".audit.json")
         r.summary["attempts"].append(entry)
         # 이 시도는 검사를 받은 적이 없다. r.last 는 마지막으로 **검사까지 간**
