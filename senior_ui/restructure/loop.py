@@ -46,9 +46,9 @@ from .prompt import (build_plan_prompt, build_prompt, choices_block, load_plan_t
 from .reply import (FlowShape, failure_report, parse_reply,
                     preserved_problems, problems_report, validate_flow)
 
-def runs_dir():
+def runs_dir(mock=False):
     """실행 폴더들이 쌓이는 곳. 산출물 폴더와 같이 움직인다 (config.outputs_dir)."""
-    return os.path.join(outputs_dir(), "restructure_auto")
+    return os.path.join(outputs_dir(mock), "restructure_auto")
 
 # 진단·계획 호출의 길이 제한. 생성 호출(--max-tokens)과 따로 둔다 - 분당
 # 한도는 max_tokens 를 미리 잡아 두고 세므로, 계획 JSON 에 생성과 같은 한도를
@@ -849,7 +849,7 @@ def copy_final(r):
     if not r.summary.get("passed"):
         r.log("final: 통과한 빌드가 없다 — outputs/restructured_auto.* 는 그대로 둔다")
         return
-    out, name = outputs_dir(), os.path.basename(r.run_dir)
+    out, name = outputs_dir(bool(r.args.mock)), os.path.basename(r.run_dir)
     os.makedirs(out, exist_ok=True)
     promoted = []
     for key, pattern in PROMOTED:
@@ -916,14 +916,16 @@ def run(args):
     # 검사기는 빌드를 :3003 이 서빙하는 http:// 로 연다. 그 서버는 저장소
     # 루트만 서빙하므로, 산출물 폴더가 밖에 있으면 검사기가 빌드를 열지 못해
     # 첫 화면에서 멈춘다 - 그것이 설계 실패처럼 보인다.
-    if not inside_root(outputs_dir()):
+    # mock 실행은 기본으로 .mock-outputs/ 에 쓴다 (config.outputs_dir).
+    mock = bool(args.mock)
+    if not inside_root(outputs_dir(mock)):
         print("cannot start: %s 가 저장소 루트 밖을 가리킨다 (%s). 검사기는 "
               ":3003 이 서빙하는 %s 안의 파일만 열 수 있다."
-              % (OUTPUTS_ENV, outputs_dir(), ROOT), file=sys.stderr)
+              % (OUTPUTS_ENV, outputs_dir(mock), ROOT), file=sys.stderr)
         return 2
 
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    run_dir = os.path.join(runs_dir(),
+    run_dir = os.path.join(runs_dir(mock),
                            stamp + ("-mock-" + args.mock if args.mock else ""))
     os.makedirs(run_dir, exist_ok=True)
     log = make_logger(os.path.join(run_dir, "run.log"))

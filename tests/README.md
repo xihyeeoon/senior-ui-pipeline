@@ -86,7 +86,8 @@
   `mock_pass` 와 `mock_preserved_all` 은 통과한다 (`passed=true`, 종료 코드 0),
   `mock_preserved_some` 은 검사 I 에서, `mock_preserved_none` 은 형식 검사에서
   떨어진다. mock 실행은 `.mock-outputs/` 를 쓴다 — 통과한 빌드가
-  `outputs/restructured_auto.*` 를 덮지 않게 떼어 놓았다
+  `outputs/restructured_auto.*` 를 덮지 않게 떼어 놓았다 (이제 `--mock` 의
+  기본값이기도 하다. 캡처는 같은 폴더를 환경 변수로 한 번 더 못박는다)
 - `session_report.md` / `.csv`
 - `report/four_runs.md` / `report/four_runs.details.md` —
   `senior_ui.audit.report` 가 `fixtures/report/` 의 audit JSON 네 개를 나란히

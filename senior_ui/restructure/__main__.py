@@ -59,8 +59,8 @@ mock 모드는 다섯이고 Run 1 빌드를 되읽는다. 모드마다 은행 �
 
   pass            은행 목록 · 금액 숫자판 · 빠른 금액을 window.PRESERVED 의
                   배열(BANKS·SECS · AMT_KEYS · QUICK)을 읽어 그린다  -> 통과.
-                  통과하므로 outputs/restructured_auto.* 를 덮는다 - 덮지 않으려면
-                  SENIOR_UI_OUTPUTS 로 다른 폴더를 준다
+                  통과해도 outputs/ 는 건드리지 않는다 - mock 은 기본으로
+                  .mock-outputs/ 에 쓴다 (SENIOR_UI_OUTPUTS 를 주면 그 폴더)
   fail            pass 와 같은 빌드 + 둘째 걸음이 없는 선택자를 클릭하는 흐름
   preserved-all   목록은 참조하고 '00'·'전액' 은 마크업에 직접 쓴다  -> 통과
   preserved-some  참조는 하지만 slice(0, 4) 로 일부만 그린다  -> 검사 I 에서 실패
@@ -90,7 +90,7 @@ from .model import MODES, SEED, TEMPERATURE
 # 전액이 없다. 원본의 숫자판이 배열이 된 뒤로 pass 는 그 배열을 읽어 그리므로
 # 통과한다.
 MOCK_PASS_NOTE = ("pass 는 숫자판·빠른 금액까지 도구가 넣은 배열에서 그려 통과한다 "
-                  "(통과하면 outputs/restructured_auto.* 를 덮는다).")
+                  "(mock 은 기본으로 .mock-outputs/ 에 쓰고 outputs/ 는 건드리지 않는다).")
 
 
 def build_parser():

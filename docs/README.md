@@ -44,7 +44,7 @@ LLM 을 부르는 것은 재구성 루프 하나뿐이고, 키는 `.envs` 의 `O
 | `tests/` | 회귀 테스트와 기준값. 구조를 정리해도 동작이 그대로인지 파일 비교로 확인한다. 자세한 것은 `tests/README.md`. | yes |
 | `docs/` | 이 문서들. 재구성 프롬프트 템플릿(`restructure-prompt.md`)도 여기 있고 루프가 그 파일을 읽어 모델에 보낸다. | yes |
 | `outputs/` | 실행 산출물. 크고 대부분 재생성 가능하므로 ignore 한다 — 그래서 `results/` 가 있다. | no |
-| `.mock-outputs/` | `--mock` 실행이 쓰는 산출물 폴더 (`tests/capture_baseline.py` 의 `MOCK_OUTPUTS`). `outputs/` 와 떼어 놓는다 — `--mock preserved-all` 은 실제로 통과하므로, 같은 폴더를 쓰면 기준값을 뽑거나 테스트를 돌릴 때마다 `outputs/restructured_auto.*` 가 mock 결과로 덮인다. | no |
+| `.mock-outputs/` | `--mock` 실행의 기본 산출물 폴더 (`config.MOCK_OUTPUTS_DIR`). `outputs/` 와 떼어 놓는다 — `--mock pass` · `preserved-all` 은 실제로 통과하므로, 같은 폴더를 쓰면 연습으로 돌린 mock 이 `outputs/restructured_auto.*` 를 덮는다. `outputs/restructured_auto.*` 는 실제 실행만 쓴다. | no |
 | `sessions/` | 피험자 세션 기록. 사람에게서 받은 자료라 저장소에 넣지 않는다. | no |
 | `.venv/`, `.envs` | Python 환경과 `OPENAI_API_KEY`. | no |
 
@@ -73,9 +73,9 @@ LLM 이 쓴 것이라 다시 만들려면 API 비용이 들고 바이트까지 �
 배열(`window.PRESERVED.AMT_KEYS` · `QUICK`)을 읽어 그린다. Run 1 은 옛 원본의
 과제로 만든 빌드라 받는 사람 이름도 지금 원본의 정답(김철수)으로 바꿔 끼운다
 (`model.NAME_SWAP`). 통과하므로 `designer_brief.md` 가 생기고
-`outputs/restructured_auto.*` 를 덮는다 — 덮지 않으려면 환경변수
-`SENIOR_UI_OUTPUTS` 로 다른 폴더를 준다 (`tests/capture_baseline.py` 는
-`.mock-outputs/` 를 쓴다).
+승격도 일어나지만, mock 은 기본으로 `.mock-outputs/` 에 쓰므로
+`outputs/restructured_auto.*` 는 그대로다 — 그 자리는 실제 실행만 쓴다. 다른
+폴더에 쓰려면 환경변수 `SENIOR_UI_OUTPUTS` 를 준다 (주면 그것이 이긴다).
 
 `PYTHONUTF8=1` 은 더 이상 필요 없다. 모든 명령줄이 맨 앞에서
 `senior_ui._cli.setup_stdout()` 을 불러 stdout 을 UTF-8 로 맞춘다.
@@ -357,6 +357,10 @@ flags as optimistic.
 `kb/senior_kb.csv` 는 **사후 대조** 용이다 — 만들어진 설계가 결과적으로 어떤
 규칙에 해당하는지 나중에 확인하는 것. 재구성본을 만들 때 모델에 주지 않았고
 앞으로도 주지 않는다. 자세한 것은 `kb/README.md`.
+
+## 알려진 문제
+
+- 오류 팝업 화면과 '모든 화면을 흐름이 지나가야 한다' 규칙의 충돌 — 9-2 단계에서 해결
 
 ## 다른 문서
 
