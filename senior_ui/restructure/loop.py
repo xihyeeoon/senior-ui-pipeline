@@ -473,7 +473,7 @@ def copy_final(r):
 # 이 이유로 멈춘 실행은 "빌드가 떨어졌다" 가 아니라 "돌지 못했다" 다. 부르는
 # 쪽은 둘을 구분해야 한다 - 떨어진 빌드는 다시 만들고, 돌지 못한 실행은 다시
 # 만들 것이 없다. senior_ui.audit 의 종료 코드 규약과 같다 (docs/README.md).
-CANNOT_RUN = {"api_rejected", "infra_exhausted", "cannot_start"}
+CANNOT_RUN = {"rate_limit", "api_rejected", "infra_exhausted", "cannot_start"}
 
 
 def exit_code(summary):

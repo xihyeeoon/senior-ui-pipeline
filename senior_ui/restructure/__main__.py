@@ -40,6 +40,11 @@ Usage:
 The key comes from .envs (OPENAI_API_KEY=...) or the environment. The model
 comes from --model, then RESTRUCTURE_MODEL, then DESIGNREPAIR_MODEL, then gpt-4o.
 Exit: 0 = a build passed, 1 = every attempt failed, 2 = could not run.
+
+"돌지 못했다"(2)에 들어가는 것은 넷이다 - 레이트 리밋으로 멈춤, API 가 요청을
+거절함(키·권한·잘못된 요청), 인프라 예산 소진, 시작 자체를 못 함(입력·흐름·
+서버). 전부 "다시 만들 빌드가 없다" 이므로 떨어진 빌드(1)와 구분해야 한다.
+정하는 곳은 loop.exit_code() 한 곳이다.
 """
 import argparse
 import sys

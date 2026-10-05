@@ -674,3 +674,28 @@ def test_an_unreadable_envs_stops_the_run_with_a_reason(fake_run_env, monkeypatc
     code, summary = run_loop(monkeypatch, tmp_path, always_reply, attempts=1)
     assert code == 2
     assert summary["stopped_reason"] == "cannot_start"
+
+
+# ===================================================================== #
+# 9. 레이트 리밋으로 멈췄을 때의 종료 코드
+# ===================================================================== #
+def test_a_rate_limited_run_exits_2(fake_run_env, tmp_path):
+    """429 로 멈춘 것은 "빌드가 떨어졌다" 가 아니라 "돌지 못했다" 다.
+
+    문서는 2 = 아예 돌지 못했다 라고 적고 있었는데, 실제로는 통과만 보고 1 을
+    돌려주었다. 부르는 쪽은 다시 만들 것이 없는 실행을 다시 만들게 된다.
+    """
+    def throttled(*a, **kw):
+        raise model.RateLimited("429 Too Many Requests")
+
+    code, summary = run_loop(fake_run_env, tmp_path, throttled, attempts=3)
+    assert summary["stopped_reason"] == "rate_limit"
+    assert code == 2
+
+
+def test_a_build_that_simply_failed_still_exits_1(fake_run_env, tmp_path):
+    """구분이 서야 뜻이 있다. 떨어진 빌드는 그대로 1 이다."""
+    fake_run_env.setattr(loop, "run_audit", lambda *a, **kw: failing_report())
+    code, summary = run_loop(fake_run_env, tmp_path, always_reply, attempts=1)
+    assert summary["stopped_reason"] == "budget_exhausted"
+    assert code == 1
