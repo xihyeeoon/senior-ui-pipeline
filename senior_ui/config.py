@@ -73,6 +73,33 @@ ORIGINAL_URL = url_for(ORIGINAL_REL)
 DEFAULT_MODEL = "gpt-4o"
 MODEL_ENV_VARS = ("RESTRUCTURE_MODEL", "DESIGNREPAIR_MODEL")
 
+# 모델별 100만 토큰당 가격 (USD). summary.json 의 cost 가 이 표로 시도별·전체
+# 예상 금액을 센다. None 이면 금액은 null 이다 - 0 이 아니라 "모른다".
+#
+#   이름은 --model 에 주는 그대로 찾는다. 날짜가 붙은 판(gpt-4o-2024-05-13 등)은
+#   별칭과 값이 다를 수 있으므로 쓰려면 따로 적는다.
+#   output 은 생각(reasoning) 토큰에도 매겨진다 - completion 이 생각을 포함하므로
+#   따로 더하지 않는다.
+#   캐시된 입력의 할인은 넣지 않았다. 그래서 금액은 상한 쪽 어림이다.
+#
+# gpt-4o 만 채워 두었다. 나머지는 연구자가 공식 가격표를 보고 채운다
+# (https://developers.openai.com/api/docs/pricing).
+MODEL_PRICES = {
+    "gpt-4o": {"input": 2.50, "output": 10.00},
+    "gpt-4.1": None,
+    "o3": None,
+    "o4-mini": None,
+    "gpt-5": None,
+    "gpt-5.4": None,
+    "gpt-5.5": None,
+    "gpt-5.6-sol": None,
+    "gpt-5.6-terra": None,
+    "gpt-5.6-luna": None,
+    "gpt-6-astra": None,
+    "gpt-6.1-sol": None,
+    "gpt-6-luna": None,
+}
+
 # The two builds under comparison. `url` is what the phone loads in the frame.
 CONDITIONS = [
     {"key": "original",

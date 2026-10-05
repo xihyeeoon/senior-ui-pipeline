@@ -461,3 +461,65 @@ def test_check_commands_make_no_run_folder(probe_env, out_root, argv):
     run_cli(probe_env, *argv)
     assert not os.path.exists(os.path.join(out_root, "restructure_auto"))
     assert os.listdir(out_root) == ["model-probe.log"]
+
+
+# ===================================================================== #
+# 5. 가격 - config.py 한 곳의 표, summary 에 시도별·전체 예상 금액
+# ===================================================================== #
+from test_restructure_bugs import failing_report  # noqa: E402
+
+USAGE = {"prompt": 20000, "completion": 3000, "reasoning": None}
+
+
+def test_the_price_table_lives_in_config():
+    assert config.MODEL_PRICES["gpt-4o"] == {"input": 2.50, "output": 10.00}
+    others = [v for k, v in config.MODEL_PRICES.items() if k != "gpt-4o"]
+    assert others and all(v is None for v in others)   # 연구자가 나중에 채운다
+
+
+def test_cost_is_estimated_per_attempt_and_in_total(fake_run_env, out_root):
+    fake_run_env.setattr(loop, "run_audit", lambda *a, **kw: failing_report())
+    _code, summary = run_loop(fake_run_env, out_root, replying(usage=USAGE),
+                              attempts=2, model="gpt-4o")
+    cost = summary["cost"]
+    # 20,000 x 2.50 / 1M + 3,000 x 10.00 / 1M = 0.05 + 0.03 (진단·계획 대역은 usage 없음)
+    assert cost["by_attempt"] == [{"attempt": 1, "usd": 0.08},
+                                  {"attempt": 2, "usd": 0.08}]
+    assert cost["total_usd"] == 0.16
+    assert cost["per_million"] == {"input": 2.50, "output": 10.00}
+    assert cost["currency"] == "USD"
+    assert any("예상 금액" in l and "0.16" in l for l in run_log(summary))
+
+
+def test_reasoning_tokens_are_already_in_the_output_price(fake_run_env, out_root):
+    """completion 은 생각 토큰을 포함한다 - 생각을 따로 더하면 두 번 센다."""
+    fake_run_env.setattr(config, "MODEL_PRICES", {"gpt-5": {"input": 1.0, "output": 10.0}})
+    usage = {"prompt": 1000000, "completion": 100000, "reasoning": 90000}
+    _code, summary = run_loop(fake_run_env, out_root, replying(usage=usage),
+                              attempts=1, model="gpt-5")
+    assert summary["cost"]["total_usd"] == 2.0
+
+
+def test_an_empty_price_gives_null_not_zero(fake_run_env, out_root):
+    _code, summary = run_loop(fake_run_env, out_root, replying(usage=USAGE),
+                              attempts=1, model="gpt-5")
+    cost = summary["cost"]
+    assert cost["per_million"] is None
+    assert cost["total_usd"] is None
+    assert cost["by_attempt"] == [{"attempt": 1, "usd": None}]
+    assert any("예상 금액" in l and "비어 있다" in l for l in run_log(summary))
+
+
+def test_no_usage_gives_null_cost(fake_run_env, out_root):
+    _code, summary = run_loop(fake_run_env, out_root, replying(usage=None),
+                              attempts=1, model="gpt-4o")
+    assert summary["cost"]["total_usd"] is None
+
+
+def test_list_models_shows_whether_a_price_is_set(probe_env, out_root, capsys):
+    F.install(probe_env, model_ids=["gpt-4o", "gpt-5"])
+    run_cli(probe_env, "--list-models")
+    rows = {l.split()[0]: l for l in capsys.readouterr().out.splitlines()
+            if l.startswith("  gpt-")}
+    assert "2.50 / 10.00" in rows["gpt-4o"]
+    assert "가격 비어 있음" in rows["gpt-5"]

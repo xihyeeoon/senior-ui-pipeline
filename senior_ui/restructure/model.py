@@ -267,6 +267,21 @@ def shrink_for_minute(message, cap, log=None):
     return smaller
 
 
+def price_for(model):
+    """그 모델의 100만 토큰당 가격 {"input", "output"}. 표에 없거나 비었으면 None."""
+    from senior_ui import config
+    return config.MODEL_PRICES.get(model) or None
+
+
+def cost_usd(usage, price):
+    """호출 하나의 예상 금액. 가격이나 usage 를 모르면 None."""
+    if not price or not usage or usage.get("prompt") is None \
+            or usage.get("completion") is None:
+        return None
+    return (usage["prompt"] * price["input"]
+            + usage["completion"] * price["output"]) / 1e6
+
+
 # 분당 한도를 알려 주는 응답 헤더 (https://developers.openai.com/api/docs/guides/rate-limits).
 # 모델마다 · 계정 등급마다 다르고 문서의 표가 실제와 다를 수 있으므로, 실제
 # 호출이 받은 값을 남긴다. 이 계정은 gpt-4o 에서 분당 30,000 토큰이었다.

@@ -38,9 +38,9 @@ from senior_ui.tasks import DEFAULT_TASK, abs_path, load_task
 from .audit_call import load_allowed_removals, run_audit
 from .brief import write_brief
 from .model import (MOCK_TASK, TEMPERATURE, SEED, ApiRejected, InfraFailed,
-                    RateLimited, call_model, describe, describe_ratelimit,
-                    estimate_tokens, load_env, mock_plan_reply, mock_reply, profile_for,
-                    sdk_version)
+                    RateLimited, call_model, cost_usd, describe, describe_ratelimit,
+                    estimate_tokens, load_env, mock_plan_reply, mock_reply, price_for,
+                    profile_for, sdk_version)
 from .plan import (PlanProblems, apply_changes, match_problems, parse_plan,
                    parse_reflection, plan_report, screens_in, unaddressed)
 from .preserve import inject, names_read, preserved_data
@@ -186,7 +186,9 @@ class Run:
                         "budget": {}, "stopped_reason": None, "trend": [],
                         "git": None, "tokens": None,
                         # 마지막 실제 호출이 받은 분당 한도 (호출마다는 calls[].ratelimit)
-                        "ratelimit": None}
+                        "ratelimit": None,
+                        # 시도별·전체 예상 금액 (config.MODEL_PRICES, tally_cost)
+                        "cost": None}
 
 
 # --------------------------------------------------------------------------- #
@@ -330,6 +332,45 @@ def tally_tokens(r):
             "by_stage": {k: _tally(v) for k, v in stages.items()},
             "total": _tally(calls),
             "first_attempt": _tally(first) if first else None}
+
+
+def _add(values):
+    """금액들의 합. 하나도 모르면 None - 0 과 "모른다" 는 다르다."""
+    values = [v for v in values if v is not None]
+    return round(sum(values), 6) if values else None
+
+
+def tally_cost(r):
+    """시도별 · 전체 예상 금액 (USD). 가격은 config.MODEL_PRICES 의 이 모델 값.
+
+    가격이 비었거나 usage 가 없으면(mock) 금액은 null 이다. 캐시된 입력의
+    할인은 넣지 않으므로 상한 쪽 어림이다."""
+    price = price_for(r.model)
+    attempts = []
+    for n in sorted({n for n, _c in r.all_calls}):
+        attempts.append({"attempt": n, "usd": _add(
+            cost_usd(c.get("usage"), price) for m, c in r.all_calls if m == n)})
+    return {"currency": "USD", "price_model": r.model, "per_million": price,
+            "by_attempt": attempts, "total_usd": _add(a["usd"] for a in attempts),
+            "note": "입력 x input + 출력(생각 포함) x output, 100만 토큰당. 캐시 할인 "
+                    "미반영 (상한)"}
+
+
+def log_cost(r):
+    c = r.summary.get("cost")
+    if not c or not c["by_attempt"]:
+        return
+    if c["per_million"] is None:
+        r.log("예상 금액: 가격표에 %s 가 비어 있다 — null (config.MODEL_PRICES)"
+              % c["price_model"])
+        return
+    def usd(v):
+        return "-" if v is None else "$%.4f" % v
+    r.log("예상 금액: %s · 전체 %s (가격표 %s %.2f / %.2f, 캐시 할인 미반영)"
+          % (" · ".join("시도 %d %s" % (a["attempt"], usd(a["usd"]))
+                        for a in c["by_attempt"]),
+             usd(c["total_usd"]), c["price_model"], c["per_million"]["input"],
+             c["per_million"]["output"]))
 
 
 # --------------------------------------------------------------------------- #
@@ -1149,6 +1190,8 @@ def run(args):
         r.summary["budget"] = r.budget.as_dict()
         r.summary["tokens"] = tally_tokens(r)
         log_tokens(r)
+        r.summary["cost"] = tally_cost(r)
+        log_cost(r)
         copy_final(r)
         _dump(r.summary, os.path.join(run_dir, "summary.json"))
         log("summary: %s" % os.path.join(run_dir, "summary.json"))

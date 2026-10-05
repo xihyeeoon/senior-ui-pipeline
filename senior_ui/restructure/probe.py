@@ -74,6 +74,13 @@ def natural(name):
     return [int(t) if t.isdigit() else t for t in re.split(r"(\d+)", name)]
 
 
+def price_note(name):
+    price = M.price_for(name)
+    if not price:
+        return "가격 비어 있음"
+    return "가격 %.2f / %.2f" % (price["input"], price["output"])
+
+
 def list_models():
     out = Out("list-models")
     try:
@@ -86,13 +93,14 @@ def list_models():
             out.say("확인하지 못했다: %s: %s" % (type(e).__name__, e))
             return 2
         gpt = sorted((i for i in ids if i.startswith("gpt-")), key=natural)
-        out.say("이 키로 쓸 수 있는 gpt- 모델 %d개 (도구가 부르는 방식):" % len(gpt))
+        out.say("이 키로 쓸 수 있는 gpt- 모델 %d개 (도구가 부르는 방식 · 100만 토큰당 "
+                "입력/출력 가격, config.MODEL_PRICES):" % len(gpt))
         width = max([len(i) for i in gpt] + [10])
         for name in gpt:
             p = M.profile_for(name)
             how = ("%s · %s" % (p["api"], "추론형" if p["reasoning"] else "추론형 아님")
                    if p["known"] else "모름 → gpt-4o 처럼 부른다")
-            out.say("  %-*s  %s" % (width, name, how))
+            out.say("  %-*s  %s · %s" % (width, name, how, price_note(name)))
         out.say("gpt- 로 시작하지 않는 %d개는 뺐다 (o3 · o4-mini 같은 o 계열 추론형도 "
                 "여기 든다)." % (len(ids) - len(gpt)))
         return 0
@@ -136,6 +144,7 @@ def probe(name, temperature=M.TEMPERATURE, seed=M.SEED, reasoning_effort=None,
                 % (reply["finish_reason"], usage.get("completion"),
                    "-" if usage.get("reasoning") is None else usage["reasoning"],
                    reply["text"][:40]))
+        out.say("가격표: %s (config.MODEL_PRICES)" % price_note(name))
         if reply["finish_reason"] == "length" and p["reasoning"]:
             out.say("  (추론형은 출력 %d 토큰을 생각에 다 쓰고 잘릴 수 있다 - 확인 "
                     "명령에서는 정상이다)" % PROBE_MAX_TOKENS)
