@@ -25,7 +25,9 @@ Checks
   G  state distinction    warning `.x` and `.x.on` must still look different
   H  undefined class      warning a class no stylesheet defines does nothing
   I  choice preservation  fatal   values the original offered must still exist
-                                  somewhere in the build
+                                  somewhere in the build - the tool's injected
+                                  data block does not count; warns when a value
+                                  is in the document but was never selectable
 
 The screens, how to reach them and what each must show live in a flow file
 under flows/ (see flow.load_flow); the in-page JavaScript probes live in

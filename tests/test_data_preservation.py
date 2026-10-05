@@ -236,40 +236,88 @@ def test_no_names_means_no_problem():
 
 
 # --------------------------------------------------------------------- #
-# 4. 검사 I 가 데이터 블록에 속지 않아야 한다
+# 4. 검사 I 가 데이터 블록에 속지 않는다
 # --------------------------------------------------------------------- #
-# 지금 검사 I 는 재설계 HTML 의 **원문** 에서 값을 찾는다. 도구가 데이터 블록을
-# 넣으면 모든 값이 원문에 생기므로, 모델이 하나도 그리지 않아도 통과한다 -
-# 장치가 검사를 꺼 버리는 셈이다.
+# 고치기 전: 검사 I 는 재설계 HTML 의 **원문** 에서 값을 찾았다. 도구가 데이터
+# 블록을 넣으면 모든 값이 원문에 생기므로, 모델이 하나도 그리지 않아도 통과했다 -
+# 데이터를 지키려고 만든 장치가 그 데이터를 지켰는지 보는 검사를 꺼 버린다.
 #
-# 아래 두 테스트는 그 상태를 재현한다. 검사 I 를 어떻게 바꿀지는 설계안을
-# 먼저 보고하고 정하기로 했으므로, 지금은 xfail 로 둔다 (strict - 고쳐지면
-# 여기서 알려 준다).
+# 이제 블록을 빼고 보되, 블록을 참조해 **그린** 것은 렌더링된 DOM 에서 센다.
 def audit_with(rep_html, rep_choices=None):
     """원본에 세 개짜리 선택지가 있는 상태에서 빌드를 검사한다."""
     import test_audit_bugs as AB
     orig = AB.snap({"start": AB.row("start",
                                     choices={"pick": ["가은행", "나은행", "다은행"]})})
-    rep = AB.snap({"start": AB.done_row("start", choices=rep_choices or {})})
+    rep = AB.snap({"start": AB.row("start", shown=[["#dn-amt", "10,000"]],
+                                   choices=rep_choices or {})})
     return _api.audit(orig, rep, "", rep_html, AB.flow(["start"]))
 
 
-@pytest.mark.xfail(strict=True,
-                   reason="검사 I 변경 대기 - 설계안 승인 후 구현한다")
 def test_check_I_is_not_fooled_by_the_tools_data_block():
     """데이터 블록만 있고 아무것도 그리지 않은 빌드는 통과하면 안 된다."""
     block = preserve.data_block({"P": ["가은행", "나은행", "다은행"]})
     report = audit_with("<html><body>%s</body></html>" % block)
     assert [f["check"] for f in report["fatal"]] == ["I"]
     assert report["metrics"]["choice_values_kept"] == {"pick": 0}
+    assert report["metrics"]["choice_values_selectable"] == {"pick": 0}
 
 
-@pytest.mark.xfail(strict=True,
-                   reason="검사 I 변경 대기 - 설계안 승인 후 구현한다")
 def test_a_build_that_draws_them_all_from_the_block_passes():
-    """반대쪽도 맞아야 한다 - 데이터 블록을 참조해 전부 그린 빌드는 통과한다."""
+    """반대쪽도 맞아야 한다 - 블록을 참조해 전부 그린 빌드는 통과한다.
+
+    그 빌드의 **원문** 에는 값이 한 글자도 없다. 값은 런타임에 생긴다. 원문만
+    보면 하라고 한 일을 한 답이 떨어진다.
+    """
     block = preserve.data_block({"P": ["가은행", "나은행", "다은행"]})
     report = audit_with("<html><body>%s</body></html>" % block,
                         rep_choices={"pick": ["가은행", "나은행", "다은행"]})
     assert report["fatal"] == []
     assert report["metrics"]["choice_values_kept"] == {"pick": 3}
+    assert report["metrics"]["choice_values_selectable"] == {"pick": 3}
+    assert report["warning"] == []
+
+
+def test_a_build_that_draws_only_some_of_them_fails():
+    """`slice(0, 2)` 처럼 일부만 그린 빌드는 검사 I 에서 떨어진다."""
+    block = preserve.data_block({"P": ["가은행", "나은행", "다은행"]})
+    report = audit_with("<html><body>%s</body></html>" % block,
+                        rep_choices={"pick": ["가은행", "나은행"]})
+    assert [f["check"] for f in report["fatal"]] == ["I"]
+    assert report["metrics"]["choice_values_missing"] == {"pick": ["다은행"]}
+    assert report["metrics"]["choice_values_selectable"] == {"pick": 2}
+
+
+# --------------------------------------------------------------------- #
+# 5. 문서에는 있지만 고를 수 없던 값은 경고다 (fatal 아님)
+# --------------------------------------------------------------------- #
+def test_a_value_in_the_document_but_never_selectable_is_a_warning():
+    """"전체 보기" 뒤나 검색 결과로만 나오는 목록은 검사기가 그 버튼을 누르지
+    않으면 DOM 에 나타나지 않는다. fatal 로 하면 정상 설계가 떨어진다."""
+    report = audit_with("<html><body><p>가은행 나은행 다은행</p></body></html>",
+                        rep_choices={"pick": ["가은행"]})
+    assert report["fatal"] == []
+    assert report["passed"] is True
+    assert report["metrics"]["choice_values_kept"] == {"pick": 3}
+    assert report["metrics"]["choice_values_selectable"] == {"pick": 1}
+
+    warn = [w for w in report["warning"] if w["check"] == "I"]
+    assert len(warn) == 1
+    assert warn[0]["not_selectable"] == ["나은행", "다은행"]
+    assert "2개" in warn[0]["detail"]
+    assert "나은행" in warn[0]["detail"]
+
+
+def test_a_missing_value_is_not_also_a_warning():
+    """없는 값은 fatal 이다. 경고까지 겹쳐 내면 같은 일을 두 번 말한다."""
+    report = audit_with("<html><body><p>가은행</p></body></html>",
+                        rep_choices={"pick": ["가은행"]})
+    assert [f["check"] for f in report["fatal"]] == ["I"]
+    assert [w for w in report["warning"] if w["check"] == "I"] == []
+
+
+def test_a_hidden_choice_is_still_selectable():
+    """숨김·접힘은 괜찮다는 규칙은 그대로다. probe 는 켜지지 않은 화면 안의
+    선택지도 모으므로, 접어 둔 목록은 경고가 되지 않는다."""
+    report = audit_with("<html><body><p>가은행 나은행 다은행</p></body></html>",
+                        rep_choices={"pick": ["가은행", "나은행", "다은행"]})
+    assert report["warning"] == []
