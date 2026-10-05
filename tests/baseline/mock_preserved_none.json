@@ -1,6 +1,6 @@
 {
   "model": "gpt-4o",
-  "mock": "pass",
+  "mock": "preserved-none",
   "stage": "styled",
   "preserved": {
     "BANKS": 38,
@@ -34,18 +34,16 @@
           "SECS": 29,
           "nums": 10
         },
-        "redeclared": [],
-        "read": [
-          "BANKS",
-          "SECS"
-        ]
+        "redeclared": [
+          "BANKS"
+        ],
+        "read": []
       },
       "html": "<run>/attempt_1.html",
       "flow": "<run>/attempt_1.flow.json",
-      "stage": "audit",
+      "stage": "flow",
       "passed": false,
-      "fatal": 2,
-      "warning": 3
+      "fatal": 1
     }
   ],
   "passed": false,
@@ -56,22 +54,13 @@
     "audit": "<run>/attempt_1.audit.json"
   },
   "budget": {
-    "format_used": 0,
+    "format_used": 1,
     "format_budget": 1,
-    "audit_used": 1,
+    "audit_used": 0,
     "audit_budget": 1,
     "infra_used": 0,
     "infra_budget": 3
   },
   "stopped_reason": "budget_exhausted",
-  "trend": [
-    {
-      "attempt": 1,
-      "fatal_total": 2,
-      "fatal_root": 2,
-      "fatal_derived": 0,
-      "screens": "9/9",
-      "stopped_at": null
-    }
-  ]
+  "trend": []
 }

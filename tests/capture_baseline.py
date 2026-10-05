@@ -11,7 +11,7 @@ senior_ui/ 는 한 줄도 건드리지 않는다. 전부 tests/_api.py 를 거�
   [2] retry_block (실제 리포트 3개 + 합성 리포트 1개) + brief_failure
   [3] 재구성 프롬프트 조립 (choices_block + 첫 시도 / 재시도 프롬프트 전문)
   [4] parse_reply / mock_reply
-  [5] mock 실행 (--mock pass, --mock fail)
+  [5] mock 실행 (--mock pass / fail / preserved-all / -some / -none)
   [6] 가짜 세션 4건으로 session_report
   [7] senior_ui.audit.report (여러 audit 를 나란히 놓는 md, --details 포함)
 
@@ -364,12 +364,27 @@ def ensure_mock_input():
 MOCK_RUNS = [
     ("mock_pass", ["--mock", "pass", "--attempts", "1"]),
     ("mock_fail", ["--mock", "fail", "--attempts", "2", "--delay", "0"]),
+    # 선택지 데이터를 도구가 지키는 장치의 세 경우. 셋은 Run 1 빌드의 은행
+    # 목록 한 줄에서만 다르고, 그 한 줄 때문에 각각 다른 자리에서 갈린다.
+    ("mock_preserved_all", ["--mock", "preserved-all", "--attempts", "1"]),
+    ("mock_preserved_some", ["--mock", "preserved-some", "--attempts", "1"]),
+    ("mock_preserved_none", ["--mock", "preserved-none", "--attempts", "1"]),
 ]
+
+# mock 실행이 쓸 산출물 폴더. 실제 outputs/ 와 떼어 놓는다.
+#
+# 통과한 빌드는 outputs/restructured_auto.* 로 복사된다 (loop.copy_final).
+# 그 이름은 뷰어와 실험 조건이 "지금 쓰는 재구성본" 으로 읽는 것인데,
+# preserved-all 모드는 실제로 통과하므로 기준값을 뽑거나 테스트를 돌릴
+# 때마다 그 파일이 mock 결과로 덮인다. 저장소 루트 **안** 에 두는 이유는
+# 검사기가 빌드를 :3003 이 서빙하는 http:// 로 열기 때문이다.
+MOCK_OUTPUTS = os.path.join(ROOT, ".mock-outputs")
 
 
 def run_mock(args):
     cmd = [sys.executable, "-m", "senior_ui.restructure"] + args
-    env = dict(os.environ, PYTHONIOENCODING="utf-8")
+    env = dict(os.environ, PYTHONIOENCODING="utf-8",
+               SENIOR_UI_OUTPUTS=MOCK_OUTPUTS)
     p = subprocess.run(cmd, cwd=ROOT, env=env, capture_output=True, text=True,
                        encoding="utf-8", errors="replace")
     hits = [l for l in (p.stdout or "").splitlines() if " summary: " in l]

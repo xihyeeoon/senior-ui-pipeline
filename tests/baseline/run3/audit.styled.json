@@ -125,6 +125,15 @@
       "ratio": 2.52,
       "need": 3,
       "inherited": false
+    },
+    {
+      "check": "I",
+      "screen": null,
+      "detail": "원본의 pick-bank 선택지 67개 중 1개는 생성물 문서 안에는 있지만 검사기가 걷는 동안 DOM 에서는 고를 수 없었다 (예: 케이뱅크). \"전체 보기\" 뒤나 검색 결과로만 나오는 목록이면 정상이다 - 판정에는 넣지 않는다. 그 길을 걷게 하려면 흐름 명세에 그 클릭을 넣어라.",
+      "action": "pick-bank",
+      "not_selectable": [
+        "케이뱅크"
+      ]
     }
   ],
   "metrics": {
@@ -254,6 +263,13 @@
     "choice_values_removed_by_design": {},
     "choice_values_kept": {
       "pick-bank": 9,
+      "acc-num": 10,
+      "quick": 3,
+      "num": 10,
+      "pw": 10
+    },
+    "choice_values_selectable": {
+      "pick-bank": 8,
       "acc-num": 10,
       "quick": 3,
       "num": 10,

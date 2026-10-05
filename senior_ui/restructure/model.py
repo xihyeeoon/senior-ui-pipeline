@@ -166,14 +166,89 @@ def mock_build_path():
                             % (MOCK_BUILD, OUTPUTS_DIR, RESULTS_DIR))
 
 
+# --------------------------------------------------------------------------- #
+# mock 이 Run 1 빌드에 가하는 바꿔치기
+# --------------------------------------------------------------------------- #
+# mock 은 API 없이 루프를 돌리는 대역이다. 선택지 데이터를 도구가 넣어 주게 된
+# 뒤로는 Run 1 빌드를 그대로 되읽을 수 없다 - 그 빌드는 window.PRESERVED 를 읽지
+# 않으므로 형식 검사에서 멈추고, 검사 경로를 한 번도 밟지 못한다. 그래서 은행
+# 목록 한 줄을 모드마다 다르게 바꿔 끼운다. 모드들이 **그 한 줄에서만** 다르므로
+# 결과가 갈리는 이유가 그 줄 하나로 좁혀진다.
+#
+# 자리를 찾지 못하면 멈춘다. 조용히 지나가면 "그 경우를 확인했다" 가 거짓이 된다.
+BANKS_LINE = ("const BANKS = ['신한','국민','카카오뱅크','농협','우리','하나',"
+              "'기업','토스뱅크'];")
+
+# 도구가 넣어 준 데이터를 참조해 전부 그린다 (은행 38 + 증권사 29).
+BANKS_ALL = ("const BANKS = window.PRESERVED.BANKS"
+             ".concat(window.PRESERVED.SECS);")
+# 참조는 하지만 일부만 그린다. 형식 검사는 통과하고 검사 I 에서 떨어진다.
+BANKS_SOME = ("const BANKS = window.PRESERVED.BANKS"
+              ".concat(window.PRESERVED.SECS).slice(0, 4);")
+# 참조하지 않고 직접 네 개를 쓴다. Run 4·5 의 모델이 한 그대로다. 형식 검사에서
+# 떨어진다 (검사기까지 가지 않는다).
+BANKS_NONE = "const BANKS = ['신한','국민','카카오뱅크','농협'];"
+
+# 원본의 마크업 숫자판에 있고 Run 1 빌드에는 없는 두 값 - 숫자판의 '00' 과
+# 금액 버튼의 '전액'. 이것을 채워 두면 검사 I 의 결과가 은행 목록 하나로만
+# 갈린다. 채우지 않으면 "전부 그린 응답" 도 다른 두 누락 때문에 떨어져서,
+# 통과하는 모습을 볼 수 없다.
+PAD = [
+    ('<button disabled></button><button data-action="amt-num" data-v="0">0</button>',
+     '<button data-action="amt-num" data-v="00">00</button>'
+     '<button data-action="amt-num" data-v="0">0</button>'),
+    ('<button data-action="amt-set" data-v="100000">10만원</button>',
+     '<button data-action="amt-set" data-v="100000">10만원</button>'
+     '<button data-action="amt-set" data-v="all">전액</button>'),
+]
+
+# (은행 목록 한 줄, 원본 숫자판을 채우는가, 흐름을 깨뜨리는가)
+MOCKS = {
+    # Run 1 을 되읽는다. 목록만 참조로 바꿔 검사 경로를 계속 밟게 한다.
+    "pass": (BANKS_ALL, False, False),
+    # 둘째 걸음이 없는 선택자를 클릭한다 - 모든 시도가 화면 2에서 죽는다.
+    "fail": (BANKS_ALL, False, True),
+    # 지시대로 한 답. 통과해야 한다.
+    "preserved-all": (BANKS_ALL, True, False),
+    # 참조는 했지만 일부만 그렸다. 검사 I 에서 떨어져야 한다.
+    "preserved-some": (BANKS_SOME, True, False),
+    # 참조하지 않고 직접 썼다. 형식 검사에서 떨어져야 한다.
+    "preserved-none": (BANKS_NONE, True, False),
+}
+MODES = sorted(MOCKS)
+
+
+def swap(html, old, new):
+    """한 자리를 바꾼다. 그 자리가 없으면 멈춘다."""
+    if old not in html:
+        raise RuntimeError("mock: %s 에서 바꿀 자리를 찾지 못했다: %s…"
+                           % (MOCK_BUILD, old[:60]))
+    return html.replace(old, new, 1)
+
+
+def mock_build(mode):
+    """그 모드가 모델 답으로 내놓을 HTML."""
+    banks, pad, _broken = MOCKS[mode]
+    html = swap(io.open(mock_build_path(), encoding="utf-8").read(),
+                BANKS_LINE, banks)
+    if pad:
+        for old, new in PAD:
+            html = swap(html, old, new)
+    return html
+
+
 def mock_reply(mode):
-    """No API: replay Run 1. 'fail' hands back a flow whose second step clicks
-    a selector that does not exist, so every attempt dies on screen 2."""
-    html = io.open(mock_build_path(), encoding="utf-8").read()
+    """No API: Run 1 을 되읽는다. 모드마다 은행 목록 한 줄이 다르다 (MOCKS).
+
+    'fail' 은 둘째 걸음이 없는 선택자를 클릭하는 흐름을 함께 내놓아, 모든 시도가
+    화면 2에서 죽게 한다 - 재시도 루프가 검사 실패를 물고 도는 것을 확인하는
+    모드다.
+    """
+    html = mock_build(mode)
     flow = json.load(io.open(os.path.join(FLOWS_DIR, "restructured.json"),
                              encoding="utf-8"))
     flow["name"] = "auto"
-    if mode == "fail":
+    if MOCKS[mode][2]:
         flow["steps"][1]["click"] = "[data-action='does-not-exist']"
     text = "```html\n%s\n```\n\n```json\n%s\n```\n" % (
         html, json.dumps(flow, ensure_ascii=False, indent=2))

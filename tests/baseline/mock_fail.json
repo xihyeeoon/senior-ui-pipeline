@@ -2,13 +2,18 @@
   "model": "gpt-4o",
   "mock": "fail",
   "stage": "styled",
+  "preserved": {
+    "BANKS": 38,
+    "SECS": 29,
+    "nums": 10
+  },
   "repro": {
     "temperature": 0.0,
     "seed": 20260101,
     "response_model": null,
     "system_fingerprint": null,
     "openai_sdk": "<sdk>",
-    "prompt_template_sha256": "28b2b6b80afe62c978600eb7eae04d7a2ba94afdb01417b33b185d2465c11f7c"
+    "prompt_template_sha256": "e1e41f97a7360d875510f3b8476c3b5b9abcca71bc7b021057a5761397f2bf7d"
   },
   "attempts": [
     {
@@ -21,13 +26,25 @@
         "response_model": null,
         "system_fingerprint": null,
         "openai_sdk": "<sdk>",
-        "prompt_template_sha256": "28b2b6b80afe62c978600eb7eae04d7a2ba94afdb01417b33b185d2465c11f7c"
+        "prompt_template_sha256": "e1e41f97a7360d875510f3b8476c3b5b9abcca71bc7b021057a5761397f2bf7d"
+      },
+      "preserved": {
+        "injected": {
+          "BANKS": 38,
+          "SECS": 29,
+          "nums": 10
+        },
+        "redeclared": [],
+        "read": [
+          "BANKS",
+          "SECS"
+        ]
       },
       "html": "<run>/attempt_1.html",
       "flow": "<run>/attempt_1.flow.json",
       "stage": "audit",
       "passed": false,
-      "fatal": 11,
+      "fatal": 10,
       "warning": 0
     },
     {
@@ -40,13 +57,25 @@
         "response_model": null,
         "system_fingerprint": null,
         "openai_sdk": "<sdk>",
-        "prompt_template_sha256": "28b2b6b80afe62c978600eb7eae04d7a2ba94afdb01417b33b185d2465c11f7c"
+        "prompt_template_sha256": "e1e41f97a7360d875510f3b8476c3b5b9abcca71bc7b021057a5761397f2bf7d"
+      },
+      "preserved": {
+        "injected": {
+          "BANKS": 38,
+          "SECS": 29,
+          "nums": 10
+        },
+        "redeclared": [],
+        "read": [
+          "BANKS",
+          "SECS"
+        ]
       },
       "html": "<run>/attempt_2.html",
       "flow": "<run>/attempt_2.flow.json",
       "stage": "audit",
       "passed": false,
-      "fatal": 11,
+      "fatal": 10,
       "warning": 0
     }
   ],
@@ -69,16 +98,16 @@
   "trend": [
     {
       "attempt": 1,
-      "fatal_total": 11,
-      "fatal_root": 4,
+      "fatal_total": 10,
+      "fatal_root": 3,
       "fatal_derived": 7,
       "screens": "1/9",
       "stopped_at": "who"
     },
     {
       "attempt": 2,
-      "fatal_total": 11,
-      "fatal_root": 4,
+      "fatal_total": 10,
+      "fatal_root": 3,
       "fatal_derived": 7,
       "screens": "1/9",
       "stopped_at": "who"

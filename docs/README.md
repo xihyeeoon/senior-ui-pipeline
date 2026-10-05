@@ -97,6 +97,33 @@ LLM 이 쓴 것이라 다시 만들려면 API 비용이 들고 바이트까지 �
 .\.venv\Scripts\python.exe -m senior_ui.experiment.report             # 세션 집계
 ```
 
+### 입력의 선택지 데이터는 도구가 지킨다 (`window.PRESERVED`)
+
+자동 Run 4·5 에서 LLM 은 원본의 선택지 67개를 다시 타이핑하며 3~9개로 줄였다.
+프롬프트에 "하나도 빠뜨리지 마라" 를 넣어도 아홉 시도 모두 4개였다
+(`docs/variance-notes.md`). 그래서 데이터는 도구가 들고 있는다.
+
+- **뽑기** — 입력 HTML 에서 스크립트 배열로 그려지는 선택지를 이름과 원소로
+  꺼낸다 (`senior_ui/restructure/preserve.py`). 선택지 집합을 모으는 방식은
+  검사 I 와 같다. 마크업에 직접 쓰인 선택지(숫자판 등)는 대상이 아니다.
+- **넣기** — 재설계 HTML 의 첫 스크립트 앞에
+  `<script id="preserved-data">window.PRESERVED = {…}</script>` 를 넣는다.
+  모델이 같은 이름을 배열 리터럴로 다시 선언하면 그 초기화 식만 참조로 바꾼다 —
+  선언을 지우면 그 이름을 쓰는 코드가 `ReferenceError` 로 죽고, 그대로 두면
+  모델이 타이핑한 짧은 목록이 이긴다. 바꾼 이름은 `run.log` 와 `summary.json`
+  에 남는다.
+- **참조 검사** — 스크립트가 그 이름을 읽는지 형식 검사 단계에서 본다 (브라우저
+  없음). 읽지 않으면 검사기까지 가지 않는다. 값을 하나도 빠뜨리지 않고 직접 쓴
+  목록은 요구하지 않는다.
+- **검사 I** — 그 블록(`script#preserved-data`)은 "값이 있다" 의 증거로 세지
+  않는다. 세면 모델이 하나도 그리지 않아도 통과한다. 대신 걷는 동안 렌더링된
+  DOM 에서 모은 선택지 값을 함께 본다. `choice_values_kept` 가 판정 기준이고
+  `choice_values_selectable` 는 그중 DOM 에서 고를 수 있던 수다 — 둘이 다르면
+  경고가 난다 (fatal 아님).
+
+이름은 `senior_ui/preserved.py` 한 곳에만 있다. API 없이 확인하려면
+`--mock preserved-all` / `preserved-some` / `preserved-none` 셋을 돌린다.
+
 ### 빼도 되는 선택지 (`flows/allowed_removals.json`)
 
 검사 I 는 원본에 있던 선택지가 생성물에 없으면 fatal 을 낸다. 안전을 이유로
