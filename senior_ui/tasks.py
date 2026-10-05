@@ -44,7 +44,9 @@ def task_path(name):
 
 
 def abs_path(rel):
-    """과제 파일의 루트 기준 경로를 절대 경로로."""
+    """과제 파일의 루트 기준 경로를 절대 경로로. 이미 절대 경로면 그대로."""
+    if os.path.isabs(str(rel)):
+        return str(rel)
     return os.path.join(ROOT, *str(rel).split("/"))
 
 
