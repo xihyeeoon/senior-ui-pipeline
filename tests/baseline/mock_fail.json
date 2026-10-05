@@ -1,6 +1,7 @@
 {
   "model": "gpt-4o",
   "mock": "fail",
+  "task": "transfer",
   "stage": "styled",
   "preserved": {
     "BANKS": 38,

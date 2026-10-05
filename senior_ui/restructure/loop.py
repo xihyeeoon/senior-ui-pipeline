@@ -162,7 +162,9 @@ class Run:
         self.last_error = None
         # 길이 제한에 잘린 답이 연속 몇 번인지. 둘째 번부터는 안내가 달라진다.
         self.truncated = 0
+        # 과제는 실행 기록 안에 있어야 한다 - 여러 실행을 모아 볼 때 과제를 가른다.
         self.summary = {"run_dir": run_dir, "model": model, "mock": args.mock,
+                        "task": self.task["id"],
                         "stage": args.stage, "preserved": {}, "plan": None,
                         "repro": repro(template, temperature=self.temperature,
                                        seed=self.seed),
@@ -938,8 +940,11 @@ def run(args):
         return 2
 
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    # 실행 폴더 이름에 과제를 붙인다. 기본 과제(이체)는 전처럼 붙이지 않는다.
+    task_name = getattr(args, "task", None) or DEFAULT_TASK
     run_dir = os.path.join(runs_dir(mock),
-                           stamp + ("-mock-" + args.mock if args.mock else ""))
+                           stamp + ("" if task_name == DEFAULT_TASK else "-" + task_name)
+                           + ("-mock-" + args.mock if args.mock else ""))
     os.makedirs(run_dir, exist_ok=True)
     log = make_logger(os.path.join(run_dir, "run.log"))
     # 첫 줄. 작업 트리가 깨끗하지 않으면 그 사실이 run.log 를 여는 사람에게 가장
@@ -954,7 +959,7 @@ def run(args):
     except RuntimeError as e:
         log("cannot start: %s" % e)
         print("cannot start: %s" % e, file=sys.stderr)
-        _dump({"run_dir": run_dir, "passed": False, "attempts": [],
+        _dump({"run_dir": run_dir, "task": task_name, "passed": False, "attempts": [],
                "stopped_reason": "cannot_start", "error": str(e), "git": git},
               os.path.join(run_dir, "summary.json"))
         log("summary: %s" % os.path.join(run_dir, "summary.json"))
@@ -978,7 +983,7 @@ def run(args):
     except (OSError, RuntimeError, ValueError) as e:
         log("cannot start: %s" % e)
         print("cannot start: %s" % e, file=sys.stderr)
-        _dump({"run_dir": run_dir, "passed": False, "attempts": [],
+        _dump({"run_dir": run_dir, "task": task_name, "passed": False, "attempts": [],
                "stopped_reason": "cannot_start", "error": str(e), "git": git},
               os.path.join(run_dir, "summary.json"))
         log("summary: %s" % os.path.join(run_dir, "summary.json"))

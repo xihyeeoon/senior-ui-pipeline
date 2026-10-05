@@ -396,3 +396,25 @@ def test_the_index_has_a_card_for_every_tasks_original():
     assert bill["flow"] == {"name": "original_bill", "path": "flows/original_bill.json"}
     assert bill["layer"] == "input"
     assert "bill-home" in bill["screens"]
+
+
+# --------------------------------------------------------------------- #
+# 8. 실행 기록 - summary.json 의 task, 실행 폴더 이름
+# --------------------------------------------------------------------- #
+def test_the_summary_and_the_run_folder_name_the_task(fake_run_env, out_root):  # noqa: F811
+    """고치기 전: 실행 기록 어디에도 과제가 없었다. 여러 실행을 모아 볼 때 과제를
+    가를 수 없다."""
+    code, summary = bill_run(fake_run_env, out_root)
+    assert summary["task"] == "bill"
+    run_dir = sorted(os.listdir(os.path.join(out_root, "restructure_auto")))[-1]
+    assert run_dir.endswith("-bill")
+
+
+def test_a_transfer_run_names_the_task_but_keeps_its_folder_name(fake_run_env, out_root):  # noqa: F811
+    code, summary = run_loop(fake_run_env, out_root, always_reply, attempts=1)
+    assert summary["task"] == "transfer"
+    run_dir = sorted(os.listdir(os.path.join(out_root, "restructure_auto")))[-1]
+    assert re.fullmatch(r"\d{8}-\d{6}", run_dir)
+    # 키의 자리: mock 바로 뒤
+    keys = list(summary)
+    assert keys[keys.index("mock") + 1] == "task"
