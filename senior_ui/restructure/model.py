@@ -521,12 +521,82 @@ MOCK_PLAN = {
 }
 
 
+# --------------------------------------------------------------------------- #
+# 공과금 mock (bill-identity)
+# --------------------------------------------------------------------------- #
+# 위의 일곱은 모두 이체 Run 1 빌드를 되읽는다. 공과금 과제로 루프를 처음부터
+# 끝까지 - 기준값 걷기 · 데이터 보존 · 형식 검사 · 검사기 A~J · 설명서 - 돌려 볼
+# 길이 없었으므로, 공과금 원본을 거의 그대로 돌려주는 모드를 둔다. 실제 API 를
+# 쓰기 전에 공과금 쪽 버그를 찾는 것이 목적이다.
+#
+# 바꾸는 것은 둘뿐이다. 선택지 배열의 선언을 window.PRESERVED 를 읽게 바꾸고
+# (도구가 넣는 데이터를 읽지 않으면 형식 검사에서 떨어진다), 흐름 명세는
+# flows/original_bill.json 의 걸음을 새 설계의 흐름 명세 모양으로 쓴다.
+BILL_ORIGINAL = os.path.join(ROOT, "inputs", "original_bill.html")
+BILL_FLOW = os.path.join(FLOWS_DIR, "original_bill.json")
+
+# 공과금 원본에서 도구가 꺼내 넣어 주는 배열 (docs/input-contract.md 의 공과금 그룹 표).
+BILL_ARRAYS = ["MENU_TABS", "MENU_BANK", "MENU_CARD", "BILL_ITEMS", "PW_KEYS"]
+
+# mock 모드 -> 그 모드가 되읽는 빌드의 과제. 다른 과제로 돌리면 루프가 시작하지 않는다.
+BILL_MODES = ["bill-identity"]
+MOCK_TASK = dict([(m, "transfer") for m in MODES] + [(m, "bill") for m in BILL_MODES])
+ALL_MODES = MODES + BILL_MODES
+
+BILL_SCREENS = ["home", "menu", "search", "bill-home", "camera", "info", "password",
+                "done"]
+
+BILL_DIAGNOSIS = [
+    {"id": "D1", "screen": "menu", "element": "은행 탭 메뉴 목록",
+     "problem": "납부하기가 긴 목록 중간에 있어 훑다가 지나친다",
+     "evidence": "MENU_BANK 의 소분류 10개 · 항목 69개를 한 목록으로 그린다"},
+    {"id": "D2", "screen": "bill-home", "element": "납부 항목 18개",
+     "problem": "전기요금 항목을 눌러도 아무 일이 없어 어디로 가야 할지 모른다",
+     "evidence": "BILL_ITEMS 의 항목은 pick-bill 로 무동작이고 [납부하기] 카드만 넘어간다"},
+]
+
+BILL_PLAN = {
+    "screens": [{"name": n, "purpose": "원본 그대로", "from": [n]} for n in BILL_SCREENS],
+    "changes": [
+        {"id": "C1", "what": "바꾸지 않는다 (mock - 원본을 그대로 돌려준다)",
+         "why": "루프가 공과금 과제를 끝까지 도는지 보려는 것", "addresses": ["D1", "D2"],
+         "from_screens": ["menu", "bill-home"], "to_screens": ["menu", "bill-home"]},
+    ],
+    "errors": [],
+}
+
+
+def bill_build():
+    """bill-identity 가 모델 답으로 내놓을 HTML. 선언 자리를 찾지 못하면 멈춘다."""
+    html = io.open(BILL_ORIGINAL, encoding="utf-8").read()
+    for name in BILL_ARRAYS:
+        pat = re.compile(r"const %s = \[.*?\];" % name, re.S)
+        if len(pat.findall(html)) != 1:
+            raise RuntimeError("mock: %s 에서 %s 의 선언을 하나로 찾지 못했다"
+                               % (BILL_ORIGINAL, name))
+        html = pat.sub(lambda m: "const %s = window.PRESERVED.%s;" % (name, name), html)
+    return html
+
+
+def bill_flow():
+    """flows/original_bill.json 의 걸음을 새 설계의 흐름 명세 모양으로."""
+    src = json.load(io.open(BILL_FLOW, encoding="utf-8"))
+    return {"name": "auto", "note": "mock bill-identity - 공과금 원본을 그대로 돌려준다",
+            "derived_from_original": False,
+            "required_ids": src["required_ids"], "steps": src["steps"],
+            "expect": src["expect"], "done_amount": src["done_amount"],
+            "error_paths": []}
+
+
 def mock_plan_reply(mode):
-    """No API: 진단·계획 단계의 답. 다섯 모드가 같은 답을 쓴다."""
-    if mode not in MOCKS:
+    """No API: 진단·계획 단계의 답. 이체 일곱 모드가 같은 답을 쓰고, 공과금
+    모드는 공과금 원본의 화면 그대로인 계획이다."""
+    if mode not in MOCK_TASK:
         raise ValueError("mock 모드가 아니다: %s" % mode)
+    diagnosis, plan = (BILL_DIAGNOSIS, BILL_PLAN) if mode in BILL_MODES \
+        else (MOCK_DIAGNOSIS, MOCK_PLAN)
     text = "```json\n%s\n```\n" % json.dumps(
-        {"diagnosis": MOCK_DIAGNOSIS, "plan": MOCK_PLAN}, ensure_ascii=False, indent=2)
+        {"diagnosis": diagnosis, "plan": plan}, ensure_ascii=False, indent=2)
     return {"text": text, "finish_reason": "stop", "seconds": 0.0, "usage": None,
             "temperature": TEMPERATURE, "seed": SEED,
             "model": None, "system_fingerprint": None}
@@ -548,21 +618,26 @@ def mock_reply(mode, reflect=False):
     화면 2에서 죽게 한다 - 재시도 루프가 검사 실패를 물고 도는 것을 확인하는
     모드다.
     """
-    html = mock_build(mode)
-    flow = json.load(io.open(os.path.join(FLOWS_DIR, "restructured.json"),
-                             encoding="utf-8"))
-    flow["name"] = "auto"
-    if MOCKS[mode][2]:
-        flow["steps"][1]["click"] = "[data-action='does-not-exist']"
-    if ERRORS[MOCKS[mode][3]][1]:
-        flow["error_paths"] = json.loads(json.dumps(MOCK_ERROR_PATHS))
+    if mode in BILL_MODES:
+        html, flow = bill_build(), bill_flow()
+    else:
+        html = mock_build(mode)
+        flow = json.load(io.open(os.path.join(FLOWS_DIR, "restructured.json"),
+                                 encoding="utf-8"))
+        flow["name"] = "auto"
+        if MOCKS[mode][2]:
+            flow["steps"][1]["click"] = "[data-action='does-not-exist']"
+        if ERRORS[MOCKS[mode][3]][1]:
+            flow["error_paths"] = json.loads(json.dumps(MOCK_ERROR_PATHS))
     text = "```html\n%s\n```\n\n```json\n%s\n```\n" % (
         html, json.dumps(flow, ensure_ascii=False, indent=2))
     if reflect:
         # 재시도 답은 반성이 코드 블록보다 앞이다 (docs/restructure-prompt.md
         # 의 REFLECT 블록).
         text = "```json\n%s\n```\n\n" % json.dumps(
-            MOCK_REFLECTION, ensure_ascii=False, indent=2) + text
+            dict(MOCK_REFLECTION, keep=[c["id"] for c in (
+                BILL_PLAN if mode in BILL_MODES else MOCK_PLAN)["changes"]]),
+            ensure_ascii=False, indent=2) + text
     return {"text": text, "finish_reason": "stop", "seconds": 0.0, "usage": None,
             "temperature": TEMPERATURE, "seed": SEED,
             "model": None, "system_fingerprint": None}

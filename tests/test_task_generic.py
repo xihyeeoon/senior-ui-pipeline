@@ -418,3 +418,44 @@ def test_a_transfer_run_names_the_task_but_keeps_its_folder_name(fake_run_env, o
     # 키의 자리: mock 바로 뒤
     keys = list(summary)
     assert keys[keys.index("mock") + 1] == "task"
+
+
+# --------------------------------------------------------------------- #
+# 9. 공과금 mock (bill-identity) - 형식 검사까지 (브라우저 없이)
+# --------------------------------------------------------------------- #
+M = _api.model_module
+
+
+def test_the_bill_mock_exists_and_belongs_to_the_bill_task():
+    """고치기 전: mock 은 모두 이체 전용이라 공과금 루프를 끝까지 돌릴 길이
+    없었다."""
+    args = _api.restructure_parser().parse_args(
+        ["--task", "bill", "--mock", "bill-identity"])
+    assert args.mock == "bill-identity"
+    assert M.MOCK_TASK["bill-identity"] == "bill"
+    assert all(M.MOCK_TASK[m] == "transfer" for m in M.MODES)
+
+
+def test_the_bill_mock_reply_passes_the_format_checks():
+    """원본을 거의 그대로 돌려준다 - 선택지 배열은 window.PRESERVED 를 읽고,
+    흐름은 flows/original_bill.json 의 걸음이다."""
+    html, flow, _ = _api.parse_reply(M.mock_reply("bill-identity")["text"])
+    flow["derived_from_original"] = False
+    task = _api.load_task("bill")
+    assert _api.validate_flow(flow, html, [], task["done_expect"]) == []
+    for name in M.BILL_ARRAYS:
+        assert "const %s = window.PRESERVED.%s;" % (name, name) in html
+    plan_text = M.mock_plan_reply("bill-identity")["text"]
+    diagnosis, plan = _api.plan_module.parse_plan(
+        plan_text, _api.plan_module.screens_in(
+            io.open(T.abs_path(task["original"]), encoding="utf-8").read()), [])
+    assert _api.plan_module.match_problems(plan, html) == []
+
+
+def test_a_mock_of_another_task_does_not_start(fake_run_env, out_root):  # noqa: F811
+    """이체 mock 을 공과금 과제로 돌리면(또는 그 반대) 시작하지 않는다 - 다른
+    과제의 빌드로 루프가 돌아 결과가 뜻이 없다."""
+    fake_run_env.setattr(loop, "call_model", always_reply)
+    code = loop.run(_api.restructure_parser().parse_args(
+        ["--task", "bill", "--mock", "pass", "--attempts", "1", "--delay", "0"]))
+    assert code == 2

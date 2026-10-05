@@ -36,9 +36,9 @@ from senior_ui.tasks import DEFAULT_TASK, abs_path, load_task
 
 from .audit_call import load_allowed_removals, run_audit
 from .brief import write_brief
-from .model import (TEMPERATURE, SEED, ApiRejected, InfraFailed, RateLimited,
-                    call_model, estimate_tokens, load_env, mock_plan_reply, mock_reply,
-                    sdk_version)
+from .model import (MOCK_TASK, TEMPERATURE, SEED, ApiRejected, InfraFailed,
+                    RateLimited, call_model, estimate_tokens, load_env, mock_plan_reply,
+                    mock_reply, sdk_version)
 from .plan import (PlanProblems, apply_changes, match_problems, parse_plan,
                    parse_reflection, plan_report, screens_in, unaddressed)
 from .preserve import inject, names_read, preserved_data
@@ -975,6 +975,10 @@ def run(args):
         task = load_task(getattr(args, "task", None) or DEFAULT_TASK)
         if not getattr(args, "original", None):
             args.original = abs_path(task["original"])
+        # mock 은 한 과제의 빌드를 되읽는다. 다른 과제로 돌리면 결과에 뜻이 없다.
+        if args.mock and MOCK_TASK.get(args.mock) != task["id"]:
+            raise RuntimeError("--mock %s 는 %s 과제의 mock 이다 (지금 과제: %s)"
+                               % (args.mock, MOCK_TASK.get(args.mock), task["id"]))
         template = load_template(task["id"])
         plan_template = load_plan_template(task["id"])
         original_html = io.open(args.original, encoding="utf-8").read()

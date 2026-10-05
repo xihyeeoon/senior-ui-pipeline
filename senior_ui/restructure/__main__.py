@@ -91,7 +91,7 @@ from senior_ui.audit.stage import STAGES
 from senior_ui.tasks import DEFAULT_TASK, task_names
 
 from .loop import PLAN_MAX_TOKENS, run
-from .model import MODES, SEED, TEMPERATURE
+from .model import ALL_MODES, SEED, TEMPERATURE
 
 
 # --mock pass 가 무엇을 하는가. Run 1 빌드에는 원본 숫자판의 00 과 금액 버튼의
@@ -122,7 +122,7 @@ def build_parser():
                          "30,000 을 넘는다")
     ap.add_argument("--plan-max-tokens", type=int, default=PLAN_MAX_TOKENS,
                     help="진단·계획 호출의 completion cap (JSON 하나)")
-    ap.add_argument("--mock", choices=MODES, default=None,
+    ap.add_argument("--mock", choices=ALL_MODES, default=None,
                     help="API 없이 Run 1 을 되읽는다. 모드마다 은행 목록 "
                          "한 줄이 다르다 - model.MOCKS 참고. %s" % MOCK_PASS_NOTE)
     ap.add_argument("--task", choices=task_names(), default=DEFAULT_TASK,
