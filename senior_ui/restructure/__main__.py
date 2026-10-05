@@ -54,7 +54,10 @@ mock 모드는 다섯이고 Run 1 빌드의 은행 목록 한 줄에서만 다�
 
   다섯 모두 진단·계획 답은 같다 (model.MOCK_PLAN - Run 1 빌드의 아홉 화면).
 
-  pass            목록을 window.PRESERVED 로 바꿔 끼운다 - 검사까지 가고 떨어진다
+  pass            목록을 window.PRESERVED 로 바꿔 끼운다 - 검사까지 가고 떨어진다.
+                  pass 는 지금 검사 I(00·전액 누락)에서 떨어진다. 통과 경로 확인은 preserved-all 로 한다.
+                  통과해야 생기는 것(designer_brief.md, outputs/ 로의 승격)도
+                  preserved-all 에서만 생긴다
   fail            같은 빌드 + 둘째 걸음이 없는 선택자를 클릭하는 흐름
   preserved-all   데이터를 참조해 전부 그린다 (+ 원본 숫자판의 '00'·'전액')  -> 통과
   preserved-some  참조는 하지만 slice(0, 4) 로 일부만 그린다  -> 검사 I 에서 실패
@@ -80,6 +83,12 @@ from .loop import PLAN_MAX_TOKENS, run
 from .model import MODES, SEED, TEMPERATURE
 
 
+# --mock pass 가 통과하지 않는 이유. Run 1 빌드에는 원본 숫자판의 00 과 금액
+# 버튼의 전액이 없다. 원본 숫자판을 배열로 바꾸는 단계(9번)에서 mock 도 다시
+# 손보므로 지금은 고치지 않고 적어만 둔다.
+MOCK_PASS_NOTE = ("pass 는 지금 검사 I(00·전액 누락)에서 떨어진다. 통과 경로 확인은 preserved-all 로 한다.")
+
+
 def build_parser():
     ap = argparse.ArgumentParser()
     ap.add_argument("--attempts", type=int, default=3,
@@ -103,7 +112,7 @@ def build_parser():
                     help="진단·계획 호출의 completion cap (JSON 하나)")
     ap.add_argument("--mock", choices=MODES, default=None,
                     help="API 없이 Run 1 을 되읽는다. 모드마다 은행 목록 "
-                         "한 줄이 다르다 - model.MOCKS 참고")
+                         "한 줄이 다르다 - model.MOCKS 참고. %s" % MOCK_PASS_NOTE)
     ap.add_argument("--original", default=ORIGINAL_FILE)
     ap.add_argument("--stage", choices=sorted(STAGES), default="styled",
                     help="검사 단계. wireframe 은 A·B·C·F·I 만 본다")
