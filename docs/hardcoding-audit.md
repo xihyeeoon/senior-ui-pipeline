@@ -2,7 +2,7 @@
 
 `feat/task-generic` 에서 과제 정의를 `tasks/<과제>.json` 으로 뺀 뒤, 레포에 남은 "특정 과제 ·
 특정 값 · 특정 실행 · 특정 환경 · 숫자 상수" 에 묶인 곳을 모은 표다. **고치지 않았다** —
-한 건(승격 산출물 이름)만 지시에 따라 11번에서 고쳤고 그렇게 적었다.
+승격 산출물 이름, 그리고 합치기 전에 지시받은 1·2·3·10·13번은 11번에서 고쳤고 그렇게 적었다.
 
 - 범위: `senior_ui/` · `web/` · `tests/*.py` · `docs/restructure-prompt.md` · `시작.bat`.
   `tests/fixtures/` · `tests/baseline/` 안의 값은 테스트 입력이라 세지 않았다. 테스트 코드가 특정
@@ -15,33 +15,34 @@
 
 | 분류 | 행 | 고쳐야 함 | 일부러 둠 | 모르겠음 | 11번에서 고침 |
 |---|---|---|---|---|---|
-| 과제 | 38 | 11 | 23 | 4 | 0 |
+| 과제 | 38 | 7 | 23 | 4 | 4 |
 | 값 | 7 | 1 | 6 | 0 | 0 |
 | 실행 | 24 | 0 | 23 | 0 | 1 |
-| 환경 | 13 | 2 | 11 | 0 | 0 |
+| 환경 | 13 | 1 | 11 | 0 | 1 |
 | 상수 | 36 | 5 | 31 | 0 | 0 |
-| **합** | **118** | **19** | **94** | **4** | **1** |
+| **합** | **118** | **14** | **94** | **4** | **6** |
 
-행은 아래 표의 줄 수다 (같은 종류를 한 줄로 묶은 것이 많다). "고쳐야 함" 19행은 아래
-16항목이다 — 한 항목이 여러 파일에 걸치면 파일마다 한 행이다 (15번 · 16번).
+행은 아래 표의 줄 수다 (같은 종류를 한 줄로 묶은 것이 많다). "고쳐야 함" 14행은 아래 16항목 중
+남은 11항목이다 — 한 항목이 여러 파일에 걸치면 파일마다 한 행이다 (15번 · 16번). 1·2·3·10·13번은
+합치기 전에 고쳤다.
 
-### 고쳐야 함 (16) — 제안 단계
+### 고쳐야 함 (16, 그중 다섯은 11번에서 고침) — 제안 단계
 
 | # | 자리 | 한 줄 | 제안 |
 |---|---|---|---|
-| 1 | `reply.py:269` · `b_display.py` | 흐름 명세의 `expect` 완료 화면 키가 `"done"` 으로 박혀 있다. 모델이 마지막 화면을 다른 이름으로 지으면 `expect.done` 은 형식 검사를 지나고 검사 B 는 그 화면을 찾지 못해 **말없이 건너뛴다** (공과금의 `#dn-eno` 가 안 걸린다) | 12번 전 — 완료 화면 키를 `steps` 의 마지막 화면으로 보고, `expect` 키가 화면 이름인지 형식 검사에서 본다 |
-| 2 | `a_completion.py:150,152` | 검사 A 가 `truth["AMOUNT_SHOWN"]` 을 바로 읽는다. 금액 없는 과제에서는 KeyError | 세 번째 과제를 더하기 전 — `done_expect` 의 짝을 과제에서 읽는다 |
-| 3 | `a_completion.py:133` | `done_amount` 가 없을 때의 대체값 `"#dn-amt"` (이체 id) | 2번과 함께 — `flow.done_selector(task_of(flow))` |
+| 1 | `reply.py:269` · `b_display.py` | 흐름 명세의 `expect` 완료 화면 키가 `"done"` 으로 박혀 있다. 모델이 마지막 화면을 다른 이름으로 지으면 `expect.done` 은 형식 검사를 지나고 검사 B 는 그 화면을 찾지 못해 **말없이 건너뛴다** (공과금의 `#dn-eno` 가 안 걸린다) | **11번에서 고침** (합치기 전, `cadbe5c`) |
+| 2 | `a_completion.py:150,152` | 검사 A 가 `truth["AMOUNT_SHOWN"]` 을 바로 읽는다. 금액 없는 과제에서는 KeyError | **11번에서 고침** (합치기 전, `cadbe5c`) |
+| 3 | `a_completion.py:133` | `done_amount` 가 없을 때의 대체값 `"#dn-amt"` (이체 id) | **11번에서 고침** (합치기 전, `cadbe5c`) |
 | 4 | `b_display.py:100,130` | 대화상자 경고 문구가 "다른 금액이면 틀린다" · "the task used `AMOUNT_SHOWN`" — 공과금에서 걸린 숫자가 전자납부번호여도 금액을 말한다 | 2번과 함께 (문구만) |
 | 5 | `config.py:58,59,67` | `ORIGINAL_FILE` · `ORIGINAL_URL` 은 이제 코드에서 쓰지 않는다. `ORIGINAL_REL` 만 `devserver` 가 쓴다 | 정리 단계 — 지우거나 `tasks/transfer.json` 에서 만든다 |
 | 6 | `config.py:70–77` | 실험 조건(`CONDITIONS`)이 이체 원본과 `outputs/restructured_transfer.html`("재구성본 (Run 1)") 둘로 박혀 있다 | 실험 준비 단계 — 과제별 조건을 과제 파일이나 실험 설정 파일로 |
 | 7 | `build_index.py:400,409` | 이체 원본 카드(`collect_baseline`)의 경로 · 흐름이 과제 파일이 아닌 글자다 | 정리 단계 — `tasks/transfer.json` 의 `original` · `flow` 로 (카드 모양은 그대로) |
 | 8 | `model.py:535,536` | 공과금 mock 이 원본 · 흐름 경로를 `tasks/bill.json` 이 아닌 글자로 쓴다 | 바로 고칠 수 있음 — `load_task("bill")` |
 | 9 | `restructure/__main__.py:1` | 모듈 설명이 "redesigned **transfer** prototype" | 정리 단계 (문서) |
-| 10 | `docs/restructure-prompt.md:176` | "오류는 계획의 `errors` 대로 알린다." 가 오류 없는 과제(공과금)에도 그대로 들어간다 | 12번 전 — `{{TASK_*}}` 슬롯으로 |
+| 10 | `docs/restructure-prompt.md:176` | "오류는 계획의 `errors` 대로 알린다." 가 오류 없는 과제(공과금)에도 그대로 들어간다 | **11번에서 고침** (합치기 전, `086358d`) |
 | 11 | `docs/restructure-prompt.md:26,32` | 사람용 메모가 낡았다 — "치환 자리 다섯" (지금은 `{{TASK}}` · `{{TASK_*}}` 가 더 있다), "원본 흐름(`flows/original.json`)" (지금은 과제의 흐름) | 정리 단계 (문서) |
 | 12 | `brief.py:207` | 설명서 문구가 데이터 블록 id `preserved-data` 를 `preserved.DATA_BLOCK_ID` 를 쓰지 않고 다시 적었다 | 정리 단계 |
-| 13 | `capture_baseline.py:105` · `test_drive.py:73` · `test_audit_accuracy.py:44` | 테스트용 `http.server` 를 `--bind` 없이 띄운다 → 0.0.0.0. `devserver` · `test_devserver.py` 는 루프백만 허용한다 | 다음 테스트 정비 — `"--bind", "127.0.0.1"` (기준값과 무관) |
+| 13 | `capture_baseline.py:105` · `test_drive.py:73` · `test_audit_accuracy.py:44` | 테스트용 `http.server` 를 `--bind` 없이 띄운다 → 0.0.0.0. `devserver` · `test_devserver.py` 는 루프백만 허용한다 | **11번에서 고침** (합치기 전, `66c7ba0`) |
 | 14 | `시작.bat:7,8,13` | 포트 3003 · 주소를 글자로 다시 적었다 (`config.PORT` 와 따로 논다) | 정리 단계 — 서버가 찍는 주소를 쓰거나 포트를 인자로 |
 | 15 | `drive.py:299,406` · `web/dashboard.css:70–72` | 휴대폰 크기 390×844 (css 는 390×700) 가 여러 곳에 따로 있다 | 정리 단계 — `config.VIEWPORT` 하나로 |
 | 16 | `report.py:209` · `dashboard.js:421,433` · `build_index.py:73` | 상수를 글로 다시 적었다 — "1.5배" (`e_layout.HEIGHT_GROWTH_LIMIT`), "KB 46개" (KB 행 수), "A·B·C·F·I·J" (`stage.STAGES`) | 정리 단계 — 그 상수를 읽어 문구를 만든다 |
@@ -94,8 +95,8 @@
 | `core.py:1,13` | 모듈 설명 "for the transfer prototype", "8 screens" | 과제 | 일부러 둠 | 설명 글. 판정에 쓰이지 않는다 (정리 때 같이 고쳐도 된다) |
 | `handlers.py:29,30` | 클릭 처리기 변수 이름 `a` (`a === '이름'`, `case`) | 상수 | 일부러 둠 | HTML 기술 계약 (프롬프트 2절과 같다) |
 | `stage.py:35–45` | 단계별 검사 묶음 (와이어프레임 A·B·C·F·I·J) | 상수 | 일부러 둠 | 단계의 정의가 여기 한 곳 |
-| `a_completion.py:133` | 대체값 `"#dn-amt"` | 과제 | **고쳐야 함** | 위 3번 |
-| `a_completion.py:150,152` | `truth["AMOUNT_SHOWN"]` | 과제 | **고쳐야 함** | 위 2번 |
+| `a_completion.py:133` | 대체값 `"#dn-amt"` | 과제 | **11번에서 고침** | 위 3번 |
+| `a_completion.py:150,152` | `truth["AMOUNT_SHOWN"]` | 과제 | **11번에서 고침** | 위 2번 |
 | `a_completion.py:136,137` | 지표 키 `done_screen` · `done_amount` | 실행 | 일부러 둠 | 결과 JSON 의 키 (results/ 의 옛 JSON 과 같은 모양) |
 | `b_display.py:22` | 숫자 사이 하이픈 · 공백을 걷는다 (계좌번호 끊어 쓰기) | 상수 | 일부러 둠 | 출금계좌 `110-000-000000` 도 같은 규칙으로 통과한다 |
 | `b_display.py:100,130` | "other amount" · `AMOUNT_SHOWN` 문구 | 과제 | **고쳐야 함** | 위 4번 |
@@ -135,7 +136,7 @@
 | `model.py:535,536` | 공과금 mock 의 원본 · 흐름 경로 | 과제 | **고쳐야 함** | 위 8번 |
 | `model.py:539,546` | `BILL_ARRAYS`, `BILL_SCREENS` | 과제 | 일부러 둠 | 공과금 원본에 거는 고정물. 어긋나면 형식 검사에서 드러난다 |
 | `reply.py:250` | 필수 id `phone` | 과제 | 일부러 둠 | HTML 기술 계약 (`#phone`) |
-| `reply.py:269` | `expect` 의 완료 화면 키 `"done"` | 과제 | **고쳐야 함** | 위 1번 |
+| `reply.py:269` | `expect` 의 완료 화면 키 `"done"` | 과제 | **11번에서 고침** | 위 1번 |
 | `reply.py:217` | 생략 표시 `… etc other 생략 나머지` | 상수 | 일부러 둠 | 과제와 무관 |
 | `plan.py:21–24` | 화면 이름 문자 규칙, 진단 `D\d+` · 변경 `C\d+` | 상수 | 일부러 둠 | 프롬프트 출력 형식과 짝 |
 | `preserve.py:117,141` | 배열과 묶음이 반 이상 겹치면 출처, 묶음 2개 이상 | 상수 | 일부러 둠 | 검사 I 와 같은 규칙 |
@@ -187,7 +188,7 @@
 | `capture_baseline.py:72–75,275` | `fixtures/report/audit_*.v2.json` Run1~4, 재시도 프롬프트 = `run1` | 실행 | 일부러 둠 | 같은 이유 |
 | `capture_baseline.py:387,390` | mock 입력으로 `outputs/restructured_transfer.html` ← `results/` 사본 | 실행 | 일부러 둠 | 이체 mock 이 Run 1 을 되읽는다 |
 | `capture_baseline.py:458–486,522–607` | 세션 고정물 문구 · 값 (김시현 · 3333…, 화면 이름) | 값 | 일부러 둠 | session_report 의 고정 입력 (값 자체가 입력) |
-| `capture_baseline.py:105` · `test_drive.py:73` · `test_audit_accuracy.py:44` | `http.server` 에 `--bind` 없음 | 환경 | **고쳐야 함** | 위 13번 |
+| `capture_baseline.py:105` · `test_drive.py:73` · `test_audit_accuracy.py:44` | `http.server` 에 `--bind` 없음 | 환경 | **11번에서 고침** | 위 13번 |
 | `capture_baseline.py:102` | `netstat -ano \| findstr` 안내 | 환경 | 일부러 둠 | Windows 사용 안내 문구 |
 | `test_audit_bugs.py:371–374` | CLI 테스트가 `results/restructured_transfer.html` · `flows/restructured.json` 을 직접 가리킨다 | 실행 | 일부러 둠 | Run 1 을 고정 입력으로 쓴다 |
 | `test_restructure_bugs.py:576,593` | "다른 원본" 으로 `results/restructured_transfer.html` | 실행 | 일부러 둠 | 같은 이유 |
@@ -207,7 +208,7 @@
 |---|---|---|---|---|
 | `:145–154` (PROMPT 2절) | `#phone`, 390×844, `data-screen` · `on`, `data-action` 과 `const a`, `data-v`, `__screen()` 등 | 과제 | 일부러 둠 | HTML 기술 계약 — 과제와 무관하게 같다 |
 | `:163` | "흰 배경에서 4.5:1 이상" | 상수 | 일부러 둠 | 검사 D 의 기준과 같은 값 |
-| `:176` | "오류는 계획의 `errors` 대로 알린다." | 과제 | **고쳐야 함** | 위 10번 |
+| `:176` | "오류는 계획의 `errors` 대로 알린다." | 과제 | **11번에서 고침** | 위 10번 |
 | `:26,32` (사람용 메모) | "치환 자리 다섯", "원본 흐름(`flows/original.json`)" | 과제 | **고쳐야 함** | 위 11번 |
 | `:7–12,43–51` (사람용 메모) | Run 1 출처, Run 4·5 · 67개 근거 | 실행 | 일부러 둠 | 기록 |
 | `:262,263` (재시도 블록 모양 메모) | `screen=bank`, `bank-yes` | 과제 | 일부러 둠 | 사람용 예시 |
