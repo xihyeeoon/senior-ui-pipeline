@@ -29,9 +29,10 @@ from senior_ui.devserver import ensure_server
 from .audit_call import load_allowed_removals, run_audit
 from .model import (TEMPERATURE, SEED, ApiRejected, InfraFailed, RateLimited,
                     call_model, load_env, mock_reply, sdk_version)
+from .preserve import inject, names_read, preserved_data
 from .prompt import build_prompt, choices_block, load_template, one_line, retry_block
 from .reply import (FlowShape, failure_report, parse_reply,
-                    problems_report, validate_flow)
+                    preserved_problems, problems_report, validate_flow)
 
 def runs_dir():
     """실행 폴더들이 쌓이는 곳. 산출물 폴더와 같이 움직인다 (config.outputs_dir)."""
@@ -107,6 +108,9 @@ class Run:
         self.temperature = getattr(args, "temperature", TEMPERATURE)
         self.seed = getattr(args, "seed", SEED)
         self.choices = ""
+        # 입력이 가진 선택지 데이터. 실행마다 한 번 뽑아 시도마다 넣는다.
+        # {배열 이름: [원소들]} (preserve.preserved_data).
+        self.preserved = {}
         # 연구자가 관리하는 "빼도 되는 선택지" 목록. 검사 직전에 흐름에 합친다.
         self.allowed_removals = {}
         self.orig_snapshot = None
@@ -122,7 +126,7 @@ class Run:
         # 길이 제한에 잘린 답이 연속 몇 번인지. 둘째 번부터는 안내가 달라진다.
         self.truncated = 0
         self.summary = {"run_dir": run_dir, "model": model, "mock": args.mock,
-                        "stage": args.stage,
+                        "stage": args.stage, "preserved": {},
                         "repro": repro(template, temperature=self.temperature,
                                        seed=self.seed),
                         "attempts": [], "passed": False, "final": None,
@@ -336,11 +340,30 @@ def check_reply(r, p, entry, reply):
     # 여기까지 왔으면 답은 읽을 수 있는 모양이다. 형식 오류는 해결되었다.
     r.truncated, r.last_error = 0, None
 
+    # 선택지 데이터는 도구가 넣는다. 참조 검사는 **넣기 전** 의 HTML 로 한다 -
+    # 넣은 뒤의 문서에는 `window.PRESERVED = {...}` 가 늘 있으므로, 그것으로
+    # 보면 무엇을 보내도 "읽었다" 가 된다 (reply.preserved_problems).
+    names = list(r.preserved)
+    read = names_read(html, names)
+    problems = problems + preserved_problems(html, r.preserved)
+    build_html, redeclared = inject(html, r.preserved)
+    if names:
+        entry["preserved"] = {"injected": {n: len(v) for n, v in r.preserved.items()},
+                              "redeclared": redeclared, "read": read}
+        r.log("preserved: %s 를 넣었다 (참조 %s%s)"
+              % (", ".join("%s %d" % (n, len(v)) for n, v in r.preserved.items()),
+                 ", ".join(read) or "없음",
+                 (" / 모델이 다시 선언한 것: %s" % ", ".join(redeclared))
+                 if redeclared else ""))
+
     html_path, flow_path = p + ".html", p + ".flow.json"
-    io.open(html_path, "w", encoding="utf-8", newline="\n").write(html)
+    io.open(html_path, "w", encoding="utf-8", newline="\n").write(build_html)
     io.open(flow_path, "w", encoding="utf-8", newline="\n").write(
         json.dumps(flow, ensure_ascii=False, indent=2))
     entry["html"], entry["flow"] = html_path, flow_path
+    # `html` 은 **모델이 쓴** 것이다. 재시도 블록에 그대로 들어가므로 주입한
+    # 것을 넣으면 모델이 자기가 쓰지 않은 데이터 블록을 프롬프트로 돌려받는다 -
+    # 입력의 목록 전체가 프롬프트에 두 번 들어가고, 고칠 것도 아니다.
     return {"html": html, "flow_text": flow_text, "problems": problems,
             "html_path": html_path, "flow_path": flow_path}, None
 
@@ -584,6 +607,13 @@ def run(args):
         if r.choices:
             log("선택지: %s" % " / ".join(
                 l.strip() for l in r.choices.splitlines() if l.startswith("  ")))
+        # 입력이 스크립트 배열로 그리는 선택지. 모델이 다시 타이핑하지 않도록
+        # 도구가 들고 있다가 시도마다 재설계 HTML 에 넣는다.
+        r.preserved = preserved_data(r.orig_snapshot, original_html)
+        r.summary["preserved"] = {n: len(v) for n, v in r.preserved.items()}
+        if r.preserved:
+            log("지킬 데이터: %s" % " / ".join(
+                "%s %d개" % (n, len(v)) for n, v in r.preserved.items()))
 
         n = 0
         while True:

@@ -878,3 +878,118 @@ def test_a_researcher_allowed_removal_is_still_honoured():
     report = one_missing_choice(choices_removed={
         "pick-bank": {"values": ["나은행", "다은행"], "reason": "연구자가 허용했다"}})
     assert report["fatal"] == []
+
+
+# ===================================================================== #
+# 12. 입력의 선택지 데이터는 도구가 지킨다
+# ===================================================================== #
+# 자동 Run 4·5 에서 LLM 은 원본의 선택지 67개를 다시 타이핑하며 3~9개로 줄였다.
+# 프롬프트에 "하나도 빠뜨리지 마라" 를 넣어도 9번 시도 모두 4개였다. 그래서
+# 데이터는 도구가 들고 있고, 모델은 window.PRESERVED 를 참조해 그린다.
+#
+# 뽑기·넣기·참조 검사 자체는 tests/test_data_preservation.py 가 본다. 여기서
+# 보는 것은 루프가 그것들을 어느 자리에서 쓰는가다.
+PRESERVE_DATA = {"PICKS": ["가", "나", "다"]}
+
+READS_HTML = GOOD_HTML.replace(
+    "const a = el.dataset.action;",
+    "const a = el.dataset.action; window.PRESERVED.PICKS.forEach(x=>x);")
+
+
+@pytest.fixture
+def preserving(fake_run_env):
+    """원본에서 뽑는 단계만 고정한다. 그 뒤는 루프가 그대로 돈다."""
+    fake_run_env.setattr(loop, "preserved_data",
+                         lambda snap, html: dict(PRESERVE_DATA))
+    return fake_run_env
+
+
+def test_the_preserved_data_is_injected_into_the_build(preserving, out_root):
+    """검사기가 여는 파일에 데이터 블록이 있어야 한다. 모델이 쓴 HTML 에
+    그대로 두면 모델이 타이핑한 짧은 목록이 그 자리에 남는다."""
+    seen = {}
+
+    def spy(orig_snapshot, orig_html, html_path, flow_path, url, shots, stage,
+            original_url=None, allowed_removals=None):
+        seen["html"] = io.open(html_path, encoding="utf-8").read()
+        return passing_report()
+
+    preserving.setattr(loop, "run_audit", spy)
+    _code, _summary = run_loop(preserving, out_root,
+                               replies(reply_text(READS_HTML, GOOD_FLOW)),
+                               attempts=1)
+    assert 'id="preserved-data"' in seen["html"]
+    for v in PRESERVE_DATA["PICKS"]:
+        assert v in seen["html"]
+
+
+def test_a_build_that_never_reads_the_data_never_reaches_the_audit(preserving,
+                                                                   out_root):
+    """참조하지 않는 답은 형식 실패다. 브라우저를 띄울 일이 없다."""
+    audits = []
+
+    def spy(*a, **kw):
+        audits.append(1)
+        return passing_report()
+
+    preserving.setattr(loop, "run_audit", spy)
+    _code, summary = run_loop(preserving, out_root,
+                              replies(reply_text(GOOD_HTML, GOOD_FLOW)),
+                              attempts=1)
+    assert audits == []
+    assert summary["attempts"][0]["stage"] == "flow"
+    assert summary["budget"]["format_used"] == 1
+    assert summary["budget"]["audit_used"] == 0
+
+
+def test_the_retry_block_says_which_names_were_not_read(preserving, out_root):
+    call = replies(reply_text(GOOD_HTML, GOOD_FLOW))
+    _code, _summary = run_loop(preserving, out_root, call, attempts=2)
+    second = prompts_of(out_root)[1]
+    assert "PRESERVED" in second
+    assert "PICKS" in second
+
+
+def test_the_reference_check_reads_the_models_html_not_the_injected_one(
+        preserving, out_root):
+    """도구가 넣은 블록은 `window.PRESERVED = {...}` 로 쓴다. 주입 뒤의 HTML 로
+    검사하면 그 블록이 "읽었다" 로 세어져 검사가 늘 통과한다."""
+    _code, summary = run_loop(preserving, out_root,
+                              replies(reply_text(GOOD_HTML, GOOD_FLOW)),
+                              attempts=1)
+    assert summary["attempts"][0]["preserved"]["read"] == []
+
+
+def test_the_summary_records_the_names_and_counts(preserving, out_root):
+    """시도마다 넣은 데이터의 이름·개수, 같은 이름을 선언했는지, 참조했는지."""
+    preserving.setattr(loop, "run_audit", lambda *a, **kw: passing_report())
+    _code, summary = run_loop(preserving, out_root,
+                              replies(reply_text(READS_HTML, GOOD_FLOW)),
+                              attempts=1)
+    assert summary["preserved"] == {"PICKS": 3}
+    got = summary["attempts"][0]["preserved"]
+    assert got["injected"] == {"PICKS": 3}
+    assert got["redeclared"] == []
+    assert got["read"] == ["PICKS"]
+
+
+def test_the_summary_records_a_redeclaration(preserving, out_root):
+    """모델이 같은 이름을 다시 타이핑했다는 사실 자체가 결과다."""
+    html = READS_HTML.replace(
+        "<script>", "<script>\nconst PICKS = ['가'];", 1)
+    preserving.setattr(loop, "run_audit", lambda *a, **kw: passing_report())
+    _code, summary = run_loop(preserving, out_root,
+                              replies(reply_text(html, GOOD_FLOW)), attempts=1)
+    assert summary["attempts"][0]["preserved"]["redeclared"] == ["PICKS"]
+
+
+def test_an_input_without_script_drawn_choices_changes_nothing(fake_run_env,
+                                                              out_root):
+    """뽑을 데이터가 없으면 아무것도 넣지 않고, 참조도 요구하지 않는다."""
+    fake_run_env.setattr(loop, "preserved_data", lambda snap, html: {})
+    fake_run_env.setattr(loop, "run_audit", lambda *a, **kw: passing_report())
+    _code, summary = run_loop(fake_run_env, out_root,
+                              replies(reply_text(GOOD_HTML, GOOD_FLOW)),
+                              attempts=1)
+    assert summary["passed"] is True
+    assert summary["preserved"] == {}

@@ -29,6 +29,7 @@ from senior_ui.audit import report as _audit_report          # noqa: E402
 from senior_ui.restructure import audit_call as _audit_call  # noqa: E402
 from senior_ui.restructure import loop as _loop              # noqa: E402
 from senior_ui.restructure import model as _model            # noqa: E402
+from senior_ui.restructure import preserve as _preserve      # noqa: E402
 from senior_ui.restructure import prompt as _prompt          # noqa: E402
 from senior_ui.restructure import reply as _reply            # noqa: E402
 from senior_ui.experiment import report as _session_report    # noqa: E402
@@ -66,6 +67,12 @@ validate_flow = _reply.validate_flow
 parse_reply = _reply.parse_reply
 # 흐름 명세 검사가 처리기를 읽을 때 쓰는 함수. 검사 C 와 같은 것이어야 한다.
 validate_flow_handlers = _reply.handled_actions
+
+# ---- senior_ui/restructure/preserve.py (선택지 데이터 뽑기 · 넣기) ------ #
+# 뽑고 넣고 읽는지 보는 세 가지를 테스트가 하나씩 보므로 모듈째로 내보낸다.
+preserve_module = _preserve
+# 참조 검사의 집은 형식 검사 쪽이다 (reply.py) - 브라우저 없이 규칙으로 본다.
+preserved_problems = _reply.preserved_problems
 
 # ---- senior_ui/restructure/prompt.py ----------------------------------- #
 # 프롬프트 조립 - 템플릿 읽기 / 선택지 블록 / 슬롯 채우기 / 재시도 블록

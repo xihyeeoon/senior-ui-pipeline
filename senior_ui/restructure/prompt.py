@@ -12,6 +12,9 @@ import os
 import re
 
 from senior_ui.config import ROOT
+from senior_ui.preserved import GLOBAL_NAME
+
+from .preserve import preserved_data, split_groups
 
 PROMPT_FILE = os.path.join(ROOT, "docs", "restructure-prompt.md")
 
@@ -30,52 +33,59 @@ def build_prompt(template, original_html, retry_block, choices=""):
                     .replace("{{CHOICES}}", choices))
 
 
-ARRAY_DECL = re.compile(r"(?:const|let|var)\s+([A-Za-z_]\w*)\s*=\s*\[([^\]]*)\]")
-
-
 def choices_block(orig_snapshot, original_html):
-    """원본이 가진 반복 선택지를 요약한다.
+    """원본이 가진 반복 선택지를 요약하고, 데이터를 어디서 읽는지 알린다.
 
-    검사 I 가 렌더링된 DOM 에서 수집하는 바로 그 집합을 쓴다. 모델이 보는 것과
-    검사가 세는 것이 어긋나면 안 되기 때문이다. 원본은 은행 67개를 스크립트
-    배열로만 들고 있어서, 프롬프트에 원본 파일을 그대로 넣으면 마크업에는
-    템플릿 조각 하나만 보인다 - 모델이 스크립트를 읽어야만 발견한다.
+    검사 I 가 렌더링된 DOM 에서 수집하는 바로 그 집합을 쓴다 (preserve.py 의
+    choice_groups). 모델이 보는 것과 검사가 세는 것이 어긋나면 안 되기 때문이다.
 
     마크업에 직접 쓰인 것(숫자판 등)과 스크립트가 그리는 것(은행 목록 등)을
-    가른다. 전자는 그대로 두면 되고, 후자만 "배열을 참조해 그려라" 가 된다.
-    은행이나 금융에 묶이지 않은 일반 규칙이다."""
-    groups = {}
-    for row in (orig_snapshot.get("screens") or {}).values():
-        for action, vals in (row.get("choices") or {}).items():
-            groups.setdefault(action, set()).update(vals)
-    if not groups:
+    가른다. 전자는 그대로 두면 되고, 후자는 **도구가 들고 있다** - 모델은 목록을
+    다시 타이핑하지 않고 `window.PRESERVED.<이름>` 을 참조해 그린다.
+
+    전에는 이 자리에 "배열은 원본 그대로 두고 참조해 그려라, 값은 하나도
+    빠뜨리지 마라" 가 있었다. Run 5 는 그 문장을 받고도 9번 시도 모두 4개만
+    썼다 (docs/variance-notes.md). 말로 지시하는 방법은 효과가 없었으므로 이제
+    데이터는 도구가 넣고, 이 블록은 "어디서 읽는가" 와 "검사가 무엇을 보는가" 를
+    알리는 글이 되었다.
+
+    은행이나 금융에 묶이지 않은 일반 규칙이다 - 이름도 개수도 입력에서 나온다.
+    """
+    generated, inline = split_groups(orig_snapshot, original_html)
+    if not generated and not inline:
         return ""
-
-    script = "\n".join(re.findall(r"<script[^>]*>(.*?)</script>", original_html, re.S))
-    arrays = [(name, [v.strip().strip("'\"") for v in body.split(",") if v.strip()])
-              for name, body in ARRAY_DECL.findall(script)]
-
-    generated, inline = [], []
-    for action, vals in sorted(groups.items(), key=lambda kv: -len(kv[1])):
-        in_markup = len(re.findall(r'data-action="%s"' % re.escape(action), original_html))
-        # 그 선택지 값을 담고 있는 스크립트 배열을 찾는다
-        src = [(n, len(items)) for n, items in arrays
-               if items and len(set(items) & vals) >= max(2, len(items) // 2)]
-        if in_markup < len(vals):
-            where = (" (%s)" % " + ".join("%s %d" % (n, c) for n, c in src)) if src else ""
-            generated.append("  %s — %d개%s" % (action, len(vals), where))
-        else:
-            inline.append("  %s — %d개" % (action, len(vals)))
+    data = preserved_data(orig_snapshot, original_html)
 
     out = ["## 원본이 가진 선택지", ""]
     if generated:
-        out += ["원본의 반복 선택지 (스크립트가 런타임에 그린다):", *generated, "",
-                "이 배열들은 원본 그대로 두고, 화면은 그 배열을 참조해 그려라.",
-                "목록 항목을 마크업에 직접 쓰지 마라. 몇 개를 보일지는 네가 정한다 —",
-                "전부 보여도 되고, 검색이나 추정으로 좁혀도 된다. 다만 값은 하나도",
-                "빠뜨리지 마라.", ""]
+        out.append("원본의 반복 선택지 (스크립트가 런타임에 그린다):")
+        for action, count, src in generated:
+            where = (" (%s)" % " + ".join("%s %d" % (n, c) for n, c in src))                 if src else ""
+            out.append("  %s — %d개%s" % (action, count, where))
+        out.append("")
+    if data:
+        keys = " · ".join("window.%s.%s (%d개)" % (GLOBAL_NAME, n, len(v))
+                          for n, v in data.items())
+        out += ["이 데이터는 도구가 다음 이름으로 넣어 준다:", "  " + keys, "",
+                "목록을 직접 쓰지 마라. 이것을 참조해 그려라. 몇 개를 어떻게 "
+                "보일지는 네가",
+                "정한다 (검색, 자주 쓰는 것 먼저, 탭, 가나다 묶음 등). 다만 모든 "
+                "값을 고를",
+                "수 있어야 한다. 위 이름을 하나도 빠뜨리지 말고 참조하라 - 읽지 "
+                "않은 이름이",
+                "있으면 형식 오류로 돌아온다.", "",
+                "검사가 보는 것은 렌더링된 화면이다. 선택 화면이 열렸을 때 모든 "
+                "값이 DOM",
+                "안에 있어야 한다 (숨김·접힘은 괜찮다). 검색창을 두더라도 검색어가 "
+                "비었을",
+                "때는 전체 목록이 DOM 에 있어야 한다. 도구가 넣어 준 데이터 "
+                "블록은 증거로",
+                "세지 않는다 - 그 데이터를 읽어 **그린** 것만 센다.", ""]
     if inline:
-        out += ["마크업에 직접 있는 것 (그대로 두면 된다):", *inline, ""]
+        out.append("마크업에 직접 있는 것 (그대로 두면 된다):")
+        for action, count, _src in inline:
+            out.append("  %s — %d개" % (action, count))
+        out.append("")
     return "\n".join(out)
 
 
