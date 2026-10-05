@@ -1004,7 +1004,9 @@ def run(args):
             r.summary["error"] = str(e)
             return exit_code(r.summary)
         # 대비·언어 검사의 기준이 되는 원본 스냅샷. 실행마다 한 번만 걷는다.
-        base_flow = A.load_flow(None)
+        # 과제의 원본 흐름으로 걷는다 - 다른 과제의 흐름으로 걸으면 첫 화면에서
+        # 멈추고, 선택지 요약 · 지킬 데이터가 빈다.
+        base_flow = A.load_flow(None, task=task["id"])
         log("audit: driving the original once (baseline for contrast / language)")
         # 비교 기준으로만 쓰므로 원본의 오류 경로는 걷지 않는다 - 모델의 설계는
         # 원본과 화면이 다르고, 오류 경로는 생성물의 흐름으로 걷는다.

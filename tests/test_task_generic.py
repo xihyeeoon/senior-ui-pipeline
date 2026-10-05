@@ -181,6 +181,19 @@ def bill_run(env, out_root, call=bill_reply, **kw):  # noqa: F811
     return run_loop(env, out_root, call, attempts=1, task="bill", original=None, **kw)
 
 
+def test_the_loop_walks_the_original_with_the_tasks_flow(fake_run_env, out_root):  # noqa: F811
+    """고치기 전: 기준값 걷기가 load_flow(None) - 과제와 상관없이 이체 흐름 -
+    이어서 공과금 원본은 home 에서 멈췄다."""
+    seen = []
+
+    def fake_load(path, task=None):
+        seen.append((path, task))
+        return {"name": "original", "steps": []}
+    fake_run_env.setattr(loop.A, "load_flow", fake_load)
+    bill_run(fake_run_env, out_root)
+    assert seen[0] == (None, "bill")
+
+
 def test_the_bill_prompts_carry_the_bill_task_and_no_transfer_errors(
         fake_run_env, out_root):  # noqa: F811
     """고치기 전: 오류 조건 절이 늘 이체의 두 오류였다."""

@@ -96,7 +96,8 @@ def fake_run_env(monkeypatch, out_root):
     monkeypatch.setenv("OPENAI_API_KEY", "test-key-not-used")
     monkeypatch.setattr(loop, "ensure_server", lambda log: None)
     monkeypatch.setattr(loop.A, "drive", fake_drive)
-    monkeypatch.setattr(loop.A, "load_flow", lambda p: {"name": "original", "steps": []})
+    monkeypatch.setattr(loop.A, "load_flow",
+                        lambda p, task=None: {"name": "original", "steps": []})
     # 가짜 원본에는 오류 경로도 없다. 진짜 원본의 오류 정의를 그대로 두면 이
     # 파일의 가짜 답(오류 경로 없음)이 모두 형식에서 떨어진다. 오류 경로를
     # 요구하는 루프는 test_error_paths.py 가 따로 본다.
