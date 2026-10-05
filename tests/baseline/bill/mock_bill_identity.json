@@ -33,7 +33,7 @@
     "response_model": null,
     "system_fingerprint": null,
     "openai_sdk": "<sdk>",
-    "prompt_template_sha256": "9713490bacefa9114fcf7ab3d087f9af6bda4d2a6d812fa69a8ff0382b2f9445"
+    "prompt_template_sha256": "737aec5d96b62c58c5e6fb221a92a00a8779214afa83f29ad4aea0879ae2cf8c"
   },
   "attempts": [
     {
@@ -46,7 +46,7 @@
         "response_model": null,
         "system_fingerprint": null,
         "openai_sdk": "<sdk>",
-        "prompt_template_sha256": "9713490bacefa9114fcf7ab3d087f9af6bda4d2a6d812fa69a8ff0382b2f9445"
+        "prompt_template_sha256": "737aec5d96b62c58c5e6fb221a92a00a8779214afa83f29ad4aea0879ae2cf8c"
       },
       "plan": "<run>/attempt_1.plan.json",
       "calls": [
@@ -59,7 +59,7 @@
         },
         {
           "stage": "generate",
-          "estimated_prompt": 13228,
+          "estimated_prompt": 13255,
           "method": "tiktoken:o200k_base",
           "max_tokens": 14000,
           "usage": null
@@ -163,7 +163,7 @@
       },
       "generate": {
         "calls": 1,
-        "estimated_prompt": 13228,
+        "estimated_prompt": 13255,
         "max_tokens": 14000,
         "prompt": null,
         "completion": null
@@ -171,14 +171,14 @@
     },
     "total": {
       "calls": 2,
-      "estimated_prompt": 25035,
+      "estimated_prompt": 25062,
       "max_tokens": 20000,
       "prompt": null,
       "completion": null
     },
     "first_attempt": {
       "calls": 2,
-      "estimated_prompt": 25035,
+      "estimated_prompt": 25062,
       "max_tokens": 20000,
       "prompt": null,
       "completion": null

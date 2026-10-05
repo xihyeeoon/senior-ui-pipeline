@@ -14,7 +14,7 @@ on 클래스를 옮기지 않으면 사용자는 앞 화면에 그대로 서 있
 원본에서 파생된 빌드에서만 돈다 - 새 설계에는 지킬 원본이 없다.
 """
 from ..context import union
-from ..flow import fill, truth_of
+from ..flow import done_pairs, fill, truth_of
 
 # 켜진 화면 안에서만 잴 수 있는 것들. probes.py 가 켜진 화면이 없을 때 이
 # 값들을 [] 가 아니라 null 로 돌려주므로, null 하나로 "아무것도 떠 있지
@@ -127,29 +127,33 @@ def _amount_round_trip(ctx):
     rep, want = ctx.rep, ctx.want
     metrics, F = ctx.metrics, ctx.fatal_
 
-    # 완료 화면은 흐름의 마지막 단계이고, 금액을 담은 선택자는 흐름이 알려 준다.
-    # 화면 이름을 "done" 으로 못박으면 다른 이름을 쓴 설계를 검사할 수 없다.
+    # 완료 화면은 흐름의 마지막 단계이고, 거기서 확인할 값은 과제가 정한다
+    # (done_expect - 이체는 금액, 공과금은 금액과 전자납부번호). 금액 자리는
+    # 흐름의 done_amount 가 알려 줄 수 있다 (flow.done_pairs). 화면 이름을
+    # "done" 으로 못박으면 다른 이름을 쓴 설계를 검사할 수 없다.
     last_screen = want[-1] if want else None
-    done_sel = ctx.flow.get("done_amount") or "#dn-amt"
+    pairs = done_pairs(ctx.flow)
     done = (rep["screens"].get(last_screen) or {}) if last_screen else {}
-    shown_done = dict(done.get("shown") or []).get(done_sel)
+    shown = dict(done.get("shown") or [])
     metrics["done_screen"] = last_screen
-    metrics["done_amount"] = shown_done
-    # 도착하지 못했으면(멈춤·오류·엉뚱한 화면) 금액은 애초에 볼 수 없다.
+    metrics["done_amount"] = shown.get(pairs[0][0]) if pairs else None
+    # 도착하지 못했으면(멈춤·오류·엉뚱한 화면) 값은 애초에 볼 수 없다.
     # _screens_reached 가 그 도착 실패를 이미 fatal 로 적었으므로, 여기서 또
     # 적으면 결함 하나가 두 번 세진다. 지표(done_amount)는 그대로 남긴다.
     if not _arrived(done, ctx.screen(last_screen)):
         return
     # 흐름의 expect 에 같은 선택자가 적혀 있으면 검사 B 가 같은 값을 같은 기준
     # 으로 이미 본다. 결함은 하나이므로 거기에 맡기고 여기서는 지표만 남긴다.
-    # (네 흐름 파일 모두 완료 화면의 금액을 expect 에 적고 있다.) expect 에
+    # (이체 흐름 파일은 모두 완료 화면의 금액을 expect 에 적고 있다.) expect 에
     # 없으면 B 는 그 선택자를 보지 않으므로 A 가 유일한 검사다.
     truth = truth_of(ctx.flow)
-    covered = any(fill(sel, truth) == done_sel
-                  for sel, _ in (ctx.flow["expect"].get(last_screen) or []))
-    if shown_done != truth["AMOUNT_SHOWN"] and not covered:
-        F("A", last_screen, "완료 화면의 %s 가 %r 을 보여 준다. 과제가 넣은 값은 %r 이다."
-          % (done_sel, shown_done, truth["AMOUNT_SHOWN"]))
+    covered = {fill(sel, truth)
+               for sel, _ in (ctx.flow["expect"].get(last_screen) or [])}
+    for sel, val in pairs:
+        want_value = fill(val, truth)
+        if shown.get(sel) != want_value and sel not in covered:
+            F("A", last_screen, "완료 화면의 %s 가 %r 을 보여 준다. 과제가 넣은 값은 %r 이다."
+              % (sel, shown.get(sel), want_value))
 
 
 def _preserved_attrs(ctx):

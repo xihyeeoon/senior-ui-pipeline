@@ -131,6 +131,19 @@ def done_selector(task=None):
     return T.load_task(task)["done_expect"][0][0]
 
 
+def done_pairs(flow):
+    """완료 화면에서 확인할 [선택자, 값 틀] 들 - 그 흐름 과제의 done_expect.
+
+    첫 짝(금액)의 선택자는 흐름이 done_amount 를 적었으면 그것이다 - 옛 흐름은
+    완료 금액 자리를 그 칸으로 알려 왔다. 완료 화면은 흐름의 마지막 걸음
+    화면이다 (이름이 "done" 이 아니어도)."""
+    pairs = [list(p) for p in T.load_task(task_of(flow))["done_expect"]]
+    own = (flow or {}).get("done_amount")
+    if own and pairs:
+        pairs[0][0] = own
+    return pairs
+
+
 def error_defs(flow=None):
     """오류 경로 id -> 과제가 정한 정의. 그 과제의 원본 흐름의 것이 기준이다.
 

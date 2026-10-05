@@ -548,3 +548,60 @@ def test_the_index_keeps_transfer_and_bill_auto_builds_apart(monkeypatch):
     assert len(ids) == len(set(ids)), ids
     assert ix["baseline"]["id"] == "original_transfer"
     shutil.rmtree(base, ignore_errors=True)
+
+
+# --------------------------------------------------------------------- #
+# 11. 완료 화면 - 이름이 "done" 이 아니어도 done_expect 가 빠지지 않는다
+# --------------------------------------------------------------------- #
+FINISH_HTML = BILL_HTML.replace('data-screen="done"', 'data-screen="finish"')
+FINISH_STEPS = [{"screen": "start"},
+                {"screen": "finish", "click": "[data-action='go']"}]
+
+
+def finish_flow(expect):
+    return {"name": "auto", "required_ids": ["phone", "dn-paid", "dn-eno"],
+            "steps": FINISH_STEPS, "expect": expect, "done_amount": "#dn-paid",
+            "error_paths": []}
+
+
+def test_the_format_check_reads_the_done_values_on_the_last_screen():
+    """고치기 전: expect 의 완료 화면 키가 "done" 으로 박혀 있어, 마지막 화면이
+    finish 인 설계가 expect.done 을 적으면 형식 검사를 지났다 - 그런데 검사 B 는
+    done 이라는 화면을 찾지 못해 말없이 건너뛴다."""
+    done = _api.load_task("bill")["done_expect"]
+    flow = finish_flow({"done": [["#dn-paid", "{AMOUNT_SHOWN}"], ["#dn-eno", "{ENO}"]]})
+    got = _api.validate_flow(flow, FINISH_HTML, [], done)
+    assert 'expect.finish 에 ["#dn-eno", "{ENO}"] 이 없다' in got
+    assert any("expect 의 키 'done'" in p for p in got)
+    ok = finish_flow({"finish": [["#dn-paid", "{AMOUNT_SHOWN}"], ["#dn-eno", "{ENO}"]]})
+    assert _api.validate_flow(ok, FINISH_HTML, [], done) == []
+
+
+def finish_ctx(expect, shown):
+    flow = dict(finish_flow(expect), task="bill", truth=F.task_truth("bill"))
+    rep = {"screens": {"start": {"landed_on": "start", "dom_screen": "start", "shown": []},
+                       "finish": {"landed_on": "finish", "dom_screen": "finish",
+                                  "shown": shown}},
+           "reached": ["start", "finish"], "missing_ids": [], "js_errors": [],
+           "dialogs": []}
+    return _api.AuditContext(orig={"screens": {}}, rep=rep, orig_html="", rep_html="",
+                             flow=flow, derived=False, want=["start", "finish"],
+                             shared=[])
+
+
+def test_check_a_reads_every_done_value_of_the_task():
+    """고치기 전: 검사 A 는 금액(truth["AMOUNT_SHOWN"], 대체값 #dn-amt) 하나만
+    보았다. expect 가 완료 화면을 다른 이름으로 적은 빌드에서는 #dn-eno 를 아무도
+    보지 않았다."""
+    ctx = finish_ctx({"done": [["#dn-eno", "{ENO}"]]},
+                     [["#dn-paid", "2,160"], ["#dn-eno", "1234"]])
+    _api.a_completion.run(ctx)
+    _api.b_display.run(ctx)
+    assert [f["detail"] for f in ctx.fatal if "#dn-eno" in f["detail"]] == \
+        ["완료 화면의 #dn-eno 가 '1234' 을 보여 준다. 과제가 넣은 값은 '1700000000' 이다."]
+    # expect 가 마지막 화면에 적었으면 검사 B 가 보고, A 는 겹쳐 세지 않는다
+    ctx = finish_ctx({"finish": [["#dn-eno", "{ENO}"]]},
+                     [["#dn-paid", "2,160"], ["#dn-eno", "1234"]])
+    _api.a_completion.run(ctx)
+    _api.b_display.run(ctx)
+    assert [f["check"] for f in ctx.fatal] == ["B"]

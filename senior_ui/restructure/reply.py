@@ -260,18 +260,32 @@ def _check_ids(flow, html, steps, screens, done=None):
 
 
 def _check_expect(flow, html, steps, screens, done=None):
-    """완료 화면에서 과제의 값(done_expect - 이체는 금액)을 확인할 짝이 있는지."""
+    """완료 화면에서 과제의 값(done_expect - 이체는 금액)을 확인할 짝이 있는지.
+
+    완료 화면은 steps 의 마지막 화면이다 - 이름이 "done" 이 아니어도. 전에는
+    expect 의 "done" 칸만 보아서, 마지막 화면을 finish 로 지은 설계가
+    expect.done 을 적으면 형식 검사를 지나고 검사 B 는 그 칸을 말없이 건너뛰었다.
+    같은 이유로 steps 의 방문 이름이 아닌 expect 칸도 문제로 센다 - 검사기는
+    그 칸의 값을 보지 않는다."""
     problems = []
     expect = flow.get("expect")
     if not isinstance(expect, dict):
         problems.append("expect 가 객체가 아니다")
-    else:
-        pairs = expect.get("done") or []
-        for sel, val in _done_of(done):
-            if not any(isinstance(p, list) and len(p) == 2 and p[0] == sel
-                       for p in pairs):
-                problems.append("expect.done 에 %s 이 없다"
-                                % json.dumps([sel, val], ensure_ascii=False))
+        return problems
+    visits = _visits(steps)
+    last = visits[-1] if visits else "done"
+    pairs = expect.get(last) or []
+    for sel, val in _done_of(done):
+        if not any(isinstance(p, list) and len(p) == 2 and p[0] == sel for p in pairs):
+            problems.append("expect.%s 에 %s 이 없다"
+                            % (last, json.dumps([sel, val], ensure_ascii=False)))
+    stray = [k for k in expect if visits and k not in visits]
+    if stray:
+        problems.append("expect 의 키 %s 는 steps 의 화면이 아니다 - 검사기는 그 값을 "
+                        "보지 않는다. 키는 steps 의 screen 이름(같은 화면을 두 번 지나면 "
+                        "\"이름#2\")이고, 완료 화면의 값은 마지막 화면(%s) 칸에 적는다 "
+                        "(있는 것: %s)" % (", ".join(repr(k) for k in stray), last,
+                                         ", ".join(visits)))
     return problems
 
 

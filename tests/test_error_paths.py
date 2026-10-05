@@ -254,7 +254,8 @@ document.getElementById('phone').addEventListener('click', e => {
 def model_flow(paths):
     return {"name": "auto", "derived_from_original": False,
             "required_ids": ["phone", "dn-amt"], "steps": STEPS,
-            "expect": {"done": [["#dn-amt", "{AMOUNT_SHOWN}"]]},
+            # 완료 화면은 steps 의 마지막 화면(amount)이다 (reply._check_expect)
+            "expect": {"amount": [["#dn-amt", "{AMOUNT_SHOWN}"]]},
             "error_paths": paths}
 
 
