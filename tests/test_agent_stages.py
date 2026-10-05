@@ -828,3 +828,12 @@ def test_the_index_attaches_a_build_s_plan(out_root):
 def test_a_build_without_a_plan_has_none(out_root):
     rel = os.path.relpath(out_root, ROOT).replace(os.sep, "/")
     assert _api.index_plan_of(rel + "/nothing.html") is None
+
+
+def test_the_prompt_does_not_suggest_features_the_original_lacks():
+    """원본에 없는 기능(은행 추정)을 프롬프트가 먼저 제안하면 모델은 원본에
+    없는 번호→은행 표를 지어낸다 - 손수 Run 1~3 의 케이뱅크가 그렇게 생겼다.
+    원본에 있는 조회(예금주)는 원본이 보여 주는 값으로만 흉내 낸다."""
+    for t in (_api.load_template(), _api.load_plan_template()):
+        assert "은행 추정" not in t
+    assert "원본에 있는 동작만, 원본이 보여 주는 값으로 흉내 낸다" in _api.load_template()

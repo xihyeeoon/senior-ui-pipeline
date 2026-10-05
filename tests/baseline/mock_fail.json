@@ -31,7 +31,7 @@
     "response_model": null,
     "system_fingerprint": null,
     "openai_sdk": "<sdk>",
-    "prompt_template_sha256": "9a4646c4503ba1f183fc6edd0c2cd74aff257ead6e6194fc1a72aa871304a7e8"
+    "prompt_template_sha256": "12dc12079dcf3b5056b0607b8d807b6ad137915ee4e9240a8521437123c00b6e"
   },
   "attempts": [
     {
@@ -44,7 +44,7 @@
         "response_model": null,
         "system_fingerprint": null,
         "openai_sdk": "<sdk>",
-        "prompt_template_sha256": "9a4646c4503ba1f183fc6edd0c2cd74aff257ead6e6194fc1a72aa871304a7e8"
+        "prompt_template_sha256": "12dc12079dcf3b5056b0607b8d807b6ad137915ee4e9240a8521437123c00b6e"
       },
       "plan": "<run>/attempt_1.plan.json",
       "calls": [
@@ -57,7 +57,7 @@
         },
         {
           "stage": "generate",
-          "estimated_prompt": 13579,
+          "estimated_prompt": 13590,
           "method": "tiktoken:o200k_base",
           "max_tokens": 14000,
           "usage": null
@@ -98,13 +98,13 @@
         "response_model": null,
         "system_fingerprint": null,
         "openai_sdk": "<sdk>",
-        "prompt_template_sha256": "9a4646c4503ba1f183fc6edd0c2cd74aff257ead6e6194fc1a72aa871304a7e8"
+        "prompt_template_sha256": "12dc12079dcf3b5056b0607b8d807b6ad137915ee4e9240a8521437123c00b6e"
       },
       "plan": "<run>/attempt_2.plan.json",
       "calls": [
         {
           "stage": "retry",
-          "estimated_prompt": 23789,
+          "estimated_prompt": 23800,
           "method": "tiktoken:o200k_base",
           "max_tokens": 14000,
           "usage": null
@@ -200,14 +200,14 @@
       },
       "generate": {
         "calls": 1,
-        "estimated_prompt": 13579,
+        "estimated_prompt": 13590,
         "max_tokens": 14000,
         "prompt": null,
         "completion": null
       },
       "retry": {
         "calls": 1,
-        "estimated_prompt": 23789,
+        "estimated_prompt": 23800,
         "max_tokens": 14000,
         "prompt": null,
         "completion": null
@@ -215,14 +215,14 @@
     },
     "total": {
       "calls": 3,
-      "estimated_prompt": 49025,
+      "estimated_prompt": 49047,
       "max_tokens": 34000,
       "prompt": null,
       "completion": null
     },
     "first_attempt": {
       "calls": 2,
-      "estimated_prompt": 25236,
+      "estimated_prompt": 25247,
       "max_tokens": 20000,
       "prompt": null,
       "completion": null
