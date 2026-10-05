@@ -323,3 +323,49 @@ def test_the_placeholder_line_agrees_with_the_truth(name):
         assert truth[key] == val, (key, val)
     # 틀린 값(*_WRONG)은 모델에게 보이지 않는다
     assert not [k for k, _ in pairs if k.endswith("_WRONG")]
+
+
+# --------------------------------------------------------------------- #
+# 6. 검사기 CLI - 과제의 원본과 흐름
+# --------------------------------------------------------------------- #
+def cli_drives(monkeypatch, tmp_path, extra):
+    """CLI 를 부르고, drive 가 받은 (URL, 흐름 이름, 흐름의 과제) 를 돌려준다.
+    drive · audit 은 대역이다 - 무엇을 걷는지만 본다."""
+    CLI = _api.audit_cli_module
+    seen = []
+
+    async def fake_drive(url, flow, want_shots=None, errors=True):
+        seen.append((url, flow["name"], flow["task"]))
+        return {}
+    monkeypatch.setattr(CLI, "drive", fake_drive)
+    monkeypatch.setattr(CLI, "audit", lambda *a: {"passed": True, "fatal": [],
+                                                  "warning": [], "metrics": {}})
+    monkeypatch.setattr(CLI, "apply_stage", lambda r, s: r)
+    flow = tmp_path / "auto.json"
+    flow.write_text(json.dumps(dict(BILL_FLOW, derived_from_original=False)),
+                    encoding="utf-8")
+    build = tmp_path / "b.html"
+    build.write_text(BILL_HTML, encoding="utf-8")
+    import sys
+    monkeypatch.setattr(sys, "stdout", io.StringIO())
+    code = _api.audit_cli_main(["--build", "http://x/b.html", "--build-file", str(build),
+                                "--flow", str(flow), "--out", str(tmp_path / "a.json")]
+                               + extra)
+    assert code == 0
+    return seen
+
+
+def test_the_cli_walks_the_bill_original_with_the_bill_flow(monkeypatch, tmp_path):
+    """고치기 전: 새 설계를 검사할 때 원본을 load_flow(None) - 이체 흐름 - 으로,
+    기본 원본(original_transfer.html)을 걸었다. --task 도 없었다."""
+    seen = cli_drives(monkeypatch, tmp_path, ["--task", "bill"])
+    orig_url, orig_flow, orig_task = seen[0]
+    assert orig_url.endswith("/inputs/original_bill.html")
+    assert (orig_flow, orig_task) == ("original_bill", "bill")
+    assert seen[1][2] == "bill"                 # 빌드도 공과금 정답으로 걷는다
+
+
+def test_the_cli_defaults_to_transfer(monkeypatch, tmp_path):
+    seen = cli_drives(monkeypatch, tmp_path, [])
+    assert seen[0][0].endswith("/inputs/original_transfer.html")
+    assert seen[0][1:] == ("original", "transfer")

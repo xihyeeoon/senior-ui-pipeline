@@ -35,7 +35,8 @@ import sys
 import traceback
 
 from .._cli import setup_stdout
-from ..config import ORIGINAL_FILE, ORIGINAL_URL, OUTPUTS_DIR
+from ..config import OUTPUTS_DIR, url_for
+from ..tasks import abs_path, load_task, task_names
 from .core import audit
 from .drive import drive
 from .flow import load_flow
@@ -60,10 +61,16 @@ def main(argv=None):
     # 무엇이든 찍기 전에 맞춘다 (senior_ui/_cli.py).
     setup_stdout()
     ap = argparse.ArgumentParser(prog="python -m senior_ui.audit")
-    ap.add_argument("--original", default=ORIGINAL_URL)
+    ap.add_argument("--task", choices=task_names(), default=None,
+                    help="과제 (tasks/<이름>.json). 주지 않으면 흐름 파일의 task, "
+                         "그것도 없으면 transfer. 기본 원본과 원본을 걷는 흐름이 "
+                         "여기서 온다")
+    ap.add_argument("--original", default=None,
+                    help="원본의 URL. 주지 않으면 과제 파일의 original")
     ap.add_argument("--build", "--repaired", dest="build", required=True,
                     help="검사할 빌드의 URL (--repaired 는 옛 이름)")
-    ap.add_argument("--original-file", default=ORIGINAL_FILE)
+    ap.add_argument("--original-file", default=None,
+                    help="원본 파일. 주지 않으면 과제 파일의 original")
     ap.add_argument("--build-file", "--repaired-file", dest="build_file",
                     required=True,
                     help="같은 빌드의 파일 경로 (--repaired-file 은 옛 이름)")
@@ -76,16 +83,20 @@ def main(argv=None):
     args = ap.parse_args(argv)
 
 
+    # 흐름을 먼저 읽는다 - 과제(그리고 기본 원본)는 흐름이 정할 수 있다.
+    try:
+        flow = load_flow(args.flow, task=args.task)
+        task = load_task(flow["task"])
+    except (OSError, ValueError) as e:
+        return cannot_run("cannot read the flow: %s" % e)
+    args.original = args.original or url_for(task["original"])
+    args.original_file = args.original_file or abs_path(task["original"])
+
     try:
         orig_html = io.open(args.original_file, encoding="utf-8").read()
         rep_html = io.open(args.build_file, encoding="utf-8").read()
     except OSError as e:
         return cannot_run("cannot read inputs: %s" % e)
-
-    try:
-        flow = load_flow(args.flow)
-    except (OSError, ValueError) as e:
-        return cannot_run("cannot read the flow: %s" % e)
 
     stage = args.stage or flow.get("stage") or "styled"
     if stage not in STAGES:
@@ -96,7 +107,8 @@ def main(argv=None):
     if args.shots:
         os.makedirs(args.shots, exist_ok=True)
     try:
-        base_flow = load_flow(None) \
+        # 새 설계는 원본을 그 과제의 원본 흐름으로 걷는다.
+        base_flow = load_flow(None, task=task["id"]) \
             if not flow.get("derived_from_original", True) else flow
     except (OSError, ValueError) as e:
         return cannot_run("cannot read the flow: %s" % e)
