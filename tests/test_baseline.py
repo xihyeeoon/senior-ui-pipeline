@@ -298,3 +298,33 @@ def test_session_report_aggregations_match_baseline():
     secs = [(r.get("metrics") or {}).get("seconds") for r in rows]
     med, mean, lo, hi, n = _api.sr_summarise(secs)
     assert (round(med, 3), round(mean, 3), lo, hi, n) == (85.65, 104.275, 61.3, 184.5, 4)
+
+
+# --------------------------------------------------------------------- #
+# 공과금 과제 (baseline/bill/)
+# --------------------------------------------------------------------- #
+def bill_html():
+    return io.open(os.path.join(ROOT, C.BILL_ORIGINAL_REL), encoding="utf-8").read()
+
+
+@pytest.mark.parametrize("name,rel,flow_name", C.BILL_CASES,
+                         ids=[c[0] for c in C.BILL_CASES])
+def test_bill_audit_matches_baseline(name, rel, flow_name):
+    """공과금 원본 대 원본. 저장된 스냅샷으로 다시 계산한다."""
+    snaps = load(C.BILL, name, "snapshots.json")
+    flow = _api.load_flow(C.flow_path_of(flow_name))
+    rep_html = io.open(os.path.join(ROOT, rel), encoding="utf-8").read()
+    got = jround(_api.audit(snaps["orig"], snaps["rep"], bill_html(), rep_html, flow))
+    assert got == load(C.BILL, name, "audit.json")
+    for stage in ("styled", "wireframe"):
+        assert jround(_api.apply_stage(copy.deepcopy(got), stage)) == \
+            load(C.BILL, name, "audit.%s.json" % stage)
+
+
+def test_bill_prompts_match_baseline():
+    """공과금 프롬프트 전문 - 선택지 요약 · 진단·계획 · 첫 생성."""
+    snaps = load(C.BILL, "original_vs_original", "snapshots.json")
+    choices, plan, first = C.bill_prompts(bill_html(), snaps["orig"])
+    assert choices == load_text(C.BILL, "prompt", "choices_block.txt")
+    assert plan == load_text(C.BILL, "prompt", "plan.txt")
+    assert first == load_text(C.BILL, "prompt", "attempt_1.txt")

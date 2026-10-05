@@ -173,3 +173,39 @@ def test_mock_run_matches_baseline(server, baseline_dir, name, args):
     assert got["trend"] == want["trend"]
     assert got["attempts"] == want["attempts"]
     assert got == want
+
+
+# --------------------------------------------------------------------- #
+# 공과금 과제 (baseline/bill/) - 실제로 다시 걷는다
+# --------------------------------------------------------------------- #
+def drive_bill(rel, flow_name):
+    """capture_baseline.capture_bill 과 같은 순서."""
+    flow = _api.load_flow(C.flow_path_of(flow_name))
+    orig_html = io.open(os.path.join(ROOT, C.BILL_ORIGINAL_REL), encoding="utf-8").read()
+    rep_html = io.open(os.path.join(ROOT, rel), encoding="utf-8").read()
+    orig = asyncio.run(_api.drive("%s/%s" % (C.BASE_URL, C.BILL_ORIGINAL_REL), flow))
+    rep = asyncio.run(_api.drive("%s/%s" % (C.BASE_URL, rel), flow))
+    return {"orig": orig, "rep": rep}, _api.audit(orig, rep, orig_html, rep_html, flow)
+
+
+@pytest.mark.parametrize("name,rel,flow_name", C.BILL_CASES,
+                         ids=[c[0] for c in C.BILL_CASES])
+def test_bill_drive_matches_baseline(server, baseline_dir, name, rel, flow_name):
+    snaps, report = drive_bill(rel, flow_name)
+    want = ignore.normalise_snapshot(load(C.BILL, name, "snapshots.json"))
+    assert ignore.normalise_snapshot(jround(snaps)) == want
+    assert ignore.normalise_report(jround(report)) == \
+        ignore.normalise_report(load(C.BILL, name, "audit.json"))
+
+
+@pytest.mark.parametrize("name,args", C.BILL_MOCK_RUNS,
+                         ids=[m[0] for m in C.BILL_MOCK_RUNS])
+def test_bill_mock_run_matches_baseline(server, baseline_dir, name, args):
+    """공과금 루프를 처음부터 끝까지 - 기준값 걷기 · 데이터 보존 · 형식 검사 ·
+    검사기 A~J · 설명서. 통과해야 한다."""
+    summary, code = C.run_mock(args)
+    got = jround(C.strip_volatile(summary))
+    want = load(C.BILL, "%s.json" % name)
+    assert got["passed"] is True and code == 0
+    assert got["task"] == "bill"
+    assert got == want

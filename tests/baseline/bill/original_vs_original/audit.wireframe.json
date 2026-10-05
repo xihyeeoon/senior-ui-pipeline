@@ -1,0 +1,177 @@
+{
+  "passed": true,
+  "fatal": [],
+  "warning": [],
+  "metrics": {
+    "flow": "original_bill",
+    "derived_from_original": true,
+    "screens_in_flow": [
+      "home",
+      "menu",
+      "search",
+      "bill-home",
+      "camera",
+      "info",
+      "password",
+      "done"
+    ],
+    "screens_comparable_to_original": [
+      "home",
+      "menu",
+      "search",
+      "bill-home",
+      "camera",
+      "info",
+      "password",
+      "done"
+    ],
+    "screens_expected": 8,
+    "screens_reached": 8,
+    "screens_unlit": [],
+    "screens_landed_on": {
+      "home": {
+        "hook": "home",
+        "dom": "home"
+      },
+      "menu": {
+        "hook": "menu",
+        "dom": "menu"
+      },
+      "search": {
+        "hook": "search",
+        "dom": "search"
+      },
+      "bill-home": {
+        "hook": "bill-home",
+        "dom": "bill-home"
+      },
+      "camera": {
+        "hook": "camera",
+        "dom": "camera"
+      },
+      "info": {
+        "hook": "info",
+        "dom": "info"
+      },
+      "password": {
+        "hook": "password",
+        "dom": "password"
+      },
+      "done": {
+        "hook": "done",
+        "dom": "done"
+      }
+    },
+    "done_screen": "done",
+    "done_amount": "2,160",
+    "data-screen_original": 8,
+    "data-screen_repaired": 8,
+    "data-action_original": 19,
+    "data-action_repaired": 19,
+    "id_original": 33,
+    "id_repaired": 33,
+    "per_screen_attr_loss": {},
+    "injected_dialog_calls": 0,
+    "onclick_added": 0,
+    "dialogs_during_task": 0,
+    "handled_actions": 20,
+    "dead_controls_unverifiable": [],
+    "dead_controls_new": 0,
+    "dead_controls_pre_existing": [],
+    "low_contrast_after": 55,
+    "low_contrast_before": 55,
+    "low_contrast_by_screen": {
+      "home": {
+        "before": 21,
+        "after": 21
+      },
+      "menu": {
+        "before": 8,
+        "after": 8
+      },
+      "search": {
+        "before": 1,
+        "after": 1
+      },
+      "bill-home": {
+        "before": 23,
+        "after": 23
+      },
+      "camera": {
+        "before": 0,
+        "after": 0
+      },
+      "info": {
+        "before": 2,
+        "after": 2
+      },
+      "password": {
+        "before": 0,
+        "after": 0
+      },
+      "done": {
+        "before": 0,
+        "after": 0
+      }
+    },
+    "new_inherited_colour": 0,
+    "contrast_undetermined": 2,
+    "contrast_undetermined_before": 2,
+    "low_contrast_gained_text": 0,
+    "overlaps_new": 0,
+    "overflows_new": 0,
+    "screens_much_taller": 0,
+    "newly_wrapped_text": 0,
+    "new_english_words": [],
+    "new_english_words_markup_only": [],
+    "state_pairs_checked": 3,
+    "state_pairs_collapsed": 0,
+    "undefined_classes_new": [],
+    "choice_groups_original": {
+      "menu-tab": 7,
+      "menu-chip": 10,
+      "menu-item": 73,
+      "pick-bill": 18,
+      "pw": 10
+    },
+    "choice_values_removed_by_design": {},
+    "choice_values_kept": {
+      "menu-tab": 7,
+      "menu-chip": 10,
+      "menu-item": 73,
+      "pick-bill": 18,
+      "pw": 10
+    },
+    "choice_values_selectable": {
+      "menu-tab": 7,
+      "menu-chip": 10,
+      "menu-item": 73,
+      "pick-bill": 18,
+      "pw": 10
+    },
+    "choice_values_missing": {},
+    "fatal_duplicates_removed": 0,
+    "fatal_total": 0,
+    "fatal_derived": 0,
+    "fatal_root": 0,
+    "stopped_at": null,
+    "js_error_details": [],
+    "flow_notes": [],
+    "checks_stood_down": [
+      "J/흐름에 오류 경로가 없다 - 정답 경로만 걸었다",
+      "D/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다.",
+      "E/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다.",
+      "G/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다.",
+      "H/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다."
+    ],
+    "stage": "wireframe",
+    "stage_checks": [
+      "A",
+      "B",
+      "C",
+      "F",
+      "I",
+      "J"
+    ]
+  }
+}

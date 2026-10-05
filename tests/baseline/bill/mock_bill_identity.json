@@ -1,0 +1,187 @@
+{
+  "model": "gpt-4o",
+  "mock": "bill-identity",
+  "task": "bill",
+  "stage": "styled",
+  "preserved": {
+    "MENU_BANK": 79,
+    "MENU_CARD": 5,
+    "BILL_ITEMS": 23,
+    "PW_KEYS": 10,
+    "MENU_TABS": 7
+  },
+  "plan": {
+    "attempt": 1,
+    "diagnosis": "<run>/attempt_1.diagnosis.json",
+    "diagnosis_count": 2,
+    "screens": [
+      "home",
+      "menu",
+      "search",
+      "bill-home",
+      "camera",
+      "info",
+      "password",
+      "done"
+    ],
+    "changes": 1,
+    "unaddressed": []
+  },
+  "repro": {
+    "temperature": 0.0,
+    "seed": 20260101,
+    "response_model": null,
+    "system_fingerprint": null,
+    "openai_sdk": "<sdk>",
+    "prompt_template_sha256": "9713490bacefa9114fcf7ab3d087f9af6bda4d2a6d812fa69a8ff0382b2f9445"
+  },
+  "attempts": [
+    {
+      "n": 1,
+      "finish_reason": "stop",
+      "usage": null,
+      "repro": {
+        "temperature": 0.0,
+        "seed": 20260101,
+        "response_model": null,
+        "system_fingerprint": null,
+        "openai_sdk": "<sdk>",
+        "prompt_template_sha256": "9713490bacefa9114fcf7ab3d087f9af6bda4d2a6d812fa69a8ff0382b2f9445"
+      },
+      "plan": "<run>/attempt_1.plan.json",
+      "calls": [
+        {
+          "stage": "plan",
+          "estimated_prompt": 11807,
+          "method": "tiktoken:o200k_base",
+          "max_tokens": 6000,
+          "usage": null
+        },
+        {
+          "stage": "generate",
+          "estimated_prompt": 13228,
+          "method": "tiktoken:o200k_base",
+          "max_tokens": 14000,
+          "usage": null
+        }
+      ],
+      "plan_call": {
+        "finish_reason": "stop",
+        "usage": null,
+        "seconds": 0.0
+      },
+      "preserved": {
+        "injected": {
+          "MENU_BANK": 79,
+          "MENU_CARD": 5,
+          "BILL_ITEMS": 23,
+          "PW_KEYS": 10,
+          "MENU_TABS": 7
+        },
+        "redeclared": [],
+        "read": [
+          "MENU_BANK",
+          "MENU_CARD",
+          "BILL_ITEMS",
+          "PW_KEYS",
+          "MENU_TABS"
+        ]
+      },
+      "html": "<run>/attempt_1.html",
+      "flow": "<run>/attempt_1.flow.json",
+      "model_html": "<run>/attempt_1.model.html",
+      "stage": "audit",
+      "passed": true,
+      "fatal": 0,
+      "warning": 30
+    }
+  ],
+  "passed": true,
+  "final": {
+    "attempt": 1,
+    "html": "<run>/attempt_1.html",
+    "flow": "<run>/attempt_1.flow.json",
+    "audit": "<run>/attempt_1.audit.json",
+    "plan": "<run>/attempt_1.plan.json",
+    "diagnosis": "<run>/attempt_1.diagnosis.json",
+    "preserved": {
+      "injected": {
+        "MENU_BANK": 79,
+        "MENU_CARD": 5,
+        "BILL_ITEMS": 23,
+        "PW_KEYS": 10,
+        "MENU_TABS": 7
+      },
+      "redeclared": [],
+      "read": [
+        "MENU_BANK",
+        "MENU_CARD",
+        "BILL_ITEMS",
+        "PW_KEYS",
+        "MENU_TABS"
+      ]
+    },
+    "model_html": "<run>/attempt_1.model.html",
+    "model_html_promoted": "<root>/.mock-outputs/restructured_auto.model.html",
+    "brief": "<run>/designer_brief.md",
+    "brief_promoted": "<root>/.mock-outputs/restructured_auto.designer_brief.md"
+  },
+  "budget": {
+    "format_used": 0,
+    "format_budget": 1,
+    "audit_used": 0,
+    "audit_budget": 1,
+    "infra_used": 0,
+    "infra_budget": 3
+  },
+  "stopped_reason": null,
+  "trend": [
+    {
+      "attempt": 1,
+      "fatal_total": 0,
+      "fatal_root": 0,
+      "fatal_derived": 0,
+      "screens": "8/8",
+      "stopped_at": null
+    }
+  ],
+  "git": {
+    "commit": "<commit>",
+    "branch": "<branch>",
+    "dirty": "<dirty>",
+    "dirty_files": "<dirty_files>"
+  },
+  "tokens": {
+    "method": "tiktoken:o200k_base",
+    "by_stage": {
+      "plan": {
+        "calls": 1,
+        "estimated_prompt": 11807,
+        "max_tokens": 6000,
+        "prompt": null,
+        "completion": null
+      },
+      "generate": {
+        "calls": 1,
+        "estimated_prompt": 13228,
+        "max_tokens": 14000,
+        "prompt": null,
+        "completion": null
+      }
+    },
+    "total": {
+      "calls": 2,
+      "estimated_prompt": 25035,
+      "max_tokens": 20000,
+      "prompt": null,
+      "completion": null
+    },
+    "first_attempt": {
+      "calls": 2,
+      "estimated_prompt": 25035,
+      "max_tokens": 20000,
+      "prompt": null,
+      "completion": null
+    }
+  }
+}

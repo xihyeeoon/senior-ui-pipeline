@@ -1,0 +1,7160 @@
+{
+  "orig": {
+    "screens": {
+      "home": {
+        "landed_on": "home",
+        "dom_screen": "home",
+        "attr_text": "",
+        "outside_text": "",
+        "actions": [
+          "go-menu"
+        ],
+        "ids": [],
+        "screens": [
+          "home",
+          "menu",
+          "search",
+          "bill-home",
+          "camera",
+          "info",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "4:31\n67\nC\n홍길동님\n☺\n▤\n♤\n⌕\n자산\n›\nS\n[금융거래한도계좌2]신한 주거래 우대통장\n(저축예금)\n금액 숨김\n이체\n절세혜택과 안정적인 노후, IRP로 준비하세요\n▭\nPick E 체크캐릭터형(하리보)\n금액 숨김\n앱카드 가입\n땡겨요\n›\n🍔\n할인쿠폰 드려요\nbhc치킨 최대 9,000원\n바로받기\n이벤트\n쿠폰\n포인트\n7월 소비 ↻\n›\n📅 오늘 쓴 돈\n0원\n카드 쓸때마다 쌓이고, 현금처럼 쓰는\n마이신한포인트\n시작하기\n추천서비스\n›\n⌂\nSOL패밀리\n가족과 함께하는 금융생활\n🅦\n급여클럽+\n급여이체 우대 혜택\n💳\n내 카드 승인내역\n모든 카드 실시간 승인내역\n더 많은 금융자산 모두\n연결하면 커피쿠폰 즉시지급!\n이벤트 바로가기 ›\n신한금융그룹\n💳\n신한카드\n나에게 맞는 카드 찾기\n📈\n신한투자증권\n지금 뜨는 주식 보러가기\n🛡\n신한라이프\n내게 필요한 보험, 보장분석으로 확인하기\n쉬운홈\n홈화면 설정\n금액 숨기기\n⌂\n홈\nⓌ\n금융\n⌂\n상품\n🎁\n혜택\n📈\n주식",
+        "height": 844,
+        "choices": {
+          "menu-tab": [
+            "은행",
+            "카드",
+            "증권",
+            "보험",
+            "혜택",
+            "상품",
+            "고객센터"
+          ],
+          "menu-chip": [
+            "은행::조회/관리",
+            "은행::이체",
+            "은행::세금/공과금",
+            "은행::상품관리",
+            "은행::자산관리",
+            "은행::외환",
+            "은행::모바일창구",
+            "은행::특화라운지",
+            "은행::신한 슈퍼SOL 사용팁",
+            "은행::설정/인증"
+          ],
+          "menu-item": [
+            "전체계좌 조회",
+            "입출금 거래내역",
+            "소비 현황",
+            "계좌비밀번호 설정",
+            "계좌 통합관리",
+            "휴면예금 및 숨은 보험금 찾기",
+            "비과세종합저축 자료제출",
+            "계좌이체",
+            "다건이체",
+            "이체결과 조회",
+            "자동이체",
+            "간편앱출금",
+            "이체관리",
+            "자동이체 가져오기",
+            "MY급여이체",
+            "납부하기",
+            "자동납부",
+            "납부내역 조회",
+            "공공기관 채권",
+            "법원업무",
+            "대학등록금",
+            "입출금",
+            "예적금/청약",
+            "외화예적금",
+            "대출",
+            "퇴직연금",
+            "펀드",
+            "신탁",
+            "개인종합자산관리(ISA)",
+            "포트폴리오",
+            "골드/실버",
+            "카드",
+            "보험",
+            "전세보증금반환보증",
+            "자산분석",
+            "소비분석",
+            "고정지출",
+            "예산관리",
+            "금융캘린더",
+            "연말정산",
+            "금융상품비교",
+            "부동산",
+            "내 차 리포트",
+            "투자지표",
+            "금리인하요구권 대행 서비스",
+            "은퇴 시뮬레이션",
+            "연결관리",
+            "환전",
+            "국내 외화이체",
+            "해외송금",
+            "SOL트래블",
+            "글로벌 멀티카드 충전/환불",
+            "거래외국환은행 지정",
+            "외국환거래약정 동의",
+            "증명서 발급",
+            "화상상담서비스",
+            "모바일번호표",
+            "서식작성",
+            "영업점 상담예약",
+            "소호메이트(개인사업자)",
+            "SOL PB",
+            "SOL메이트 자산관리라운지",
+            "SOL메이트 연금광장",
+            "리틀 신한 케어",
+            "디딤씨앗 정보조회",
+            "슈퍼쏠져(나라사랑카드라운지)",
+            "신한 슈퍼SOL 사용팁",
+            "비대면 계좌개설 안심차단",
+            "설정/인증",
+            "아파트 관리비",
+            "도시가스 요금",
+            "전화 요금",
+            "전기 요금"
+          ],
+          "pick-bill": [
+            "국세",
+            "관세",
+            "국고",
+            "국세 환급금 조회",
+            "지방세",
+            "환경개선부담금",
+            "세외수입",
+            "아파트/상가관리비",
+            "KT통신요금",
+            "전기요금/TV수신료",
+            "상하수도요금",
+            "고속도로 통행료",
+            "국민연금",
+            "공무원연금",
+            "통합징수 보험료",
+            "고용/산재보험료",
+            "교통범칙금",
+            "검찰청 벌과금"
+          ],
+          "pw": [
+            "1",
+            "6",
+            "0",
+            "9",
+            "8",
+            "5",
+            "2",
+            "4",
+            "3",
+            "7"
+          ]
+        },
+        "contrast": [
+          {
+            "text": "C",
+            "tag": "span",
+            "cls": "dot",
+            "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
+            "bg": "rgb(255, 122, 0)",
+            "opacity": 1,
+            "fontSize": 12,
+            "ratio": 2.61,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "arr",
+            "color": "rgb(185, 190, 199)",
+            "seen": "rgb(185, 190, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 17,
+            "ratio": 1.87,
+            "need": 4.5
+          },
+          {
+            "text": "▭",
+            "tag": "div",
+            "cls": "logo",
+            "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
+            "bg": "rgb(224, 138, 0)",
+            "opacity": 1,
+            "fontSize": 15,
+            "ratio": 2.69,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "arr",
+            "color": "rgb(185, 190, 199)",
+            "seen": "rgb(185, 190, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 17,
+            "ratio": 1.87,
+            "need": 4.5
+          },
+          {
+            "text": "할인쿠폰 드려요",
+            "tag": "div",
+            "cls": "t2",
+            "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 12,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "arr",
+            "color": "rgb(185, 190, 199)",
+            "seen": "rgb(185, 190, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 17,
+            "ratio": 1.87,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "arr",
+            "color": "rgb(185, 190, 199)",
+            "seen": "rgb(185, 190, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 17,
+            "ratio": 1.87,
+            "need": 4.5
+          },
+          {
+            "text": "가족과 함께하는 금융생활",
+            "tag": "div",
+            "cls": "t2",
+            "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 12,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "급여이체 우대 혜택",
+            "tag": "div",
+            "cls": "t2",
+            "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 12,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "모든 카드 실시간 승인내역",
+            "tag": "div",
+            "cls": "t2",
+            "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 12,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "나에게 맞는 카드 찾기",
+            "tag": "div",
+            "cls": "t2",
+            "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 12,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "지금 뜨는 주식 보러가기",
+            "tag": "div",
+            "cls": "t2",
+            "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 12,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "내게 필요한 보험, 보장분석으로 확인하기",
+            "tag": "div",
+            "cls": "t2",
+            "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 12,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "금융",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 11,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "Ⓦ",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 18,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "상품",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 11,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "⌂",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 18,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "혜택",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 11,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "🎁",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 18,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "주식",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 11,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "📈",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 18,
+            "ratio": 2.64,
+            "need": 4.5
+          }
+        ],
+        "contrast_undetermined": [
+          {
+            "text": "카드 쓸때마다 쌓이고, 현금처럼 쓰는",
+            "tag": "div",
+            "cls": "p1",
+            "color": "rgb(255, 255, 255)",
+            "fontSize": 12,
+            "need": 4.5,
+            "background": "linear-gradient(90deg, rgb(61, 111, 232), rgb(91, 127, 240))",
+            "behind": "div.pointbar"
+          },
+          {
+            "text": "마이신한포인트",
+            "tag": "div",
+            "cls": "p2",
+            "color": "rgb(255, 255, 255)",
+            "fontSize": 20,
+            "need": 3,
+            "background": "linear-gradient(90deg, rgb(61, 111, 232), rgb(91, 127, 240))",
+            "behind": "div.pointbar"
+          }
+        ],
+        "inherited": [
+          {
+            "text": "4:31",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "67",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "홍길동님",
+            "tag": "div",
+            "cls": "name",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "☺",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(51, 51, 51)"
+          },
+          {
+            "text": "▤",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(51, 51, 51)"
+          },
+          {
+            "text": "♤",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(51, 51, 51)"
+          },
+          {
+            "text": "⌕",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(51, 51, 51)"
+          },
+          {
+            "text": "자산",
+            "tag": "h3",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "금액 숨김",
+            "tag": "div",
+            "cls": "acctamt",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "Pick E 체크캐릭터형(하리보)",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "금액 숨김",
+            "tag": "div",
+            "cls": "acctamt",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "땡겨요",
+            "tag": "h3",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "🍔",
+            "tag": "div",
+            "cls": "sq",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "bhc치킨 최대 9,000원",
+            "tag": "div",
+            "cls": "t1",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "이벤트",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(90, 96, 105)"
+          },
+          {
+            "text": "쿠폰",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(90, 96, 105)"
+          },
+          {
+            "text": "포인트",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(90, 96, 105)"
+          },
+          {
+            "text": "7월 소비 ↻",
+            "tag": "h3",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "0원",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "카드 쓸때마다 쌓이고, 현금처럼 쓰는",
+            "tag": "div",
+            "cls": "p1",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "마이신한포인트",
+            "tag": "div",
+            "cls": "p2",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "추천서비스",
+            "tag": "h3",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "⌂",
+            "tag": "div",
+            "cls": "sq",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "SOL패밀리",
+            "tag": "div",
+            "cls": "t1",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "🅦",
+            "tag": "div",
+            "cls": "sq",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "급여클럽+",
+            "tag": "div",
+            "cls": "t1",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "💳",
+            "tag": "div",
+            "cls": "sq",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "내 카드 승인내역",
+            "tag": "div",
+            "cls": "t1",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "더 많은 금융자산 모두 연결하면 커피쿠폰 즉시지급!",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신한금융그룹",
+            "tag": "h3",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "💳",
+            "tag": "div",
+            "cls": "sq",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신한카드",
+            "tag": "div",
+            "cls": "t1",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "📈",
+            "tag": "div",
+            "cls": "sq",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신한투자증권",
+            "tag": "div",
+            "cls": "t1",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "🛡",
+            "tag": "div",
+            "cls": "sq",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신한라이프",
+            "tag": "div",
+            "cls": "t1",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "쉬운홈",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(90, 96, 105)"
+          },
+          {
+            "text": "홈화면 설정",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(90, 96, 105)"
+          },
+          {
+            "text": "금액 숨기기",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(90, 96, 105)"
+          },
+          {
+            "text": "⌂",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(27, 100, 218)"
+          },
+          {
+            "text": "Ⓦ",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)"
+          },
+          {
+            "text": "⌂",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)"
+          },
+          {
+            "text": "🎁",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)"
+          },
+          {
+            "text": "📈",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)"
+          }
+        ],
+        "overlap": [
+          {
+            "a": "카드 쓸때마다 쌓이고, 현금처럼 쓰는",
+            "b": "Ⓦ금융",
+            "overlap_pct": 39
+          },
+          {
+            "a": "카드 쓸때마다 쌓이고, 현금처럼 쓰는",
+            "b": "⌂상품",
+            "overlap_pct": 38
+          },
+          {
+            "a": "카드 쓸때마다 쌓이고, 현금처럼 쓰는",
+            "b": "⌂",
+            "overlap_pct": 27
+          },
+          {
+            "a": "마이신한포인트",
+            "b": "Ⓦ금융",
+            "overlap_pct": 29
+          },
+          {
+            "a": "마이신한포인트",
+            "b": "⌂상품",
+            "overlap_pct": 28
+          },
+          {
+            "a": "시작하기",
+            "b": "🎁혜택",
+            "overlap_pct": 38
+          },
+          {
+            "a": "시작하기",
+            "b": "📈주식",
+            "overlap_pct": 51
+          }
+        ],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "[금융거래한도계좌2]신한 주거래 우대통장 (저축예금)",
+            "tag": "div",
+            "cls": "acctname",
+            "lines": 3
+          },
+          {
+            "text": "더 많은 금융자산 모두 연결하면 커피쿠폰 즉시지급!",
+            "tag": "div",
+            "cls": "",
+            "lines": 2
+          }
+        ],
+        "shown": []
+      },
+      "menu": {
+        "landed_on": "menu",
+        "dom_screen": "menu",
+        "attr_text": "",
+        "outside_text": "",
+        "actions": [
+          "back-home",
+          "open-search",
+          "menu-tab",
+          "menu-tab",
+          "menu-tab",
+          "menu-tab",
+          "menu-tab",
+          "menu-tab",
+          "menu-tab",
+          "menu-chip",
+          "menu-chip",
+          "menu-chip",
+          "menu-chip",
+          "menu-chip",
+          "menu-chip",
+          "menu-chip",
+          "menu-chip",
+          "menu-chip",
+          "menu-chip",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item"
+        ],
+        "ids": [
+          "menu-tabs",
+          "menu-body",
+          "cat-은행",
+          "sec-은행::조회/관리",
+          "sec-은행::이체",
+          "sec-은행::세금/공과금",
+          "sec-은행::상품관리",
+          "sec-은행::자산관리",
+          "sec-은행::외환",
+          "sec-은행::모바일창구",
+          "sec-은행::특화라운지",
+          "sec-은행::신한 슈퍼SOL 사용팁",
+          "sec-은행::설정/인증",
+          "cat-카드",
+          "sec-카드::대표 생활요금",
+          "cat-증권",
+          "cat-보험",
+          "cat-혜택",
+          "cat-상품",
+          "cat-고객센터"
+        ],
+        "screens": [
+          "home",
+          "menu",
+          "search",
+          "bill-home",
+          "camera",
+          "info",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "4:31\n67\n‹\n💬\n⚙\n⎋\n상품, 메뉴, 혜택 등을 검색해보세요\n⌕\n은행\n카드\n증권\n보험\n혜택\n상품\n고객센터\n은행\n조회/관리\n이체\n세금/공과금\n상품관리\n자산관리\n외환\n모바일창구\n특화라운지\n신한 슈퍼SOL 사용팁\n설정/인증\n조회/관리\n전체계좌 조회\n입출금 거래내역\n소비 현황\n계좌비밀번호 설정\n계좌 통합관리\n휴면예금 및 숨은 보험금 찾기\n비과세종합저축 자료제출\n이체\n계좌이체\n다건이체\n이체결과 조회\n자동이체\n간편앱출금\n이체관리\n자동이체 가져오기\nMY급여이체\n세금/공과금\n납부하기\n자동납부\n납부내역 조회\n공공기관 채권\n법원업무\n대학등록금\n상품관리\n입출금\n예적금/청약\n외화예적금\n대출\n퇴직연금\n펀드\n신탁\n개인종합자산관리(ISA)\n포트폴리오\n골드/실버\n카드\n보험\n전세보증금반환보증\n자산관리\n자산분석\n소비분석\n고정지출\n예산관리\n금융캘린더\n연말정산\n금융상품비교\n부동산\n내 차 리포트\n투자지표\n금리인하요구권 대행 서비스\n은퇴 시뮬레이션\n연결관리\n외환\n환전\n국내 외화이체\n해외송금\nSOL트래블\n글로벌 멀티카드 충전/환불\n거래외국환은행 지정\n외국환거래약정 동의\n모바일창구\n증명서 발급\n화상상담서비스\n모바일번호표\n서식작성\n영업점 상담예약\n특화라운지\n소호메이트(개인사업자)\nSOL PB\nSOL메이트 자산관리라운지\nSOL메이트 연금광장\n리틀 신한 케어\n디딤씨앗 정보조회\n슈퍼쏠져(나라사랑카드라운지)\n신한 슈퍼SOL 사용팁\n신한 슈퍼SOL 사용팁\n설정/인증\n비대면 계좌개설 안심차단\n설정/인증\n카드\n대표 생활요금\n아파트 관리비\n도시가스 요금\n전화 요금\n전기 요금\n증권\n보험\n혜택\n상품\n고객센터",
+        "height": 844,
+        "choices": {
+          "menu-tab": [
+            "은행",
+            "카드",
+            "증권",
+            "보험",
+            "혜택",
+            "상품",
+            "고객센터"
+          ],
+          "menu-chip": [
+            "은행::조회/관리",
+            "은행::이체",
+            "은행::세금/공과금",
+            "은행::상품관리",
+            "은행::자산관리",
+            "은행::외환",
+            "은행::모바일창구",
+            "은행::특화라운지",
+            "은행::신한 슈퍼SOL 사용팁",
+            "은행::설정/인증"
+          ],
+          "menu-item": [
+            "전체계좌 조회",
+            "입출금 거래내역",
+            "소비 현황",
+            "계좌비밀번호 설정",
+            "계좌 통합관리",
+            "휴면예금 및 숨은 보험금 찾기",
+            "비과세종합저축 자료제출",
+            "계좌이체",
+            "다건이체",
+            "이체결과 조회",
+            "자동이체",
+            "간편앱출금",
+            "이체관리",
+            "자동이체 가져오기",
+            "MY급여이체",
+            "납부하기",
+            "자동납부",
+            "납부내역 조회",
+            "공공기관 채권",
+            "법원업무",
+            "대학등록금",
+            "입출금",
+            "예적금/청약",
+            "외화예적금",
+            "대출",
+            "퇴직연금",
+            "펀드",
+            "신탁",
+            "개인종합자산관리(ISA)",
+            "포트폴리오",
+            "골드/실버",
+            "카드",
+            "보험",
+            "전세보증금반환보증",
+            "자산분석",
+            "소비분석",
+            "고정지출",
+            "예산관리",
+            "금융캘린더",
+            "연말정산",
+            "금융상품비교",
+            "부동산",
+            "내 차 리포트",
+            "투자지표",
+            "금리인하요구권 대행 서비스",
+            "은퇴 시뮬레이션",
+            "연결관리",
+            "환전",
+            "국내 외화이체",
+            "해외송금",
+            "SOL트래블",
+            "글로벌 멀티카드 충전/환불",
+            "거래외국환은행 지정",
+            "외국환거래약정 동의",
+            "증명서 발급",
+            "화상상담서비스",
+            "모바일번호표",
+            "서식작성",
+            "영업점 상담예약",
+            "소호메이트(개인사업자)",
+            "SOL PB",
+            "SOL메이트 자산관리라운지",
+            "SOL메이트 연금광장",
+            "리틀 신한 케어",
+            "디딤씨앗 정보조회",
+            "슈퍼쏠져(나라사랑카드라운지)",
+            "신한 슈퍼SOL 사용팁",
+            "비대면 계좌개설 안심차단",
+            "설정/인증",
+            "아파트 관리비",
+            "도시가스 요금",
+            "전화 요금",
+            "전기 요금"
+          ],
+          "pick-bill": [
+            "국세",
+            "관세",
+            "국고",
+            "국세 환급금 조회",
+            "지방세",
+            "환경개선부담금",
+            "세외수입",
+            "아파트/상가관리비",
+            "KT통신요금",
+            "전기요금/TV수신료",
+            "상하수도요금",
+            "고속도로 통행료",
+            "국민연금",
+            "공무원연금",
+            "통합징수 보험료",
+            "고용/산재보험료",
+            "교통범칙금",
+            "검찰청 벌과금"
+          ],
+          "pw": [
+            "1",
+            "6",
+            "0",
+            "9",
+            "8",
+            "5",
+            "2",
+            "4",
+            "3",
+            "7"
+          ]
+        },
+        "contrast": [
+          {
+            "text": "상품, 메뉴, 혜택 등을 검색해보세요",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(154, 158, 166)",
+            "seen": "rgb(154, 158, 166)",
+            "bg": "rgb(237, 239, 243)",
+            "opacity": 1,
+            "fontSize": 17,
+            "ratio": 2.33,
+            "need": 4.5
+          },
+          {
+            "text": "⌕",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(154, 158, 166)",
+            "seen": "rgb(154, 158, 166)",
+            "bg": "rgb(237, 239, 243)",
+            "opacity": 1,
+            "fontSize": 17,
+            "ratio": 2.33,
+            "need": 4.5
+          },
+          {
+            "text": "카드",
+            "tag": "div",
+            "cls": "mtab",
+            "color": "rgb(154, 158, 166)",
+            "seen": "rgb(154, 158, 166)",
+            "bg": "rgb(242, 244, 248)",
+            "opacity": 1,
+            "fontSize": 18,
+            "ratio": 2.44,
+            "need": 4.5
+          },
+          {
+            "text": "증권",
+            "tag": "div",
+            "cls": "mtab",
+            "color": "rgb(154, 158, 166)",
+            "seen": "rgb(154, 158, 166)",
+            "bg": "rgb(242, 244, 248)",
+            "opacity": 1,
+            "fontSize": 18,
+            "ratio": 2.44,
+            "need": 4.5
+          },
+          {
+            "text": "보험",
+            "tag": "div",
+            "cls": "mtab",
+            "color": "rgb(154, 158, 166)",
+            "seen": "rgb(154, 158, 166)",
+            "bg": "rgb(242, 244, 248)",
+            "opacity": 1,
+            "fontSize": 18,
+            "ratio": 2.44,
+            "need": 4.5
+          },
+          {
+            "text": "혜택",
+            "tag": "div",
+            "cls": "mtab",
+            "color": "rgb(154, 158, 166)",
+            "seen": "rgb(154, 158, 166)",
+            "bg": "rgb(242, 244, 248)",
+            "opacity": 1,
+            "fontSize": 18,
+            "ratio": 2.44,
+            "need": 4.5
+          },
+          {
+            "text": "상품",
+            "tag": "div",
+            "cls": "mtab",
+            "color": "rgb(154, 158, 166)",
+            "seen": "rgb(154, 158, 166)",
+            "bg": "rgb(242, 244, 248)",
+            "opacity": 1,
+            "fontSize": 18,
+            "ratio": 2.44,
+            "need": 4.5
+          },
+          {
+            "text": "고객센터",
+            "tag": "div",
+            "cls": "mtab",
+            "color": "rgb(154, 158, 166)",
+            "seen": "rgb(154, 158, 166)",
+            "bg": "rgb(242, 244, 248)",
+            "opacity": 1,
+            "fontSize": 18,
+            "ratio": 2.44,
+            "need": 4.5
+          }
+        ],
+        "contrast_undetermined": [],
+        "inherited": [
+          {
+            "text": "4:31",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "67",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "상품, 메뉴, 혜택 등을 검색해보세요",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(154, 158, 166)"
+          },
+          {
+            "text": "⌕",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(154, 158, 166)"
+          },
+          {
+            "text": "은행",
+            "tag": "div",
+            "cls": "mtab act",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "은행",
+            "tag": "h2",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "조회/관리",
+            "tag": "span",
+            "cls": "chip",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "이체",
+            "tag": "span",
+            "cls": "chip",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "세금/공과금",
+            "tag": "span",
+            "cls": "chip",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "상품관리",
+            "tag": "span",
+            "cls": "chip",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "자산관리",
+            "tag": "span",
+            "cls": "chip",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "외환",
+            "tag": "span",
+            "cls": "chip",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "모바일창구",
+            "tag": "span",
+            "cls": "chip",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "특화라운지",
+            "tag": "span",
+            "cls": "chip",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신한 슈퍼SOL 사용팁",
+            "tag": "span",
+            "cls": "chip",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "설정/인증",
+            "tag": "span",
+            "cls": "chip",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "전체계좌 조회",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "입출금 거래내역",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "소비 현황",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "계좌비밀번호 설정",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "계좌 통합관리",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "휴면예금 및 숨은 보험금 찾기",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "비과세종합저축 자료제출",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "계좌이체",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "다건이체",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "이체결과 조회",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "자동이체",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "간편앱출금",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "이체관리",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "자동이체 가져오기",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "MY급여이체",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "납부하기",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "자동납부",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "납부내역 조회",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "공공기관 채권",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "법원업무",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "대학등록금",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "입출금",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "예적금/청약",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "외화예적금",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "대출",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "퇴직연금",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "펀드",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신탁",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "개인종합자산관리(ISA)",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "포트폴리오",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "골드/실버",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "카드",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "보험",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "전세보증금반환보증",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "자산분석",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "소비분석",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "고정지출",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "예산관리",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "금융캘린더",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "연말정산",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "금융상품비교",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "부동산",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "내 차 리포트",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "투자지표",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "금리인하요구권 대행 서비스",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "은퇴 시뮬레이션",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "연결관리",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "환전",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "국내 외화이체",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "해외송금",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "SOL트래블",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "글로벌 멀티카드 충전/환불",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "거래외국환은행 지정",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "외국환거래약정 동의",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "증명서 발급",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "화상상담서비스",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "모바일번호표",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "서식작성",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "영업점 상담예약",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "소호메이트(개인사업자)",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "SOL PB",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "SOL메이트 자산관리라운지",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "SOL메이트 연금광장",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "리틀 신한 케어",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "디딤씨앗 정보조회",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "슈퍼쏠져(나라사랑카드라운지)",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신한 슈퍼SOL 사용팁",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "비대면 계좌개설 안심차단",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "설정/인증",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "카드",
+            "tag": "h2",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "아파트 관리비",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "도시가스 요금",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "전화 요금",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "전기 요금",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "증권",
+            "tag": "h2",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "보험",
+            "tag": "h2",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "혜택",
+            "tag": "h2",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "상품",
+            "tag": "h2",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "고객센터",
+            "tag": "h2",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [],
+        "shown": []
+      },
+      "search": {
+        "landed_on": "search",
+        "dom_screen": "search",
+        "attr_text": "검색어를 입력하세요",
+        "outside_text": "",
+        "actions": [
+          "back-menu",
+          "search-clear"
+        ],
+        "ids": [
+          "search-input",
+          "search-clear",
+          "search-body"
+        ],
+        "screens": [
+          "home",
+          "menu",
+          "search",
+          "bill-home",
+          "camera",
+          "info",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "4:31\n67\n‹\n⌕\n찾으시는 메뉴를 입력해보세요",
+        "height": 844,
+        "choices": {
+          "menu-tab": [
+            "은행",
+            "카드",
+            "증권",
+            "보험",
+            "혜택",
+            "상품",
+            "고객센터"
+          ],
+          "menu-chip": [
+            "은행::조회/관리",
+            "은행::이체",
+            "은행::세금/공과금",
+            "은행::상품관리",
+            "은행::자산관리",
+            "은행::외환",
+            "은행::모바일창구",
+            "은행::특화라운지",
+            "은행::신한 슈퍼SOL 사용팁",
+            "은행::설정/인증"
+          ],
+          "menu-item": [
+            "전체계좌 조회",
+            "입출금 거래내역",
+            "소비 현황",
+            "계좌비밀번호 설정",
+            "계좌 통합관리",
+            "휴면예금 및 숨은 보험금 찾기",
+            "비과세종합저축 자료제출",
+            "계좌이체",
+            "다건이체",
+            "이체결과 조회",
+            "자동이체",
+            "간편앱출금",
+            "이체관리",
+            "자동이체 가져오기",
+            "MY급여이체",
+            "납부하기",
+            "자동납부",
+            "납부내역 조회",
+            "공공기관 채권",
+            "법원업무",
+            "대학등록금",
+            "입출금",
+            "예적금/청약",
+            "외화예적금",
+            "대출",
+            "퇴직연금",
+            "펀드",
+            "신탁",
+            "개인종합자산관리(ISA)",
+            "포트폴리오",
+            "골드/실버",
+            "카드",
+            "보험",
+            "전세보증금반환보증",
+            "자산분석",
+            "소비분석",
+            "고정지출",
+            "예산관리",
+            "금융캘린더",
+            "연말정산",
+            "금융상품비교",
+            "부동산",
+            "내 차 리포트",
+            "투자지표",
+            "금리인하요구권 대행 서비스",
+            "은퇴 시뮬레이션",
+            "연결관리",
+            "환전",
+            "국내 외화이체",
+            "해외송금",
+            "SOL트래블",
+            "글로벌 멀티카드 충전/환불",
+            "거래외국환은행 지정",
+            "외국환거래약정 동의",
+            "증명서 발급",
+            "화상상담서비스",
+            "모바일번호표",
+            "서식작성",
+            "영업점 상담예약",
+            "소호메이트(개인사업자)",
+            "SOL PB",
+            "SOL메이트 자산관리라운지",
+            "SOL메이트 연금광장",
+            "리틀 신한 케어",
+            "디딤씨앗 정보조회",
+            "슈퍼쏠져(나라사랑카드라운지)",
+            "신한 슈퍼SOL 사용팁",
+            "비대면 계좌개설 안심차단",
+            "설정/인증",
+            "아파트 관리비",
+            "도시가스 요금",
+            "전화 요금",
+            "전기 요금"
+          ],
+          "pick-bill": [
+            "국세",
+            "관세",
+            "국고",
+            "국세 환급금 조회",
+            "지방세",
+            "환경개선부담금",
+            "세외수입",
+            "아파트/상가관리비",
+            "KT통신요금",
+            "전기요금/TV수신료",
+            "상하수도요금",
+            "고속도로 통행료",
+            "국민연금",
+            "공무원연금",
+            "통합징수 보험료",
+            "고용/산재보험료",
+            "교통범칙금",
+            "검찰청 벌과금"
+          ],
+          "pw": [
+            "1",
+            "6",
+            "0",
+            "9",
+            "8",
+            "5",
+            "2",
+            "4",
+            "3",
+            "7"
+          ]
+        },
+        "contrast": [
+          {
+            "text": "찾으시는 메뉴를 입력해보세요",
+            "tag": "div",
+            "cls": "shint",
+            "color": "rgb(154, 158, 166)",
+            "seen": "rgb(154, 158, 166)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 17,
+            "ratio": 2.69,
+            "need": 4.5
+          }
+        ],
+        "contrast_undetermined": [],
+        "inherited": [
+          {
+            "text": "4:31",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "67",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "‹",
+            "tag": "span",
+            "cls": "ico",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "⌕",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [],
+        "shown": []
+      },
+      "bill-home": {
+        "landed_on": "bill-home",
+        "dom_screen": "bill-home",
+        "attr_text": "",
+        "outside_text": "",
+        "actions": [
+          "back-bill-home",
+          "pay-start",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill"
+        ],
+        "ids": [
+          "bill-list"
+        ],
+        "screens": [
+          "home",
+          "menu",
+          "search",
+          "bill-home",
+          "camera",
+          "info",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "4:31\n67\n‹\n💬\n⌂\n각종 세금/공과금 이제\n간편하게 납부해보세요\n🧾\n납부하기\n종이고지서 번호로 바로 납부\n조회하기\n전자고지서로 간편하게 확인\n자주쓰는 지로번호 등록해보세요!\n›\n국고금\n국세\n›\n관세\n›\n국고\n›\n국세 환급금 조회\n›\n통합지방세\n지방세\n주민세, 재산세, 자동차세 등\n›\n환경개선부담금\n경유자동차 사용 부담금\n›\n세외수입\n과태료, 수수료, 기부금 등\n›\n생활공과금\n아파트/상가관리비\n›\nKT통신요금\n›\n전기요금/TV수신료\n›\n상하수도요금\n›\n고속도로 통행료\n›\n4대 보험/연금\n국민연금\n›\n공무원연금\n›\n통합징수 보험료\n›\n고용/산재보험료\n›\n벌금/과태료\n교통범칙금\n›\n검찰청 벌과금\n›",
+        "height": 844,
+        "choices": {
+          "menu-tab": [
+            "은행",
+            "카드",
+            "증권",
+            "보험",
+            "혜택",
+            "상품",
+            "고객센터"
+          ],
+          "menu-chip": [
+            "은행::조회/관리",
+            "은행::이체",
+            "은행::세금/공과금",
+            "은행::상품관리",
+            "은행::자산관리",
+            "은행::외환",
+            "은행::모바일창구",
+            "은행::특화라운지",
+            "은행::신한 슈퍼SOL 사용팁",
+            "은행::설정/인증"
+          ],
+          "menu-item": [
+            "전체계좌 조회",
+            "입출금 거래내역",
+            "소비 현황",
+            "계좌비밀번호 설정",
+            "계좌 통합관리",
+            "휴면예금 및 숨은 보험금 찾기",
+            "비과세종합저축 자료제출",
+            "계좌이체",
+            "다건이체",
+            "이체결과 조회",
+            "자동이체",
+            "간편앱출금",
+            "이체관리",
+            "자동이체 가져오기",
+            "MY급여이체",
+            "납부하기",
+            "자동납부",
+            "납부내역 조회",
+            "공공기관 채권",
+            "법원업무",
+            "대학등록금",
+            "입출금",
+            "예적금/청약",
+            "외화예적금",
+            "대출",
+            "퇴직연금",
+            "펀드",
+            "신탁",
+            "개인종합자산관리(ISA)",
+            "포트폴리오",
+            "골드/실버",
+            "카드",
+            "보험",
+            "전세보증금반환보증",
+            "자산분석",
+            "소비분석",
+            "고정지출",
+            "예산관리",
+            "금융캘린더",
+            "연말정산",
+            "금융상품비교",
+            "부동산",
+            "내 차 리포트",
+            "투자지표",
+            "금리인하요구권 대행 서비스",
+            "은퇴 시뮬레이션",
+            "연결관리",
+            "환전",
+            "국내 외화이체",
+            "해외송금",
+            "SOL트래블",
+            "글로벌 멀티카드 충전/환불",
+            "거래외국환은행 지정",
+            "외국환거래약정 동의",
+            "증명서 발급",
+            "화상상담서비스",
+            "모바일번호표",
+            "서식작성",
+            "영업점 상담예약",
+            "소호메이트(개인사업자)",
+            "SOL PB",
+            "SOL메이트 자산관리라운지",
+            "SOL메이트 연금광장",
+            "리틀 신한 케어",
+            "디딤씨앗 정보조회",
+            "슈퍼쏠져(나라사랑카드라운지)",
+            "신한 슈퍼SOL 사용팁",
+            "비대면 계좌개설 안심차단",
+            "설정/인증",
+            "아파트 관리비",
+            "도시가스 요금",
+            "전화 요금",
+            "전기 요금"
+          ],
+          "pick-bill": [
+            "국세",
+            "관세",
+            "국고",
+            "국세 환급금 조회",
+            "지방세",
+            "환경개선부담금",
+            "세외수입",
+            "아파트/상가관리비",
+            "KT통신요금",
+            "전기요금/TV수신료",
+            "상하수도요금",
+            "고속도로 통행료",
+            "국민연금",
+            "공무원연금",
+            "통합징수 보험료",
+            "고용/산재보험료",
+            "교통범칙금",
+            "검찰청 벌과금"
+          ],
+          "pw": [
+            "1",
+            "6",
+            "0",
+            "9",
+            "8",
+            "5",
+            "2",
+            "4",
+            "3",
+            "7"
+          ]
+        },
+        "contrast": [
+          {
+            "text": "종이고지서 번호로 바로 납부",
+            "tag": "div",
+            "cls": "d",
+            "color": "rgb(138, 138, 143)",
+            "seen": "rgb(138, 138, 143)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 3.44,
+            "need": 4.5
+          },
+          {
+            "text": "전자고지서로 간편하게 확인",
+            "tag": "div",
+            "cls": "d",
+            "color": "rgb(138, 138, 143)",
+            "seen": "rgb(138, 138, 143)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 3.44,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "주민세, 재산세, 자동차세 등",
+            "tag": "div",
+            "cls": "s",
+            "color": "rgb(138, 138, 143)",
+            "seen": "rgb(138, 138, 143)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 3.44,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "경유자동차 사용 부담금",
+            "tag": "div",
+            "cls": "s",
+            "color": "rgb(138, 138, 143)",
+            "seen": "rgb(138, 138, 143)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 3.44,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "과태료, 수수료, 기부금 등",
+            "tag": "div",
+            "cls": "s",
+            "color": "rgb(138, 138, 143)",
+            "seen": "rgb(138, 138, 143)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 3.44,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          }
+        ],
+        "contrast_undetermined": [],
+        "inherited": [
+          {
+            "text": "4:31",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "67",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "각종 세금/공과금 이제 간편하게 납부해보세요",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "🧾",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "납부하기",
+            "tag": "div",
+            "cls": "t",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "조회하기",
+            "tag": "div",
+            "cls": "t",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "자주쓰는 지로번호 등록해보세요!",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "국고금",
+            "tag": "div",
+            "cls": "bsec",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "국세",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "관세",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "국고",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "국세 환급금 조회",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "통합지방세",
+            "tag": "div",
+            "cls": "bsec",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "지방세",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "환경개선부담금",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "세외수입",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "생활공과금",
+            "tag": "div",
+            "cls": "bsec",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "아파트/상가관리비",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "KT통신요금",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "전기요금/TV수신료",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "상하수도요금",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "고속도로 통행료",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "4대 보험/연금",
+            "tag": "div",
+            "cls": "bsec",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "국민연금",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "공무원연금",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "통합징수 보험료",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "고용/산재보험료",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "벌금/과태료",
+            "tag": "div",
+            "cls": "bsec",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "교통범칙금",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "검찰청 벌과금",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "각종 세금/공과금 이제 간편하게 납부해보세요",
+            "tag": "span",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "종이고지서 번호로 바로 납부",
+            "tag": "div",
+            "cls": "d",
+            "lines": 2
+          },
+          {
+            "text": "전자고지서로 간편하게 확인",
+            "tag": "div",
+            "cls": "d",
+            "lines": 2
+          }
+        ],
+        "shown": []
+      },
+      "camera": {
+        "landed_on": "camera",
+        "dom_screen": "camera",
+        "attr_text": "",
+        "outside_text": "",
+        "actions": [
+          "shutter",
+          "to-bill-home"
+        ],
+        "ids": [],
+        "screens": [
+          "home",
+          "menu",
+          "search",
+          "bill-home",
+          "camera",
+          "info",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "4:31\n67\n지로번호가 잘 보이게\n준비해주세요\n고지서를 사각형에 맞춰\n촬영해주세요\n✕",
+        "height": 844,
+        "choices": {
+          "menu-tab": [
+            "은행",
+            "카드",
+            "증권",
+            "보험",
+            "혜택",
+            "상품",
+            "고객센터"
+          ],
+          "menu-chip": [
+            "은행::조회/관리",
+            "은행::이체",
+            "은행::세금/공과금",
+            "은행::상품관리",
+            "은행::자산관리",
+            "은행::외환",
+            "은행::모바일창구",
+            "은행::특화라운지",
+            "은행::신한 슈퍼SOL 사용팁",
+            "은행::설정/인증"
+          ],
+          "menu-item": [
+            "전체계좌 조회",
+            "입출금 거래내역",
+            "소비 현황",
+            "계좌비밀번호 설정",
+            "계좌 통합관리",
+            "휴면예금 및 숨은 보험금 찾기",
+            "비과세종합저축 자료제출",
+            "계좌이체",
+            "다건이체",
+            "이체결과 조회",
+            "자동이체",
+            "간편앱출금",
+            "이체관리",
+            "자동이체 가져오기",
+            "MY급여이체",
+            "납부하기",
+            "자동납부",
+            "납부내역 조회",
+            "공공기관 채권",
+            "법원업무",
+            "대학등록금",
+            "입출금",
+            "예적금/청약",
+            "외화예적금",
+            "대출",
+            "퇴직연금",
+            "펀드",
+            "신탁",
+            "개인종합자산관리(ISA)",
+            "포트폴리오",
+            "골드/실버",
+            "카드",
+            "보험",
+            "전세보증금반환보증",
+            "자산분석",
+            "소비분석",
+            "고정지출",
+            "예산관리",
+            "금융캘린더",
+            "연말정산",
+            "금융상품비교",
+            "부동산",
+            "내 차 리포트",
+            "투자지표",
+            "금리인하요구권 대행 서비스",
+            "은퇴 시뮬레이션",
+            "연결관리",
+            "환전",
+            "국내 외화이체",
+            "해외송금",
+            "SOL트래블",
+            "글로벌 멀티카드 충전/환불",
+            "거래외국환은행 지정",
+            "외국환거래약정 동의",
+            "증명서 발급",
+            "화상상담서비스",
+            "모바일번호표",
+            "서식작성",
+            "영업점 상담예약",
+            "소호메이트(개인사업자)",
+            "SOL PB",
+            "SOL메이트 자산관리라운지",
+            "SOL메이트 연금광장",
+            "리틀 신한 케어",
+            "디딤씨앗 정보조회",
+            "슈퍼쏠져(나라사랑카드라운지)",
+            "신한 슈퍼SOL 사용팁",
+            "비대면 계좌개설 안심차단",
+            "설정/인증",
+            "아파트 관리비",
+            "도시가스 요금",
+            "전화 요금",
+            "전기 요금"
+          ],
+          "pick-bill": [
+            "국세",
+            "관세",
+            "국고",
+            "국세 환급금 조회",
+            "지방세",
+            "환경개선부담금",
+            "세외수입",
+            "아파트/상가관리비",
+            "KT통신요금",
+            "전기요금/TV수신료",
+            "상하수도요금",
+            "고속도로 통행료",
+            "국민연금",
+            "공무원연금",
+            "통합징수 보험료",
+            "고용/산재보험료",
+            "교통범칙금",
+            "검찰청 벌과금"
+          ],
+          "pw": [
+            "1",
+            "6",
+            "0",
+            "9",
+            "8",
+            "5",
+            "2",
+            "4",
+            "3",
+            "7"
+          ]
+        },
+        "contrast": [],
+        "contrast_undetermined": [],
+        "inherited": [
+          {
+            "text": "4:31",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "67",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "지로번호가 잘 보이게 준비해주세요",
+            "tag": "div",
+            "cls": "camtext",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "✕",
+            "tag": "span",
+            "cls": "camclose",
+            "color": "rgb(255, 255, 255)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "지로번호가 잘 보이게 준비해주세요",
+            "tag": "div",
+            "cls": "camtext",
+            "lines": 2
+          },
+          {
+            "text": "고지서를 사각형에 맞춰 촬영해주세요",
+            "tag": "div",
+            "cls": "frame",
+            "lines": 2
+          }
+        ],
+        "shown": []
+      },
+      "info": {
+        "landed_on": "info",
+        "dom_screen": "info",
+        "attr_text": "",
+        "outside_text": "",
+        "actions": [
+          "to-bill-home",
+          "pay"
+        ],
+        "ids": [
+          "bi-eno",
+          "bi-name",
+          "bi-amt",
+          "bi-acc"
+        ],
+        "screens": [
+          "home",
+          "menu",
+          "search",
+          "bill-home",
+          "camera",
+          "info",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "4:31\n67\n‹\n전기요금 납부\n💬\n⌂\n납부정보\n전자납부번호(고객번호)\n1700000000\n고객명\n홍길동\n청구연월\n202607\n고객전용지정 계좌번호\n31500000000000\n고객주소\n○○동 ●●●-●\n납부금액\n2,160원\n출금계좌\nS\n[금융거래한도계좌2]신한 주거래 우대통장(저축예금)\n신한 110-000-000000\n⌄\n출금가능금액 1,000,000\n납부",
+        "height": 844,
+        "choices": {
+          "menu-tab": [
+            "은행",
+            "카드",
+            "증권",
+            "보험",
+            "혜택",
+            "상품",
+            "고객센터"
+          ],
+          "menu-chip": [
+            "은행::조회/관리",
+            "은행::이체",
+            "은행::세금/공과금",
+            "은행::상품관리",
+            "은행::자산관리",
+            "은행::외환",
+            "은행::모바일창구",
+            "은행::특화라운지",
+            "은행::신한 슈퍼SOL 사용팁",
+            "은행::설정/인증"
+          ],
+          "menu-item": [
+            "전체계좌 조회",
+            "입출금 거래내역",
+            "소비 현황",
+            "계좌비밀번호 설정",
+            "계좌 통합관리",
+            "휴면예금 및 숨은 보험금 찾기",
+            "비과세종합저축 자료제출",
+            "계좌이체",
+            "다건이체",
+            "이체결과 조회",
+            "자동이체",
+            "간편앱출금",
+            "이체관리",
+            "자동이체 가져오기",
+            "MY급여이체",
+            "납부하기",
+            "자동납부",
+            "납부내역 조회",
+            "공공기관 채권",
+            "법원업무",
+            "대학등록금",
+            "입출금",
+            "예적금/청약",
+            "외화예적금",
+            "대출",
+            "퇴직연금",
+            "펀드",
+            "신탁",
+            "개인종합자산관리(ISA)",
+            "포트폴리오",
+            "골드/실버",
+            "카드",
+            "보험",
+            "전세보증금반환보증",
+            "자산분석",
+            "소비분석",
+            "고정지출",
+            "예산관리",
+            "금융캘린더",
+            "연말정산",
+            "금융상품비교",
+            "부동산",
+            "내 차 리포트",
+            "투자지표",
+            "금리인하요구권 대행 서비스",
+            "은퇴 시뮬레이션",
+            "연결관리",
+            "환전",
+            "국내 외화이체",
+            "해외송금",
+            "SOL트래블",
+            "글로벌 멀티카드 충전/환불",
+            "거래외국환은행 지정",
+            "외국환거래약정 동의",
+            "증명서 발급",
+            "화상상담서비스",
+            "모바일번호표",
+            "서식작성",
+            "영업점 상담예약",
+            "소호메이트(개인사업자)",
+            "SOL PB",
+            "SOL메이트 자산관리라운지",
+            "SOL메이트 연금광장",
+            "리틀 신한 케어",
+            "디딤씨앗 정보조회",
+            "슈퍼쏠져(나라사랑카드라운지)",
+            "신한 슈퍼SOL 사용팁",
+            "비대면 계좌개설 안심차단",
+            "설정/인증",
+            "아파트 관리비",
+            "도시가스 요금",
+            "전화 요금",
+            "전기 요금"
+          ],
+          "pick-bill": [
+            "국세",
+            "관세",
+            "국고",
+            "국세 환급금 조회",
+            "지방세",
+            "환경개선부담금",
+            "세외수입",
+            "아파트/상가관리비",
+            "KT통신요금",
+            "전기요금/TV수신료",
+            "상하수도요금",
+            "고속도로 통행료",
+            "국민연금",
+            "공무원연금",
+            "통합징수 보험료",
+            "고용/산재보험료",
+            "교통범칙금",
+            "검찰청 벌과금"
+          ],
+          "pw": [
+            "1",
+            "6",
+            "0",
+            "9",
+            "8",
+            "5",
+            "2",
+            "4",
+            "3",
+            "7"
+          ]
+        },
+        "contrast": [
+          {
+            "text": "신한 110-000-000000",
+            "tag": "div",
+            "cls": "no",
+            "color": "rgb(138, 138, 143)",
+            "seen": "rgb(138, 138, 143)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 3.44,
+            "need": 4.5
+          },
+          {
+            "text": "출금가능금액",
+            "tag": "div",
+            "cls": "avail",
+            "color": "rgb(138, 138, 143)",
+            "seen": "rgb(138, 138, 143)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 3.44,
+            "need": 4.5
+          }
+        ],
+        "contrast_undetermined": [],
+        "inherited": [
+          {
+            "text": "4:31",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "67",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "전기요금 납부",
+            "tag": "span",
+            "cls": "title",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "납부정보",
+            "tag": "div",
+            "cls": "h2",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "1700000000",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "홍길동",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "202607",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "31500000000000",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "○○동 ●●●-●",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "2,160",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(0, 70, 255)"
+          },
+          {
+            "text": "출금계좌",
+            "tag": "div",
+            "cls": "h2",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "[금융거래한도계좌2]신한 주거래 우대통장(저축예금)",
+            "tag": "div",
+            "cls": "nm",
+            "color": "rgb(26, 26, 26)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "고객전용지정 계좌번호",
+            "tag": "span",
+            "cls": "k",
+            "lines": 2
+          },
+          {
+            "text": "[금융거래한도계좌2]신한 주거래 우대통장(저축예금)",
+            "tag": "div",
+            "cls": "nm",
+            "lines": 2
+          }
+        ],
+        "shown": [
+          [
+            "#bi-eno",
+            "1700000000"
+          ],
+          [
+            "#bi-name",
+            "홍길동"
+          ],
+          [
+            "#bi-amt",
+            "2,160"
+          ],
+          [
+            "#bi-acc",
+            "신한 110-000-000000"
+          ]
+        ]
+      },
+      "password": {
+        "landed_on": "password",
+        "dom_screen": "password",
+        "attr_text": "",
+        "outside_text": "",
+        "actions": [
+          "close-password",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw-shuffle",
+          "pw",
+          "pw-del"
+        ],
+        "ids": [
+          "pw-dots",
+          "pwpad"
+        ],
+        "screens": [
+          "home",
+          "menu",
+          "search",
+          "bill-home",
+          "camera",
+          "info",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "4:31\n67\n✕\n계좌 비밀번호\n3\n2\n7\n6\n1\n8\n5\n4\n9\n재배열\n0\n⌫",
+        "height": 844,
+        "choices": {
+          "menu-tab": [
+            "은행",
+            "카드",
+            "증권",
+            "보험",
+            "혜택",
+            "상품",
+            "고객센터"
+          ],
+          "menu-chip": [
+            "은행::조회/관리",
+            "은행::이체",
+            "은행::세금/공과금",
+            "은행::상품관리",
+            "은행::자산관리",
+            "은행::외환",
+            "은행::모바일창구",
+            "은행::특화라운지",
+            "은행::신한 슈퍼SOL 사용팁",
+            "은행::설정/인증"
+          ],
+          "menu-item": [
+            "전체계좌 조회",
+            "입출금 거래내역",
+            "소비 현황",
+            "계좌비밀번호 설정",
+            "계좌 통합관리",
+            "휴면예금 및 숨은 보험금 찾기",
+            "비과세종합저축 자료제출",
+            "계좌이체",
+            "다건이체",
+            "이체결과 조회",
+            "자동이체",
+            "간편앱출금",
+            "이체관리",
+            "자동이체 가져오기",
+            "MY급여이체",
+            "납부하기",
+            "자동납부",
+            "납부내역 조회",
+            "공공기관 채권",
+            "법원업무",
+            "대학등록금",
+            "입출금",
+            "예적금/청약",
+            "외화예적금",
+            "대출",
+            "퇴직연금",
+            "펀드",
+            "신탁",
+            "개인종합자산관리(ISA)",
+            "포트폴리오",
+            "골드/실버",
+            "카드",
+            "보험",
+            "전세보증금반환보증",
+            "자산분석",
+            "소비분석",
+            "고정지출",
+            "예산관리",
+            "금융캘린더",
+            "연말정산",
+            "금융상품비교",
+            "부동산",
+            "내 차 리포트",
+            "투자지표",
+            "금리인하요구권 대행 서비스",
+            "은퇴 시뮬레이션",
+            "연결관리",
+            "환전",
+            "국내 외화이체",
+            "해외송금",
+            "SOL트래블",
+            "글로벌 멀티카드 충전/환불",
+            "거래외국환은행 지정",
+            "외국환거래약정 동의",
+            "증명서 발급",
+            "화상상담서비스",
+            "모바일번호표",
+            "서식작성",
+            "영업점 상담예약",
+            "소호메이트(개인사업자)",
+            "SOL PB",
+            "SOL메이트 자산관리라운지",
+            "SOL메이트 연금광장",
+            "리틀 신한 케어",
+            "디딤씨앗 정보조회",
+            "슈퍼쏠져(나라사랑카드라운지)",
+            "신한 슈퍼SOL 사용팁",
+            "비대면 계좌개설 안심차단",
+            "설정/인증",
+            "아파트 관리비",
+            "도시가스 요금",
+            "전화 요금",
+            "전기 요금"
+          ],
+          "pick-bill": [
+            "국세",
+            "관세",
+            "국고",
+            "국세 환급금 조회",
+            "지방세",
+            "환경개선부담금",
+            "세외수입",
+            "아파트/상가관리비",
+            "KT통신요금",
+            "전기요금/TV수신료",
+            "상하수도요금",
+            "고속도로 통행료",
+            "국민연금",
+            "공무원연금",
+            "통합징수 보험료",
+            "고용/산재보험료",
+            "교통범칙금",
+            "검찰청 벌과금"
+          ],
+          "pw": [
+            "3",
+            "2",
+            "7",
+            "6",
+            "1",
+            "8",
+            "5",
+            "4",
+            "9",
+            "0"
+          ]
+        },
+        "contrast": [],
+        "contrast_undetermined": [],
+        "inherited": [
+          {
+            "text": "4:31",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "67",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "계좌 비밀번호",
+            "tag": "div",
+            "cls": "pwtitle",
+            "color": "rgb(26, 26, 26)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [],
+        "shown": []
+      },
+      "done": {
+        "landed_on": "done",
+        "dom_screen": "done",
+        "attr_text": "",
+        "outside_text": "",
+        "actions": [
+          "finish",
+          "finish"
+        ],
+        "ids": [
+          "dn-acc",
+          "dn-paid",
+          "dn-eno"
+        ],
+        "screens": [
+          "home",
+          "menu",
+          "search",
+          "bill-home",
+          "camera",
+          "info",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "4:31\n67\n💬\n⌂\n✓\n납부완료\n출금계좌\n신한 110-000-000000\n납부금액\n2,160원\n납부일\n2026.08.07 10:11\n전자납부번호(고객번호)\n1700000000\n고객명\n홍길동\n청구연월\n202607\n고객전용지정 계좌번호\n31500000000000\n고객주소\n○○동 ●●●-●\n• '납부 완료'가 표시되더라도 입금할 수 없는 계좌인 경우 출금계좌로 재입금됩니다.\n확인",
+        "height": 844,
+        "choices": {
+          "menu-tab": [
+            "은행",
+            "카드",
+            "증권",
+            "보험",
+            "혜택",
+            "상품",
+            "고객센터"
+          ],
+          "menu-chip": [
+            "은행::조회/관리",
+            "은행::이체",
+            "은행::세금/공과금",
+            "은행::상품관리",
+            "은행::자산관리",
+            "은행::외환",
+            "은행::모바일창구",
+            "은행::특화라운지",
+            "은행::신한 슈퍼SOL 사용팁",
+            "은행::설정/인증"
+          ],
+          "menu-item": [
+            "전체계좌 조회",
+            "입출금 거래내역",
+            "소비 현황",
+            "계좌비밀번호 설정",
+            "계좌 통합관리",
+            "휴면예금 및 숨은 보험금 찾기",
+            "비과세종합저축 자료제출",
+            "계좌이체",
+            "다건이체",
+            "이체결과 조회",
+            "자동이체",
+            "간편앱출금",
+            "이체관리",
+            "자동이체 가져오기",
+            "MY급여이체",
+            "납부하기",
+            "자동납부",
+            "납부내역 조회",
+            "공공기관 채권",
+            "법원업무",
+            "대학등록금",
+            "입출금",
+            "예적금/청약",
+            "외화예적금",
+            "대출",
+            "퇴직연금",
+            "펀드",
+            "신탁",
+            "개인종합자산관리(ISA)",
+            "포트폴리오",
+            "골드/실버",
+            "카드",
+            "보험",
+            "전세보증금반환보증",
+            "자산분석",
+            "소비분석",
+            "고정지출",
+            "예산관리",
+            "금융캘린더",
+            "연말정산",
+            "금융상품비교",
+            "부동산",
+            "내 차 리포트",
+            "투자지표",
+            "금리인하요구권 대행 서비스",
+            "은퇴 시뮬레이션",
+            "연결관리",
+            "환전",
+            "국내 외화이체",
+            "해외송금",
+            "SOL트래블",
+            "글로벌 멀티카드 충전/환불",
+            "거래외국환은행 지정",
+            "외국환거래약정 동의",
+            "증명서 발급",
+            "화상상담서비스",
+            "모바일번호표",
+            "서식작성",
+            "영업점 상담예약",
+            "소호메이트(개인사업자)",
+            "SOL PB",
+            "SOL메이트 자산관리라운지",
+            "SOL메이트 연금광장",
+            "리틀 신한 케어",
+            "디딤씨앗 정보조회",
+            "슈퍼쏠져(나라사랑카드라운지)",
+            "신한 슈퍼SOL 사용팁",
+            "비대면 계좌개설 안심차단",
+            "설정/인증",
+            "아파트 관리비",
+            "도시가스 요금",
+            "전화 요금",
+            "전기 요금"
+          ],
+          "pick-bill": [
+            "국세",
+            "관세",
+            "국고",
+            "국세 환급금 조회",
+            "지방세",
+            "환경개선부담금",
+            "세외수입",
+            "아파트/상가관리비",
+            "KT통신요금",
+            "전기요금/TV수신료",
+            "상하수도요금",
+            "고속도로 통행료",
+            "국민연금",
+            "공무원연금",
+            "통합징수 보험료",
+            "고용/산재보험료",
+            "교통범칙금",
+            "검찰청 벌과금"
+          ],
+          "pw": [
+            "3",
+            "2",
+            "7",
+            "6",
+            "1",
+            "8",
+            "5",
+            "4",
+            "9",
+            "0"
+          ]
+        },
+        "contrast": [],
+        "contrast_undetermined": [],
+        "inherited": [
+          {
+            "text": "4:31",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "67",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "납부완료",
+            "tag": "div",
+            "cls": "donet",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "2,160",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(0, 70, 255)"
+          },
+          {
+            "text": "2026.08.07 10:11",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "1700000000",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "홍길동",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "202607",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "31500000000000",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "○○동 ●●●-●",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          }
+        ],
+        "overlap": [
+          {
+            "a": "• '납부 완료'가 표시되더라도 입금할 수 ",
+            "b": "확인",
+            "overlap_pct": 61
+          }
+        ],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "고객전용지정 계좌번호",
+            "tag": "span",
+            "cls": "k",
+            "lines": 2
+          },
+          {
+            "text": "• '납부 완료'가 표시되더라도 입금할 수 없는 계좌인",
+            "tag": "div",
+            "cls": "note",
+            "lines": 2
+          }
+        ],
+        "shown": [
+          [
+            "#dn-paid",
+            "2,160"
+          ],
+          [
+            "#dn-acc",
+            "신한 110-000-000000"
+          ],
+          [
+            "#dn-eno",
+            "1700000000"
+          ]
+        ]
+      }
+    },
+    "dialogs": [],
+    "js_errors": [],
+    "reached": [
+      "home",
+      "menu",
+      "search",
+      "bill-home",
+      "camera",
+      "info",
+      "password",
+      "done"
+    ],
+    "missing_ids": [],
+    "state_pairs": [
+      {
+        "base": ".screen",
+        "state": "on",
+        "props": [
+          "display"
+        ],
+        "differing": [
+          "display"
+        ],
+        "base_values": [
+          "display=none"
+        ]
+      },
+      {
+        "base": ".mtab",
+        "state": "act",
+        "props": [
+          "color",
+          "font-weight",
+          "border-bottom-color"
+        ],
+        "differing": [
+          "color",
+          "font-weight",
+          "border-bottom-color"
+        ],
+        "base_values": [
+          "color=rgb(154, 158, 166)",
+          "font-weight=400",
+          "border-bottom-color=rgba(0, 0, 0, 0)"
+        ]
+      },
+      {
+        "base": ".sclear",
+        "state": "on",
+        "props": [
+          "display"
+        ],
+        "differing": [
+          "display"
+        ],
+        "base_values": [
+          "display=none"
+        ]
+      }
+    ],
+    "load_failed": null,
+    "notes": [],
+    "js_error_details": [],
+    "flow": "original_bill",
+    "truth": {
+      "AMOUNT": "2160",
+      "ENO": "1700000000",
+      "AMOUNT_SHOWN": "2,160",
+      "MONTH": "202607",
+      "QUERY": "공과",
+      "CUSTOMER": "홍길동",
+      "PAY_BANK": "신한",
+      "PAY_ACCOUNT": "110-000-000000"
+    },
+    "undefined_classes": []
+  },
+  "rep": {
+    "screens": {
+      "home": {
+        "landed_on": "home",
+        "dom_screen": "home",
+        "attr_text": "",
+        "outside_text": "",
+        "actions": [
+          "go-menu"
+        ],
+        "ids": [],
+        "screens": [
+          "home",
+          "menu",
+          "search",
+          "bill-home",
+          "camera",
+          "info",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "4:31\n67\nC\n홍길동님\n☺\n▤\n♤\n⌕\n자산\n›\nS\n[금융거래한도계좌2]신한 주거래 우대통장\n(저축예금)\n금액 숨김\n이체\n절세혜택과 안정적인 노후, IRP로 준비하세요\n▭\nPick E 체크캐릭터형(하리보)\n금액 숨김\n앱카드 가입\n땡겨요\n›\n🍔\n할인쿠폰 드려요\nbhc치킨 최대 9,000원\n바로받기\n이벤트\n쿠폰\n포인트\n7월 소비 ↻\n›\n📅 오늘 쓴 돈\n0원\n카드 쓸때마다 쌓이고, 현금처럼 쓰는\n마이신한포인트\n시작하기\n추천서비스\n›\n⌂\nSOL패밀리\n가족과 함께하는 금융생활\n🅦\n급여클럽+\n급여이체 우대 혜택\n💳\n내 카드 승인내역\n모든 카드 실시간 승인내역\n더 많은 금융자산 모두\n연결하면 커피쿠폰 즉시지급!\n이벤트 바로가기 ›\n신한금융그룹\n💳\n신한카드\n나에게 맞는 카드 찾기\n📈\n신한투자증권\n지금 뜨는 주식 보러가기\n🛡\n신한라이프\n내게 필요한 보험, 보장분석으로 확인하기\n쉬운홈\n홈화면 설정\n금액 숨기기\n⌂\n홈\nⓌ\n금융\n⌂\n상품\n🎁\n혜택\n📈\n주식",
+        "height": 844,
+        "choices": {
+          "menu-tab": [
+            "은행",
+            "카드",
+            "증권",
+            "보험",
+            "혜택",
+            "상품",
+            "고객센터"
+          ],
+          "menu-chip": [
+            "은행::조회/관리",
+            "은행::이체",
+            "은행::세금/공과금",
+            "은행::상품관리",
+            "은행::자산관리",
+            "은행::외환",
+            "은행::모바일창구",
+            "은행::특화라운지",
+            "은행::신한 슈퍼SOL 사용팁",
+            "은행::설정/인증"
+          ],
+          "menu-item": [
+            "전체계좌 조회",
+            "입출금 거래내역",
+            "소비 현황",
+            "계좌비밀번호 설정",
+            "계좌 통합관리",
+            "휴면예금 및 숨은 보험금 찾기",
+            "비과세종합저축 자료제출",
+            "계좌이체",
+            "다건이체",
+            "이체결과 조회",
+            "자동이체",
+            "간편앱출금",
+            "이체관리",
+            "자동이체 가져오기",
+            "MY급여이체",
+            "납부하기",
+            "자동납부",
+            "납부내역 조회",
+            "공공기관 채권",
+            "법원업무",
+            "대학등록금",
+            "입출금",
+            "예적금/청약",
+            "외화예적금",
+            "대출",
+            "퇴직연금",
+            "펀드",
+            "신탁",
+            "개인종합자산관리(ISA)",
+            "포트폴리오",
+            "골드/실버",
+            "카드",
+            "보험",
+            "전세보증금반환보증",
+            "자산분석",
+            "소비분석",
+            "고정지출",
+            "예산관리",
+            "금융캘린더",
+            "연말정산",
+            "금융상품비교",
+            "부동산",
+            "내 차 리포트",
+            "투자지표",
+            "금리인하요구권 대행 서비스",
+            "은퇴 시뮬레이션",
+            "연결관리",
+            "환전",
+            "국내 외화이체",
+            "해외송금",
+            "SOL트래블",
+            "글로벌 멀티카드 충전/환불",
+            "거래외국환은행 지정",
+            "외국환거래약정 동의",
+            "증명서 발급",
+            "화상상담서비스",
+            "모바일번호표",
+            "서식작성",
+            "영업점 상담예약",
+            "소호메이트(개인사업자)",
+            "SOL PB",
+            "SOL메이트 자산관리라운지",
+            "SOL메이트 연금광장",
+            "리틀 신한 케어",
+            "디딤씨앗 정보조회",
+            "슈퍼쏠져(나라사랑카드라운지)",
+            "신한 슈퍼SOL 사용팁",
+            "비대면 계좌개설 안심차단",
+            "설정/인증",
+            "아파트 관리비",
+            "도시가스 요금",
+            "전화 요금",
+            "전기 요금"
+          ],
+          "pick-bill": [
+            "국세",
+            "관세",
+            "국고",
+            "국세 환급금 조회",
+            "지방세",
+            "환경개선부담금",
+            "세외수입",
+            "아파트/상가관리비",
+            "KT통신요금",
+            "전기요금/TV수신료",
+            "상하수도요금",
+            "고속도로 통행료",
+            "국민연금",
+            "공무원연금",
+            "통합징수 보험료",
+            "고용/산재보험료",
+            "교통범칙금",
+            "검찰청 벌과금"
+          ],
+          "pw": [
+            "9",
+            "0",
+            "5",
+            "7",
+            "6",
+            "1",
+            "8",
+            "4",
+            "2",
+            "3"
+          ]
+        },
+        "contrast": [
+          {
+            "text": "C",
+            "tag": "span",
+            "cls": "dot",
+            "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
+            "bg": "rgb(255, 122, 0)",
+            "opacity": 1,
+            "fontSize": 12,
+            "ratio": 2.61,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "arr",
+            "color": "rgb(185, 190, 199)",
+            "seen": "rgb(185, 190, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 17,
+            "ratio": 1.87,
+            "need": 4.5
+          },
+          {
+            "text": "▭",
+            "tag": "div",
+            "cls": "logo",
+            "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
+            "bg": "rgb(224, 138, 0)",
+            "opacity": 1,
+            "fontSize": 15,
+            "ratio": 2.69,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "arr",
+            "color": "rgb(185, 190, 199)",
+            "seen": "rgb(185, 190, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 17,
+            "ratio": 1.87,
+            "need": 4.5
+          },
+          {
+            "text": "할인쿠폰 드려요",
+            "tag": "div",
+            "cls": "t2",
+            "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 12,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "arr",
+            "color": "rgb(185, 190, 199)",
+            "seen": "rgb(185, 190, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 17,
+            "ratio": 1.87,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "arr",
+            "color": "rgb(185, 190, 199)",
+            "seen": "rgb(185, 190, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 17,
+            "ratio": 1.87,
+            "need": 4.5
+          },
+          {
+            "text": "가족과 함께하는 금융생활",
+            "tag": "div",
+            "cls": "t2",
+            "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 12,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "급여이체 우대 혜택",
+            "tag": "div",
+            "cls": "t2",
+            "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 12,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "모든 카드 실시간 승인내역",
+            "tag": "div",
+            "cls": "t2",
+            "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 12,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "나에게 맞는 카드 찾기",
+            "tag": "div",
+            "cls": "t2",
+            "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 12,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "지금 뜨는 주식 보러가기",
+            "tag": "div",
+            "cls": "t2",
+            "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 12,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "내게 필요한 보험, 보장분석으로 확인하기",
+            "tag": "div",
+            "cls": "t2",
+            "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 12,
+            "ratio": 3.25,
+            "need": 4.5
+          },
+          {
+            "text": "금융",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 11,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "Ⓦ",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 18,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "상품",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 11,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "⌂",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 18,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "혜택",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 11,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "🎁",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 18,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "주식",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 11,
+            "ratio": 2.64,
+            "need": 4.5
+          },
+          {
+            "text": "📈",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)",
+            "seen": "rgb(154, 160, 168)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 18,
+            "ratio": 2.64,
+            "need": 4.5
+          }
+        ],
+        "contrast_undetermined": [
+          {
+            "text": "카드 쓸때마다 쌓이고, 현금처럼 쓰는",
+            "tag": "div",
+            "cls": "p1",
+            "color": "rgb(255, 255, 255)",
+            "fontSize": 12,
+            "need": 4.5,
+            "background": "linear-gradient(90deg, rgb(61, 111, 232), rgb(91, 127, 240))",
+            "behind": "div.pointbar"
+          },
+          {
+            "text": "마이신한포인트",
+            "tag": "div",
+            "cls": "p2",
+            "color": "rgb(255, 255, 255)",
+            "fontSize": 20,
+            "need": 3,
+            "background": "linear-gradient(90deg, rgb(61, 111, 232), rgb(91, 127, 240))",
+            "behind": "div.pointbar"
+          }
+        ],
+        "inherited": [
+          {
+            "text": "4:31",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "67",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "홍길동님",
+            "tag": "div",
+            "cls": "name",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "☺",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(51, 51, 51)"
+          },
+          {
+            "text": "▤",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(51, 51, 51)"
+          },
+          {
+            "text": "♤",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(51, 51, 51)"
+          },
+          {
+            "text": "⌕",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(51, 51, 51)"
+          },
+          {
+            "text": "자산",
+            "tag": "h3",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "금액 숨김",
+            "tag": "div",
+            "cls": "acctamt",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "Pick E 체크캐릭터형(하리보)",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "금액 숨김",
+            "tag": "div",
+            "cls": "acctamt",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "땡겨요",
+            "tag": "h3",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "🍔",
+            "tag": "div",
+            "cls": "sq",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "bhc치킨 최대 9,000원",
+            "tag": "div",
+            "cls": "t1",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "이벤트",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(90, 96, 105)"
+          },
+          {
+            "text": "쿠폰",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(90, 96, 105)"
+          },
+          {
+            "text": "포인트",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(90, 96, 105)"
+          },
+          {
+            "text": "7월 소비 ↻",
+            "tag": "h3",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "0원",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "카드 쓸때마다 쌓이고, 현금처럼 쓰는",
+            "tag": "div",
+            "cls": "p1",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "마이신한포인트",
+            "tag": "div",
+            "cls": "p2",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "추천서비스",
+            "tag": "h3",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "⌂",
+            "tag": "div",
+            "cls": "sq",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "SOL패밀리",
+            "tag": "div",
+            "cls": "t1",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "🅦",
+            "tag": "div",
+            "cls": "sq",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "급여클럽+",
+            "tag": "div",
+            "cls": "t1",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "💳",
+            "tag": "div",
+            "cls": "sq",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "내 카드 승인내역",
+            "tag": "div",
+            "cls": "t1",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "더 많은 금융자산 모두 연결하면 커피쿠폰 즉시지급!",
+            "tag": "div",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신한금융그룹",
+            "tag": "h3",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "💳",
+            "tag": "div",
+            "cls": "sq",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신한카드",
+            "tag": "div",
+            "cls": "t1",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "📈",
+            "tag": "div",
+            "cls": "sq",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신한투자증권",
+            "tag": "div",
+            "cls": "t1",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "🛡",
+            "tag": "div",
+            "cls": "sq",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신한라이프",
+            "tag": "div",
+            "cls": "t1",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "쉬운홈",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(90, 96, 105)"
+          },
+          {
+            "text": "홈화면 설정",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(90, 96, 105)"
+          },
+          {
+            "text": "금액 숨기기",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(90, 96, 105)"
+          },
+          {
+            "text": "⌂",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(27, 100, 218)"
+          },
+          {
+            "text": "Ⓦ",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)"
+          },
+          {
+            "text": "⌂",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)"
+          },
+          {
+            "text": "🎁",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)"
+          },
+          {
+            "text": "📈",
+            "tag": "span",
+            "cls": "ti",
+            "color": "rgb(154, 160, 168)"
+          }
+        ],
+        "overlap": [
+          {
+            "a": "카드 쓸때마다 쌓이고, 현금처럼 쓰는",
+            "b": "Ⓦ금융",
+            "overlap_pct": 39
+          },
+          {
+            "a": "카드 쓸때마다 쌓이고, 현금처럼 쓰는",
+            "b": "⌂상품",
+            "overlap_pct": 38
+          },
+          {
+            "a": "카드 쓸때마다 쌓이고, 현금처럼 쓰는",
+            "b": "⌂",
+            "overlap_pct": 27
+          },
+          {
+            "a": "마이신한포인트",
+            "b": "Ⓦ금융",
+            "overlap_pct": 29
+          },
+          {
+            "a": "마이신한포인트",
+            "b": "⌂상품",
+            "overlap_pct": 28
+          },
+          {
+            "a": "시작하기",
+            "b": "🎁혜택",
+            "overlap_pct": 38
+          },
+          {
+            "a": "시작하기",
+            "b": "📈주식",
+            "overlap_pct": 51
+          }
+        ],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "[금융거래한도계좌2]신한 주거래 우대통장 (저축예금)",
+            "tag": "div",
+            "cls": "acctname",
+            "lines": 3
+          },
+          {
+            "text": "더 많은 금융자산 모두 연결하면 커피쿠폰 즉시지급!",
+            "tag": "div",
+            "cls": "",
+            "lines": 2
+          }
+        ],
+        "shown": []
+      },
+      "menu": {
+        "landed_on": "menu",
+        "dom_screen": "menu",
+        "attr_text": "",
+        "outside_text": "",
+        "actions": [
+          "back-home",
+          "open-search",
+          "menu-tab",
+          "menu-tab",
+          "menu-tab",
+          "menu-tab",
+          "menu-tab",
+          "menu-tab",
+          "menu-tab",
+          "menu-chip",
+          "menu-chip",
+          "menu-chip",
+          "menu-chip",
+          "menu-chip",
+          "menu-chip",
+          "menu-chip",
+          "menu-chip",
+          "menu-chip",
+          "menu-chip",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item",
+          "menu-item"
+        ],
+        "ids": [
+          "menu-tabs",
+          "menu-body",
+          "cat-은행",
+          "sec-은행::조회/관리",
+          "sec-은행::이체",
+          "sec-은행::세금/공과금",
+          "sec-은행::상품관리",
+          "sec-은행::자산관리",
+          "sec-은행::외환",
+          "sec-은행::모바일창구",
+          "sec-은행::특화라운지",
+          "sec-은행::신한 슈퍼SOL 사용팁",
+          "sec-은행::설정/인증",
+          "cat-카드",
+          "sec-카드::대표 생활요금",
+          "cat-증권",
+          "cat-보험",
+          "cat-혜택",
+          "cat-상품",
+          "cat-고객센터"
+        ],
+        "screens": [
+          "home",
+          "menu",
+          "search",
+          "bill-home",
+          "camera",
+          "info",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "4:31\n67\n‹\n💬\n⚙\n⎋\n상품, 메뉴, 혜택 등을 검색해보세요\n⌕\n은행\n카드\n증권\n보험\n혜택\n상품\n고객센터\n은행\n조회/관리\n이체\n세금/공과금\n상품관리\n자산관리\n외환\n모바일창구\n특화라운지\n신한 슈퍼SOL 사용팁\n설정/인증\n조회/관리\n전체계좌 조회\n입출금 거래내역\n소비 현황\n계좌비밀번호 설정\n계좌 통합관리\n휴면예금 및 숨은 보험금 찾기\n비과세종합저축 자료제출\n이체\n계좌이체\n다건이체\n이체결과 조회\n자동이체\n간편앱출금\n이체관리\n자동이체 가져오기\nMY급여이체\n세금/공과금\n납부하기\n자동납부\n납부내역 조회\n공공기관 채권\n법원업무\n대학등록금\n상품관리\n입출금\n예적금/청약\n외화예적금\n대출\n퇴직연금\n펀드\n신탁\n개인종합자산관리(ISA)\n포트폴리오\n골드/실버\n카드\n보험\n전세보증금반환보증\n자산관리\n자산분석\n소비분석\n고정지출\n예산관리\n금융캘린더\n연말정산\n금융상품비교\n부동산\n내 차 리포트\n투자지표\n금리인하요구권 대행 서비스\n은퇴 시뮬레이션\n연결관리\n외환\n환전\n국내 외화이체\n해외송금\nSOL트래블\n글로벌 멀티카드 충전/환불\n거래외국환은행 지정\n외국환거래약정 동의\n모바일창구\n증명서 발급\n화상상담서비스\n모바일번호표\n서식작성\n영업점 상담예약\n특화라운지\n소호메이트(개인사업자)\nSOL PB\nSOL메이트 자산관리라운지\nSOL메이트 연금광장\n리틀 신한 케어\n디딤씨앗 정보조회\n슈퍼쏠져(나라사랑카드라운지)\n신한 슈퍼SOL 사용팁\n신한 슈퍼SOL 사용팁\n설정/인증\n비대면 계좌개설 안심차단\n설정/인증\n카드\n대표 생활요금\n아파트 관리비\n도시가스 요금\n전화 요금\n전기 요금\n증권\n보험\n혜택\n상품\n고객센터",
+        "height": 844,
+        "choices": {
+          "menu-tab": [
+            "은행",
+            "카드",
+            "증권",
+            "보험",
+            "혜택",
+            "상품",
+            "고객센터"
+          ],
+          "menu-chip": [
+            "은행::조회/관리",
+            "은행::이체",
+            "은행::세금/공과금",
+            "은행::상품관리",
+            "은행::자산관리",
+            "은행::외환",
+            "은행::모바일창구",
+            "은행::특화라운지",
+            "은행::신한 슈퍼SOL 사용팁",
+            "은행::설정/인증"
+          ],
+          "menu-item": [
+            "전체계좌 조회",
+            "입출금 거래내역",
+            "소비 현황",
+            "계좌비밀번호 설정",
+            "계좌 통합관리",
+            "휴면예금 및 숨은 보험금 찾기",
+            "비과세종합저축 자료제출",
+            "계좌이체",
+            "다건이체",
+            "이체결과 조회",
+            "자동이체",
+            "간편앱출금",
+            "이체관리",
+            "자동이체 가져오기",
+            "MY급여이체",
+            "납부하기",
+            "자동납부",
+            "납부내역 조회",
+            "공공기관 채권",
+            "법원업무",
+            "대학등록금",
+            "입출금",
+            "예적금/청약",
+            "외화예적금",
+            "대출",
+            "퇴직연금",
+            "펀드",
+            "신탁",
+            "개인종합자산관리(ISA)",
+            "포트폴리오",
+            "골드/실버",
+            "카드",
+            "보험",
+            "전세보증금반환보증",
+            "자산분석",
+            "소비분석",
+            "고정지출",
+            "예산관리",
+            "금융캘린더",
+            "연말정산",
+            "금융상품비교",
+            "부동산",
+            "내 차 리포트",
+            "투자지표",
+            "금리인하요구권 대행 서비스",
+            "은퇴 시뮬레이션",
+            "연결관리",
+            "환전",
+            "국내 외화이체",
+            "해외송금",
+            "SOL트래블",
+            "글로벌 멀티카드 충전/환불",
+            "거래외국환은행 지정",
+            "외국환거래약정 동의",
+            "증명서 발급",
+            "화상상담서비스",
+            "모바일번호표",
+            "서식작성",
+            "영업점 상담예약",
+            "소호메이트(개인사업자)",
+            "SOL PB",
+            "SOL메이트 자산관리라운지",
+            "SOL메이트 연금광장",
+            "리틀 신한 케어",
+            "디딤씨앗 정보조회",
+            "슈퍼쏠져(나라사랑카드라운지)",
+            "신한 슈퍼SOL 사용팁",
+            "비대면 계좌개설 안심차단",
+            "설정/인증",
+            "아파트 관리비",
+            "도시가스 요금",
+            "전화 요금",
+            "전기 요금"
+          ],
+          "pick-bill": [
+            "국세",
+            "관세",
+            "국고",
+            "국세 환급금 조회",
+            "지방세",
+            "환경개선부담금",
+            "세외수입",
+            "아파트/상가관리비",
+            "KT통신요금",
+            "전기요금/TV수신료",
+            "상하수도요금",
+            "고속도로 통행료",
+            "국민연금",
+            "공무원연금",
+            "통합징수 보험료",
+            "고용/산재보험료",
+            "교통범칙금",
+            "검찰청 벌과금"
+          ],
+          "pw": [
+            "9",
+            "0",
+            "5",
+            "7",
+            "6",
+            "1",
+            "8",
+            "4",
+            "2",
+            "3"
+          ]
+        },
+        "contrast": [
+          {
+            "text": "상품, 메뉴, 혜택 등을 검색해보세요",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(154, 158, 166)",
+            "seen": "rgb(154, 158, 166)",
+            "bg": "rgb(237, 239, 243)",
+            "opacity": 1,
+            "fontSize": 17,
+            "ratio": 2.33,
+            "need": 4.5
+          },
+          {
+            "text": "⌕",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(154, 158, 166)",
+            "seen": "rgb(154, 158, 166)",
+            "bg": "rgb(237, 239, 243)",
+            "opacity": 1,
+            "fontSize": 17,
+            "ratio": 2.33,
+            "need": 4.5
+          },
+          {
+            "text": "카드",
+            "tag": "div",
+            "cls": "mtab",
+            "color": "rgb(154, 158, 166)",
+            "seen": "rgb(154, 158, 166)",
+            "bg": "rgb(242, 244, 248)",
+            "opacity": 1,
+            "fontSize": 18,
+            "ratio": 2.44,
+            "need": 4.5
+          },
+          {
+            "text": "증권",
+            "tag": "div",
+            "cls": "mtab",
+            "color": "rgb(154, 158, 166)",
+            "seen": "rgb(154, 158, 166)",
+            "bg": "rgb(242, 244, 248)",
+            "opacity": 1,
+            "fontSize": 18,
+            "ratio": 2.44,
+            "need": 4.5
+          },
+          {
+            "text": "보험",
+            "tag": "div",
+            "cls": "mtab",
+            "color": "rgb(154, 158, 166)",
+            "seen": "rgb(154, 158, 166)",
+            "bg": "rgb(242, 244, 248)",
+            "opacity": 1,
+            "fontSize": 18,
+            "ratio": 2.44,
+            "need": 4.5
+          },
+          {
+            "text": "혜택",
+            "tag": "div",
+            "cls": "mtab",
+            "color": "rgb(154, 158, 166)",
+            "seen": "rgb(154, 158, 166)",
+            "bg": "rgb(242, 244, 248)",
+            "opacity": 1,
+            "fontSize": 18,
+            "ratio": 2.44,
+            "need": 4.5
+          },
+          {
+            "text": "상품",
+            "tag": "div",
+            "cls": "mtab",
+            "color": "rgb(154, 158, 166)",
+            "seen": "rgb(154, 158, 166)",
+            "bg": "rgb(242, 244, 248)",
+            "opacity": 1,
+            "fontSize": 18,
+            "ratio": 2.44,
+            "need": 4.5
+          },
+          {
+            "text": "고객센터",
+            "tag": "div",
+            "cls": "mtab",
+            "color": "rgb(154, 158, 166)",
+            "seen": "rgb(154, 158, 166)",
+            "bg": "rgb(242, 244, 248)",
+            "opacity": 1,
+            "fontSize": 18,
+            "ratio": 2.44,
+            "need": 4.5
+          }
+        ],
+        "contrast_undetermined": [],
+        "inherited": [
+          {
+            "text": "4:31",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "67",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "상품, 메뉴, 혜택 등을 검색해보세요",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(154, 158, 166)"
+          },
+          {
+            "text": "⌕",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(154, 158, 166)"
+          },
+          {
+            "text": "은행",
+            "tag": "div",
+            "cls": "mtab act",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "은행",
+            "tag": "h2",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "조회/관리",
+            "tag": "span",
+            "cls": "chip",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "이체",
+            "tag": "span",
+            "cls": "chip",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "세금/공과금",
+            "tag": "span",
+            "cls": "chip",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "상품관리",
+            "tag": "span",
+            "cls": "chip",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "자산관리",
+            "tag": "span",
+            "cls": "chip",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "외환",
+            "tag": "span",
+            "cls": "chip",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "모바일창구",
+            "tag": "span",
+            "cls": "chip",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "특화라운지",
+            "tag": "span",
+            "cls": "chip",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신한 슈퍼SOL 사용팁",
+            "tag": "span",
+            "cls": "chip",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "설정/인증",
+            "tag": "span",
+            "cls": "chip",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "전체계좌 조회",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "입출금 거래내역",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "소비 현황",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "계좌비밀번호 설정",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "계좌 통합관리",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "휴면예금 및 숨은 보험금 찾기",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "비과세종합저축 자료제출",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "계좌이체",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "다건이체",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "이체결과 조회",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "자동이체",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "간편앱출금",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "이체관리",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "자동이체 가져오기",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "MY급여이체",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "납부하기",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "자동납부",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "납부내역 조회",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "공공기관 채권",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "법원업무",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "대학등록금",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "입출금",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "예적금/청약",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "외화예적금",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "대출",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "퇴직연금",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "펀드",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신탁",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "개인종합자산관리(ISA)",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "포트폴리오",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "골드/실버",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "카드",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "보험",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "전세보증금반환보증",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "자산분석",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "소비분석",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "고정지출",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "예산관리",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "금융캘린더",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "연말정산",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "금융상품비교",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "부동산",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "내 차 리포트",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "투자지표",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "금리인하요구권 대행 서비스",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "은퇴 시뮬레이션",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "연결관리",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "환전",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "국내 외화이체",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "해외송금",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "SOL트래블",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "글로벌 멀티카드 충전/환불",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "거래외국환은행 지정",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "외국환거래약정 동의",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "증명서 발급",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "화상상담서비스",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "모바일번호표",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "서식작성",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "영업점 상담예약",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "소호메이트(개인사업자)",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "SOL PB",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "SOL메이트 자산관리라운지",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "SOL메이트 연금광장",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "리틀 신한 케어",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "디딤씨앗 정보조회",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "슈퍼쏠져(나라사랑카드라운지)",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "신한 슈퍼SOL 사용팁",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "비대면 계좌개설 안심차단",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "설정/인증",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "카드",
+            "tag": "h2",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "아파트 관리비",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "도시가스 요금",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "전화 요금",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "전기 요금",
+            "tag": "div",
+            "cls": "mi",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "증권",
+            "tag": "h2",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "보험",
+            "tag": "h2",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "혜택",
+            "tag": "h2",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "상품",
+            "tag": "h2",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "고객센터",
+            "tag": "h2",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [],
+        "shown": []
+      },
+      "search": {
+        "landed_on": "search",
+        "dom_screen": "search",
+        "attr_text": "검색어를 입력하세요",
+        "outside_text": "",
+        "actions": [
+          "back-menu",
+          "search-clear"
+        ],
+        "ids": [
+          "search-input",
+          "search-clear",
+          "search-body"
+        ],
+        "screens": [
+          "home",
+          "menu",
+          "search",
+          "bill-home",
+          "camera",
+          "info",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "4:31\n67\n‹\n⌕\n찾으시는 메뉴를 입력해보세요",
+        "height": 844,
+        "choices": {
+          "menu-tab": [
+            "은행",
+            "카드",
+            "증권",
+            "보험",
+            "혜택",
+            "상품",
+            "고객센터"
+          ],
+          "menu-chip": [
+            "은행::조회/관리",
+            "은행::이체",
+            "은행::세금/공과금",
+            "은행::상품관리",
+            "은행::자산관리",
+            "은행::외환",
+            "은행::모바일창구",
+            "은행::특화라운지",
+            "은행::신한 슈퍼SOL 사용팁",
+            "은행::설정/인증"
+          ],
+          "menu-item": [
+            "전체계좌 조회",
+            "입출금 거래내역",
+            "소비 현황",
+            "계좌비밀번호 설정",
+            "계좌 통합관리",
+            "휴면예금 및 숨은 보험금 찾기",
+            "비과세종합저축 자료제출",
+            "계좌이체",
+            "다건이체",
+            "이체결과 조회",
+            "자동이체",
+            "간편앱출금",
+            "이체관리",
+            "자동이체 가져오기",
+            "MY급여이체",
+            "납부하기",
+            "자동납부",
+            "납부내역 조회",
+            "공공기관 채권",
+            "법원업무",
+            "대학등록금",
+            "입출금",
+            "예적금/청약",
+            "외화예적금",
+            "대출",
+            "퇴직연금",
+            "펀드",
+            "신탁",
+            "개인종합자산관리(ISA)",
+            "포트폴리오",
+            "골드/실버",
+            "카드",
+            "보험",
+            "전세보증금반환보증",
+            "자산분석",
+            "소비분석",
+            "고정지출",
+            "예산관리",
+            "금융캘린더",
+            "연말정산",
+            "금융상품비교",
+            "부동산",
+            "내 차 리포트",
+            "투자지표",
+            "금리인하요구권 대행 서비스",
+            "은퇴 시뮬레이션",
+            "연결관리",
+            "환전",
+            "국내 외화이체",
+            "해외송금",
+            "SOL트래블",
+            "글로벌 멀티카드 충전/환불",
+            "거래외국환은행 지정",
+            "외국환거래약정 동의",
+            "증명서 발급",
+            "화상상담서비스",
+            "모바일번호표",
+            "서식작성",
+            "영업점 상담예약",
+            "소호메이트(개인사업자)",
+            "SOL PB",
+            "SOL메이트 자산관리라운지",
+            "SOL메이트 연금광장",
+            "리틀 신한 케어",
+            "디딤씨앗 정보조회",
+            "슈퍼쏠져(나라사랑카드라운지)",
+            "신한 슈퍼SOL 사용팁",
+            "비대면 계좌개설 안심차단",
+            "설정/인증",
+            "아파트 관리비",
+            "도시가스 요금",
+            "전화 요금",
+            "전기 요금"
+          ],
+          "pick-bill": [
+            "국세",
+            "관세",
+            "국고",
+            "국세 환급금 조회",
+            "지방세",
+            "환경개선부담금",
+            "세외수입",
+            "아파트/상가관리비",
+            "KT통신요금",
+            "전기요금/TV수신료",
+            "상하수도요금",
+            "고속도로 통행료",
+            "국민연금",
+            "공무원연금",
+            "통합징수 보험료",
+            "고용/산재보험료",
+            "교통범칙금",
+            "검찰청 벌과금"
+          ],
+          "pw": [
+            "9",
+            "0",
+            "5",
+            "7",
+            "6",
+            "1",
+            "8",
+            "4",
+            "2",
+            "3"
+          ]
+        },
+        "contrast": [
+          {
+            "text": "찾으시는 메뉴를 입력해보세요",
+            "tag": "div",
+            "cls": "shint",
+            "color": "rgb(154, 158, 166)",
+            "seen": "rgb(154, 158, 166)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 17,
+            "ratio": 2.69,
+            "need": 4.5
+          }
+        ],
+        "contrast_undetermined": [],
+        "inherited": [
+          {
+            "text": "4:31",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "67",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "‹",
+            "tag": "span",
+            "cls": "ico",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "⌕",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [],
+        "shown": []
+      },
+      "bill-home": {
+        "landed_on": "bill-home",
+        "dom_screen": "bill-home",
+        "attr_text": "",
+        "outside_text": "",
+        "actions": [
+          "back-bill-home",
+          "pay-start",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill",
+          "pick-bill"
+        ],
+        "ids": [
+          "bill-list"
+        ],
+        "screens": [
+          "home",
+          "menu",
+          "search",
+          "bill-home",
+          "camera",
+          "info",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "4:31\n67\n‹\n💬\n⌂\n각종 세금/공과금 이제\n간편하게 납부해보세요\n🧾\n납부하기\n종이고지서 번호로 바로 납부\n조회하기\n전자고지서로 간편하게 확인\n자주쓰는 지로번호 등록해보세요!\n›\n국고금\n국세\n›\n관세\n›\n국고\n›\n국세 환급금 조회\n›\n통합지방세\n지방세\n주민세, 재산세, 자동차세 등\n›\n환경개선부담금\n경유자동차 사용 부담금\n›\n세외수입\n과태료, 수수료, 기부금 등\n›\n생활공과금\n아파트/상가관리비\n›\nKT통신요금\n›\n전기요금/TV수신료\n›\n상하수도요금\n›\n고속도로 통행료\n›\n4대 보험/연금\n국민연금\n›\n공무원연금\n›\n통합징수 보험료\n›\n고용/산재보험료\n›\n벌금/과태료\n교통범칙금\n›\n검찰청 벌과금\n›",
+        "height": 844,
+        "choices": {
+          "menu-tab": [
+            "은행",
+            "카드",
+            "증권",
+            "보험",
+            "혜택",
+            "상품",
+            "고객센터"
+          ],
+          "menu-chip": [
+            "은행::조회/관리",
+            "은행::이체",
+            "은행::세금/공과금",
+            "은행::상품관리",
+            "은행::자산관리",
+            "은행::외환",
+            "은행::모바일창구",
+            "은행::특화라운지",
+            "은행::신한 슈퍼SOL 사용팁",
+            "은행::설정/인증"
+          ],
+          "menu-item": [
+            "전체계좌 조회",
+            "입출금 거래내역",
+            "소비 현황",
+            "계좌비밀번호 설정",
+            "계좌 통합관리",
+            "휴면예금 및 숨은 보험금 찾기",
+            "비과세종합저축 자료제출",
+            "계좌이체",
+            "다건이체",
+            "이체결과 조회",
+            "자동이체",
+            "간편앱출금",
+            "이체관리",
+            "자동이체 가져오기",
+            "MY급여이체",
+            "납부하기",
+            "자동납부",
+            "납부내역 조회",
+            "공공기관 채권",
+            "법원업무",
+            "대학등록금",
+            "입출금",
+            "예적금/청약",
+            "외화예적금",
+            "대출",
+            "퇴직연금",
+            "펀드",
+            "신탁",
+            "개인종합자산관리(ISA)",
+            "포트폴리오",
+            "골드/실버",
+            "카드",
+            "보험",
+            "전세보증금반환보증",
+            "자산분석",
+            "소비분석",
+            "고정지출",
+            "예산관리",
+            "금융캘린더",
+            "연말정산",
+            "금융상품비교",
+            "부동산",
+            "내 차 리포트",
+            "투자지표",
+            "금리인하요구권 대행 서비스",
+            "은퇴 시뮬레이션",
+            "연결관리",
+            "환전",
+            "국내 외화이체",
+            "해외송금",
+            "SOL트래블",
+            "글로벌 멀티카드 충전/환불",
+            "거래외국환은행 지정",
+            "외국환거래약정 동의",
+            "증명서 발급",
+            "화상상담서비스",
+            "모바일번호표",
+            "서식작성",
+            "영업점 상담예약",
+            "소호메이트(개인사업자)",
+            "SOL PB",
+            "SOL메이트 자산관리라운지",
+            "SOL메이트 연금광장",
+            "리틀 신한 케어",
+            "디딤씨앗 정보조회",
+            "슈퍼쏠져(나라사랑카드라운지)",
+            "신한 슈퍼SOL 사용팁",
+            "비대면 계좌개설 안심차단",
+            "설정/인증",
+            "아파트 관리비",
+            "도시가스 요금",
+            "전화 요금",
+            "전기 요금"
+          ],
+          "pick-bill": [
+            "국세",
+            "관세",
+            "국고",
+            "국세 환급금 조회",
+            "지방세",
+            "환경개선부담금",
+            "세외수입",
+            "아파트/상가관리비",
+            "KT통신요금",
+            "전기요금/TV수신료",
+            "상하수도요금",
+            "고속도로 통행료",
+            "국민연금",
+            "공무원연금",
+            "통합징수 보험료",
+            "고용/산재보험료",
+            "교통범칙금",
+            "검찰청 벌과금"
+          ],
+          "pw": [
+            "9",
+            "0",
+            "5",
+            "7",
+            "6",
+            "1",
+            "8",
+            "4",
+            "2",
+            "3"
+          ]
+        },
+        "contrast": [
+          {
+            "text": "종이고지서 번호로 바로 납부",
+            "tag": "div",
+            "cls": "d",
+            "color": "rgb(138, 138, 143)",
+            "seen": "rgb(138, 138, 143)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 3.44,
+            "need": 4.5
+          },
+          {
+            "text": "전자고지서로 간편하게 확인",
+            "tag": "div",
+            "cls": "d",
+            "color": "rgb(138, 138, 143)",
+            "seen": "rgb(138, 138, 143)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 3.44,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "주민세, 재산세, 자동차세 등",
+            "tag": "div",
+            "cls": "s",
+            "color": "rgb(138, 138, 143)",
+            "seen": "rgb(138, 138, 143)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 3.44,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "경유자동차 사용 부담금",
+            "tag": "div",
+            "cls": "s",
+            "color": "rgb(138, 138, 143)",
+            "seen": "rgb(138, 138, 143)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 3.44,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "과태료, 수수료, 기부금 등",
+            "tag": "div",
+            "cls": "s",
+            "color": "rgb(138, 138, 143)",
+            "seen": "rgb(138, 138, 143)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 3.44,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "c",
+            "color": "rgb(184, 189, 199)",
+            "seen": "rgb(184, 189, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 1.88,
+            "need": 4.5
+          }
+        ],
+        "contrast_undetermined": [],
+        "inherited": [
+          {
+            "text": "4:31",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "67",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "각종 세금/공과금 이제 간편하게 납부해보세요",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "🧾",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "납부하기",
+            "tag": "div",
+            "cls": "t",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "조회하기",
+            "tag": "div",
+            "cls": "t",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "자주쓰는 지로번호 등록해보세요!",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "국고금",
+            "tag": "div",
+            "cls": "bsec",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "국세",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "관세",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "국고",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "국세 환급금 조회",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "통합지방세",
+            "tag": "div",
+            "cls": "bsec",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "지방세",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "환경개선부담금",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "세외수입",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "생활공과금",
+            "tag": "div",
+            "cls": "bsec",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "아파트/상가관리비",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "KT통신요금",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "전기요금/TV수신료",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "상하수도요금",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "고속도로 통행료",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "4대 보험/연금",
+            "tag": "div",
+            "cls": "bsec",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "국민연금",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "공무원연금",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "통합징수 보험료",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "고용/산재보험료",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "벌금/과태료",
+            "tag": "div",
+            "cls": "bsec",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "교통범칙금",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "검찰청 벌과금",
+            "tag": "div",
+            "cls": "l",
+            "color": "rgb(26, 26, 26)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "각종 세금/공과금 이제 간편하게 납부해보세요",
+            "tag": "span",
+            "cls": "",
+            "lines": 2
+          },
+          {
+            "text": "종이고지서 번호로 바로 납부",
+            "tag": "div",
+            "cls": "d",
+            "lines": 2
+          },
+          {
+            "text": "전자고지서로 간편하게 확인",
+            "tag": "div",
+            "cls": "d",
+            "lines": 2
+          }
+        ],
+        "shown": []
+      },
+      "camera": {
+        "landed_on": "camera",
+        "dom_screen": "camera",
+        "attr_text": "",
+        "outside_text": "",
+        "actions": [
+          "shutter",
+          "to-bill-home"
+        ],
+        "ids": [],
+        "screens": [
+          "home",
+          "menu",
+          "search",
+          "bill-home",
+          "camera",
+          "info",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "4:31\n67\n지로번호가 잘 보이게\n준비해주세요\n고지서를 사각형에 맞춰\n촬영해주세요\n✕",
+        "height": 844,
+        "choices": {
+          "menu-tab": [
+            "은행",
+            "카드",
+            "증권",
+            "보험",
+            "혜택",
+            "상품",
+            "고객센터"
+          ],
+          "menu-chip": [
+            "은행::조회/관리",
+            "은행::이체",
+            "은행::세금/공과금",
+            "은행::상품관리",
+            "은행::자산관리",
+            "은행::외환",
+            "은행::모바일창구",
+            "은행::특화라운지",
+            "은행::신한 슈퍼SOL 사용팁",
+            "은행::설정/인증"
+          ],
+          "menu-item": [
+            "전체계좌 조회",
+            "입출금 거래내역",
+            "소비 현황",
+            "계좌비밀번호 설정",
+            "계좌 통합관리",
+            "휴면예금 및 숨은 보험금 찾기",
+            "비과세종합저축 자료제출",
+            "계좌이체",
+            "다건이체",
+            "이체결과 조회",
+            "자동이체",
+            "간편앱출금",
+            "이체관리",
+            "자동이체 가져오기",
+            "MY급여이체",
+            "납부하기",
+            "자동납부",
+            "납부내역 조회",
+            "공공기관 채권",
+            "법원업무",
+            "대학등록금",
+            "입출금",
+            "예적금/청약",
+            "외화예적금",
+            "대출",
+            "퇴직연금",
+            "펀드",
+            "신탁",
+            "개인종합자산관리(ISA)",
+            "포트폴리오",
+            "골드/실버",
+            "카드",
+            "보험",
+            "전세보증금반환보증",
+            "자산분석",
+            "소비분석",
+            "고정지출",
+            "예산관리",
+            "금융캘린더",
+            "연말정산",
+            "금융상품비교",
+            "부동산",
+            "내 차 리포트",
+            "투자지표",
+            "금리인하요구권 대행 서비스",
+            "은퇴 시뮬레이션",
+            "연결관리",
+            "환전",
+            "국내 외화이체",
+            "해외송금",
+            "SOL트래블",
+            "글로벌 멀티카드 충전/환불",
+            "거래외국환은행 지정",
+            "외국환거래약정 동의",
+            "증명서 발급",
+            "화상상담서비스",
+            "모바일번호표",
+            "서식작성",
+            "영업점 상담예약",
+            "소호메이트(개인사업자)",
+            "SOL PB",
+            "SOL메이트 자산관리라운지",
+            "SOL메이트 연금광장",
+            "리틀 신한 케어",
+            "디딤씨앗 정보조회",
+            "슈퍼쏠져(나라사랑카드라운지)",
+            "신한 슈퍼SOL 사용팁",
+            "비대면 계좌개설 안심차단",
+            "설정/인증",
+            "아파트 관리비",
+            "도시가스 요금",
+            "전화 요금",
+            "전기 요금"
+          ],
+          "pick-bill": [
+            "국세",
+            "관세",
+            "국고",
+            "국세 환급금 조회",
+            "지방세",
+            "환경개선부담금",
+            "세외수입",
+            "아파트/상가관리비",
+            "KT통신요금",
+            "전기요금/TV수신료",
+            "상하수도요금",
+            "고속도로 통행료",
+            "국민연금",
+            "공무원연금",
+            "통합징수 보험료",
+            "고용/산재보험료",
+            "교통범칙금",
+            "검찰청 벌과금"
+          ],
+          "pw": [
+            "9",
+            "0",
+            "5",
+            "7",
+            "6",
+            "1",
+            "8",
+            "4",
+            "2",
+            "3"
+          ]
+        },
+        "contrast": [],
+        "contrast_undetermined": [],
+        "inherited": [
+          {
+            "text": "4:31",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "67",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "지로번호가 잘 보이게 준비해주세요",
+            "tag": "div",
+            "cls": "camtext",
+            "color": "rgb(255, 255, 255)"
+          },
+          {
+            "text": "✕",
+            "tag": "span",
+            "cls": "camclose",
+            "color": "rgb(255, 255, 255)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "지로번호가 잘 보이게 준비해주세요",
+            "tag": "div",
+            "cls": "camtext",
+            "lines": 2
+          },
+          {
+            "text": "고지서를 사각형에 맞춰 촬영해주세요",
+            "tag": "div",
+            "cls": "frame",
+            "lines": 2
+          }
+        ],
+        "shown": []
+      },
+      "info": {
+        "landed_on": "info",
+        "dom_screen": "info",
+        "attr_text": "",
+        "outside_text": "",
+        "actions": [
+          "to-bill-home",
+          "pay"
+        ],
+        "ids": [
+          "bi-eno",
+          "bi-name",
+          "bi-amt",
+          "bi-acc"
+        ],
+        "screens": [
+          "home",
+          "menu",
+          "search",
+          "bill-home",
+          "camera",
+          "info",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "4:31\n67\n‹\n전기요금 납부\n💬\n⌂\n납부정보\n전자납부번호(고객번호)\n1700000000\n고객명\n홍길동\n청구연월\n202607\n고객전용지정 계좌번호\n31500000000000\n고객주소\n○○동 ●●●-●\n납부금액\n2,160원\n출금계좌\nS\n[금융거래한도계좌2]신한 주거래 우대통장(저축예금)\n신한 110-000-000000\n⌄\n출금가능금액 1,000,000\n납부",
+        "height": 844,
+        "choices": {
+          "menu-tab": [
+            "은행",
+            "카드",
+            "증권",
+            "보험",
+            "혜택",
+            "상품",
+            "고객센터"
+          ],
+          "menu-chip": [
+            "은행::조회/관리",
+            "은행::이체",
+            "은행::세금/공과금",
+            "은행::상품관리",
+            "은행::자산관리",
+            "은행::외환",
+            "은행::모바일창구",
+            "은행::특화라운지",
+            "은행::신한 슈퍼SOL 사용팁",
+            "은행::설정/인증"
+          ],
+          "menu-item": [
+            "전체계좌 조회",
+            "입출금 거래내역",
+            "소비 현황",
+            "계좌비밀번호 설정",
+            "계좌 통합관리",
+            "휴면예금 및 숨은 보험금 찾기",
+            "비과세종합저축 자료제출",
+            "계좌이체",
+            "다건이체",
+            "이체결과 조회",
+            "자동이체",
+            "간편앱출금",
+            "이체관리",
+            "자동이체 가져오기",
+            "MY급여이체",
+            "납부하기",
+            "자동납부",
+            "납부내역 조회",
+            "공공기관 채권",
+            "법원업무",
+            "대학등록금",
+            "입출금",
+            "예적금/청약",
+            "외화예적금",
+            "대출",
+            "퇴직연금",
+            "펀드",
+            "신탁",
+            "개인종합자산관리(ISA)",
+            "포트폴리오",
+            "골드/실버",
+            "카드",
+            "보험",
+            "전세보증금반환보증",
+            "자산분석",
+            "소비분석",
+            "고정지출",
+            "예산관리",
+            "금융캘린더",
+            "연말정산",
+            "금융상품비교",
+            "부동산",
+            "내 차 리포트",
+            "투자지표",
+            "금리인하요구권 대행 서비스",
+            "은퇴 시뮬레이션",
+            "연결관리",
+            "환전",
+            "국내 외화이체",
+            "해외송금",
+            "SOL트래블",
+            "글로벌 멀티카드 충전/환불",
+            "거래외국환은행 지정",
+            "외국환거래약정 동의",
+            "증명서 발급",
+            "화상상담서비스",
+            "모바일번호표",
+            "서식작성",
+            "영업점 상담예약",
+            "소호메이트(개인사업자)",
+            "SOL PB",
+            "SOL메이트 자산관리라운지",
+            "SOL메이트 연금광장",
+            "리틀 신한 케어",
+            "디딤씨앗 정보조회",
+            "슈퍼쏠져(나라사랑카드라운지)",
+            "신한 슈퍼SOL 사용팁",
+            "비대면 계좌개설 안심차단",
+            "설정/인증",
+            "아파트 관리비",
+            "도시가스 요금",
+            "전화 요금",
+            "전기 요금"
+          ],
+          "pick-bill": [
+            "국세",
+            "관세",
+            "국고",
+            "국세 환급금 조회",
+            "지방세",
+            "환경개선부담금",
+            "세외수입",
+            "아파트/상가관리비",
+            "KT통신요금",
+            "전기요금/TV수신료",
+            "상하수도요금",
+            "고속도로 통행료",
+            "국민연금",
+            "공무원연금",
+            "통합징수 보험료",
+            "고용/산재보험료",
+            "교통범칙금",
+            "검찰청 벌과금"
+          ],
+          "pw": [
+            "9",
+            "0",
+            "5",
+            "7",
+            "6",
+            "1",
+            "8",
+            "4",
+            "2",
+            "3"
+          ]
+        },
+        "contrast": [
+          {
+            "text": "신한 110-000-000000",
+            "tag": "div",
+            "cls": "no",
+            "color": "rgb(138, 138, 143)",
+            "seen": "rgb(138, 138, 143)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 3.44,
+            "need": 4.5
+          },
+          {
+            "text": "출금가능금액",
+            "tag": "div",
+            "cls": "avail",
+            "color": "rgb(138, 138, 143)",
+            "seen": "rgb(138, 138, 143)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 16,
+            "ratio": 3.44,
+            "need": 4.5
+          }
+        ],
+        "contrast_undetermined": [],
+        "inherited": [
+          {
+            "text": "4:31",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "67",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "전기요금 납부",
+            "tag": "span",
+            "cls": "title",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "납부정보",
+            "tag": "div",
+            "cls": "h2",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "1700000000",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "홍길동",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "202607",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "31500000000000",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "○○동 ●●●-●",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "2,160",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(0, 70, 255)"
+          },
+          {
+            "text": "출금계좌",
+            "tag": "div",
+            "cls": "h2",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "[금융거래한도계좌2]신한 주거래 우대통장(저축예금)",
+            "tag": "div",
+            "cls": "nm",
+            "color": "rgb(26, 26, 26)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "고객전용지정 계좌번호",
+            "tag": "span",
+            "cls": "k",
+            "lines": 2
+          },
+          {
+            "text": "[금융거래한도계좌2]신한 주거래 우대통장(저축예금)",
+            "tag": "div",
+            "cls": "nm",
+            "lines": 2
+          }
+        ],
+        "shown": [
+          [
+            "#bi-eno",
+            "1700000000"
+          ],
+          [
+            "#bi-name",
+            "홍길동"
+          ],
+          [
+            "#bi-amt",
+            "2,160"
+          ],
+          [
+            "#bi-acc",
+            "신한 110-000-000000"
+          ]
+        ]
+      },
+      "password": {
+        "landed_on": "password",
+        "dom_screen": "password",
+        "attr_text": "",
+        "outside_text": "",
+        "actions": [
+          "close-password",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw",
+          "pw-shuffle",
+          "pw",
+          "pw-del"
+        ],
+        "ids": [
+          "pw-dots",
+          "pwpad"
+        ],
+        "screens": [
+          "home",
+          "menu",
+          "search",
+          "bill-home",
+          "camera",
+          "info",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "4:31\n67\n✕\n계좌 비밀번호\n8\n9\n0\n3\n7\n1\n2\n5\n4\n재배열\n6\n⌫",
+        "height": 844,
+        "choices": {
+          "menu-tab": [
+            "은행",
+            "카드",
+            "증권",
+            "보험",
+            "혜택",
+            "상품",
+            "고객센터"
+          ],
+          "menu-chip": [
+            "은행::조회/관리",
+            "은행::이체",
+            "은행::세금/공과금",
+            "은행::상품관리",
+            "은행::자산관리",
+            "은행::외환",
+            "은행::모바일창구",
+            "은행::특화라운지",
+            "은행::신한 슈퍼SOL 사용팁",
+            "은행::설정/인증"
+          ],
+          "menu-item": [
+            "전체계좌 조회",
+            "입출금 거래내역",
+            "소비 현황",
+            "계좌비밀번호 설정",
+            "계좌 통합관리",
+            "휴면예금 및 숨은 보험금 찾기",
+            "비과세종합저축 자료제출",
+            "계좌이체",
+            "다건이체",
+            "이체결과 조회",
+            "자동이체",
+            "간편앱출금",
+            "이체관리",
+            "자동이체 가져오기",
+            "MY급여이체",
+            "납부하기",
+            "자동납부",
+            "납부내역 조회",
+            "공공기관 채권",
+            "법원업무",
+            "대학등록금",
+            "입출금",
+            "예적금/청약",
+            "외화예적금",
+            "대출",
+            "퇴직연금",
+            "펀드",
+            "신탁",
+            "개인종합자산관리(ISA)",
+            "포트폴리오",
+            "골드/실버",
+            "카드",
+            "보험",
+            "전세보증금반환보증",
+            "자산분석",
+            "소비분석",
+            "고정지출",
+            "예산관리",
+            "금융캘린더",
+            "연말정산",
+            "금융상품비교",
+            "부동산",
+            "내 차 리포트",
+            "투자지표",
+            "금리인하요구권 대행 서비스",
+            "은퇴 시뮬레이션",
+            "연결관리",
+            "환전",
+            "국내 외화이체",
+            "해외송금",
+            "SOL트래블",
+            "글로벌 멀티카드 충전/환불",
+            "거래외국환은행 지정",
+            "외국환거래약정 동의",
+            "증명서 발급",
+            "화상상담서비스",
+            "모바일번호표",
+            "서식작성",
+            "영업점 상담예약",
+            "소호메이트(개인사업자)",
+            "SOL PB",
+            "SOL메이트 자산관리라운지",
+            "SOL메이트 연금광장",
+            "리틀 신한 케어",
+            "디딤씨앗 정보조회",
+            "슈퍼쏠져(나라사랑카드라운지)",
+            "신한 슈퍼SOL 사용팁",
+            "비대면 계좌개설 안심차단",
+            "설정/인증",
+            "아파트 관리비",
+            "도시가스 요금",
+            "전화 요금",
+            "전기 요금"
+          ],
+          "pick-bill": [
+            "국세",
+            "관세",
+            "국고",
+            "국세 환급금 조회",
+            "지방세",
+            "환경개선부담금",
+            "세외수입",
+            "아파트/상가관리비",
+            "KT통신요금",
+            "전기요금/TV수신료",
+            "상하수도요금",
+            "고속도로 통행료",
+            "국민연금",
+            "공무원연금",
+            "통합징수 보험료",
+            "고용/산재보험료",
+            "교통범칙금",
+            "검찰청 벌과금"
+          ],
+          "pw": [
+            "8",
+            "9",
+            "0",
+            "3",
+            "7",
+            "1",
+            "2",
+            "5",
+            "4",
+            "6"
+          ]
+        },
+        "contrast": [],
+        "contrast_undetermined": [],
+        "inherited": [
+          {
+            "text": "4:31",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "67",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "계좌 비밀번호",
+            "tag": "div",
+            "cls": "pwtitle",
+            "color": "rgb(26, 26, 26)"
+          }
+        ],
+        "overlap": [],
+        "overflow": [],
+        "wrapped": [],
+        "shown": []
+      },
+      "done": {
+        "landed_on": "done",
+        "dom_screen": "done",
+        "attr_text": "",
+        "outside_text": "",
+        "actions": [
+          "finish",
+          "finish"
+        ],
+        "ids": [
+          "dn-acc",
+          "dn-paid",
+          "dn-eno"
+        ],
+        "screens": [
+          "home",
+          "menu",
+          "search",
+          "bill-home",
+          "camera",
+          "info",
+          "password",
+          "done"
+        ],
+        "onclicks": [],
+        "text": "4:31\n67\n💬\n⌂\n✓\n납부완료\n출금계좌\n신한 110-000-000000\n납부금액\n2,160원\n납부일\n2026.08.07 10:11\n전자납부번호(고객번호)\n1700000000\n고객명\n홍길동\n청구연월\n202607\n고객전용지정 계좌번호\n31500000000000\n고객주소\n○○동 ●●●-●\n• '납부 완료'가 표시되더라도 입금할 수 없는 계좌인 경우 출금계좌로 재입금됩니다.\n확인",
+        "height": 844,
+        "choices": {
+          "menu-tab": [
+            "은행",
+            "카드",
+            "증권",
+            "보험",
+            "혜택",
+            "상품",
+            "고객센터"
+          ],
+          "menu-chip": [
+            "은행::조회/관리",
+            "은행::이체",
+            "은행::세금/공과금",
+            "은행::상품관리",
+            "은행::자산관리",
+            "은행::외환",
+            "은행::모바일창구",
+            "은행::특화라운지",
+            "은행::신한 슈퍼SOL 사용팁",
+            "은행::설정/인증"
+          ],
+          "menu-item": [
+            "전체계좌 조회",
+            "입출금 거래내역",
+            "소비 현황",
+            "계좌비밀번호 설정",
+            "계좌 통합관리",
+            "휴면예금 및 숨은 보험금 찾기",
+            "비과세종합저축 자료제출",
+            "계좌이체",
+            "다건이체",
+            "이체결과 조회",
+            "자동이체",
+            "간편앱출금",
+            "이체관리",
+            "자동이체 가져오기",
+            "MY급여이체",
+            "납부하기",
+            "자동납부",
+            "납부내역 조회",
+            "공공기관 채권",
+            "법원업무",
+            "대학등록금",
+            "입출금",
+            "예적금/청약",
+            "외화예적금",
+            "대출",
+            "퇴직연금",
+            "펀드",
+            "신탁",
+            "개인종합자산관리(ISA)",
+            "포트폴리오",
+            "골드/실버",
+            "카드",
+            "보험",
+            "전세보증금반환보증",
+            "자산분석",
+            "소비분석",
+            "고정지출",
+            "예산관리",
+            "금융캘린더",
+            "연말정산",
+            "금융상품비교",
+            "부동산",
+            "내 차 리포트",
+            "투자지표",
+            "금리인하요구권 대행 서비스",
+            "은퇴 시뮬레이션",
+            "연결관리",
+            "환전",
+            "국내 외화이체",
+            "해외송금",
+            "SOL트래블",
+            "글로벌 멀티카드 충전/환불",
+            "거래외국환은행 지정",
+            "외국환거래약정 동의",
+            "증명서 발급",
+            "화상상담서비스",
+            "모바일번호표",
+            "서식작성",
+            "영업점 상담예약",
+            "소호메이트(개인사업자)",
+            "SOL PB",
+            "SOL메이트 자산관리라운지",
+            "SOL메이트 연금광장",
+            "리틀 신한 케어",
+            "디딤씨앗 정보조회",
+            "슈퍼쏠져(나라사랑카드라운지)",
+            "신한 슈퍼SOL 사용팁",
+            "비대면 계좌개설 안심차단",
+            "설정/인증",
+            "아파트 관리비",
+            "도시가스 요금",
+            "전화 요금",
+            "전기 요금"
+          ],
+          "pick-bill": [
+            "국세",
+            "관세",
+            "국고",
+            "국세 환급금 조회",
+            "지방세",
+            "환경개선부담금",
+            "세외수입",
+            "아파트/상가관리비",
+            "KT통신요금",
+            "전기요금/TV수신료",
+            "상하수도요금",
+            "고속도로 통행료",
+            "국민연금",
+            "공무원연금",
+            "통합징수 보험료",
+            "고용/산재보험료",
+            "교통범칙금",
+            "검찰청 벌과금"
+          ],
+          "pw": [
+            "8",
+            "9",
+            "0",
+            "3",
+            "7",
+            "1",
+            "2",
+            "5",
+            "4",
+            "6"
+          ]
+        },
+        "contrast": [],
+        "contrast_undetermined": [],
+        "inherited": [
+          {
+            "text": "4:31",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "67",
+            "tag": "span",
+            "cls": "right",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "납부완료",
+            "tag": "div",
+            "cls": "donet",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "2,160",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(0, 70, 255)"
+          },
+          {
+            "text": "2026.08.07 10:11",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "1700000000",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "홍길동",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "202607",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "31500000000000",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "○○동 ●●●-●",
+            "tag": "span",
+            "cls": "v",
+            "color": "rgb(26, 26, 26)"
+          }
+        ],
+        "overlap": [
+          {
+            "a": "• '납부 완료'가 표시되더라도 입금할 수 ",
+            "b": "확인",
+            "overlap_pct": 61
+          }
+        ],
+        "overflow": [],
+        "wrapped": [
+          {
+            "text": "고객전용지정 계좌번호",
+            "tag": "span",
+            "cls": "k",
+            "lines": 2
+          },
+          {
+            "text": "• '납부 완료'가 표시되더라도 입금할 수 없는 계좌인",
+            "tag": "div",
+            "cls": "note",
+            "lines": 2
+          }
+        ],
+        "shown": [
+          [
+            "#dn-paid",
+            "2,160"
+          ],
+          [
+            "#dn-acc",
+            "신한 110-000-000000"
+          ],
+          [
+            "#dn-eno",
+            "1700000000"
+          ]
+        ]
+      }
+    },
+    "dialogs": [],
+    "js_errors": [],
+    "reached": [
+      "home",
+      "menu",
+      "search",
+      "bill-home",
+      "camera",
+      "info",
+      "password",
+      "done"
+    ],
+    "missing_ids": [],
+    "state_pairs": [
+      {
+        "base": ".screen",
+        "state": "on",
+        "props": [
+          "display"
+        ],
+        "differing": [
+          "display"
+        ],
+        "base_values": [
+          "display=none"
+        ]
+      },
+      {
+        "base": ".mtab",
+        "state": "act",
+        "props": [
+          "color",
+          "font-weight",
+          "border-bottom-color"
+        ],
+        "differing": [
+          "color",
+          "font-weight",
+          "border-bottom-color"
+        ],
+        "base_values": [
+          "color=rgb(154, 158, 166)",
+          "font-weight=400",
+          "border-bottom-color=rgba(0, 0, 0, 0)"
+        ]
+      },
+      {
+        "base": ".sclear",
+        "state": "on",
+        "props": [
+          "display"
+        ],
+        "differing": [
+          "display"
+        ],
+        "base_values": [
+          "display=none"
+        ]
+      }
+    ],
+    "load_failed": null,
+    "notes": [],
+    "js_error_details": [],
+    "flow": "original_bill",
+    "truth": {
+      "AMOUNT": "2160",
+      "ENO": "1700000000",
+      "AMOUNT_SHOWN": "2,160",
+      "MONTH": "202607",
+      "QUERY": "공과",
+      "CUSTOMER": "홍길동",
+      "PAY_BANK": "신한",
+      "PAY_ACCOUNT": "110-000-000000"
+    },
+    "undefined_classes": []
+  }
+}
