@@ -7,13 +7,31 @@
     "SECS": 29,
     "nums": 10
   },
+  "plan": {
+    "attempt": 1,
+    "diagnosis": "<run>/attempt_1.diagnosis.json",
+    "diagnosis_count": 6,
+    "screens": [
+      "start",
+      "who",
+      "accno",
+      "bank",
+      "whoconfirm",
+      "amount",
+      "review",
+      "auth",
+      "done"
+    ],
+    "changes": 7,
+    "unaddressed": []
+  },
   "repro": {
     "temperature": 0.0,
     "seed": 20260101,
     "response_model": null,
     "system_fingerprint": null,
     "openai_sdk": "<sdk>",
-    "prompt_template_sha256": "e1e41f97a7360d875510f3b8476c3b5b9abcca71bc7b021057a5761397f2bf7d"
+    "prompt_template_sha256": "12dc12079dcf3b5056b0607b8d807b6ad137915ee4e9240a8521437123c00b6e"
   },
   "attempts": [
     {
@@ -26,7 +44,29 @@
         "response_model": null,
         "system_fingerprint": null,
         "openai_sdk": "<sdk>",
-        "prompt_template_sha256": "e1e41f97a7360d875510f3b8476c3b5b9abcca71bc7b021057a5761397f2bf7d"
+        "prompt_template_sha256": "12dc12079dcf3b5056b0607b8d807b6ad137915ee4e9240a8521437123c00b6e"
+      },
+      "plan": "<run>/attempt_1.plan.json",
+      "calls": [
+        {
+          "stage": "plan",
+          "estimated_prompt": 11657,
+          "method": "tiktoken:o200k_base",
+          "max_tokens": 6000,
+          "usage": null
+        },
+        {
+          "stage": "generate",
+          "estimated_prompt": 13590,
+          "method": "tiktoken:o200k_base",
+          "max_tokens": 14000,
+          "usage": null
+        }
+      ],
+      "plan_call": {
+        "finish_reason": "stop",
+        "usage": null,
+        "seconds": 0.0
       },
       "preserved": {
         "injected": {
@@ -55,6 +95,8 @@
     "html": "<run>/attempt_1.html",
     "flow": "<run>/attempt_1.flow.json",
     "audit": "<run>/attempt_1.audit.json",
+    "plan": "<run>/attempt_1.plan.json",
+    "diagnosis": "<run>/attempt_1.diagnosis.json",
     "preserved": {
       "injected": {
         "BANKS": 38,
@@ -67,7 +109,10 @@
         "SECS"
       ]
     },
-    "model_html": "<run>/attempt_1.model.html"
+    "model_html": "<run>/attempt_1.model.html",
+    "model_html_promoted": "<root>/.mock-outputs/restructured_auto.model.html",
+    "brief": "<run>/designer_brief.md",
+    "brief_promoted": "<root>/.mock-outputs/restructured_auto.designer_brief.md"
   },
   "budget": {
     "format_used": 0,
@@ -87,5 +132,44 @@
       "screens": "9/9",
       "stopped_at": null
     }
-  ]
+  ],
+  "git": {
+    "commit": "<commit>",
+    "branch": "<branch>",
+    "dirty": "<dirty>",
+    "dirty_files": "<dirty_files>"
+  },
+  "tokens": {
+    "method": "tiktoken:o200k_base",
+    "by_stage": {
+      "plan": {
+        "calls": 1,
+        "estimated_prompt": 11657,
+        "max_tokens": 6000,
+        "prompt": null,
+        "completion": null
+      },
+      "generate": {
+        "calls": 1,
+        "estimated_prompt": 13590,
+        "max_tokens": 14000,
+        "prompt": null,
+        "completion": null
+      }
+    },
+    "total": {
+      "calls": 2,
+      "estimated_prompt": 25247,
+      "max_tokens": 20000,
+      "prompt": null,
+      "completion": null
+    },
+    "first_attempt": {
+      "calls": 2,
+      "estimated_prompt": 25247,
+      "max_tokens": 20000,
+      "prompt": null,
+      "completion": null
+    }
+  }
 }

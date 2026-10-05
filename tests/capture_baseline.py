@@ -281,14 +281,29 @@ def capture_prompt(out):
     choices = _api.choices_block(snaps["orig"], orig_html)
     template = _api.load_template()
     retry = read(os.path.join(out, "retry_block", "%s.txt" % PROMPT_RETRY_CASE))
+    plan = prompt_plan()
 
     d = os.path.join(out, "prompt")
     dump_text(os.path.join(d, "choices_block.txt"), choices)
+    dump_text(os.path.join(d, "plan.txt"), plan_prompt(orig_html, choices))
     dump_text(os.path.join(d, "attempt_1.txt"),
-              _api.build_prompt(template, orig_html, "", choices))
+              _api.build_prompt(template, orig_html, "", choices, plan))
     dump_text(os.path.join(d, "retry_%s.txt" % PROMPT_RETRY_CASE),
-              _api.build_prompt(template, orig_html, retry, choices))
-    say("  prompt: choices_block, 첫 시도, 재시도(%s)" % PROMPT_RETRY_CASE)
+              _api.build_prompt(template, orig_html, _api.prompt_module.with_reflection(retry),
+                                choices, plan))
+    say("  prompt: choices_block, 진단·계획, 첫 시도, 재시도(%s)" % PROMPT_RETRY_CASE)
+
+
+def prompt_plan():
+    """프롬프트 기준값에 넣는 계획. mock 이 쓰는 그 계획이다 (model.MOCK_PLAN) -
+    루프가 넣는 것과 같은 모양으로 적는다 (loop.plan_text)."""
+    return json.dumps(_api.model_module.MOCK_PLAN, ensure_ascii=False, indent=2)
+
+
+def plan_prompt(orig_html, choices):
+    """진단·계획 프롬프트 전문 (첫 호출, 재시도 블록 없음)."""
+    return _api.build_plan_prompt(_api.load_plan_template(), orig_html, choices,
+                                  _api.plan_module.screens_in(orig_html))
 
 
 # --------------------------------------------------------------------- #
@@ -331,10 +346,13 @@ def strip_volatile(summary):
 
     fix_repro(s)
 
+    root = ROOT.replace("\\", "/")
+
     def fix(p):
         if not isinstance(p, str) or not run_dir:
             return p
-        return p.replace("\\", "/").replace(run_dir, "<run>")
+        # 실행 폴더 밖이지만 저장소 안인 것(승격된 사본)은 <root> 로
+        return p.replace("\\", "/").replace(run_dir, "<run>").replace(root, "<root>")
 
     # 실행 폴더 아래를 가리키는 경로는 모두 <run> 으로 바꾼다. 키를 손으로
     # 적어 두면 새 산출물(model_html 등)이 늘 때마다 PC 마다 다른 절대
@@ -345,9 +363,14 @@ def strip_volatile(summary):
         for k, v in list(a.items()):
             if isinstance(v, str):
                 a[k] = fix(v)
-    for k, v in list((s.get("final") or {}).items()):
-        if isinstance(v, str):
-            s["final"][k] = fix(v)
+    # 커밋과 작업 트리는 기준값을 뽑을 때마다 다르다. 자리만 남긴다 - 값은
+    # 비교하지 않되 "기록이 있다" 는 것은 비교한다.
+    if isinstance(s.get("git"), dict):
+        s["git"] = {k: "<%s>" % k for k in s["git"]}
+    for key in ("final", "plan"):
+        for k, v in list((s.get(key) or {}).items()):
+            if isinstance(v, str):
+                s[key][k] = fix(v)
     return s
 
 

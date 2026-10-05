@@ -1,9 +1,14 @@
-r"""재시도 루프. 한 번의 시도는 네 단계다.
+r"""재시도 루프. 한 번의 시도는 다섯 단계다.
 
-    request_reply  프롬프트를 만들어 보내고 답을 받아 적는다
+    request_plan   진단·계획을 받는다 (계획이 아직 없을 때만 - 보통 첫 시도)
+    request_reply  계획을 넣은 프롬프트를 보내고 HTML + 흐름 명세를 받는다
     check_reply    답을 HTML + 흐름 명세로 가르고 모양을 본다
     audit_build    검사기를 돌린다 (형식 문제로 멈췄으면 검사 전에 끝난다)
     record         리포트를 쓰고, 통과·예산을 보고 계속할지 정한다
+
+진단·계획을 따로 받는 이유는 기록이다. 한 번에 받으면 모델이 무엇을 보고 무엇을
+바꿨는지가 HTML 안에 묻힌다 - 따로 받으면 attempt_N.diagnosis.json ·
+attempt_N.plan.json 으로 남는다 (plan.py).
 
 예산은 둘이다 (Budget). 형식 오류(흐름 명세가 규격에 안 맞음)와 검사 fatal
 (설계가 과제를 통과 못 함)은 다른 종류의 실패이고, 한쪽이 예산을 다 쓰면 다른
@@ -19,6 +24,7 @@ import io
 import json
 import os
 import shutil
+import subprocess
 import sys
 import time
 
@@ -27,16 +33,27 @@ from senior_ui.config import OUTPUTS_ENV, ROOT, inside_root, outputs_dir, url_fo
 from senior_ui.devserver import ensure_server
 
 from .audit_call import load_allowed_removals, run_audit
+from .brief import write_brief
 from .model import (TEMPERATURE, SEED, ApiRejected, InfraFailed, RateLimited,
-                    call_model, load_env, mock_reply, sdk_version)
+                    call_model, estimate_tokens, load_env, mock_plan_reply, mock_reply,
+                    sdk_version)
+from .plan import (PlanProblems, apply_changes, match_problems, parse_plan,
+                   parse_reflection, plan_report, screens_in, unaddressed)
 from .preserve import inject, names_read, preserved_data
-from .prompt import build_prompt, choices_block, load_template, one_line, retry_block
+from .prompt import (build_plan_prompt, build_prompt, choices_block, load_plan_template,
+                     load_template, one_line, plan_retry_block, retry_block,
+                     with_reflection)
 from .reply import (FlowShape, failure_report, parse_reply,
                     preserved_problems, problems_report, validate_flow)
 
 def runs_dir():
     """실행 폴더들이 쌓이는 곳. 산출물 폴더와 같이 움직인다 (config.outputs_dir)."""
     return os.path.join(outputs_dir(), "restructure_auto")
+
+# 진단·계획 호출의 길이 제한. 생성 호출(--max-tokens)과 따로 둔다 - 분당
+# 한도는 max_tokens 를 미리 잡아 두고 세므로, 계획 JSON 에 생성과 같은 한도를
+# 주면 쓰지도 않을 토큰이 한도를 먹는다.
+PLAN_MAX_TOKENS = 6000
 
 # 한 번의 시도가 끝나는 방식
 STOP = "stop"            # 루프를 끝낸다
@@ -94,7 +111,7 @@ class Run:
     """한 실행이 공유하는 것들. 단계 함수들은 이것만 주고받는다."""
 
     def __init__(self, args, log, run_dir, model, template, original_html,
-                 original_url):
+                 original_url=None, plan_template=""):
         self.args = args
         # 프롬프트에 넣는 원본과 브라우저가 걷는 원본은 같은 문서다.
         self.original_url = original_url
@@ -102,7 +119,21 @@ class Run:
         self.run_dir = run_dir
         self.model = model
         self.template = template
+        self.plan_template = plan_template
         self.original_html = original_html
+        # 원본의 화면 이름. 계획의 from 이 가리킬 수 있는 이름들이다.
+        self.original_screens = screens_in(original_html)
+        # 진단과 지금의 계획. 계획은 실행에 하나이고 재시도에서 고쳐진다.
+        self.diagnosis = None
+        self.plan = None
+        # 직전 진단·계획 답의 문제. 다음 진단·계획 프롬프트로 간다.
+        self.plan_error = None
+        # 이번 생성 프롬프트가 반성을 요청했는가 (재시도일 때).
+        self.asked_reflection = False
+        # 이 시도의 모델 호출들, 그리고 실행 전체의 (시도 번호, 호출) 목록.
+        # 단계별 토큰은 끝에 이것으로 센다 (tally_tokens).
+        self.calls = []
+        self.all_calls = []
         # 못박아 두는 값. 지정하지 않으면 공급자의 기본값이 쓰이고 그 값은
         # 기록에 남지 않는다 - 나중에 "그때 무엇이 달랐나" 를 물을 수 없다.
         self.temperature = getattr(args, "temperature", TEMPERATURE)
@@ -126,11 +157,12 @@ class Run:
         # 길이 제한에 잘린 답이 연속 몇 번인지. 둘째 번부터는 안내가 달라진다.
         self.truncated = 0
         self.summary = {"run_dir": run_dir, "model": model, "mock": args.mock,
-                        "stage": args.stage, "preserved": {},
+                        "stage": args.stage, "preserved": {}, "plan": None,
                         "repro": repro(template, temperature=self.temperature,
                                        seed=self.seed),
                         "attempts": [], "passed": False, "final": None,
-                        "budget": {}, "stopped_reason": None, "trend": []}
+                        "budget": {}, "stopped_reason": None, "trend": [],
+                        "git": None, "tokens": None}
 
 
 # --------------------------------------------------------------------------- #
@@ -191,26 +223,163 @@ def _dump(obj, path):
     json.dump(obj, io.open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
 
 
+def git_state():
+    """실행 당시의 커밋과 작업 트리가 깨끗했는지.
+
+    자동 실행 7회가 모두 커밋되지 않은 코드에서 돌아서, 나중에 그 조건을
+    되짚을 수 없었다 (docs/variance-notes.md). 커밋 해시만으로는 부족하다 -
+    작업 트리가 깨끗하지 않으면 그 해시가 실행된 코드를 가리키지 않는다.
+
+    git 이 없거나 저장소가 아니면 모두 None 이다. 모른다는 것도 기록이다.
+    """
+    def git(*args):
+        return subprocess.run(["git"] + list(args), cwd=ROOT, capture_output=True,
+                              text=True, encoding="utf-8", errors="replace",
+                              check=True).stdout
+    try:
+        commit = git("rev-parse", "HEAD").strip()
+        branch = git("rev-parse", "--abbrev-ref", "HEAD").strip()
+        status = git("status", "--porcelain")
+    except (OSError, subprocess.CalledProcessError):
+        return {"commit": None, "branch": None, "dirty": None, "dirty_files": []}
+    files = [line[3:] for line in status.splitlines() if line.strip()]
+    return {"commit": commit, "branch": branch, "dirty": bool(files),
+            "dirty_files": files[:50]}
+
+
+def dirty_warning(git):
+    """run.log 첫 줄에 쓰는 경고. 깨끗하면 None. 실행은 막지 않는다."""
+    if not git or not git.get("dirty"):
+        return None
+    files = git.get("dirty_files") or []
+    return ("경고: 작업 트리가 깨끗하지 않다 — 커밋 %s 에 없는 변경 %d건 위에서 "
+            "돈다 (%s%s). 이 실행의 조건을 커밋 해시만으로 되짚을 수 없다."
+            % ((git.get("commit") or "?")[:12], len(files), ", ".join(files[:5]),
+               " …" if len(files) > 5 else ""))
+
+
+def _sum(calls, key):
+    """호출들의 usage 합. 하나도 모르면 None - 0 과 "모른다" 는 다르다."""
+    vals = [(c.get("usage") or {}).get(key) for c in calls]
+    vals = [v for v in vals if v is not None]
+    return sum(vals) if vals else None
+
+
+def _tally(calls):
+    return {"calls": len(calls),
+            "estimated_prompt": sum(c["estimated_prompt"] for c in calls),
+            "max_tokens": sum(c["max_tokens"] for c in calls),
+            "prompt": _sum(calls, "prompt"),
+            "completion": _sum(calls, "completion")}
+
+
+def tally_tokens(r):
+    """단계별 · 전체 · 첫 시도의 토큰. 예상(보내기 전 어림)과 실측(usage)을 함께.
+
+    단계는 셋이다 - plan (진단·계획), generate (첫 생성), retry (반성 + 생성).
+    """
+    calls = [c for _n, c in r.all_calls]
+    if not calls:
+        return None
+    stages = {}
+    for c in calls:
+        stages.setdefault(c["stage"], []).append(c)
+    first = [c for n, c in r.all_calls if n == 1]
+    return {"method": calls[0].get("method"),
+            "by_stage": {k: _tally(v) for k, v in stages.items()},
+            "total": _tally(calls),
+            "first_attempt": _tally(first) if first else None}
+
+
 # --------------------------------------------------------------------------- #
 # 한 번의 시도
 # --------------------------------------------------------------------------- #
-def request_reply(r, n, p):
-    """프롬프트를 만들어 보내고 답을 받아 적는다.
+def plan_text(r):
+    """프롬프트에 넣는 계획. 사람도 읽으므로 들여 쓴다."""
+    return json.dumps(r.plan, ensure_ascii=False, indent=2) if r.plan else ""
+
+
+def request_plan(r, n, p):
+    """진단·계획을 받는다. 돌려주는 것은 (호출 기록, outcome).
+
+    outcome 이 None 이면 계획이 섰다 (r.diagnosis · r.plan). 아니면 이 시도는
+    여기서 끝났고 outcome 이 다음에 할 일이다. 쓸 수 없는 답은 형식 실패다 -
+    모델이 고칠 수 있는 것이므로 형식 예산을 쓴다."""
+    prompt = build_plan_prompt(r.plan_template, r.original_html, r.choices,
+                               r.original_screens, plan_retry_block(r.plan_error))
+    io.open(p + ".plan_prompt.txt", "w", encoding="utf-8", newline="\n").write(prompt)
+    r.log("plan prompt: %d chars%s" % (len(prompt),
+                                       " (with retry block)" if r.plan_error else ""))
+    reply, outcome = ask_model(r, n, p, prompt,
+                               getattr(r.args, "plan_max_tokens", PLAN_MAX_TOKENS),
+                               mock_plan_reply, "plan")
+    if reply is None:
+        return None, outcome
+    io.open(p + ".plan_response.txt", "w", encoding="utf-8",
+            newline="\n").write(reply["text"])
+    r.log("plan: %s chars, finish=%s, %ss, usage=%s"
+          % (len(reply["text"]), reply["finish_reason"], reply["seconds"], reply["usage"]))
+    call = {"finish_reason": reply["finish_reason"], "usage": reply["usage"],
+            "seconds": reply["seconds"]}
+    try:
+        if reply["finish_reason"] == "length":
+            raise PlanProblems(["답이 길이 제한에서 잘렸다 (finish_reason=length). "
+                                "진단과 변경의 문장을 짧게 써서 JSON 을 끝까지 닫아라."])
+        diagnosis, plan = parse_plan(reply["text"], r.original_screens)
+    except PlanProblems as e:
+        r.log("plan: %d problem(s): %s" % (len(e.problems),
+                                           " | ".join(e.problems)[:300]))
+        entry = dict(call, n=n, stage="plan", passed=False, fatal=len(e.problems),
+                     calls=list(r.calls))
+        if reply["finish_reason"] == "length":
+            note_truncated(r, entry, "plan")
+        _dump(plan_report(e.problems), p + ".audit.json")
+        r.summary["attempts"].append(entry)
+        r.plan_error = list(e.problems)
+        r.budget.spend("format")
+        if r.budget.out_of("format"):
+            r.log("형식 재시도 예산 소진 (%d회) — 계획을 세우지 못했다"
+                  % r.budget.format_used)
+            return None, STOP
+        return None, GO_ON
+
+    r.plan_error = None
+    r.diagnosis, r.plan = diagnosis, plan
+    _dump(diagnosis, p + ".diagnosis.json")
+    left = unaddressed(diagnosis, plan)
+    r.summary["plan"] = {"attempt": n, "diagnosis": p + ".diagnosis.json",
+                         "diagnosis_count": len(diagnosis),
+                         "screens": [sc["name"] for sc in plan["screens"]],
+                         "changes": len(plan["changes"]),
+                         "unaddressed": left}
+    r.log("plan: 진단 %d · 화면 %d (%s) · 변경 %d%s"
+          % (len(diagnosis), len(plan["screens"]),
+             ", ".join(sc["name"] for sc in plan["screens"]), len(plan["changes"]),
+             (" / 대응하는 변경이 없는 진단: %s" % ", ".join(left)) if left else ""))
+    return call, None
+
+
+def ask_model(r, n, p, prompt, max_tokens, mock, stage):
+    """모델에 한 번 묻는다. 진단·계획과 생성이 같은 길을 쓴다.
+
+    보내기 전에 예상 토큰을 로그에 남긴다. 분당 한도는 입력에 max_tokens 를
+    더해 세므로 그 합도 적는다 - 한도에 걸렸을 때 어느 호출이 얼마였는지를
+    로그만 보고 알 수 있어야 한다.
 
     돌려주는 것은 (reply, outcome). reply 가 None 이면 이 시도가 모델 호출에서
     끝난 것이고 outcome 이 다음에 할 일이다."""
-    block = retry_block(r.last["report"], r.last["html"], r.last["flow_text"],
-                        error=r.last_error, truncated=r.truncated) \
-        if (r.last["report"] or r.last_error or r.truncated) else ""
-    prompt = build_prompt(r.template, r.original_html, block, r.choices)
-    io.open(p + ".prompt.txt", "w", encoding="utf-8", newline="\n").write(prompt)
-    r.log("prompt: %d chars%s" % (len(prompt), " (with retry block)" if block else ""))
-
+    est, method = estimate_tokens(prompt)
+    call = {"stage": stage, "estimated_prompt": est, "method": method,
+            "max_tokens": max_tokens, "usage": None}
+    r.calls.append(call)
+    r.all_calls.append((n, call))
+    r.log("tokens: %s 예상 입력 %d (%s) + max_tokens %d = 분당 한도 계산 %d"
+          % (stage, est, method, max_tokens, est + max_tokens))
     if r.args.mock:
-        reply = mock_reply(r.args.mock)
+        reply = mock(r.args.mock)
     else:
         try:
-            reply = call_model(r.model, prompt, r.args.max_tokens, r.log,
+            reply = call_model(r.model, prompt, max_tokens, r.log,
                                temperature=r.temperature, seed=r.seed)
         except RateLimited as e:
             # 설계 실패가 아니다. 예산을 깎지 않고 여기서 멈춘다.
@@ -218,7 +387,8 @@ def request_reply(r, n, p):
             r.summary["stopped_reason"] = "rate_limit"
             _dump(failure_report("INFRA", "인프라 한도로 중단: %s" % e), p + ".audit.json")
             r.summary["attempts"].append({"n": n, "stage": "rate_limit",
-                                          "passed": False, "error": str(e)})
+                                          "passed": False, "error": str(e),
+                                          "calls": list(r.calls)})
             return None, STOP
         except ApiRejected as e:
             # 키·권한·요청 자체가 틀렸다. 다시 보내도 같은 답이 오므로, 여기서
@@ -228,7 +398,8 @@ def request_reply(r, n, p):
             _dump(failure_report("INFRA", "API 가 요청을 거절했다: %s" % e),
                   p + ".audit.json")
             r.summary["attempts"].append({"n": n, "stage": "api_rejected",
-                                          "passed": False, "error": str(e)})
+                                          "passed": False, "error": str(e),
+                                          "calls": list(r.calls)})
             return None, STOP
         except Exception as e:                       # 연결 실패·타임아웃·그 밖
             # 설계 실패가 아니므로 형식·검사 예산은 건드리지 않는다. 대신 인프라
@@ -244,19 +415,63 @@ def request_reply(r, n, p):
             _dump(failure_report("INFRA", "모델 호출 실패: %s: %s" % (kind, e)),
                   p + ".audit.json")
             r.summary["attempts"].append({"n": n, "stage": "call", "passed": False,
-                                          "error": "%s: %s" % (kind, e)})
+                                          "error": "%s: %s" % (kind, e),
+                                          "calls": list(r.calls)})
             if r.budget.out_of("infra"):
                 r.log("인프라 재시도 예산 소진 (%d회) — 모델에 닿지 못했다"
                       % r.budget.infra_used)
                 r.summary["stopped_reason"] = "infra_exhausted"
                 return None, STOP
             return None, GO_ON
-    io.open(p + ".response.txt", "w", encoding="utf-8", newline="\n").write(reply["text"])
-    r.log("model: %s chars, finish=%s, %ss, usage=%s"
-          % (len(reply["text"]), reply["finish_reason"], reply["seconds"], reply["usage"]))
+    call["usage"] = reply.get("usage")
+    if reply.get("max_tokens") not in (None, max_tokens):
+        # 분당 한도에 맞추느라 줄여서 보냈다 (model.shrink_for_minute)
+        call["max_tokens_sent"] = reply["max_tokens"]
     if reply.get("model") or reply.get("system_fingerprint"):
         r.log("model: 응답 %s (fingerprint %s)"
               % (reply.get("model"), reply.get("system_fingerprint")))
+    return reply, None
+
+
+def note_truncated(r, entry, phase):
+    """답이 길이 제한에서 잘렸다. 일반 형식 실패와 따로 남긴다.
+
+    잘린 답은 겉모양이 형식 실패와 같다 - 블록이 닫히지 않았으니 "블록이 없다"
+    로 보인다. 그러나 원인은 내용이 아니라 길이 제한이고, 그 제한은 분당 한도에
+    맞추느라 줄였을 수도 있다 (model.shrink_for_minute). 그래서 그때 실제로 보낸
+    max_tokens 를 함께 적는다. 형식 예산은 그대로 쓴다 - 다시 물어야 하는 것은
+    같다."""
+    call = r.calls[-1] if r.calls else {}
+    cap = call.get("max_tokens_sent", call.get("max_tokens"))
+    entry.update(stage="truncated", phase=phase, truncated=True, max_tokens=cap)
+    r.log("잘림: %s 답이 max_tokens %s 에서 잘렸다 (finish_reason=length) — 형식 "
+          "실패로 세고 다시 묻는다" % (phase, cap))
+
+
+def request_reply(r, n, p):
+    """계획을 넣은 프롬프트를 보내고 답을 받아 적는다.
+
+    돌려주는 것은 (reply, outcome). reply 가 None 이면 이 시도가 모델 호출에서
+    끝난 것이고 outcome 이 다음에 할 일이다."""
+    block = retry_block(r.last["report"], r.last["html"], r.last["flow_text"],
+                        error=r.last_error, truncated=r.truncated) \
+        if (r.last["report"] or r.last_error or r.truncated) else ""
+    # 재시도에서는 코드보다 반성을 먼저 쓰게 한다. 그래서 실패 목록보다 앞이다.
+    r.asked_reflection = bool(block)
+    block = with_reflection(block)
+    prompt = build_prompt(r.template, r.original_html, block, r.choices, plan_text(r))
+    io.open(p + ".prompt.txt", "w", encoding="utf-8", newline="\n").write(prompt)
+    r.log("prompt: %d chars%s" % (len(prompt), " (with retry block)" if block else ""))
+
+    reflect = r.asked_reflection
+    reply, outcome = ask_model(r, n, p, prompt, r.args.max_tokens,
+                               lambda mode: mock_reply(mode, reflect=reflect),
+                               "retry" if reflect else "generate")
+    if reply is None:
+        return None, outcome
+    io.open(p + ".response.txt", "w", encoding="utf-8", newline="\n").write(reply["text"])
+    r.log("model: %s chars, finish=%s, %ss, usage=%s"
+          % (len(reply["text"]), reply["finish_reason"], reply["seconds"], reply["usage"]))
     return reply, None
 
 
@@ -283,11 +498,63 @@ def drop_declared_removals(r, flow):
     return names
 
 
-def check_reply(r, p, entry, reply):
+def note_reflection(r, p, entry, text):
+    """재시도 답의 반성을 읽어 남긴다. `(반성, 문제들)`.
+
+    반성이 없다고 이 시도를 버리지는 않는다 - 빌드는 멀쩡할 수 있고, 반성
+    하나 때문에 재시도 예산을 쓰는 것은 기록을 얻으려다 설계를 잃는 일이다.
+    없었다는 사실만 남긴다."""
+    refl, problems = parse_reflection(text)
+    if refl is None:
+        entry["reflection"], entry["reflection_missing"] = None, True
+        r.log("reflection: 없음 — 재시도 답이 반성 블록 없이 왔다")
+        return None, []
+    entry["reflection"] = p + ".reflection.json"
+    _dump(refl, entry["reflection"])
+    r.log("reflection: %s (계획 변경 %s건)"
+          % (one_line(str(refl.get("cause")))[:160],
+             len(refl.get("plan_changes") or []) if isinstance(
+                 refl.get("plan_changes"), list) else "?"))
+    return refl, problems
+
+
+def revise_plan(r, n, p, entry, refl, problems):
+    """반성의 plan_changes 를 계획에 적용한다. 돌려주는 것은 형식 문제들.
+
+    적용하지 못하면 계획은 그대로 두고 문제를 돌려준다 - 그 문제는 흐름 명세
+    문제와 같은 형식 실패로 다음 프롬프트에 간다. 적용하면 이 시도의
+    attempt_N.plan.json 이 바뀐 계획이 된다 (앞 시도의 파일은 그대로다)."""
+    if problems:
+        return list(problems)
+    changes = refl.get("plan_changes") or []
+    if not changes:
+        entry["plan_changes"] = 0
+        return []
+    new, bad = apply_changes(r.plan, r.diagnosis, changes, r.original_screens)
+    if bad:
+        entry["plan_changes_rejected"] = bad
+        r.log("reflection: 계획 변경을 적용하지 못했다 — %s" % " | ".join(bad)[:300])
+        return bad
+    r.plan = new
+    _dump(new, p + ".plan.json")
+    entry["plan_changes"] = len(changes)
+    if r.summary.get("plan") is not None:
+        r.summary["plan"].setdefault("revised_on", []).append(n)
+        r.summary["plan"]["screens"] = [sc["name"] for sc in new["screens"]]
+        r.summary["plan"]["changes"] = len(new["changes"])
+    r.log("reflection: 계획을 고쳤다 (%d건) — 화면 %s"
+          % (len(changes), ", ".join(sc["name"] for sc in new["screens"])))
+    return []
+
+
+def check_reply(r, p, entry, reply, n=None):
     """답을 HTML + 흐름 명세로 가르고 모양을 본다. 파일로도 남긴다.
 
     돌려주는 것은 (build, outcome). build 가 None 이면 파싱이 실패해 이 시도가
     끝난 것이다."""
+    refl, refl_problems = None, []
+    if r.asked_reflection:
+        refl, refl_problems = note_reflection(r, p, entry, reply["text"])
     truncated = reply["finish_reason"] == "length"
     try:
         if truncated:
@@ -318,7 +585,7 @@ def check_reply(r, p, entry, reply):
         report = failure_report("PARSE", str(e))
         entry.update(stage="parse", passed=False, fatal=1)
         if truncated:
-            entry["truncated"] = True
+            note_truncated(r, entry, "retry" if r.asked_reflection else "generate")
         _dump(report, p + ".audit.json")
         r.summary["attempts"].append(entry)
         # 이 시도는 검사를 받은 적이 없다. r.last 는 마지막으로 **검사까지 간**
@@ -339,6 +606,18 @@ def check_reply(r, p, entry, reply):
 
     # 여기까지 왔으면 답은 읽을 수 있는 모양이다. 형식 오류는 해결되었다.
     r.truncated, r.last_error = 0, None
+
+    # 반성이 계획을 바꿨으면 그것부터 반영한다 - 아래 일치 검사는 바뀐 계획과
+    # 비교해야 한다. 답 자체를 읽지 못한 시도에서는 계획을 바꾸지 않는다.
+    if refl is not None:
+        problems = problems + revise_plan(r, n, p, entry, refl, refl_problems)
+
+    # 생성물이 계획의 화면을 그대로 가졌는지. 어긋나면 계획이 생성물을 설명하지
+    # 못한다 (plan.match_problems). 흐름 명세 문제와 같은 형식 실패다.
+    mismatch = match_problems(r.plan, html) if r.plan else []
+    if mismatch:
+        entry["plan_mismatch"] = mismatch
+        problems = problems + mismatch
 
     # 선택지 데이터는 도구가 넣는다. 참조 검사는 **넣기 전** 의 HTML 로 한다 -
     # 넣은 뒤의 문서에는 `window.PRESERVED = {...}` 가 늘 있으므로, 그것으로
@@ -437,6 +716,9 @@ def record(r, n, p, entry, report, build):
     r.summary["final"] = {"attempt": n, "html": build["html_path"],
                           "flow": build["flow_path"],
                           "audit": p + ".audit.json",
+                          # 이 빌드를 만들 때 쓴 계획과, 그 계획의 바탕인 진단
+                          "plan": entry.get("plan"),
+                          "diagnosis": (r.summary.get("plan") or {}).get("diagnosis"),
                           # 이 빌드에 도구가 무엇을 넣고 무엇을 고쳤는지.
                           # 시도 기록에만 두면, 승격된 산출물만 보는 사람은
                           # 그 파일의 어느 부분이 모델의 것인지 알 수 없다.
@@ -471,13 +753,30 @@ def attempt(r, n):
     r.log("---- attempt %d (형식 %d/%d · 검사 %d/%d)"
           % (n, b.format_used, b.budget["format"], b.audit_used, b.budget["audit"]))
     p = os.path.join(r.run_dir, "attempt_%d" % n)
+    r.calls = []
+
+    plan_call = None
+    if r.plan is None:
+        plan_call, outcome = request_plan(r, n, p)
+        if outcome is not None:
+            return outcome
+        # 두 호출이 같은 1분 안에 들어가면 분당 한도를 넘는다 - 원본 HTML 이
+        # 두 프롬프트에 다 들어 있다.
+        if r.args.delay and not r.args.mock:
+            r.log("대기 %ss (진단·계획 → 생성)" % r.args.delay)
+            time.sleep(r.args.delay)
+    # 이 시도가 따른 계획. 재시도에서 계획이 바뀌면 시도마다 다른 파일이 된다.
+    _dump(r.plan, p + ".plan.json")
 
     reply, outcome = request_reply(r, n, p)
     if reply is None:
         return outcome
     entry = {"n": n, "finish_reason": reply["finish_reason"], "usage": reply["usage"],
-             "seconds": reply["seconds"], "repro": repro(r.template, reply)}
-    build, outcome = check_reply(r, p, entry, reply)
+             "seconds": reply["seconds"], "repro": repro(r.template, reply),
+             "plan": p + ".plan.json", "calls": r.calls}
+    if plan_call:
+        entry["plan_call"] = plan_call
+    build, outcome = check_reply(r, p, entry, reply, n)
     if build is None:
         return outcome
     report = audit_build(r, n, entry, build)
@@ -500,11 +799,32 @@ def log_trend(r):
                  t["fatal_derived"], t["screens"], t["stopped_at"] or "-"))
 
 
+def log_tokens(r):
+    """단계별 토큰을 한 줄씩. 예상은 늘 있고, 실측은 API 가 알려 준 것만."""
+    t = r.summary.get("tokens")
+    if not t:
+        return
+    r.log("")
+    r.log("토큰 (예상 입력 / 실측 입력 / 실측 출력, %s)" % t["method"])
+    rows = [(k, v) for k, v in t["by_stage"].items()] + [("total", t["total"])]
+    if t["first_attempt"]:
+        rows.append(("첫 시도", t["first_attempt"]))
+    for name, v in rows:
+        r.log("  %-8s 호출 %d | %6d | %6s | %6s"
+              % (name, v["calls"], v["estimated_prompt"],
+                 "-" if v["prompt"] is None else v["prompt"],
+                 "-" if v["completion"] is None else v["completion"]))
+
+
 # outputs/ 안에서 "지금 쓰는 것" 을 가리키는 이름들. 실행 이름이 붙은 사본은
 # 같은 이름에 실행 폴더 이름이 하나 끼어든다.
 PROMOTED = [("html", "restructured_auto%s.html"),
             ("flow", "restructured_auto%s.flow.json"),
             ("audit", "audit_auto%s.json"),
+            # 이 빌드를 만든 진단과 계획. 승격된 산출물만 보는 사람도 "무엇을
+            # 근거로 무엇을 바꿨는지" 를 같은 자리에서 찾을 수 있어야 한다.
+            ("plan", "restructured_auto%s.plan.json"),
+            ("diagnosis", "restructured_auto%s.diagnosis.json"),
             # 주입 전, 모델이 쓴 그대로. 승격된 산출물에는 도구가 넣은
             # 데이터 블록과 고친 선언이 들어 있으므로, 둘을 나란히 두지
             # 않으면 "모델이 만든 것" 을 되찾을 수 없다. 뽑을 데이터가
@@ -547,7 +867,32 @@ def copy_final(r):
         r.log("final: 주의 - 이 산출물은 모델이 쓴 그대로가 아니다. 도구가 "
               "%s 의 선언을 입력의 데이터로 바꿨다. 모델이 쓴 것은 %s 다."
               % (", ".join(pres["redeclared"]),
-                 PROMOTED[-1][1] % ""))
+                 dict(PROMOTED)["model_html"] % ""))
+    if f.get("model_html"):
+        f["model_html_promoted"] = os.path.join(out, dict(PROMOTED)["model_html"] % "")
+    write_briefs(r, out, name)
+
+
+# 승격된 설명서의 이름. 다른 산출물과 같이 restructured_auto 로 시작한다.
+BRIEF = "designer_brief.md"
+PROMOTED_BRIEF = "restructured_auto%s.designer_brief.md"
+
+
+def write_briefs(r, out, name):
+    """통과한 빌드의 디자이너용 설명서 (brief.py). 실행 폴더에 하나, outputs/ 에
+    하나(+ 실행 이름 사본). 링크가 설명서의 폴더 기준이므로 복사하지 않고 따로
+    쓴다 - 같은 스크린샷을 가리키되 링크 글자가 다르다."""
+    f = r.summary["final"]
+    path = write_brief(r.summary, r.original_screens, os.path.join(r.run_dir, BRIEF))
+    if not path:
+        r.log("final: 계획이 없어 설명서를 쓰지 않았다")
+        return
+    f["brief"] = path
+    promoted = write_brief(r.summary, r.original_screens,
+                           os.path.join(out, PROMOTED_BRIEF % ""))
+    shutil.copy2(promoted, os.path.join(out, PROMOTED_BRIEF % ("." + name)))
+    f["brief_promoted"] = promoted
+    r.log("final: 디자이너용 설명서 -> %s (+ %s)" % (path, PROMOTED_BRIEF % ""))
 
 
 # --------------------------------------------------------------------------- #
@@ -582,6 +927,12 @@ def run(args):
                            stamp + ("-mock-" + args.mock if args.mock else ""))
     os.makedirs(run_dir, exist_ok=True)
     log = make_logger(os.path.join(run_dir, "run.log"))
+    # 첫 줄. 작업 트리가 깨끗하지 않으면 그 사실이 run.log 를 여는 사람에게 가장
+    # 먼저 보여야 한다. 실행은 막지 않는다.
+    git = git_state()
+    warning = dirty_warning(git)
+    if warning:
+        log(warning)
 
     try:
         load_env()
@@ -589,7 +940,7 @@ def run(args):
         log("cannot start: %s" % e)
         print("cannot start: %s" % e, file=sys.stderr)
         _dump({"run_dir": run_dir, "passed": False, "attempts": [],
-               "stopped_reason": "cannot_start", "error": str(e)},
+               "stopped_reason": "cannot_start", "error": str(e), "git": git},
               os.path.join(run_dir, "summary.json"))
         log("summary: %s" % os.path.join(run_dir, "summary.json"))
         return 2
@@ -600,6 +951,7 @@ def run(args):
 
     try:
         template = load_template()
+        plan_template = load_plan_template()
         original_html = io.open(args.original, encoding="utf-8").read()
         orig_url = original_url(args.original)
         allowed = load_allowed_removals()
@@ -607,14 +959,16 @@ def run(args):
         log("cannot start: %s" % e)
         print("cannot start: %s" % e, file=sys.stderr)
         _dump({"run_dir": run_dir, "passed": False, "attempts": [],
-               "stopped_reason": "cannot_start", "error": str(e)},
+               "stopped_reason": "cannot_start", "error": str(e), "git": git},
               os.path.join(run_dir, "summary.json"))
         log("summary: %s" % os.path.join(run_dir, "summary.json"))
         return 2
 
     log("run: %s | model=%s | attempts=%d | stage=%s | mock=%s | original=%s"
         % (run_dir, model, args.attempts, args.stage, args.mock, orig_url))
-    r = Run(args, log, run_dir, model, template, original_html, orig_url)
+    r = Run(args, log, run_dir, model, template, original_html, orig_url,
+            plan_template=plan_template)
+    r.summary["git"] = git
     r.allowed_removals = allowed
     if allowed:
         log("선택지 제거 허용 (연구자 파일): %s" % ", ".join(sorted(allowed)))
@@ -668,6 +1022,8 @@ def run(args):
         # 사용자가 끊는다) 남아야 한다 - 밖에 두면 그런 실행은 run.log 조각
         # 말고는 아무것도 남기지 않는다.
         r.summary["budget"] = r.budget.as_dict()
+        r.summary["tokens"] = tally_tokens(r)
+        log_tokens(r)
         copy_final(r)
         _dump(r.summary, os.path.join(run_dir, "summary.json"))
         log("summary: %s" % os.path.join(run_dir, "summary.json"))

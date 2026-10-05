@@ -1,8 +1,17 @@
 r"""모델에 보낼 프롬프트를 만든다.
 
-docs/restructure-prompt.md 의 <!-- PROMPT --> 블록이 템플릿이고, 슬롯은 셋이다 -
-원본 HTML · 재시도 블록 · 선택지 요약. 재시도 블록은 직전 검사 결과를 모델이
-읽을 수 있는 몇 줄로 줄이는 일이고, 그 줄이기가 이 파일의 대부분이다.
+docs/restructure-prompt.md 에 블록이 셋 있다.
+
+    <!-- TASK -->         과제 설명. 아래 두 프롬프트가 같은 글을 쓴다
+    <!-- PLAN_PROMPT -->  진단·계획 (호출 1)
+    <!-- PROMPT -->       생성 (호출 2, 그리고 재시도)
+
+과제 설명을 한 곳에 두는 이유는 과제를 바꾸는 날 한 곳만 고치게 하려는 것이다 -
+두 프롬프트에 따로 적으면 한쪽만 바뀐 채로 돈다.
+
+생성 프롬프트의 슬롯은 넷이다 - 원본 HTML · 재시도 블록 · 선택지 요약 · 계획.
+재시도 블록은 직전 검사 결과를 모델이 읽을 수 있는 몇 줄로 줄이는 일이고, 그
+줄이기가 이 파일의 대부분이다.
 
 여기서는 파일을 읽는 것 말고는 아무것도 하지 않는다 - 모델 호출은 model.py,
 답 해석은 reply.py 다.
@@ -19,18 +28,67 @@ from .preserve import preserved_data, split_groups
 PROMPT_FILE = os.path.join(ROOT, "docs", "restructure-prompt.md")
 
 
-def load_template():
-    text = io.open(PROMPT_FILE, encoding="utf-8").read()
-    m = re.search(r"<!-- PROMPT -->\n(.*?)<!-- /PROMPT -->", text, re.S)
+def load_block(name, text=None):
+    """`<!-- name -->` 와 `<!-- /name -->` 사이."""
+    if text is None:
+        text = io.open(PROMPT_FILE, encoding="utf-8").read()
+    m = re.search(r"<!-- %s -->\n(.*?)<!-- /%s -->" % (name, name), text, re.S)
     if not m:
-        raise RuntimeError("no <!-- PROMPT --> block in " + PROMPT_FILE)
+        raise RuntimeError("no <!-- %s --> block in %s" % (name, PROMPT_FILE))
     return m.group(1)
 
 
-def build_prompt(template, original_html, retry_block, choices=""):
+def _with_task(name):
+    text = io.open(PROMPT_FILE, encoding="utf-8").read()
+    return load_block(name, text).replace("{{TASK}}",
+                                          load_block("TASK", text).strip())
+
+
+def load_template():
+    """생성 프롬프트. 과제 설명은 TASK 블록에서 채운 뒤다."""
+    return _with_task("PROMPT")
+
+
+def load_plan_template():
+    """진단·계획 프롬프트. 과제 설명은 생성 프롬프트와 같은 TASK 블록이다."""
+    return _with_task("PLAN_PROMPT")
+
+
+def build_prompt(template, original_html, retry_block, choices="", plan=""):
     return (template.replace("{{ORIGINAL_HTML}}", original_html)
                     .replace("{{RETRY_BLOCK}}", retry_block)
-                    .replace("{{CHOICES}}", choices))
+                    .replace("{{CHOICES}}", choices)
+                    .replace("{{PLAN}}", plan))
+
+
+def build_plan_prompt(template, original_html, choices, original_screens,
+                      retry=""):
+    return (template.replace("{{ORIGINAL_HTML}}", original_html)
+                    .replace("{{RETRY_BLOCK}}", retry)
+                    .replace("{{CHOICES}}", choices)
+                    .replace("{{ORIGINAL_SCREENS}}", ", ".join(original_screens)))
+
+
+def reflection_request():
+    """재시도 프롬프트의 맨 앞에 붙는 반성 요청 (REFLECT 블록)."""
+    return load_block("REFLECT")
+
+
+def with_reflection(block):
+    """재시도 블록 앞에 반성 요청을 붙인다. 코드보다 반성을 먼저 쓰게 하려는
+    것이므로 실패 목록보다 앞이다. 빈 블록(첫 시도)은 그대로다."""
+    return reflection_request() + "\n" + block if block else block
+
+
+def plan_retry_block(problems):
+    """진단·계획 답을 쓸 수 없었을 때의 재시도 블록. 이 단계에는 검사 결과가
+    없으므로 무엇이 틀렸는지만 적는다."""
+    if not problems:
+        return ""
+    return "\n".join(["## 직전 답의 문제", "",
+                      "직전 답을 아래 이유로 쓸 수 없었다. 고쳐서 JSON 블록 하나로 "
+                      "다시 출력하라.", ""]
+                     + ["- " + one_line(x) for x in problems] + [""])
 
 
 def choices_block(orig_snapshot, original_html):

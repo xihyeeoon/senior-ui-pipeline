@@ -296,6 +296,27 @@ def pair_screens(build_rel, flow_rel, flow_name, dirs):
     }
 
 
+def plan_of(build_rel):
+    """빌드 옆에 재구성 루프가 남긴 진단·계획이 있으면 그것. 없으면 None.
+
+    루프는 통과한 빌드를 restructured_auto.html 로 올리면서 그 계획을
+    restructured_auto.plan.json 으로, 진단을 .diagnosis.json 으로, 설명서를
+    .designer_brief.md 로 함께 올린다 (restructure/loop.py 의 PROMOTED). 손으로
+    만든 Run 1~3 에는 이것이 없고, 그 변경 기록은 changelog 에 있다.
+    """
+    stem = os.path.splitext(os.path.join(ROOT, build_rel))[0]
+    plan_path = stem + ".plan.json"
+    if not os.path.exists(plan_path):
+        return None
+
+    def load(p):
+        return json.load(io.open(p, encoding="utf-8")) if os.path.exists(p) else None
+    brief = stem + ".designer_brief.md"
+    return {"path": rel(plan_path), "plan": load(plan_path),
+            "diagnosis": load(stem + ".diagnosis.json") or [],
+            "brief": rel(brief) if os.path.exists(brief) else None}
+
+
 def build_row(build_rel, path, d, dirs, alts):
     """색인에 들어갈 빌드 한 줄."""
     flow_rel = flow_path_of((d.get("inputs") or {}).get("flow") or "")
@@ -313,6 +334,8 @@ def build_row(build_rel, path, d, dirs, alts):
         **pair_screens(build_rel, flow_rel, flow_name, dirs),
         # 같은 빌드를 다른 조건으로 검사한 것들
         "other_audits": alts,
+        # 재구성 루프가 남긴 진단·계획 ("변경 추적" 탭이 보인다)
+        "plan": plan_of(build_rel),
         # 자동 루프가 쌓을 시도 이력이 들어올 자리. 지금은 늘 비어 있다.
         "attempts": [],
     }

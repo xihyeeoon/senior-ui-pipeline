@@ -352,6 +352,41 @@ function showShot(path, cap){
 /* ------------------------------------------------------------------ */
 let CHG = { rule: '', only: 'uncovered' };   // 기본은 '규칙으로 설명 안 되는 것'
 
+/* 재구성 루프가 남긴 계획 (build_index 의 plan_of). plan.json 이 있는 빌드만.
+   Run 1 은 손으로 쓴 changelog 가 그 자리이므로 아래에 그대로 둔다. */
+function drawPlans(){
+  const withPlan = (IX.builds || []).filter(b => b.plan && b.plan.plan);
+  if (!withPlan.length) return '';
+  return withPlan.map(b => {
+    const p = b.plan.plan, diagnosis = b.plan.diagnosis || [], diag = {};
+    diagnosis.forEach(d => { diag[d.id] = d; });
+    const rows = (p.changes || []).map(c =>
+      '<tr><td class="num c-dim">' + esc(c.id) + '</td>' +
+      '<td>' + esc(c.what) + '</td><td class="c-dim">' + esc(c.why) + '</td>' +
+      '<td class="rules">' + ((c.addresses || []).length
+        ? c.addresses.map(id => '<span class="rid" title="' +
+            esc((diag[id] || {}).problem || '') + '">' + esc(id) + '</span>').join('')
+        : '<span class="rid none">진단 없음</span>') + '</td>' +
+      '<td class="c-dim">' + esc((c.from_screens || []).join(', ') || '-') + ' → ' +
+        esc((c.to_screens || []).join(', ') || '-') + '</td></tr>').join('');
+    const screens = (p.screens || []).map(s => '<b>' + esc(s.name) + '</b>' +
+      ((s.from || []).length ? ' ← ' + esc(s.from.join(', ')) : ' (새 화면)')).join(' · ');
+    const diagList = diagnosis.map(d => '<li><b>' + esc(d.id) + '</b> ' +
+      '<span class="mono">' + esc(d.screen) + '</span> ' + esc(d.problem) +
+      ' <span class="c-dim">— 근거: ' + esc(d.evidence) + '</span></li>').join('');
+    return '<h2>' + esc(b.name) + ' — 계획</h2>' +
+      '<p class="hint">재구성 루프가 HTML 을 만들기 전에 세운 계획입니다. 무엇을 근거로 ' +
+      '무엇을 바꿨는지가 여기서 옵니다. <span class="mono">' + esc(b.plan.path) + '</span>' +
+      (b.plan.brief ? ' · 디자이너용 설명서 <a href="/' + esc(b.plan.brief) + '">' +
+        esc(b.plan.brief) + '</a>' : '') + '</p>' +
+      '<div class="box">화면: ' + screens + '</div>' +
+      '<table><thead><tr><th class="num">#</th><th>무엇을</th><th>왜</th><th>진단</th>' +
+      '<th>원본 → 재설계</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+      (diagList ? '<details style="margin-top:8px"><summary>진단 ' + diagnosis.length +
+        '건</summary><ul>' + diagList + '</ul></details>' : '');
+  }).join('') + '<h2 style="margin-top:26px">재구성 Run 1 — 손으로 쓴 변경 기록</h2>';
+}
+
 function drawChanges(){
   const changes = IX.changes || [], rules = IX.rules || [];
   let list = changes.slice();
@@ -377,7 +412,7 @@ function drawChanges(){
   const shortfall = rules.filter(r => r.shortfall);
   const never = rules.filter(r => !r.cited_by.length && !r.claimed_met && !r.shortfall);
 
-  $('#changes').innerHTML =
+  $('#changes').innerHTML = drawPlans() +
     '<h2>변경 추적</h2>' +
     '<div class="banner warn">' + esc(IX.kb_note || '') + '</div>' +
     '<p class="hint">이 화면이 묻는 것은 <b>규칙으로 설명되지 않는 변경이 무엇인가</b>입니다. ' +

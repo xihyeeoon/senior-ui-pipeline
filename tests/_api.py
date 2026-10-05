@@ -29,6 +29,10 @@ from senior_ui.audit import report as _audit_report          # noqa: E402
 from senior_ui.restructure import audit_call as _audit_call  # noqa: E402
 from senior_ui.restructure import loop as _loop              # noqa: E402
 from senior_ui.restructure import model as _model            # noqa: E402
+from senior_ui.restructure import plan as _plan              # noqa: E402
+from senior_ui.restructure import brief as _brief            # noqa: E402
+from senior_ui.viewer import build_index as _build_index     # noqa: E402
+from senior_ui.restructure import __main__ as _restructure_cli  # noqa: E402
 from senior_ui.restructure import preserve as _preserve      # noqa: E402
 from senior_ui.restructure import prompt as _prompt          # noqa: E402
 from senior_ui.restructure import reply as _reply            # noqa: E402
@@ -81,6 +85,23 @@ choices_block = _prompt.choices_block
 build_prompt = _prompt.build_prompt
 retry_block = _prompt.retry_block
 brief_failure = _prompt.brief_failure
+# 진단·계획 프롬프트. 과제 설명(TASK 블록)을 생성 프롬프트와 같이 쓴다.
+load_plan_template = _prompt.load_plan_template
+build_plan_prompt = _prompt.build_plan_prompt
+prompt_module = _prompt
+
+# ---- senior_ui/restructure/__main__.py (명령줄 기본값) ------------------ #
+restructure_parser = _restructure_cli.build_parser
+
+# ---- senior_ui/restructure/brief.py (디자이너용 설명서) ----------------- #
+brief_module = _brief
+
+# ---- senior_ui/viewer/build_index.py (대시보드 색인) --------------------- #
+# 빌드 옆의 plan.json 을 "변경 추적" 탭에 붙이는 곳
+index_plan_of = _build_index.plan_of
+
+# ---- senior_ui/restructure/plan.py (진단·계획 · 일치 검사 · 반성) ------- #
+plan_module = _plan
 
 # ---- senior_ui/restructure/model.py (API 없이 도는 대역) --------------- #
 mock_reply = _model.mock_reply

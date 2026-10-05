@@ -68,6 +68,11 @@ LLM 이 쓴 것이라 다시 만들려면 API 비용이 들고 바이트까지 �
 .\.venv\Scripts\python.exe -m senior_ui.restructure --mock pass    # API 없이 확인
 ```
 
+**pass 는 지금 검사 I(00·전액 누락)에서 떨어진다. 통과 경로 확인은 preserved-all 로 한다.** Run 1 빌드에 원본 숫자판의 `00` 과 금액 버튼의 `전액` 이 없어서다.
+통과해야 생기는 것(`designer_brief.md`, `outputs/restructured_auto.*` 승격)도
+`--mock preserved-all` 에서만 생긴다. 원본 숫자판을 배열로 바꾸는 9번 단계에서
+mock 도 다시 손본다.
+
 `PYTHONUTF8=1` 은 더 이상 필요 없다. 모든 명령줄이 맨 앞에서
 `senior_ui._cli.setup_stdout()` 을 불러 stdout 을 UTF-8 로 맞춘다.
 
