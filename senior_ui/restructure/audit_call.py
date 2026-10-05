@@ -9,10 +9,10 @@ import io
 
 from senior_ui import audit as A
 from senior_ui.audit import stage as S
-from senior_ui.config import ORIGINAL_URL
 
 
-def run_audit(orig_snapshot, orig_html, html_path, flow_path, url, shots, stage):
+def run_audit(orig_snapshot, orig_html, html_path, flow_path, url, shots, stage,
+              original_url=None):
     """senior_ui.audit 로 검사한 뒤 단계 밖 검사를 걷어낸다. 와이어프레임 단계에서는
     대비·레이아웃·상태 색·미정의 클래스를 보지 않는다 - 아직 채우지 않은
     디테일이기 때문이다. 걸러낸 이유는 checks_stood_down 에 남는다."""
@@ -21,6 +21,8 @@ def run_audit(orig_snapshot, orig_html, html_path, flow_path, url, shots, stage)
     rep = asyncio.run(A.drive(url, flow, want_shots=shots))
     report = A.audit(orig_snapshot, rep, orig_html, rep_html, flow)
     report = S.apply_stage(report, stage)
-    report["inputs"] = {"original": ORIGINAL_URL, "repaired": url, "flow": flow_path,
-                        "stage": stage}
+    # 비교 기준이 된 문서를 그대로 적는다. 부르는 쪽이 --original 로 바꿀 수
+    # 있으므로, 여기서 못박으면 리포트가 비교하지 않은 문서를 가리키게 된다.
+    report["inputs"] = {"original": original_url, "repaired": url,
+                        "flow": flow_path, "stage": stage}
     return report

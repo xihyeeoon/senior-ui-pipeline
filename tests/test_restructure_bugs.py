@@ -478,3 +478,66 @@ def test_the_prompt_template_is_fingerprinted(fake_run_env, tmp_path):
     want = hashlib.sha256("바뀐 템플릿".encode("utf-8")).hexdigest()
     assert summary["repro"]["prompt_template_sha256"] == want
     assert summary["attempts"][0]["repro"]["prompt_template_sha256"] == want
+
+
+# ===================================================================== #
+# 6. --original 은 비교용 원본 실행에도 쓰인다
+# ===================================================================== #
+@pytest.fixture
+def driven_urls(fake_run_env, monkeypatch):
+    """원본을 걸을 때 쓴 URL 을 적어 둔다. fake_run_env 의 drive 를 덮는다."""
+    seen = []
+
+    async def fake_drive(url, flow, want_shots=None):
+        seen.append(url)
+        return dict(FAKE_SNAPSHOT)
+
+    monkeypatch.setattr(loop.A, "drive", fake_drive)
+    return seen
+
+
+def test_the_default_original_is_the_one_the_comparison_walks(driven_urls, monkeypatch,
+                                                              tmp_path):
+    _code, _summary = run_loop(monkeypatch, tmp_path, always_reply, attempts=1)
+    assert driven_urls[0].endswith("/inputs/original_transfer.html")
+
+
+def test_original_flag_moves_the_comparison_run_too(driven_urls, monkeypatch, tmp_path):
+    """--original 로 다른 원본을 주면 비교 기준도 그 파일이어야 한다.
+
+    고치기 전: 프롬프트에 넣는 HTML 만 그 파일에서 읽고, 브라우저로 걷는 것은
+    config.ORIGINAL_URL 로 못박혀 있었다. 대비·언어 검사의 기준이 프롬프트에
+    넣은 원본과 다른 문서가 된다 - 아무 경고 없이.
+    """
+    other = os.path.join(ROOT, "results", "restructured_transfer.html")
+    _code, _summary = run_loop(monkeypatch, tmp_path, always_reply, attempts=1,
+                               original=other)
+    assert driven_urls[0].endswith("/results/restructured_transfer.html")
+
+
+def test_the_audit_compares_against_the_same_original(driven_urls, monkeypatch,
+                                                      tmp_path):
+    """검사 리포트의 inputs.original 도 같은 URL 이어야 한다."""
+    seen = {}
+
+    def spy(orig_snapshot, orig_html, html_path, flow_path, url, shots, stage,
+            original_url=None):
+        seen["url"] = original_url
+        return passing_report()
+
+    monkeypatch.setattr(loop, "run_audit", spy)
+    other = os.path.join(ROOT, "results", "restructured_transfer.html")
+    run_loop(monkeypatch, tmp_path, always_reply, attempts=1, original=other)
+    assert seen["url"].endswith("/results/restructured_transfer.html")
+
+
+def test_an_original_outside_the_repo_stops_the_run(driven_urls, monkeypatch, tmp_path):
+    """서버는 저장소 루트만 서빙한다. 밖의 파일은 브라우저가 열 수 없다 -
+    못 연 채로 도는 대신 멈추고 그 이유를 말해야 한다."""
+    other = tmp_path / "other_original.html"
+    other.write_text("<html><body>다른 원본</body></html>", encoding="utf-8")
+
+    code, summary = run_loop(monkeypatch, tmp_path, always_reply, attempts=1,
+                             original=str(other))
+    assert code == 2
+    assert summary["stopped_reason"] == "cannot_start"

@@ -23,7 +23,7 @@ import sys
 import time
 
 from senior_ui import audit as A
-from senior_ui.config import ORIGINAL_URL, ROOT, outputs_dir, url_for
+from senior_ui.config import ROOT, outputs_dir, url_for
 from senior_ui.devserver import ensure_server
 
 from .audit_call import run_audit
@@ -92,8 +92,11 @@ class Budget:
 class Run:
     """한 실행이 공유하는 것들. 단계 함수들은 이것만 주고받는다."""
 
-    def __init__(self, args, log, run_dir, model, template, original_html):
+    def __init__(self, args, log, run_dir, model, template, original_html,
+                 original_url):
         self.args = args
+        # 프롬프트에 넣는 원본과 브라우저가 걷는 원본은 같은 문서다.
+        self.original_url = original_url
         self.log = log
         self.run_dir = run_dir
         self.model = model
@@ -135,6 +138,24 @@ def make_logger(log_path):
         with io.open(log_path, "a", encoding="utf-8") as f:
             f.write(line + "\n")
     return log
+
+
+def original_url(path):
+    """원본 파일을 서버가 서빙하는 URL 로.
+
+    프롬프트에 넣는 HTML 과 브라우저로 걷는 문서는 같아야 한다. 걷는 쪽만
+    config.ORIGINAL_URL 로 못박혀 있으면, --original 로 다른 파일을 줬을 때
+    대비·언어 검사의 기준이 프롬프트에 넣은 원본과 다른 문서가 된다 - 아무
+    경고 없이.
+
+    서버는 저장소 루트만 서빙하므로 그 밖의 파일은 URL 이 없다. 열 수 없는
+    것을 연 척하는 대신 RuntimeError 로 멈춘다.
+    """
+    rel = os.path.relpath(os.path.abspath(path), ROOT)
+    if rel.startswith(os.pardir) or os.path.isabs(rel):
+        raise RuntimeError("--original 은 저장소 안의 파일이어야 한다 (서버가 "
+                           "서빙하는 범위 밖이다): %s" % path)
+    return url_for(rel.replace(os.sep, "/"))
 
 
 def pick_model(args):
@@ -324,7 +345,8 @@ def _drive_audit(r, n, build):
     os.makedirs(shots, exist_ok=True)
     try:
         return run_audit(r.orig_snapshot, r.original_html, build["html_path"],
-                         build["flow_path"], url_for(rel), shots, r.args.stage)
+                         build["flow_path"], url_for(rel), shots, r.args.stage,
+                         original_url=r.original_url)
     except Exception as e:                           # a flow the audit cannot drive
         r.log("audit: crashed: %s: %s" % (type(e).__name__, e))
         return failure_report("AUDIT", "검사기가 흐름 명세를 실행하지 못했다: %s: %s"
@@ -478,20 +500,26 @@ def run(args):
     try:
         template = load_template()
         original_html = io.open(args.original, encoding="utf-8").read()
+        orig_url = original_url(args.original)
     except (OSError, RuntimeError) as e:
+        log("cannot start: %s" % e)
         print("cannot start: %s" % e, file=sys.stderr)
+        _dump({"run_dir": run_dir, "passed": False, "attempts": [],
+               "stopped_reason": "cannot_start", "error": str(e)},
+              os.path.join(run_dir, "summary.json"))
+        log("summary: %s" % os.path.join(run_dir, "summary.json"))
         return 2
 
-    log("run: %s | model=%s | attempts=%d | stage=%s | mock=%s"
-        % (run_dir, model, args.attempts, args.stage, args.mock))
-    r = Run(args, log, run_dir, model, template, original_html)
+    log("run: %s | model=%s | attempts=%d | stage=%s | mock=%s | original=%s"
+        % (run_dir, model, args.attempts, args.stage, args.mock, orig_url))
+    r = Run(args, log, run_dir, model, template, original_html, orig_url)
     server = None
     try:
         server = ensure_server(log)
         # 대비·언어 검사의 기준이 되는 원본 스냅샷. 실행마다 한 번만 걷는다.
         base_flow = A.load_flow(None)
         log("audit: driving the original once (baseline for contrast / language)")
-        r.orig_snapshot = asyncio.run(A.drive(ORIGINAL_URL, base_flow))
+        r.orig_snapshot = asyncio.run(A.drive(r.original_url, base_flow))
         r.choices = choices_block(r.orig_snapshot, original_html)
         if r.choices:
             log("선택지: %s" % " / ".join(
