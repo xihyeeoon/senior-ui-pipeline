@@ -8,19 +8,32 @@
   ],
   "original": "inputs/original_bill.html",
   "flow": "flows/original_bill.json",
-  "done_expect": [["#dn-paid", "{AMOUNT_SHOWN}"], ["#dn-eno", "{ENO}"]],
-  "required_truth": ["AMOUNT", "ENO"],
-  "keep_on_screen": {"CUSTOMER": "customer name"},
-  "dialog_ok_values": ["AMOUNT_SHOWN", "AMOUNT", "ENO"],
+  "done_expect": [
+    [
+      "#dn-paid",
+      "{AMOUNT_SHOWN}"
+    ],
+    [
+      "#dn-eno",
+      "{ENO}"
+    ]
+  ],
+  "required_truth": [
+    "AMOUNT",
+    "ENO"
+  ],
+  "keep_on_screen": {
+    "CUSTOMER": "customer name"
+  },
+  "dialog_ok_values": [
+    "AMOUNT_SHOWN",
+    "AMOUNT",
+    "ENO"
+  ],
   "required_error_paths": [],
   "prompt": {
-    "plan_errors": [
-      "원본에는 오류 화면이 없다 (어떤 비밀번호도 통과하고, 납부정보는 고지서에서 읽혀 틀릴 입력이 없다).",
-      "계획의 `errors` 는 `[]` 로 둔다."
-    ],
-    "plan_error_rule": [
-      "- `errors` 는 `[]` 로 둔다. 원본에 오류 조건이 없다."
-    ],
+    "plan_errors": [],
+    "plan_error_rule": [],
     "notes": [
       "- 시제품이므로 서버도 카메라도 없다. 고지서 촬영처럼 기기·서버가 하던 일은 원본에 있는 동작만, 원본이 보여 주는 값으로 흉내 낸다."
     ],
@@ -53,8 +66,7 @@
       "  \"expect\": {",
       "    \"done\": [[\"#dn-paid\", \"{AMOUNT_SHOWN}\"], [\"#dn-eno\", \"{ENO}\"]]",
       "  },",
-      "  \"done_amount\": \"#dn-paid\",",
-      "  \"error_paths\": []",
+      "  \"done_amount\": \"#dn-paid\"",
       "}"
     ],
     "flow_values": [
@@ -62,16 +74,15 @@
       "  `{CUSTOMER}` = 홍길동, `{PAY_BANK}` = 신한, `{PAY_ACCOUNT}` = 110-000-000000, `{QUERY}` = 공과.",
       "  `{QUERY}` 는 **검사기가 메뉴 검색창에 눌러 넣을 값**이고, 나머지는 고지서에서 읽혀 화면에",
       "  보여야 할 값이다. 설계에 검색어를 미리 채워 두라는 뜻이 아니다.",
-      "- `steps` 는 홈에서 납부 메뉴를 찾아 납부를 마치는 가장 긴 경로다. HTML 의 모든 화면은",
-      "  `steps` 나 `error_paths` (`expect_screen` · `back_to`) 중 하나가 지나가야 한다."
+      "- `steps` 는 홈에서 납부 메뉴를 찾아 납부를 마치는 가장 긴 경로다. HTML 의 모든 화면을 `steps` 가 지나가야 한다."
     ],
-    "flow_errors": [
-      "- 원본에는 오류 조건이 없다. `error_paths` 는 `[]` 로 둔다."
-    ],
+    "flow_errors": [],
     "flow_done": [
       "- `required_ids` 는 네 HTML 에 실제로 있는 id 만 적는다. `phone` · `dn-paid` · `dn-eno` 는 반드시 포함.",
       "- 완료 화면은 `steps` 의 마지막 화면이다. `expect` 의 그 화면 칸에는 반드시 `[\"#dn-paid\", \"{AMOUNT_SHOWN}\"]` 과",
       "  `[\"#dn-eno\", \"{ENO}\"]` 이 있어야 한다. `expect` 의 키는 `steps` 의 화면 이름이다."
-    ]
+    ],
+    "errors_note": [],
+    "plan_errors_form": []
   }
 }

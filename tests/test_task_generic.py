@@ -605,3 +605,30 @@ def test_check_a_reads_every_done_value_of_the_task():
     _api.a_completion.run(ctx)
     _api.b_display.run(ctx)
     assert [f["check"] for f in ctx.fatal] == ["B"]
+
+
+# --------------------------------------------------------------------- #
+# 12. 오류 경로가 없는 과제의 프롬프트에는 오류 문장이 없다
+# --------------------------------------------------------------------- #
+ERROR_TALK = ["오류는 계획의", "error_paths", "오류 경로", "오류 조건", "오류 화면",
+              '"errors"', "`errors`", "<오류 id>"]
+
+
+@pytest.mark.parametrize("load", ["load_template", "load_plan_template"])
+def test_a_task_without_error_paths_gets_no_error_sentences(load):
+    """고치기 전: 공과금 프롬프트에 "오류는 계획의 `errors` 대로 알린다." 와 오류
+    경로 형식 · 계획의 errors 칸 같은 문장이 그대로 들어갔다. 원본에 없는 오류를
+    지어내라는 말로 읽힐 수 있다."""
+    text = getattr(_api, load)("bill")
+    assert [w for w in ERROR_TALK if w in text] == []
+
+
+def test_the_bill_plan_example_is_still_json():
+    block = re.search(r"```json\n(.*?)\n```", _api.load_plan_template("bill"), re.S).group(1)
+    form = json.loads(block)
+    assert set(form["plan"]) == {"screens", "changes"}
+
+
+def test_the_transfer_prompts_still_talk_about_errors():
+    for text in (_api.load_template(), _api.load_plan_template()):
+        assert "`errors`" in text

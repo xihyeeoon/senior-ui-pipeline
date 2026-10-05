@@ -154,8 +154,6 @@
 }
 ```
 
-오류는 계획의 `errors` 대로 알린다.
-
 ## 3. 흐름 명세도 함께 출력하라
 
 검사기는 화면을 어떻게 지나가는지 모른다. 네가 만든 설계를 검사기가 처음부터 끝까지 몰고
@@ -181,8 +179,7 @@
   "expect": {
     "done": [["#dn-paid", "{AMOUNT_SHOWN}"], ["#dn-eno", "{ENO}"]]
   },
-  "done_amount": "#dn-paid",
-  "error_paths": []
+  "done_amount": "#dn-paid"
 }
 ```
 
@@ -196,9 +193,7 @@
   `{CUSTOMER}` = 홍길동, `{PAY_BANK}` = 신한, `{PAY_ACCOUNT}` = 110-000-000000, `{QUERY}` = 공과.
   `{QUERY}` 는 **검사기가 메뉴 검색창에 눌러 넣을 값**이고, 나머지는 고지서에서 읽혀 화면에
   보여야 할 값이다. 설계에 검색어를 미리 채워 두라는 뜻이 아니다.
-- `steps` 는 홈에서 납부 메뉴를 찾아 납부를 마치는 가장 긴 경로다. HTML 의 모든 화면은
-  `steps` 나 `error_paths` (`expect_screen` · `back_to`) 중 하나가 지나가야 한다.
-- 원본에는 오류 조건이 없다. `error_paths` 는 `[]` 로 둔다.
+- `steps` 는 홈에서 납부 메뉴를 찾아 납부를 마치는 가장 긴 경로다. HTML 의 모든 화면을 `steps` 가 지나가야 한다.
 - `required_ids` 는 네 HTML 에 실제로 있는 id 만 적는다. `phone` · `dn-paid` · `dn-eno` 는 반드시 포함.
 - 완료 화면은 `steps` 의 마지막 화면이다. `expect` 의 그 화면 칸에는 반드시 `["#dn-paid", "{AMOUNT_SHOWN}"]` 과
   `["#dn-eno", "{ENO}"]` 이 있어야 한다. `expect` 의 키는 `steps` 의 화면 이름이다.

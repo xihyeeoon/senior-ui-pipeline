@@ -17,8 +17,11 @@
 과제마다 다른 문단 — 완료 화면의 id 와 값, 과업 한 줄, 입력·확인 화면 규칙, 흐름 명세
 예시, 치환 문자열, 오류 경로 규칙 — 도 이 파일에는 `{{TASK_<칸>}}` 슬롯만 있고 글은 과제
 파일의 `prompt.<칸>` 에 있다 (`notes` · `rules` · `flow_example` · `flow_values` ·
-`flow_errors` · `flow_done` · `plan_errors` · `plan_error_rule`). 칸이 빠진 과제는
-프롬프트를 만들지 않고 멈춘다.
+`flow_errors` · `flow_done` · `plan_errors` · `plan_error_rule` · `plan_errors_form` ·
+`errors_note`). 칸이 빠진 과제는 프롬프트를 만들지 않고 멈춘다. 오류 경로가 없는 과제
+(공과금)는 오류 칸 다섯을 빈 목록으로 두어 오류 문장이 하나도 들어가지 않는다 — 원본에 없는
+오류를 지어내라는 말로 읽히지 않게. 그래서 오류 칸의 슬롯은 앞뒤 줄바꿈을 칸의 글이 품는다
+(빈 칸이 빈 줄을 남기지 않는다).
 `<!-- PLAN_PROMPT -->` 는 첫 호출(진단·계획, JSON 하나)이고, `<!-- PROMPT -->` 는 둘째
 호출(생성)과 재시도에 쓴다. 두 단계로 나눈 이유와 루프는 `senior_ui/restructure/loop.py`
 머리말에 있다.
@@ -71,9 +74,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 
 {{ERRORS}}
 
-{{TASK_PLAN_ERRORS}}
-
-선택지 데이터를 계획에서 언급할 때는 `window.PRESERVED.<이름>` 의 이름으로만 말하고,
+{{TASK_PLAN_ERRORS}}선택지 데이터를 계획에서 언급할 때는 `window.PRESERVED.<이름>` 의 이름으로만 말하고,
 값을 다시 나열하지 마라.
 
 ## 2. 출력 형식
@@ -97,11 +98,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
       {"id": "C1", "what": "<무엇을 바꾸는가>", "why": "<왜>",
        "addresses": ["<진단 id>"], "from_screens": ["<원본 data-screen>"],
        "to_screens": ["<새 화면 이름>"]}
-    ],
-    "errors": [
-      {"id": "<오류 id>", "screen": "<오류를 알리는 화면 이름>",
-       "how": "<어떻게 알리는가>", "back_to": "<고치러 돌아갈 화면 이름>"}
-    ]
+    ]{{TASK_PLAN_ERRORS_FORM}}
   }
 }
 ```
@@ -112,8 +109,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   `data-screen` 이 된다. 순서는 사용자가 지나가는 순서로 둔다.
 - `from` · `from_screens` 에는 원본의 화면 이름만 쓴다. 원본에 없던 새 화면이면 `from` 은 `[]`.
 - `to_screens` 에는 `screens` 에 있는 이름만 쓴다.
-- `addresses` 에는 `diagnosis` 에 있는 id 만 쓴다.
-{{TASK_PLAN_ERROR_RULE}}
+- `addresses` 에는 `diagnosis` 에 있는 id 만 쓴다.{{TASK_PLAN_ERROR_RULE}}
 
 {{RETRY_BLOCK}}
 
@@ -173,9 +169,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 {{PLAN}}
 ```
 
-오류는 계획의 `errors` 대로 알린다.
-
-## 3. 흐름 명세도 함께 출력하라
+{{TASK_ERRORS_NOTE}}## 3. 흐름 명세도 함께 출력하라
 
 검사기는 화면을 어떻게 지나가는지 모른다. 네가 만든 설계를 검사기가 처음부터 끝까지 몰고
 갈 수 있도록 **흐름 명세 JSON** 을 HTML 과 함께 출력하라. 형식은 다음과 같다.
@@ -190,8 +184,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 - 한 단계의 동작은 `click` 하나이거나 `do` 배열이다. `do` 의 항목은 `{"click": 선택자}`,
   `{"type": 문자열, "key": 선택자틀}` (문자열의 글자마다 `%s` 자리에 넣어 클릭),
   `{"repeat": n, "click": 선택자, "wait": 초}`, `{"wait": 초}` 중 하나.
-{{TASK_FLOW_VALUES}}
-{{TASK_FLOW_ERRORS}}
+{{TASK_FLOW_VALUES}}{{TASK_FLOW_ERRORS}}
 {{TASK_FLOW_DONE}}
 - `derived_from_original` 은 `false`.
 - 선택자는 네 HTML 에 있는 것만 쓴다. 검사기는 없는 선택자에서 멈춘다.
