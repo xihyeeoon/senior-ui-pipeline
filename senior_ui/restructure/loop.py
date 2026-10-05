@@ -29,6 +29,7 @@ import sys
 import time
 
 from senior_ui import audit as A
+from senior_ui.audit.flow import original_error_paths
 from senior_ui.config import OUTPUTS_ENV, ROOT, inside_root, outputs_dir, url_for
 from senior_ui.devserver import ensure_server
 
@@ -566,7 +567,8 @@ def check_reply(r, p, entry, reply, n=None):
         dropped = drop_declared_removals(r, flow)
         if dropped:
             entry["choices_removed_dropped"] = dropped
-        problems = validate_flow(flow, html)
+        # 과제가 정한 오류 경로를 모두 적었는지도 본다 (원본 흐름의 error_paths).
+        problems = validate_flow(flow, html, original_error_paths())
     except FlowShape as e:
         # 타입이 틀린 흐름 명세. 답의 형식 문제(PARSE)가 아니라 FLOW 문제다.
         r.log("flow: %d problem(s): %s" % (len(e.problems),

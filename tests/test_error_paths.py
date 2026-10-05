@@ -230,3 +230,88 @@ def test_stall_before_the_branch_is_derived_when_check_a_already_stopped():
                                                 "detail": "막힘"})},
                 stopped_at="account")
     assert ctx.fatal[0]["derived_from"] == "account"
+
+
+# --------------------------------------------------------------------- #
+# 형식 검사 (reply.validate_flow) - 브라우저 없이
+# --------------------------------------------------------------------- #
+HTML = """<html><body><div id="phone">
+<section class="screen on" data-screen="start"><button data-action="go">x</button></section>
+<section class="screen" data-screen="account"><button id="next" data-action="next">x</button>
+<button id="clear" data-action="clear">x</button></section>
+<section class="screen" data-screen="oops"><button id="ok" data-action="ok">x</button></section>
+<section class="screen" data-screen="amount"><b id="dn-amt"></b></section>
+</div><script>
+document.getElementById('phone').addEventListener('click', e => {
+  const el = e.target.closest('[data-action]'); const a = el.dataset.action;
+  if (a === 'go') {} else if (a === 'next') {} else if (a === 'clear') {}
+  else if (a === 'ok') {}
+});
+</script></body></html>"""
+
+
+def model_flow(paths):
+    return {"name": "auto", "derived_from_original": False,
+            "required_ids": ["phone", "dn-amt"], "steps": STEPS,
+            "expect": {"done": [["#dn-amt", "{AMOUNT_SHOWN}"]]},
+            "error_paths": paths}
+
+
+def popup_ep(**kw):
+    e = ep(expect_screen="oops", recover=[{"click": "#ok"}], back_to="account")
+    e.update(kw)
+    return e
+
+
+REQUIRED = [{"id": "wrong-account", "about": "계좌번호가 틀렸다",
+             "uses": ["ACCOUNT_WRONG"]},
+            {"id": "wrong-bank", "about": "은행이 틀렸다", "uses": ["BANK_WRONG"]}]
+
+
+def test_screen_reached_only_by_an_error_path_is_covered():
+    """오류 화면(oops)은 정답 경로가 지나가지 않는다. 오류 경로가 지나가면
+    덮인 것이다 - 전에는 억지 우회 경로를 넣어야 통과했다."""
+    assert _api.validate_flow(model_flow([popup_ep()]), HTML) == []
+    bare = _api.validate_flow(model_flow([]), HTML)
+    assert any("지나가지 않는 화면" in p and "oops" in p for p in bare)
+
+
+def test_old_flows_get_the_same_problems_without_required_errors():
+    """필수 오류 경로를 넘기지 않으면(옛 흐름의 재검사) 빠진 오류 경로를
+    문제로 세지 않는다."""
+    probs = _api.validate_flow(model_flow([popup_ep()]), HTML)
+    assert probs == []
+
+
+def test_required_error_paths_must_be_declared():
+    probs = _api.validate_flow(model_flow([popup_ep()]), HTML, REQUIRED)
+    assert len(probs) == 1
+    assert "wrong-bank" in probs[0] and "은행이 틀렸다" in probs[0]
+    # 틀린 값은 문제 글에도 나오지 않는다 - 자리표시자 이름만.
+    assert "국민" not in probs[0]
+
+
+def test_error_path_must_use_the_wrong_value_placeholder():
+    e = popup_ep(inputs=[{"type": "{ACCOUNT}", "key": "#acc"}, {"click": "#next"}])
+    probs = _api.validate_flow(model_flow([e]), HTML, REQUIRED[:1])
+    assert any("{ACCOUNT_WRONG}" in p for p in probs)
+
+
+def test_error_path_names_must_exist():
+    e = popup_ep(from_step="nowhere", expect_screen="ghost", back_to="ghost2")
+    probs = _api.validate_flow(model_flow([e]), HTML)
+    text = " | ".join(probs)
+    assert "from_step" in text and "expect_screen" in text and "back_to" in text
+
+
+def test_back_to_after_an_on_path_error_screen_is_a_format_problem():
+    """오류가 정답 경로 위의 화면(account)에 나타나면, 그보다 뒤(amount)로
+    돌아가는 것은 흐름만 보고도 틀렸다."""
+    e = ep(back_to="amount")
+    probs = _api.validate_flow(model_flow([e, popup_ep(id="x")]), HTML)
+    assert any("back_to" in p and "amount" in p for p in probs)
+
+
+def test_error_paths_of_the_wrong_type_are_a_shape_problem():
+    probs = _api.validate_flow(model_flow({"id": "x"}), HTML)
+    assert any("error_paths" in p for p in probs)
