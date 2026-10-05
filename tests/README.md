@@ -235,3 +235,22 @@ F(언어)가 보는 값이다.
 | `mock_errors_*.json` | 새 파일 | 새 mock 두 모드 |
 | `parse_reply.json` | 흐름의 `error_paths`, HTML 해시 | mock 빌드에 오류 안내를 바꿔 끼웠다 |
 | `report/four_runs*.md` | 제목 `A~J`, 표에 J 줄 | 리포트 표에 J |
+
+## 모델 바꾸기 준비 기준값 (2026-10-06, `feat/model-upgrade`)
+
+`mock_*.json` 여덟 개(이체 일곱 + `bill/mock_bill_identity.json`)만 다시 뽑았다
+(`capture_baseline.run_mock` + `strip_volatile` 로 그 파일만 덮었다 - 스냅샷 ·
+검사 · 프롬프트 기준값은 손대지 않았다). 차이는 **키 추가뿐** 이고, 기존 값은 하나도
+바뀌거나 지워지지 않았다 (`passed` · 종료 코드 · fatal · 토큰 어림 그대로).
+
+| 추가된 키 | mock 에서의 값 | 이유 |
+|---|---|---|
+| `model_source` | `"config.DEFAULT_MODEL"` | 모델이 어디서 왔나 |
+| `response_models` | `[]` | API 가 답한 판 이름들 - mock 은 없다 |
+| `model_call` | gpt-4o 방식 (chat · 추론형 아님 · temperature/seed 보냄 · o200k_base) | 모델별 부르는 방식 |
+| `tokens.*.reasoning` | `null` | 생각 토큰 칸 |
+| `ratelimit` | `null` | 응답 헤더의 분당 한도 - mock 은 호출이 없다 |
+| `cost` | 가격 gpt-4o 2.50/10.00, 금액 `null` | usage 가 없으므로 금액은 모른다 |
+
+git diff 의 지워진 줄 33개는 모두 `"completion": null` 뒤에 쉼표가 붙은 것이다
+(그 뒤에 `reasoning` 이 붙었다).
