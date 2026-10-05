@@ -38,6 +38,7 @@ from senior_ui.restructure import prompt as _prompt          # noqa: E402
 from senior_ui.restructure import reply as _reply            # noqa: E402
 from senior_ui.experiment import report as _session_report    # noqa: E402
 from senior_ui.experiment import server as _exp_server        # noqa: E402
+from senior_ui import tasks as _tasks                        # noqa: E402
 # ======================================================================= #
 
 # ---- senior_ui/audit (core.audit · drive.drive · flow.load_flow) ------- #
@@ -85,10 +86,15 @@ choices_block = _prompt.choices_block
 build_prompt = _prompt.build_prompt
 retry_block = _prompt.retry_block
 brief_failure = _prompt.brief_failure
-# 진단·계획 프롬프트. 과제 설명(TASK 블록)을 생성 프롬프트와 같이 쓴다.
+# 진단·계획 프롬프트. 과제 설명(과제 파일)을 생성 프롬프트와 같이 쓴다.
 load_plan_template = _prompt.load_plan_template
 build_plan_prompt = _prompt.build_plan_prompt
 prompt_module = _prompt
+
+# ---- senior_ui/tasks.py (과제 정의 tasks/<이름>.json) ------------------- #
+load_task = _tasks.load_task
+task_names = _tasks.task_names
+tasks_module = _tasks
 
 # ---- senior_ui/restructure/__main__.py (명령줄 기본값) ------------------ #
 restructure_parser = _restructure_cli.build_parser

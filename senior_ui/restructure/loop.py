@@ -32,6 +32,7 @@ from senior_ui import audit as A
 from senior_ui.audit.flow import original_error_paths
 from senior_ui.config import OUTPUTS_ENV, ROOT, inside_root, outputs_dir, url_for
 from senior_ui.devserver import ensure_server
+from senior_ui.tasks import DEFAULT_TASK, abs_path, load_task
 
 from .audit_call import load_allowed_removals, run_audit
 from .brief import write_brief
@@ -956,12 +957,17 @@ def run(args):
         return 2
 
     try:
-        template = load_template()
-        plan_template = load_plan_template()
+        # 과제가 프롬프트의 과제 설명과 기본 원본을 정한다. 과제를 주지 않은
+        # 실행(테스트가 손으로 만든 인자 포함)은 기본 과제다.
+        task = load_task(getattr(args, "task", None) or DEFAULT_TASK)
+        if not getattr(args, "original", None):
+            args.original = abs_path(task["original"])
+        template = load_template(task["id"])
+        plan_template = load_plan_template(task["id"])
         original_html = io.open(args.original, encoding="utf-8").read()
         orig_url = original_url(args.original)
         allowed = load_allowed_removals()
-    except (OSError, RuntimeError) as e:
+    except (OSError, RuntimeError, ValueError) as e:
         log("cannot start: %s" % e)
         print("cannot start: %s" % e, file=sys.stderr)
         _dump({"run_dir": run_dir, "passed": False, "attempts": [],
@@ -971,7 +977,8 @@ def run(args):
         return 2
 
     log("run: %s | model=%s | attempts=%d | stage=%s | mock=%s | original=%s"
-        % (run_dir, model, args.attempts, args.stage, args.mock, orig_url))
+        % (run_dir, model, args.attempts, args.stage, args.mock, orig_url)
+        + ("" if task["id"] == DEFAULT_TASK else " | task=%s" % task["id"]))
     r = Run(args, log, run_dir, model, template, original_html, orig_url,
             plan_template=plan_template)
     r.summary["git"] = git

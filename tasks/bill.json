@@ -1,0 +1,14 @@
+{
+  "id": "bill",
+  "label": "공과금 납부",
+  "description": [
+    "아래는 은행 앱의 세금·공과금 납부 화면 시제품이다 (HTML 한 파일, 8화면). 60대 이상 고령 사용자가",
+    "**공과금 납부 과업 — 전체메뉴나 메뉴 검색에서 납부하기 찾기, 종이 고지서 촬영, 납부정보 확인, 계좌 비밀번호, 완료 —",
+    "을 혼자서 끝낼 수 있도록** 이 화면들을 다시 설계하라."
+  ],
+  "original": "inputs/original_bill.html",
+  "flow": "flows/original_bill.json",
+  "done_expect": [["#dn-amt", "{AMOUNT_SHOWN}"]],
+  "required_truth": ["ACCOUNT", "AMOUNT", "BANK", "NAME"],
+  "required_error_paths": []
+}

@@ -102,9 +102,9 @@ def fake_run_env(monkeypatch, out_root):
     # 요구하는 루프는 test_error_paths.py 가 따로 본다.
     monkeypatch.setattr(loop, "original_error_paths", lambda: [])
     monkeypatch.setattr(loop, "choices_block", lambda snap, html: "")
-    monkeypatch.setattr(loop, "load_template", lambda: "TEMPLATE {{ORIGINAL_HTML}} "
+    monkeypatch.setattr(loop, "load_template", lambda task=None: "TEMPLATE {{ORIGINAL_HTML}} "
                                                        "{{RETRY_BLOCK}} {{CHOICES}}")
-    monkeypatch.setattr(loop, "load_plan_template", lambda: PLAN_TEMPLATE)
+    monkeypatch.setattr(loop, "load_plan_template", lambda task=None: PLAN_TEMPLATE)
     monkeypatch.setattr(loop, "run_audit",
                         lambda *a, **kw: passing_report())
     return monkeypatch
@@ -535,7 +535,7 @@ def test_the_summary_records_it_once_for_the_run(fake_run_env, out_root):
 def test_the_prompt_template_is_fingerprinted(fake_run_env, out_root):
     """템플릿이 바뀌면 같은 입력도 다른 답을 낸다. 어느 템플릿이었는지 남긴다."""
     import hashlib
-    fake_run_env.setattr(loop, "load_template", lambda: "바뀐 템플릿")
+    fake_run_env.setattr(loop, "load_template", lambda task=None: "바뀐 템플릿")
     _code, summary = run_loop(fake_run_env, out_root, recording_reply([]),
                               attempts=1)
     want = hashlib.sha256("바뀐 템플릿".encode("utf-8")).hexdigest()

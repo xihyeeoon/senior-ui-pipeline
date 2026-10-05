@@ -1,0 +1,14 @@
+{
+  "id": "transfer",
+  "label": "이체",
+  "description": [
+    "아래는 은행 앱의 이체 화면 시제품이다 (HTML 한 파일, 8화면). 60대 이상 고령 사용자가",
+    "**이체 과업 — 받는 사람 정하기, 계좌번호와 은행 넣기, 금액 넣기, 확인, 본인 확인, 완료 —",
+    "을 혼자서 끝낼 수 있도록** 이 화면들을 다시 설계하라."
+  ],
+  "original": "inputs/original_transfer.html",
+  "flow": "flows/original.json",
+  "done_expect": [["#dn-amt", "{AMOUNT_SHOWN}"]],
+  "required_truth": ["ACCOUNT", "AMOUNT", "BANK", "NAME"],
+  "required_error_paths": ["wrong-account", "wrong-bank"]
+}
