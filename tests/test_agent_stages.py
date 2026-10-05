@@ -545,7 +545,7 @@ def test_tokens_are_estimated_with_tiktoken():
 
 
 def test_without_tiktoken_the_estimate_falls_back_to_characters(monkeypatch):
-    monkeypatch.setattr(model, "_encoder", lambda: None)
+    monkeypatch.setattr(model, "_encoder", lambda name=None: None)
     n, method = model.estimate_tokens("가" * 290)
     assert n == 100 and method.startswith("chars")
 
@@ -630,13 +630,23 @@ def fake_openai(monkeypatch, outcomes):
                                         "completion_tokens": 3000})()
             self.model, self.system_fingerprint = "gpt-4o-x", "fp"
 
+    class Raw:
+        # call_model 은 응답 헤더를 읽으려고 with_raw_response 로 부른다
+        headers = {}
+
+        def parse(self):
+            return Resp()
+
     class Completions:
+        def __init__(self):
+            self.with_raw_response = self
+
         def create(self, **kw):
             sent.append(kw["max_completion_tokens"])
             out = outcomes.pop(0)
             if out != "ok":
                 raise make_429(out)
-            return Resp()
+            return Raw()
 
     class Client:
         def __init__(self):

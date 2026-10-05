@@ -95,7 +95,7 @@ from senior_ui.audit.stage import STAGES
 from senior_ui.tasks import DEFAULT_TASK, task_names
 
 from .loop import PLAN_MAX_TOKENS, run
-from .model import ALL_MODES, SEED, TEMPERATURE
+from .model import ALL_MODES, APIS, REASONING_EFFORTS, SEED, TEMPERATURE
 
 
 # --mock pass 가 무엇을 하는가. Run 1 빌드에는 원본 숫자판의 00 과 금액 버튼의
@@ -120,9 +120,17 @@ def build_parser():
                          "DESIGNREPAIR_MODEL, 그다음 config.DEFAULT_MODEL (%s)"
                          % config.DEFAULT_MODEL)
     ap.add_argument("--temperature", type=float, default=TEMPERATURE,
-                    help="못박아 보낸다. 기본 %s - 재현에 가장 가깝다" % TEMPERATURE)
+                    help="못박아 보낸다. 기본 %s - 재현에 가장 가깝다. 추론형 모델에는 "
+                         "보내지 않는다 (받지 않는다)" % TEMPERATURE)
     ap.add_argument("--seed", type=int, default=SEED,
-                    help="못박아 보낸다. 기본 %s" % SEED)
+                    help="못박아 보낸다. 기본 %s. Responses API 로 부를 때는 보내지 "
+                         "않는다 (인자가 없다)" % SEED)
+    ap.add_argument("--reasoning-effort", choices=REASONING_EFFORTS, default=None,
+                    help="추론형 모델이 생각에 쓸 노력. 주지 않으면 보내지 않고 모델의 "
+                         "기본값을 쓴다 (모델마다 받는 값과 기본값이 다르다)")
+    ap.add_argument("--api", choices=APIS, default="auto",
+                    help="auto 는 모델 이름으로 정한다 (model.profile_for). chat · "
+                         "responses 로 덮을 수 있다")
     ap.add_argument("--max-tokens", type=int, default=14000,
                     help="생성 호출의 completion cap. 분당 한도는 입력에 이것을 더해 "
                          "센다 - 생성 프롬프트(~15,000)에 16,000 을 붙이면 요청 하나가 "
