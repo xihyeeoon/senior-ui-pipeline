@@ -34,7 +34,8 @@ from senior_ui.devserver import ensure_server
 from .audit_call import load_allowed_removals, run_audit
 from .model import (TEMPERATURE, SEED, ApiRejected, InfraFailed, RateLimited,
                     call_model, load_env, mock_plan_reply, mock_reply, sdk_version)
-from .plan import PlanProblems, parse_plan, plan_report, screens_in, unaddressed
+from .plan import (PlanProblems, match_problems, parse_plan, plan_report, screens_in,
+                   unaddressed)
 from .preserve import inject, names_read, preserved_data
 from .prompt import (build_plan_prompt, build_prompt, choices_block, load_plan_template,
                      load_template, one_line, plan_retry_block, retry_block)
@@ -432,6 +433,13 @@ def check_reply(r, p, entry, reply):
 
     # 여기까지 왔으면 답은 읽을 수 있는 모양이다. 형식 오류는 해결되었다.
     r.truncated, r.last_error = 0, None
+
+    # 생성물이 계획의 화면을 그대로 가졌는지. 어긋나면 계획이 생성물을 설명하지
+    # 못한다 (plan.match_problems). 흐름 명세 문제와 같은 형식 실패다.
+    mismatch = match_problems(r.plan, html) if r.plan else []
+    if mismatch:
+        entry["plan_mismatch"] = mismatch
+        problems = problems + mismatch
 
     # 선택지 데이터는 도구가 넣는다. 참조 검사는 **넣기 전** 의 HTML 로 한다 -
     # 넣은 뒤의 문서에는 `window.PRESERVED = {...}` 가 늘 있으므로, 그것으로

@@ -169,6 +169,34 @@ def plan_problems(diagnosis, plan, original_screens):
     return problems
 
 
+def match_problems(plan, html):
+    """계획의 화면과 생성된 HTML 의 화면이 같은지. 어긋나면 형식 문제다.
+
+    계획을 따로 받는 이유는 "무엇을 바꿨는가" 의 기록이다. 생성물이 계획과
+    다른 화면을 가지면 그 기록이 생성물을 설명하지 못한다 - 설명서의 화면
+    대응표가 없는 화면을 가리키게 된다. 그래서 검사기에 넣기 전에 막는다.
+
+    고치는 길은 둘이다 - HTML 을 계획에 맞추거나, 재시도의 반성에서 계획을
+    바꾸거나. 메시지는 둘 다 적는다.
+    """
+    planned = [sc.get("name") for sc in (plan or {}).get("screens") or []]
+    built = screens_in(html)
+    extra = [s for s in built if s not in planned]
+    missing = [s for s in planned if s not in built]
+    problems = []
+    if extra:
+        problems.append(
+            "계획에 없는 화면이 HTML 에 있다: %s. 계획의 화면은 %s 이다. data-screen "
+            "이름을 계획과 같게 하거나, 계획을 바꿔야 한다면 반성의 plan_changes 에 "
+            "적어라." % (", ".join(extra), ", ".join(planned)))
+    if missing:
+        problems.append(
+            "계획에 있는 화면이 HTML 에 없다: %s. 계획의 모든 화면을 "
+            '<section class="screen" data-screen="이름"> 으로 만들거나, 계획을 '
+            "바꿔야 한다면 반성의 plan_changes 에 적어라." % ", ".join(missing))
+    return problems
+
+
 def plan_report(problems):
     """계획을 세우지 못한 시도도 다른 실패와 같은 리포트 모양으로 남긴다."""
     return {"passed": False, "warning": [],

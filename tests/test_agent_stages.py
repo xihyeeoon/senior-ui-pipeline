@@ -268,3 +268,55 @@ def test_every_mock_mode_has_a_plan_that_fits_its_build(mode):
     _d, p = plan_mod.parse_plan(reply["text"], ORIGINAL)
     built = plan_mod.screens_in(model.mock_build(mode))
     assert sorted(sc["name"] for sc in p["screens"]) == sorted(built)
+
+
+# ===================================================================== #
+# 5. 계획-결과 일치 검사 (규칙, 브라우저 없음)
+# ===================================================================== #
+def html_with(*screens):
+    return "".join('<section data-screen="%s"></section>' % s for s in screens)
+
+
+def test_a_build_that_matches_its_plan_has_no_problems():
+    assert plan_mod.match_problems(GOOD_PLAN, html_with("start", "done")) == []
+
+
+def test_a_screen_the_plan_does_not_have_is_a_problem():
+    got = plan_mod.match_problems(GOOD_PLAN, html_with("start", "extra", "done"))
+    assert len(got) == 1 and "extra" in got[0] and "계획에 없는" in got[0]
+
+
+def test_a_planned_screen_the_build_lacks_is_a_problem():
+    got = plan_mod.match_problems(GOOD_PLAN, html_with("start"))
+    assert len(got) == 1 and "done" in got[0]
+
+
+def test_a_renamed_screen_names_both_sides():
+    got = " ".join(plan_mod.match_problems(GOOD_PLAN, html_with("begin", "done")))
+    assert "begin" in got and "start" in got
+
+
+MISMATCHED_HTML = GOOD_HTML.replace('data-screen="start"', 'data-screen="begin"')
+MISMATCHED_FLOW = json.loads(json.dumps(GOOD_FLOW).replace('"start"', '"begin"'))
+
+
+def test_a_build_off_its_plan_is_a_format_failure(fake_run_env, out_root):
+    """흐름 명세는 맞지만 화면 이름이 계획과 다르다 - 검사기까지 가지 않는다."""
+    audits = []
+
+    def spy(*a, **kw):
+        audits.append(1)
+        return passing_report()
+
+    fake_run_env.setattr(loop, "run_audit", spy)
+
+    def call(*a, **kw):
+        return {"text": reply_text(MISMATCHED_HTML, MISMATCHED_FLOW),
+                "finish_reason": "stop", "seconds": 0.0, "usage": None}
+
+    _code, summary = run_loop(fake_run_env, out_root, call, attempts=2)
+    assert audits == []
+    assert summary["attempts"][0]["stage"] == "flow"
+    assert summary["budget"]["format_used"] >= 1
+    second = prompts_of(out_root)[1]
+    assert "begin" in second and "계획" in second
