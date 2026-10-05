@@ -6,7 +6,9 @@ r"""통과한 실행마다 디자이너에게 넘길 변경 설명서(designer_b
     1. 원본의 어느 화면이 재설계의 어느 화면이 되었나      (계획의 from)
     2. 무엇을 왜 바꿨나, 그것이 어느 진단에 대응하나        (계획의 changes)
     3. 각 화면은 어떻게 생겼나                              (검사기가 찍은 스크린샷)
-    4. 사람이 따로 봐야 할 것                               (warning · 도구가 고친 것 ·
+    4. 잘못 입력하면 어떻게 되나                            (계획의 errors · 검사 J 가
+                                                            걸어 본 결과)
+    5. 사람이 따로 봐야 할 것                               (warning · 도구가 고친 것 ·
                                                             일부러 뺀 선택지)
 
 전부 실행 폴더에 이미 있는 파일에서 옮긴다. 새로 판단하는 것은 없다.
@@ -19,6 +21,7 @@ import io
 import json
 import os
 
+from senior_ui.audit.flow import original_error_paths
 from senior_ui.preserved import GLOBAL_NAME
 
 
@@ -51,9 +54,43 @@ def choice_gaps(metrics):
             if sel.get(a) is not None and sel.get(a) != kept[a]]
 
 
+def _j_result(res, warned):
+    """검사 J 가 걸어 본 결과 한 칸."""
+    if res is None:
+        return "걷지 않음"
+    if not res.get("appeared"):
+        return "실패 — 오류 상태가 나타나지 않음 (켜진 화면 %s)" % (res.get("landed_on") or "?")
+    if not res.get("recovered"):
+        return "실패 — 되돌아가지 못함 (켜진 화면 %s)" % (res.get("recovered_to") or "?")
+    return "통과 · 경고 (알림 글에 과제의 단어가 없음)" if warned else "통과"
+
+
+def error_rows(errors, plan, metrics, warnings):
+    """오류 경로 표의 줄. 과제가 정한 오류마다 하나 (원본 흐름의 error_paths)."""
+    planned = {e.get("id"): e for e in (plan or {}).get("errors") or []
+               if isinstance(e, dict)}
+    walked = metrics.get("error_paths") or {}
+    warned = {w.get("error_path") for w in warnings or [] if w.get("check") == "J"}
+    ids = [e["id"] for e in errors or [] if "id" in e] or list(planned)
+    defs = {e["id"]: e for e in errors or [] if "id" in e}
+    rows = []
+    for eid in ids:
+        d, p, res = defs.get(eid) or {}, planned.get(eid) or {}, walked.get(eid)
+        where = ("`%s` — %s" % (p["screen"], p.get("how") or "")) if p.get("screen")             else "계획에 없음"
+        rows.append({
+            "id": eid, "about": d.get("about") or "",
+            "input": ", ".join("`{%s}`" % k for k in d.get("uses") or []) or "-",
+            "where": where,
+            "shown": " / ".join((res or {}).get("notice") or []) if (res or {}).get("appeared")
+            else "-",
+            "back_to": (res or {}).get("recovered_to") or p.get("back_to") or "-",
+            "result": _j_result(res, eid in warned)})
+    return rows
+
+
 def render_brief(run_name, attempt, plan, diagnosis, report, original_screens,
                  shots_dir, brief_dir, preserved=None, redeclared=None,
-                 model_html=None, git=None, reflections=None):
+                 model_html=None, git=None, reflections=None, errors=None):
     report = report or {}
     metrics = report.get("metrics") or {}
     diag = {d["id"]: d for d in diagnosis or []}
@@ -97,6 +134,25 @@ def render_brief(run_name, attempt, plan, diagnosis, report, original_screens,
         out += ["- 시도 %s: %s (계획 변경 %s건)" % (x["attempt"], x["cause"],
                                                x.get("plan_changes", 0))
                 for x in reflections]
+        out.append("")
+
+    rows = error_rows(errors, plan, metrics, report.get("warning"))
+    if rows:
+        out += ["## 오류 경로", "",
+                "원본에는 잘못된 입력에서 뜨는 오류가 있다. 재설계가 그 오류를 어디서 "
+                "어떻게 알리고 어디로 돌아가게 하는지, 그리고 검사기가 틀린 값을 넣어 "
+                "걸어 보았을 때 실제로 보인 글이다 (검사 J).", "",
+                "| 오류 | 원본 조건 | 잘못된 입력 | 알리는 곳 · 방법 (계획) | 실제로 보인 글 "
+                "| 돌아가는 화면 | 검사 J |", "|---|---|---|---|---|---|---|"]
+        out += ["| %s | %s | %s | %s | %s | %s | %s |" % tuple(
+            _cell(r[k]) for k in ("id", "about", "input", "where", "shown", "back_to",
+                                  "result")) for r in rows]
+        out.append("")
+        for r in rows:
+            shot = os.path.join(shots_dir, "audit_error_%s.png" % r["id"])
+            if os.path.exists(shot):
+                out.append("- `%s` 오류 상태 — [%s](%s)" % (
+                    r["id"], os.path.basename(shot), _link(shot, brief_dir)))
         out.append("")
 
     out += ["## 화면별 스크린샷", "", "검사기가 과제를 걸으며 찍은 것이다.", ""]
@@ -189,6 +245,7 @@ def write_brief(summary, original_screens, brief_path):
         preserved=summary.get("preserved"),
         redeclared=(final.get("preserved") or {}).get("redeclared"),
         model_html=final.get("model_html_promoted") or final.get("model_html"),
-        git=summary.get("git"), reflections=reflections)
+        git=summary.get("git"), reflections=reflections,
+        errors=original_error_paths())
     io.open(brief_path, "w", encoding="utf-8", newline="\n").write(text)
     return brief_path

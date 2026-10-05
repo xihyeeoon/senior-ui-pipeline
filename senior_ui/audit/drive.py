@@ -307,7 +307,8 @@ async def drive(url, flow, want_shots=None, errors=True):
                 for ep in paths:
                     data["error_paths"][ep["id"]] = (
                         _not_walked(data, ep)
-                        or await walk_error_path(browser, url, flow, ep))
+                        or await walk_error_path(browser, url, flow, ep,
+                                                 want_shots))
         finally:
             await browser.close()
     return data
@@ -384,7 +385,7 @@ async def _where(page):
             "dom_screen": await page.evaluate(P.DOM_SCREEN)}
 
 
-async def walk_error_path(browser, url, flow, ep):
+async def walk_error_path(browser, url, flow, ep, want_shots=None):
     """오류 경로 하나를 새 페이지에서 걷는다. 판정은 하지 않는다 (검사 J).
 
       1. 정답 걸음을 `from_step` (방문 이름) 에 도착할 때까지 밟는다.
@@ -451,6 +452,10 @@ async def walk_error_path(browser, url, flow, ep):
         row["settled"] = await settle(page, ep.get("expect_screen"))
         row["after"] = await _where(page)
         row["after_text"] = await _visible_text(page)
+        if want_shots:
+            # 오류 상태의 모습. 디자이너용 설명서의 오류 경로 표가 가리킨다.
+            await page.screenshot(path=os.path.join(
+                want_shots, "audit_error_%s.png" % SHOT_SAFE.sub("_", ep["id"])))
         if not row["settled"]:
             # 오류 상태가 나타나지 않았다. 되돌아가는 조작은 그 상태에서 누를
             # 것이므로 눌러 보지 않는다 - 없는 버튼마다 30초를 기다리게 된다.

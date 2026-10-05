@@ -459,3 +459,66 @@ def test_mock_modes_split_on_error_paths_at_the_format_check():
             assert errs == [], (mode, errs)
         handled = "mock-acc-err" in html
         assert handled == (M.MOCKS[mode][3] == "handled"), mode
+
+
+# --------------------------------------------------------------------- #
+# 디자이너용 설명서 - 오류 경로 표
+# --------------------------------------------------------------------- #
+B = _api.brief_module
+
+
+def brief_md(tmp_path, report_metrics, plan_errors=ERRS, warnings=()):
+    shots = tmp_path / "shots"
+    shots.mkdir()
+    (shots / "audit_error_wrong-account.png").write_bytes(b"png")
+    plan = plan_with(plan_errors)
+    report = {"passed": True, "fatal": [], "warning": list(warnings),
+              "metrics": report_metrics}
+    return B.render_brief(run_name="r", attempt=1, plan=plan, diagnosis=DIAG,
+                          report=report, original_screens=ORIG_SCREENS,
+                          shots_dir=str(shots), brief_dir=str(tmp_path),
+                          errors=original()["error_paths"])
+
+
+def test_brief_has_an_error_table(tmp_path):
+    metrics = {"error_paths": {
+        "wrong-account": {"appeared": True, "recovered": True,
+                          "notice": ["계좌번호가 맞지 않아요"], "recovered_to": "account"},
+        "wrong-bank": {"appeared": True, "recovered": True,
+                       "notice": ["다시 골라 주세요"], "recovered_to": "account"}}}
+    warn = {"check": "J", "screen": "review", "error_path": "wrong-bank",
+            "detail": "은행 단어가 없다"}
+    md = brief_md(tmp_path, metrics, warnings=[warn])
+    start = md.index("## 오류 경로")
+    sec = md[start: md.find("\n## ", start + 3)]
+    lines = [l for l in sec.splitlines() if l.startswith("| wrong-")]
+    assert len(lines) == 2
+    wa = [l for l in lines if l.startswith("| wrong-account")][0]
+    assert "계좌번호가 틀렸다" in wa            # 원본 조건
+    assert "{ACCOUNT_WRONG}" in wa             # 어느 입력에서
+    assert "같은 화면에 빨간 글" in wa          # 계획의 방법
+    assert "계좌번호가 맞지 않아요" in wa       # 걷기에서 실제로 보인 글
+    assert "통과" in wa
+    assert "audit_error_wrong-account.png" in sec
+    wb = [l for l in lines if l.startswith("| wrong-bank")][0]
+    assert "경고" in wb
+
+
+def test_brief_error_table_marks_what_failed(tmp_path):
+    metrics = {"error_paths": {
+        "wrong-account": {"appeared": False, "recovered": False, "notice": [],
+                          "landed_on": "amount"}}}
+    md = brief_md(tmp_path, metrics)
+    row = [l for l in md.splitlines() if l.startswith("| wrong-account")][0]
+    assert "나타나지 않음" in row
+    row = [l for l in md.splitlines() if l.startswith("| wrong-bank")][0]
+    assert "걷지 않음" in row
+
+
+def test_brief_without_errors_has_no_error_section(tmp_path):
+    shots = tmp_path / "shots"
+    shots.mkdir()
+    md = B.render_brief(run_name="r", attempt=1, plan=plan_with(None), diagnosis=DIAG,
+                        report={"metrics": {}}, original_screens=ORIG_SCREENS,
+                        shots_dir=str(shots), brief_dir=str(tmp_path))
+    assert "## 오류 경로" not in md
