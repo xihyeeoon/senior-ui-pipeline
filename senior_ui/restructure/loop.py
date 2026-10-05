@@ -473,7 +473,7 @@ def copy_final(r):
 # 이 이유로 멈춘 실행은 "빌드가 떨어졌다" 가 아니라 "돌지 못했다" 다. 부르는
 # 쪽은 둘을 구분해야 한다 - 떨어진 빌드는 다시 만들고, 돌지 못한 실행은 다시
 # 만들 것이 없다. senior_ui.audit 의 종료 코드 규약과 같다 (docs/README.md).
-CANNOT_RUN = {"api_rejected", "infra_exhausted"}
+CANNOT_RUN = {"api_rejected", "infra_exhausted", "cannot_start"}
 
 
 def exit_code(summary):
@@ -515,7 +515,16 @@ def run(args):
     r = Run(args, log, run_dir, model, template, original_html, orig_url)
     server = None
     try:
-        server = ensure_server(log)
+        # 띄우지 못했거나, 떠 있는 것이 이 저장소를 서빙하지 않는다. 둘 다
+        # "빌드가 떨어졌다" 가 아니라 "돌지 못했다" 다.
+        try:
+            server = ensure_server(log)
+        except RuntimeError as e:
+            log("cannot start: %s" % e)
+            print("cannot start: %s" % e, file=sys.stderr)
+            r.summary["stopped_reason"] = "cannot_start"
+            r.summary["error"] = str(e)
+            return exit_code(r.summary)
         # 대비·언어 검사의 기준이 되는 원본 스냅샷. 실행마다 한 번만 걷는다.
         base_flow = A.load_flow(None)
         log("audit: driving the original once (baseline for contrast / language)")

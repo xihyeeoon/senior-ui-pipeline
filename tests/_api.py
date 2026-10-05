@@ -87,6 +87,8 @@ loop_module = _loop
 # ---- senior_ui/devserver.py · senior_ui/config.py ---------------------- #
 listening = _devserver.listening
 ensure_server = _devserver.ensure_server
+# 포트에 떠 있는 서버가 이 저장소를 서빙하는지 보는 부분까지 테스트가 본다.
+devserver_module = _devserver
 PORT = _config.PORT
 ROOT_DIR = _config.ROOT
 

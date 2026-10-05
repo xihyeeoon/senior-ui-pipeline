@@ -541,3 +541,86 @@ def test_an_original_outside_the_repo_stops_the_run(driven_urls, monkeypatch, tm
                              original=str(other))
     assert code == 2
     assert summary["stopped_reason"] == "cannot_start"
+
+
+# ===================================================================== #
+# 7. 3003 에 떠 있는 것이 이 저장소를 서빙하는가
+# ===================================================================== #
+import contextlib        # noqa: E402 - 아래 서버 테스트에서만 쓴다
+import socket            # noqa: E402
+import subprocess        # noqa: E402
+import sys               # noqa: E402
+import time              # noqa: E402
+
+devserver = _api.devserver_module
+
+
+def free_port():
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
+@contextlib.contextmanager
+def server_on(directory, port):
+    """그 폴더를 서빙하는 http.server 를 띄운다."""
+    proc = subprocess.Popen(
+        [sys.executable, "-m", "http.server", str(port), "--bind", "127.0.0.1",
+         "--directory", str(directory)],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        for _ in range(50):
+            if devserver.listening(port):
+                break
+            time.sleep(0.1)
+        else:
+            raise AssertionError("테스트용 서버를 띄우지 못했다")
+        yield port
+    finally:
+        proc.kill()
+        proc.wait(timeout=10)
+
+
+def test_a_server_serving_this_repo_is_reused():
+    port = free_port()
+    with server_on(ROOT, port):
+        lines = []
+        assert devserver.ensure_server(lines.append, port=port) is None
+        assert any("reusing" in x for x in lines), lines
+
+
+def test_a_server_serving_something_else_stops_the_run(tmp_path):
+    """포트에 무엇이든 떠 있으면 그대로 쓰고 있었다.
+
+    다른 폴더를 서빙하는 서버를 모르고 쓰면 검사는 돌긴 하지만 그 결과가
+    무엇을 뜻하는지 알 수 없다 - 빌드를 못 열어 전부 fatal 이 나거나, 더 나쁘게
+    같은 이름의 다른 문서를 열어 통과한다.
+    """
+    (tmp_path / "inputs").mkdir()
+    (tmp_path / "inputs" / "original_transfer.html").write_text(
+        "<html>남의 원본</html>", encoding="utf-8")
+    port = free_port()
+    with server_on(tmp_path, port):
+        with pytest.raises(RuntimeError) as e:
+            devserver.ensure_server(lambda m: None, port=port)
+    assert ":%d" % port in str(e.value)
+
+
+def test_a_server_that_does_not_have_the_file_at_all_stops_the_run(tmp_path):
+    port = free_port()
+    with server_on(tmp_path, port):
+        with pytest.raises(RuntimeError):
+            devserver.ensure_server(lambda m: None, port=port)
+
+
+def test_the_loop_stops_cleanly_when_the_port_is_someone_elses(monkeypatch, tmp_path,
+                                                               fake_run_env):
+    """남의 서버를 만나면 역추적이 아니라 이유와 종료 코드 2 로 끝나야 한다."""
+    def refuse(log, port=None):
+        raise RuntimeError(":3003 에 이미 서버가 있지만 이 저장소를 서빙하지 않는다")
+
+    monkeypatch.setattr(loop, "ensure_server", refuse)
+    code, summary = run_loop(monkeypatch, tmp_path, always_reply, attempts=1)
+    assert code == 2
+    assert summary["stopped_reason"] == "cannot_start"
+    assert summary["attempts"] == []
