@@ -11,8 +11,9 @@ import os
 
 from senior_ui import audit as A
 from senior_ui.audit import stage as S
-from senior_ui.audit.flow import original_error_paths, original_truth
+from senior_ui.audit.flow import task_truth
 from senior_ui.config import FLOWS_DIR
+from senior_ui.tasks import DEFAULT_TASK, load_task
 
 
 # 허용하는 제거를 적는 파일. 연구자가 손으로 관리하는 것이고, 이것 말고는
@@ -24,10 +25,10 @@ from senior_ui.config import FLOWS_DIR
 # 그래서 선언을 읽는 곳을 모델이 쓸 수 없는 파일 하나로 옮긴다.
 ALLOWED_REMOVALS = os.path.join(FLOWS_DIR, "allowed_removals.json")
 
-# 이 저장소의 과제는 하나다. 그래도 과제별로 적는 것은, 두 번째 과제가 생겼을
-# 때 허용 목록이 섞이지 않게 하기 위해서다 - 한 과제에서 안전한 제거가 다른
-# 과제에서도 안전하다는 보장은 없다.
-TASK = "transfer"
+# 과제별로 적는다. 허용 목록이 과제끼리 섞이지 않게 하기 위해서다 - 한 과제에서
+# 안전한 제거가 다른 과제에서도 안전하다는 보장은 없다. 부르는 쪽(루프)이 과제
+# 이름을 넘기고, 주지 않으면 기본 과제다.
+TASK = DEFAULT_TASK
 
 
 def load_allowed_removals(task=TASK, path=ALLOWED_REMOVALS):
@@ -66,19 +67,23 @@ def merge_allowed_removals(flow, allowed):
 
 
 def run_audit(orig_snapshot, orig_html, html_path, flow_path, url, shots, stage,
-              original_url=None, allowed_removals=None):
+              original_url=None, allowed_removals=None, task=None):
     """senior_ui.audit 로 검사한 뒤 단계 밖 검사를 걷어낸다. 와이어프레임 단계에서는
     대비·레이아웃·상태 색·미정의 클래스를 보지 않는다 - 아직 채우지 않은
-    디테일이기 때문이다. 걸러낸 이유는 checks_stood_down 에 남는다."""
-    flow = merge_allowed_removals(A.load_flow(flow_path), allowed_removals or {})
+    디테일이기 때문이다. 걸러낸 이유는 checks_stood_down 에 남는다.
+
+    `task` 는 이 실행의 과제다. 주지 않으면 기본 과제(이체)다. 모델의 흐름에
+    적힌 task 는 듣지 않는다 - 과제는 실행이 정한다."""
+    task = task or DEFAULT_TASK
+    flow = merge_allowed_removals(A.load_flow(flow_path, task=task),
+                                  allowed_removals or {})
     # 정답도 모델의 말을 듣지 않는다. 모델이 흐름 명세에 truth 를 적어도 검사는
-    # 원본 과제의 정답(flows/original.json)으로 한다 - 모델이 정답을 고르게 두면
+    # 원본 과제의 정답(과제의 원본 흐름)으로 한다 - 모델이 정답을 고르게 두면
     # 자기가 보여 주는 값을 정답으로 적어 검사 B 를 끌 수 있다.
-    flow["truth"] = original_truth()
+    flow["truth"] = task_truth(task)
     # 과제가 정한 오류 경로는 모두 걸어야 한다. 흐름 명세에서 빠졌으면 형식
     # 검사가 먼저 막지만, 검사 J 도 같은 목록으로 한 번 더 본다.
-    flow["error_paths_required"] = [e["id"] for e in original_error_paths()
-                                    if "id" in e]
+    flow["error_paths_required"] = list(load_task(task)["required_error_paths"])
     rep_html = io.open(html_path, encoding="utf-8").read()
     rep = asyncio.run(A.drive(url, flow, want_shots=shots))
     report = A.audit(orig_snapshot, rep, orig_html, rep_html, flow)

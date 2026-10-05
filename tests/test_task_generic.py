@@ -149,7 +149,6 @@ def test_b_is_unchanged_for_transfer():
     assert ctx.fatal[0]["numbers"] == ["5"]
 
 
-
 # --------------------------------------------------------------------- #
 # 3. 재구성 루프 - 기준값 걷기 · 형식 검사 · 프롬프트의 오류 조건
 # --------------------------------------------------------------------- #
@@ -242,3 +241,39 @@ def test_required_errors_follow_the_task():
     assert FLOW_REAL.required_errors("bill") == []
     assert [e["id"] for e in FLOW_REAL.required_errors()] == ["wrong-account",
                                                                "wrong-bank"]
+
+
+# --------------------------------------------------------------------- #
+# 4. 검사기 호출 (audit_call) - 정답 · 필수 오류 경로 · 허용 제거
+# --------------------------------------------------------------------- #
+def test_run_audit_uses_the_tasks_truth_and_errors(monkeypatch, tmp_path):
+    """고치기 전: 모델의 흐름을 늘 이체 정답과 이체 오류 경로로 걸었다."""
+    AC = _api.audit_call_module
+    seen = {}
+
+    async def fake_drive(url, flow, want_shots=None, **kw):
+        seen["flow"] = flow
+        return {}
+    monkeypatch.setattr(AC.A, "drive", fake_drive)
+    monkeypatch.setattr(AC.A, "audit", lambda *a: {"passed": True})
+    monkeypatch.setattr(AC.S, "apply_stage", lambda r, s: r)
+    flow_path = tmp_path / "f.json"
+    flow_path.write_text(json.dumps(BILL_FLOW), encoding="utf-8")
+    html_path = tmp_path / "b.html"
+    html_path.write_text(BILL_HTML, encoding="utf-8")
+    AC.run_audit({}, "", str(html_path), str(flow_path), "u", None, "styled",
+                 task="bill")
+    assert seen["flow"]["truth"]["ENO"] == "1700000000"
+    assert seen["flow"]["error_paths_required"] == []
+    assert seen["flow"]["task"] == "bill"
+    AC.run_audit({}, "", str(html_path), str(flow_path), "u", None, "styled")
+    assert seen["flow"]["truth"] == TRANSFER_TRUTH
+    assert seen["flow"]["error_paths_required"] == ["wrong-account", "wrong-bank"]
+
+
+def test_allowed_removals_are_read_for_the_task(fake_run_env, out_root):  # noqa: F811
+    seen = []
+    fake_run_env.setattr(loop, "load_allowed_removals",
+                         lambda task="transfer": seen.append(task) or {})
+    bill_run(fake_run_env, out_root)
+    assert seen == ["bill"]

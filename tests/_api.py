@@ -124,6 +124,7 @@ loop_module = _loop
 # 허용하는 제거 목록을 읽고 검사 직전에 합치는 곳.
 load_allowed_removals = _audit_call.load_allowed_removals
 merge_allowed_removals = _audit_call.merge_allowed_removals
+audit_call_module = _audit_call
 
 # ---- senior_ui/devserver.py · senior_ui/config.py ---------------------- #
 listening = _devserver.listening

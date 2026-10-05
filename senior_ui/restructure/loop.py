@@ -696,7 +696,8 @@ def _drive_audit(r, n, build):
         return run_audit(r.orig_snapshot, r.original_html, build["html_path"],
                          build["flow_path"], url_for(rel), shots, r.args.stage,
                          original_url=r.original_url,
-                         allowed_removals=r.allowed_removals)
+                         allowed_removals=r.allowed_removals,
+                         task=r.task["id"])
     except Exception as e:                           # a flow the audit cannot drive
         r.log("audit: crashed: %s: %s" % (type(e).__name__, e))
         return failure_report("AUDIT", "검사기가 흐름 명세를 실행하지 못했다: %s: %s"
@@ -973,7 +974,7 @@ def run(args):
         plan_template = load_plan_template(task["id"])
         original_html = io.open(args.original, encoding="utf-8").read()
         orig_url = original_url(args.original)
-        allowed = load_allowed_removals()
+        allowed = load_allowed_removals(task["id"])
     except (OSError, RuntimeError, ValueError) as e:
         log("cannot start: %s" % e)
         print("cannot start: %s" % e, file=sys.stderr)

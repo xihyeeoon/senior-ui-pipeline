@@ -585,7 +585,7 @@ def test_the_audit_compares_against_the_same_original(driven_urls, monkeypatch,
     seen = {}
 
     def spy(orig_snapshot, orig_html, html_path, flow_path, url, shots, stage,
-            original_url=None, allowed_removals=None):
+            original_url=None, allowed_removals=None, task=None):
         seen["url"] = original_url
         return passing_report()
 
@@ -865,7 +865,7 @@ def test_check_I_catches_values_the_model_declared_removed(fake_run_env, out_roo
     seen = {}
 
     def spy(orig_snapshot, orig_html, html_path, flow_path, url, shots, stage,
-            original_url=None, allowed_removals=None):
+            original_url=None, allowed_removals=None, task=None):
         seen["flow"] = json.load(io.open(flow_path, encoding="utf-8"))
         return passing_report()
 
@@ -960,7 +960,7 @@ def test_the_preserved_data_is_injected_into_the_build(preserving, out_root):
     seen = {}
 
     def spy(orig_snapshot, orig_html, html_path, flow_path, url, shots, stage,
-            original_url=None, allowed_removals=None):
+            original_url=None, allowed_removals=None, task=None):
         seen["html"] = io.open(html_path, encoding="utf-8").read()
         return passing_report()
 
