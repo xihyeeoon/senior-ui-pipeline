@@ -1,5 +1,6 @@
 {
   "name": "d_below",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
   "note": "검사 D 가 새 설계에서 기준 미달 대비를 경고하지 않는 것을 재현한다. 전후 비교가 물러난 자리에 아무 말도 남지 않아 읽을 수 없는 글이 통과한다.",
   "derived_from_original": false,
   "required_ids": [

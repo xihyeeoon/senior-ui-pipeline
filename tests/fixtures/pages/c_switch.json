@@ -1,5 +1,6 @@
 {
   "name": "c_switch",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
   "note": "검사 C 가 switch/case 와 쌍따옴표 분기를 읽지 못하는 것을 재현한다. 화면은 넘기지 않는다 - 읽는 규칙만 본다.",
   "derived_from_original": false,
   "required_ids": [

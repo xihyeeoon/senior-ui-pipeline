@@ -1,5 +1,6 @@
 {
   "name": "d_opacity",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
   "note": "검사 D 가 조상 요소의 opacity 를 세지 않는 것을 재현한다. 걷지 않는다 - 켜진 화면 하나에서 색만 잰다.",
   "derived_from_original": false,
   "required_ids": [

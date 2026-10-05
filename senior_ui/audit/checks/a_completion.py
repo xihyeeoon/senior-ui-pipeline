@@ -14,7 +14,7 @@ on 클래스를 옮기지 않으면 사용자는 앞 화면에 그대로 서 있
 원본에서 파생된 빌드에서만 돈다 - 새 설계에는 지킬 원본이 없다.
 """
 from ..context import union
-from ..flow import AMOUNT_SHOWN, fill
+from ..flow import fill, truth_of
 
 # 켜진 화면 안에서만 잴 수 있는 것들. probes.py 가 켜진 화면이 없을 때 이
 # 값들을 [] 가 아니라 null 로 돌려주므로, null 하나로 "아무것도 떠 있지
@@ -144,11 +144,12 @@ def _amount_round_trip(ctx):
     # 으로 이미 본다. 결함은 하나이므로 거기에 맡기고 여기서는 지표만 남긴다.
     # (네 흐름 파일 모두 완료 화면의 금액을 expect 에 적고 있다.) expect 에
     # 없으면 B 는 그 선택자를 보지 않으므로 A 가 유일한 검사다.
-    covered = any(fill(sel) == done_sel
+    truth = truth_of(ctx.flow)
+    covered = any(fill(sel, truth) == done_sel
                   for sel, _ in (ctx.flow["expect"].get(last_screen) or []))
-    if shown_done != AMOUNT_SHOWN and not covered:
+    if shown_done != truth["AMOUNT_SHOWN"] and not covered:
         F("A", last_screen, "완료 화면의 %s 가 %r 을 보여 준다. 과제가 넣은 값은 %r 이다."
-          % (done_sel, shown_done, AMOUNT_SHOWN))
+          % (done_sel, shown_done, truth["AMOUNT_SHOWN"]))
 
 
 def _preserved_attrs(ctx):

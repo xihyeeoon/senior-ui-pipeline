@@ -1,5 +1,6 @@
 {
   "name": "f_comment",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
   "note": "검사 F 의 마크업 검사가 HTML 주석을 걷어내지 못해, 주석 안의 꺾쇠 뒤 글자가 새 영어로 잡히는 것을 재현한다. 원본 쪽 페이지의 주석에는 꺾쇠가 없다.",
   "derived_from_original": false,
   "required_ids": [

@@ -1,11 +1,17 @@
 {
   "pass": {
     "reply_finish_reason": "stop",
-    "reply_text_sha256": "11813270eb78d6f4108a847d750a98c735bff9c46eaa1e87d2201338212eb1cc",
-    "html_len": 26907,
-    "html_sha256": "31ebaea90c57c91a5f4401494353a6fcf8a6721c6fe606d331412991e775d3f5",
+    "reply_text_sha256": "51ce15d3a20b940d3847395a9e7e5035d2403d07c9753e98ca4b3490b11ef367",
+    "html_len": 26585,
+    "html_sha256": "27705166bdcd1eae87080f6a892e9994995b4cbbcca9a2f683cb908a29e265d3",
     "flow": {
       "name": "auto",
+      "truth": {
+        "BANK": "카카오뱅크",
+        "ACCOUNT": "3333000000000",
+        "AMOUNT": "10000",
+        "NAME": "김시현"
+      },
       "note": "LLM-restructured design, 9 screens. Not a repair of the original document, so the per-screen structural comparison is skipped - see derived_from_original. This drives the long path (a first-time account) so every screen is exercised; the saved-recipient path is 5 taps shorter and skips accno/bank/whoconfirm. type 액션은 숫자판(key 에 %s, 글자마다 클릭)과 입력 칸(%s 없이 fill) 둘 다 쓸 수 있다. 이 흐름은 숫자판 형식이다.",
       "derived_from_original": false,
       "required_ids": [
@@ -126,15 +132,21 @@
       },
       "done_amount": "#dn-amt"
     },
-    "flow_text_sha256": "7b8a930d366d03bffa51b158aa7fa04410761b76b7843560541613ca36a4ff36"
+    "flow_text_sha256": "21eac125e6312035521ca237dd1ac31bdc060c339c1e9745290b1f6b6d37772b"
   },
   "fail": {
     "reply_finish_reason": "stop",
-    "reply_text_sha256": "50d2e0994bdaefe36114d94bbf50afb76a6210dffc760cf5ff677cbfb2335ac7",
-    "html_len": 26907,
-    "html_sha256": "31ebaea90c57c91a5f4401494353a6fcf8a6721c6fe606d331412991e775d3f5",
+    "reply_text_sha256": "f538ef4fc4391a31068e68ace422df6de461734110a243b9a070b158ea5e320e",
+    "html_len": 26585,
+    "html_sha256": "27705166bdcd1eae87080f6a892e9994995b4cbbcca9a2f683cb908a29e265d3",
     "flow": {
       "name": "auto",
+      "truth": {
+        "BANK": "카카오뱅크",
+        "ACCOUNT": "3333000000000",
+        "AMOUNT": "10000",
+        "NAME": "김시현"
+      },
       "note": "LLM-restructured design, 9 screens. Not a repair of the original document, so the per-screen structural comparison is skipped - see derived_from_original. This drives the long path (a first-time account) so every screen is exercised; the saved-recipient path is 5 taps shorter and skips accno/bank/whoconfirm. type 액션은 숫자판(key 에 %s, 글자마다 클릭)과 입력 칸(%s 없이 fill) 둘 다 쓸 수 있다. 이 흐름은 숫자판 형식이다.",
       "derived_from_original": false,
       "required_ids": [
@@ -255,6 +267,6 @@
       },
       "done_amount": "#dn-amt"
     },
-    "flow_text_sha256": "3c4cf42ebb685d098be44ee19be347c474b197a7375cb3ada4fbca4feabc0708"
+    "flow_text_sha256": "229d50674df569f4563fc44563f33c06aeec6c7edac23d402a3f9d019eb355fd"
   }
 }

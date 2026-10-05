@@ -68,10 +68,14 @@ LLM 이 쓴 것이라 다시 만들려면 API 비용이 들고 바이트까지 �
 .\.venv\Scripts\python.exe -m senior_ui.restructure --mock pass    # API 없이 확인
 ```
 
-**pass 는 지금 검사 I(00·전액 누락)에서 떨어진다. 통과 경로 확인은 preserved-all 로 한다.** Run 1 빌드에 원본 숫자판의 `00` 과 금액 버튼의 `전액` 이 없어서다.
-통과해야 생기는 것(`designer_brief.md`, `outputs/restructured_auto.*` 승격)도
-`--mock preserved-all` 에서만 생긴다. 원본 숫자판을 배열로 바꾸는 9번 단계에서
-mock 도 다시 손본다.
+`--mock pass` 는 통과한다. Run 1 빌드에는 원본 숫자판의 `00` 과 금액 버튼의
+`전액` 이 없는데, 원본의 숫자판·빠른 금액이 스크립트 배열이 된 뒤로 pass 는 그
+배열(`window.PRESERVED.AMT_KEYS` · `QUICK`)을 읽어 그린다. Run 1 은 옛 원본의
+과제로 만든 빌드라 받는 사람 이름도 지금 원본의 정답(김철수)으로 바꿔 끼운다
+(`model.NAME_SWAP`). 통과하므로 `designer_brief.md` 가 생기고
+`outputs/restructured_auto.*` 를 덮는다 — 덮지 않으려면 환경변수
+`SENIOR_UI_OUTPUTS` 로 다른 폴더를 준다 (`tests/capture_baseline.py` 는
+`.mock-outputs/` 를 쓴다).
 
 `PYTHONUTF8=1` 은 더 이상 필요 없다. 모든 명령줄이 맨 앞에서
 `senior_ui._cli.setup_stdout()` 을 불러 stdout 을 UTF-8 로 맞춘다.

@@ -79,10 +79,11 @@
 - `parse_reply.json` — `mock_reply` 의 답을 `parse_reply` 로 되읽은 결과
   (HTML 은 28KB 라 해시만 남긴다)
 - `mock_*.json` — `--mock` 다섯 모드의 `summary.json`
-  (`capture_baseline.MOCK_RUNS`). 다섯은 Run 1 빌드의 은행 목록 한 줄에서만
-  다르고, 그 한 줄 때문에 각각 다른 자리에서 갈린다.
-  `mock_pass` · `mock_fail` 은 검사까지 가서 떨어진다 (`passed=false`, 종료
-  코드 1). `mock_preserved_all` 은 통과한다 (`passed=true`, 종료 코드 0),
+  (`capture_baseline.MOCK_RUNS`). 다섯은 Run 1 빌드의 은행 목록 한 줄과
+  `00`·`전액` 을 채우는 방법(배열을 읽는가, 마크업에 쓰는가)에서만 다르고,
+  그 차이 때문에 각각 다른 자리에서 갈린다.
+  `mock_fail` 은 검사까지 가서 떨어진다 (`passed=false`, 종료 코드 1).
+  `mock_pass` 와 `mock_preserved_all` 은 통과한다 (`passed=true`, 종료 코드 0),
   `mock_preserved_some` 은 검사 I 에서, `mock_preserved_none` 은 형식 검사에서
   떨어진다. mock 실행은 `.mock-outputs/` 를 쓴다 — 통과한 빌드가
   `outputs/restructured_auto.*` 를 덮지 않게 떼어 놓았다
@@ -145,7 +146,7 @@ findings 를 넣는 자리보다 앞이라서 그렇다. 이것은 정리 전부
 달라진 것은 **딱 한 가지 원인**뿐이었다.
 
 > 원본 시제품의 비밀번호 숫자판은 그릴 때마다 숫자를 섞는다.
-> `inputs/original_transfer.html` 의 `const nums = [0..9].sort(()=>Math.random()-0.5)`
+> `inputs/original_transfer.html` 의 `keyButtons(shuffled(PW_KEYS), 'pw')`
 > 이고, 화면의 `재배열` 버튼도 같은 함수를 다시 부른다.
 
 그래서 섞인 순서가 그대로 들어가는 세 경로만 비교에서 뺀다
@@ -165,7 +166,7 @@ findings 를 넣는 자리보다 앞이라서 그렇다. 이것은 정리 전부
 **두 출력이 바이트까지 같았다.**
 
 이유는 `choices_block` 이 값을 `set` 에 모아 **개수만** 쓰기 때문이다. 섞이는 것은
-순서뿐이고 집합은 늘 `{0..9}` 라서 `pw — 10개 (nums 10)` 라는 한 줄은 변하지 않는다.
+순서뿐이고 집합은 늘 `{0..9}` 라서 `pw — 10개 (PW_KEYS 10)` 라는 한 줄은 변하지 않는다.
 값 자체나 순서를 프롬프트에 적는 자리가 생기면 이 성질이 깨지므로, 그때 다시
 측정해야 한다. 그래서 `prompt/` 기준값은 브라우저 없이 저장된 스냅샷만으로 비교한다
 (`tests/ignore.py` 에 넣을 것이 없다).

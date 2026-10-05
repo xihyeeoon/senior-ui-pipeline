@@ -263,11 +263,22 @@ BANKS_SOME = ("const BANKS = window.PRESERVED.BANKS"
 # 떨어진다 (검사기까지 가지 않는다).
 BANKS_NONE = "const BANKS = ['신한','국민','카카오뱅크','농협'];"
 
-# 원본의 마크업 숫자판에 있고 Run 1 빌드에는 없는 두 값 - 숫자판의 '00' 과
-# 금액 버튼의 '전액'. 이것을 채워 두면 검사 I 의 결과가 은행 목록 하나로만
-# 갈린다. 채우지 않으면 "전부 그린 응답" 도 다른 두 누락 때문에 떨어져서,
-# 통과하는 모습을 볼 수 없다.
-PAD = [
+# Run 1 은 옛 원본의 과제(김시현 · 카카오뱅크)로 만든 빌드다. 예금주 조회를
+# 흉내 내는 두 자리가 받는 사람 이름을 박아 두었는데, 검사는 지금 원본의 정답
+# (flows/original.json 의 truth)으로 하므로 그대로 두면 검사 B 가 모든 모드에서
+# 이름 두 곳을 잡는다. 모드와 상관없는 차이이므로 다섯 모드 모두 바꿔 끼운다.
+NAME_SWAP = ("S.name='김시현'", "S.name='김철수'")
+
+# 원본에 있고 Run 1 빌드에는 없는 두 값 - 금액 숫자판의 '00' 과 빠른 금액의
+# '전액'. 이것을 채워 두면 검사 I 의 결과가 은행 목록 하나로만 갈린다. 채우지
+# 않으면 "전부 그린 응답" 도 다른 두 누락 때문에 떨어져서, 통과하는 모습을 볼 수
+# 없다. 채우는 방법이 둘이다.
+#
+#   markup  두 값을 마크업에 직접 쓴다. 값이 하나도 빠지지 않았으므로 배열을
+#           읽지 않아도 형식 검사를 지난다 (reply.preserved_problems).
+#   arrays  숫자판과 빠른 금액을 도구가 넣어 준 배열(AMT_KEYS · QUICK)을 읽어
+#           그린다. 원본의 숫자판이 배열이 된 뒤의, 지시대로 한 답이다.
+PAD_MARKUP = [
     ('<button disabled></button><button data-action="amt-num" data-v="0">0</button>',
      '<button data-action="amt-num" data-v="00">00</button>'
      '<button data-action="amt-num" data-v="0">0</button>'),
@@ -276,18 +287,51 @@ PAD = [
      '<button data-action="amt-set" data-v="all">전액</button>'),
 ]
 
-# (은행 목록 한 줄, 원본 숫자판을 채우는가, 흐름을 깨뜨리는가)
+AMT_ROWS = [
+    '<button data-action="amt-num" data-v="1">1</button><button data-action="amt-num" '
+    'data-v="2">2</button><button data-action="amt-num" data-v="3">3</button>',
+    '<button data-action="amt-num" data-v="4">4</button><button data-action="amt-num" '
+    'data-v="5">5</button><button data-action="amt-num" data-v="6">6</button>',
+    '<button data-action="amt-num" data-v="7">7</button><button data-action="amt-num" '
+    'data-v="8">8</button><button data-action="amt-num" data-v="9">9</button>',
+    '<button disabled></button><button data-action="amt-num" data-v="0">0</button>'
+    '<button class="word" data-action="amt-del">지우기</button>',
+]
+QUICK_ROWS = ['<button data-action="amt-set" data-v="%s">%s</button>' % (v, t)
+              for v, t in (("10000", "1만원"), ("30000", "3만원"),
+                           ("50000", "5만원"), ("100000", "10만원"))]
+PAD_ARRAYS = (
+    [(row, "") for row in AMT_ROWS[:3]]
+    + [(AMT_ROWS[3], '<span id="mock-amt-pad"></span>')]
+    + [(row, "") for row in QUICK_ROWS[:3]]
+    + [(QUICK_ROWS[3], '<span id="mock-quick"></span>')]
+    + [("else if(a==='amt-set'){ S.amount=el.dataset.v; renderAmount(); }",
+        "else if(a==='amt-set'){ S.amount=el.dataset.v==='all' ? '100000' : "
+        "el.dataset.v; renderAmount(); }"),
+       ("</script>",
+        "document.getElementById('mock-amt-pad').outerHTML = "
+        "window.PRESERVED.AMT_KEYS.map(v=>'<button data-action=\"amt-num\" "
+        "data-v=\"'+v+'\">'+v+'</button>').join('') + "
+        "'<button class=\"word\" data-action=\"amt-del\">지우기</button>';\n"
+        "document.getElementById('mock-quick').outerHTML = "
+        "window.PRESERVED.QUICK.map(v=>'<button data-action=\"amt-set\" "
+        "data-v=\"'+v+'\">'+(v==='all' ? '전액' : (v/10000)+'만원')+'</button>')"
+        ".join('');\n</script>")])
+PADS = {None: [], "markup": PAD_MARKUP, "arrays": PAD_ARRAYS}
+
+# (은행 목록 한 줄, 원본에 있고 Run 1 에 없는 두 값을 채우는 방법, 흐름을 깨뜨리는가)
 MOCKS = {
-    # Run 1 을 되읽는다. 목록만 참조로 바꿔 검사 경로를 계속 밟게 한다.
-    "pass": (BANKS_ALL, False, False),
+    # Run 1 을 되읽는다. 목록과 숫자판·빠른 금액을 도구가 넣은 배열에서 그린다.
+    # 지시대로 한 답이고, 통과해야 한다.
+    "pass": (BANKS_ALL, "arrays", False),
     # 둘째 걸음이 없는 선택자를 클릭한다 - 모든 시도가 화면 2에서 죽는다.
-    "fail": (BANKS_ALL, False, True),
-    # 지시대로 한 답. 통과해야 한다.
-    "preserved-all": (BANKS_ALL, True, False),
+    "fail": (BANKS_ALL, "arrays", True),
+    # 목록은 참조하고 두 값은 마크업에 직접 썼다. 통과해야 한다.
+    "preserved-all": (BANKS_ALL, "markup", False),
     # 참조는 했지만 일부만 그렸다. 검사 I 에서 떨어져야 한다.
-    "preserved-some": (BANKS_SOME, True, False),
+    "preserved-some": (BANKS_SOME, "markup", False),
     # 참조하지 않고 직접 썼다. 형식 검사에서 떨어져야 한다.
-    "preserved-none": (BANKS_NONE, True, False),
+    "preserved-none": (BANKS_NONE, "markup", False),
 }
 MODES = sorted(MOCKS)
 
@@ -305,9 +349,10 @@ def mock_build(mode):
     banks, pad, _broken = MOCKS[mode]
     html = swap(io.open(mock_build_path(), encoding="utf-8").read(),
                 BANKS_LINE, banks)
-    if pad:
-        for old, new in PAD:
-            html = swap(html, old, new)
+    # 이름은 두 자리 모두 바꾼다 (bank-yes · pick-bank).
+    html = swap(html, *NAME_SWAP).replace(*NAME_SWAP)
+    for old, new in PADS[pad]:
+        html = swap(html, old, new)
     return html
 
 

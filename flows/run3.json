@@ -1,5 +1,6 @@
 {
   "name": "run3",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
   "note": "LLM-restructured design, third run: 8 screens. Same screens as run 1 (restructured.json) up to review; the difference is that identity verification is a modal raised over the review screen rather than its own auth screen, so the send step never leaves review. Long path (first-time account) as before. type 액션은 숫자판(key 에 %s, 글자마다 클릭)과 입력 칸(%s 없이 fill) 둘 다 쓸 수 있다. 이 흐름은 숫자판 형식이다.",
   "derived_from_original": false,
   "required_ids": [

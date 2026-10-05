@@ -1,5 +1,6 @@
 {
   "name": "f_modal",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
   "note": "검사 F 가 켜진 화면 밖에 떠 있는 모달의 영어를 보지 못하는 것을 재현한다. 모달의 글은 스크립트가 넣는다 - 마크업에서 찾는 쪽도 보지 못하게 해서 재현하는 것이 하나만 되게 한다.",
   "derived_from_original": false,
   "required_ids": [

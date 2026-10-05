@@ -1,11 +1,12 @@
 {
   "name": "original",
-  "note": "The 8-screen SOL transfer prototype. derived_from_original means the build under test is a repair of this same document, so structural preservation can be asserted.",
+  "truth": {"BANK": "신한", "ACCOUNT": "110234567890", "AMOUNT": "32000", "NAME": "김철수"},
+  "note": "The SOL transfer prototype - 8 task screens, aligned to the Flutter dummy app A1 transfer (2026-10-05); the two error popups (err-account, err-bank) are screens too but the happy path does not visit them. derived_from_original means the build under test is a repair of this same document, so structural preservation can be asserted.",
   "derived_from_original": true,
   "required_ids": ["phone", "grid-bank", "grid-sec", "tab-bank", "tab-sec",
                    "picked-bank", "acc-input", "acc-next", "amt-acc",
                    "amt-display", "amt-next", "cf-amt", "cf-acc",
-                   "dn-amt", "pw-dots", "pwpad"],
+                   "dn-amt", "pw-dots", "pwpad", "amt-bank", "cf-bank"],
   "steps": [
     {"screen": "home"},
     {"screen": "recipient", "click": "[data-action='go-recipient']"},
@@ -27,8 +28,8 @@
     ]}
   ],
   "expect": {
-    "amount": [["#amt-acc", "{ACCOUNT}"]],
-    "confirm": [["#cf-acc", "{ACCOUNT}"], ["#cf-amt", "{AMOUNT_SHOWN}"]],
+    "amount": [["#amt-bank", "{BANK}"], ["#amt-acc", "{ACCOUNT}"]],
+    "confirm": [["#cf-bank", "{BANK}"], ["#cf-acc", "{ACCOUNT}"], ["#cf-amt", "{AMOUNT_SHOWN}"]],
     "done": [["#dn-amt", "{AMOUNT_SHOWN}"]]
   },
   "done_amount": "#dn-amt"

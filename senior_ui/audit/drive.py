@@ -11,7 +11,7 @@ from playwright.async_api import TimeoutError as PlaywrightTimeout
 from playwright.async_api import async_playwright
 
 from . import probes as P
-from .flow import fill, visit_keys
+from .flow import fill, truth_of, visit_keys
 
 # 방문 이름의 `#` 는 파일 이름에서는 쓰지 않는다 (URL 에서 조각 구분자다).
 SHOT_SAFE = re.compile(r"[^0-9A-Za-z_.-]")
@@ -25,7 +25,7 @@ TAG_OF = """sel => { const e = document.querySelector(sel);
                      return e ? e.tagName.toLowerCase() : null; }"""
 
 
-async def run_actions(page, spec, notes=None):
+async def run_actions(page, spec, notes=None, truth=None):
     """One step of a flow file: click / type / repeat / wait, in order.
 
     `type` covers both ways a design can take text:
@@ -43,13 +43,17 @@ async def run_actions(page, spec, notes=None):
     selector that matches nothing. So when the `%s` selector points at an
     input/textarea once the `%s` attribute is dropped, fill it and record that
     in `notes`; the report surfaces it rather than silently accepting it.
+
+    `truth` 는 자리표시자({ACCOUNT} 등)에 넣을 정답 값이다. 없으면 원본
+    흐름의 것 (flow.truth_of).
     """
+    truth = truth or truth_of(None)
     for item in (spec if isinstance(spec, list) else [spec]):
         if "wait" in item and "click" not in item and "repeat" not in item:
             await asyncio.sleep(float(item["wait"]))
             continue
         if "type" in item:
-            key, value = item["key"], fill(item["type"])
+            key, value = item["key"], fill(item["type"], truth)
             if "%s" not in key:
                 await page.fill(key, value)
                 continue
@@ -68,11 +72,11 @@ async def run_actions(page, spec, notes=None):
             continue
         if "repeat" in item:
             for _ in range(int(item["repeat"])):
-                await page.click(fill(item["click"]))
+                await page.click(fill(item["click"], truth))
                 await asyncio.sleep(float(item.get("wait", 0.1)))
             continue
         if "click" in item:
-            await page.click(fill(item["click"]))
+            await page.click(fill(item["click"], truth))
             if item.get("wait"):
                 await asyncio.sleep(float(item["wait"]))
 
@@ -267,7 +271,8 @@ async def collect_screen(page, flow, visit, reached=None):
     # expect 는 방문 이름으로 적는다 - 화면 이름만 적으면 첫 방문이다
     # (flow.visit_keys 참고).
     row["shown"] = await page.evaluate(
-        SHOWN, [fill(s) for s, _ in flow["expect"].get(visit, [])])
+        SHOWN, [fill(s, truth_of(flow))
+                for s, _ in flow["expect"].get(visit, [])])
     return row
 
 
@@ -275,7 +280,10 @@ async def drive(url, flow, want_shots=None):
     """Walk the task once and collect everything the checks need."""
     data = {"screens": {}, "dialogs": [], "js_errors": [], "reached": [],
             "missing_ids": [], "state_pairs": [], "load_failed": None,
-            "notes": [], "js_error_details": [], "flow": flow["name"]}
+            "notes": [], "js_error_details": [], "flow": flow["name"],
+            # 이 걸음에 눌러 넣은 정답. 검사 B 가 원본 화면에 있던 받는 사람
+            # 이름을 찾을 때 원본의 정답을 써야 한다 - 빌드의 정답과 다를 수 있다.
+            "truth": truth_of(flow)}
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch()
@@ -309,9 +317,11 @@ async def walk(page, flow, data, want_shots, url):
         name = step["screen"]
         try:
             if "do" in step:
-                await run_actions(page, step["do"], data["notes"])
+                await run_actions(page, step["do"], data["notes"],
+                                  truth_of(flow))
             elif "click" in step:
-                await run_actions(page, {"click": step["click"]}, data["notes"])
+                await run_actions(page, {"click": step["click"]}, data["notes"],
+                                  truth_of(flow))
         except Exception as e:
             msg = "%s: %s" % (type(e).__name__, e)
             hint = await where_is(page, msg)

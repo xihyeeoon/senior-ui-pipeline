@@ -12,6 +12,7 @@
 ```json
 {
   "name": "restructured",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
   "note": "LLM-restructured design, 9 screens. Not a repair of the original document, so the per-screen structural comparison is skipped - see derived_from_original. This drives the long path (a first-time account) so every screen is exercised; the saved-recipient path is 5 taps shorter and skips accno/bank/whoconfirm. type 액션은 숫자판(key 에 %s, 글자마다 클릭)과 입력 칸(%s 없이 fill) 둘 다 쓸 수 있다. 이 흐름은 숫자판 형식이다.",
   "derived_from_original": false,
   "required_ids": [

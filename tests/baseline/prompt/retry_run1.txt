@@ -27,10 +27,10 @@
 - 숫자판은 버튼마다 `data-action` 과 `data-v="숫자"` 를 둔다.
 - 전역에 `window.__screen()` (현재 화면 이름 반환), `window.__log` (배열), `window.__startTask()`,
   `window.__dump()` 를 둔다. 화면이 바뀔 때마다 `__log` 에 `{type:'screen_enter', to:이름}` 을 넣는다.
-- 완료 화면에는 보낸 금액을 담는 `id="dn-amt"` 요소가 있어야 하고, 그 텍스트는 `10,000` 처럼
+- 완료 화면에는 보낸 금액을 담는 `id="dn-amt"` 요소가 있어야 하고, 그 텍스트는 `32,000` 처럼
   천 단위 쉼표 숫자여야 한다.
 - 과업: **다른 사람의 계좌로 돈을 보낸다.** 받는 은행, 계좌번호, 금액은 사용자가
-  그때그때 입력한다. 시제품이므로 잔액은 100,000원으로 둔다.
+  그때그때 입력한다. 시제품이므로 잔액은 1,000,000원으로 둔다.
 - **사용자가 입력해야 하는 값을 미리 채워 넣지 마라.** 계좌번호나 금액이 이미
   들어 있는 화면, 읽기 전용으로 값이 박힌 칸을 만들지 마라.
 - **입력 화면을 생략하지 마라.** 계좌번호를 넣는 화면과 금액을 넣는 화면이 있어야 한다.
@@ -48,10 +48,13 @@
 
 원본의 반복 선택지 (스크립트가 런타임에 그린다):
   pick-bank — 67개 (BANKS 38 + SECS 29)
-  pw — 10개 (nums 10)
+  num — 11개 (AMT_KEYS 11)
+  acc-num — 10개 (ACC_KEYS 10)
+  pw — 10개 (PW_KEYS 10)
+  quick — 4개 (QUICK 4)
 
 이 데이터는 도구가 다음 이름으로 넣어 준다:
-  window.PRESERVED.BANKS (38개) · window.PRESERVED.SECS (29개) · window.PRESERVED.nums (10개)
+  window.PRESERVED.BANKS (38개) · window.PRESERVED.SECS (29개) · window.PRESERVED.AMT_KEYS (11개) · window.PRESERVED.ACC_KEYS (10개) · window.PRESERVED.PW_KEYS (10개) · window.PRESERVED.QUICK (4개)
 
 목록을 직접 쓰지 마라. 이것을 참조해 그려라. 몇 개를 어떻게 보일지는 네가
 정한다 (검색, 자주 쓰는 것 먼저, 탭, 가나다 묶음 등). 다만 모든 값을 고를
@@ -62,11 +65,6 @@
 안에 있어야 한다 (숨김·접힘은 괜찮다). 검색창을 두더라도 검색어가 비었을
 때는 전체 목록이 DOM 에 있어야 한다. 도구가 넣어 준 데이터 블록은 증거로
 세지 않는다 - 그 데이터를 읽어 **그린** 것만 센다.
-
-마크업에 직접 있는 것 (그대로 두면 된다):
-  num — 11개
-  acc-num — 10개
-  quick — 4개
 
 
 ## 계획
@@ -274,8 +272,8 @@
 - 한 단계의 동작은 `click` 하나이거나 `do` 배열이다. `do` 의 항목은 `{"click": 선택자}`,
   `{"type": 문자열, "key": 선택자틀}` (문자열의 글자마다 `%s` 자리에 넣어 클릭),
   `{"repeat": n, "click": 선택자, "wait": 초}`, `{"wait": 초}` 중 하나.
-- 치환 문자열: `{ACCOUNT}` = 3333000000000, `{AMOUNT}` = 10000, `{AMOUNT_SHOWN}` = 10,000,
-  `{BANK}` = 카카오뱅크, `{NAME}` = 김시현.
+- 치환 문자열: `{ACCOUNT}` = 110234567890, `{AMOUNT}` = 32000, `{AMOUNT_SHOWN}` = 32,000,
+  `{BANK}` = 신한, `{NAME}` = 김철수.
   이 값들은 **검사기가 과업을 수행할 때 눌러 넣을 값**이다. 설계에 미리 채워 두라는
   뜻이 아니다. 사용자는 빈 화면에서 시작해 이 값을 직접 입력한다.
 - 모든 화면을 최소 한 번 지나가야 한다 (처음 보내는 계좌를 직접 입력하는 가장 긴 경로).
@@ -333,6 +331,7 @@
 ```json
 {
   "name": "restructured",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
   "note": "LLM-restructured design, 9 screens. Not a repair of the original document, so the per-screen structural comparison is skipped - see derived_from_original. This drives the long path (a first-time account) so every screen is exercised; the saved-recipient path is 5 taps shorter and skips accno/bank/whoconfirm. type 액션은 숫자판(key 에 %s, 글자마다 클릭)과 입력 칸(%s 없이 fill) 둘 다 쓸 수 있다. 이 흐름은 숫자판 형식이다.",
   "derived_from_original": false,
   "required_ids": [
@@ -1234,6 +1233,26 @@ log('screen_enter', { to:'start' });
   .bottom2 button{flex:1; border:0; border-radius:13px; padding:18px; font-size:17px; font-weight:700; font-family:inherit;}
   .bottom2 .ghost{background:#EAF0FE; color:var(--blue); flex:0 0 108px;}
   .bottom2 .fill{background:var(--blue-deep); color:#fff;}
+  /* ---------- Flutter A1 에 맞춘 것 (2026-10-05) ---------- */
+  .h1row{display:flex; align-items:center; justify-content:space-between; padding-right:20px;}
+  .h1row .h1{padding-right:0;}
+  .srch{width:40px; height:40px; border-radius:12px; background:#EDEFF3; color:#4A4A4F; font-size:19px;
+    display:flex; align-items:center; justify-content:center; margin-bottom:12px;}
+  .accrow{display:flex; align-items:center; gap:8px;}
+  .accrow .val{flex:1;}
+  .accfield.max{border-color:#D93A32;}
+  .accfield.max .lab{color:#D93A32;}
+  .accclear{display:none; font-size:20px; color:#6B7280; padding:0 4px;}
+  .accclear.on{display:block;}
+  .accwarn{display:none; margin:-6px 22px 12px; font-size:14px; color:#D93A32;}
+  .accwarn.on{display:block;}
+  .dimmer{position:absolute; inset:0; background:rgba(0,0,0,.45);}
+  .dialog{position:absolute; left:28px; right:28px; top:50%; transform:translateY(-50%);
+    background:#fff; border-radius:18px; padding:24px 22px 18px;}
+  .dialog .ecode{font-size:19px; font-weight:700; color:#D93A32;}
+  .dialog .emsg{font-size:17px; line-height:1.45; color:var(--ink); margin-top:12px; word-break:keep-all;}
+  .dialog .ebtn{width:100%; margin-top:22px; background:var(--blue-deep); color:#fff; border:0; border-radius:12px;
+    padding:16px; font-size:17px; font-weight:700; font-family:inherit;}
 
 /* ---- 실기기 대응 (2026-09-29) ----------------------------------------
    폰 브라우저는 주소창이 높이를 먹어 가용 높이가 700px 안팎이다. 프레임을
@@ -1252,9 +1271,9 @@ log('screen_enter', { to:'start' });
 
 <!-- ================= 1. 메인 ================= -->
 <section class="screen on home" data-screen="home">
-  <div class="statusbar"><span>1:39</span><span class="right">5G 66</span></div>
+  <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="homehead">
-    <div class="name"><span class="dot">C</span>김시현님</div>
+    <div class="name"><span class="dot">C</span>홍길동님</div>
     <div class="icons"><span>☺</span><span>▤</span><span>♤</span><span>⌕</span></div>
   </div>
   <div class="body">
@@ -1264,53 +1283,53 @@ log('screen_enter', { to:'start' });
         <div class="logo">S</div>
         <div style="flex:1">
           <div class="acctname">[금융거래한도계좌2]신한 주거래 우대통장<br>(저축예금)</div>
-          <div class="acctamt">100,000원</div>
+          <div class="acctamt">금액 숨김</div>
         </div>
         <button class="btn-sm" data-action="go-recipient">이체</button>
       </div>
-      <div class="membership">김시현님의 SOL멤버십 등급은 클래식 입니다</div>
+      <div class="membership">절세혜택과 안정적인 노후, IRP로 준비하세요</div>
     </div>
 
     <div class="card">
-      <h3 style="font-size:17px">Pick E 체크캐릭터형(하리보)</h3>
-      <div style="font-size:13px;color:#6B7280">8월 이용 금액 100,000원</div>
+      <div class="acctrow">
+        <div class="logo" style="background:#E08A00">▭</div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:600">Pick E 체크캐릭터형(하리보)</div>
+          <div class="acctamt">금액 숨김</div>
+        </div>
+      </div>
       <button class="btn-wide">앱카드 가입</button>
     </div>
 
     <div class="card">
       <h3>땡겨요 <span class="arr">›</span></h3>
-      <div style="font-size:15px;font-weight:600">🛵 8월 최대할인! 브랜드데이 확인하기</div>
-      <button class="btn-wide" style="background:#F5F6F9;color:#3A3F46;font-weight:500">쿠폰바로받기</button>
+      <div class="svc"><div class="sq">🍔</div>
+        <div style="flex:1"><div class="t2">할인쿠폰 드려요</div><div class="t1">bhc치킨 최대 9,000원</div></div>
+        <button class="btn-sm">바로받기</button></div>
       <div class="rowlist"><span>이벤트</span><span>쿠폰</span><span>포인트</span></div>
     </div>
 
     <div class="card">
-      <h3>8월 소비 100,000원 ↻ <span class="arr">›</span></h3>
-      <div style="font-size:13px;color:#6B7280">전월 오늘 대비 <span style="color:#E5484D">+100,000원 증가</span></div>
-      <div style="margin-top:14px;font-size:12px;color:#8A8F98">오늘 쓴 돈</div>
-      <div style="font-size:19px;font-weight:700">1,000원</div>
-      <div style="margin-top:12px;background:#F5F6F9;border-radius:11px;padding:13px">
-        <div style="font-size:12px;color:#8A8F98">Pick E 체크 외 1개</div>
-        <div style="font-size:17px;font-weight:700">100,000원</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div style="font-size:17px;font-weight:700">가입 즉시 1만원 올영 상품권</div>
-      <div style="font-size:14px;color:var(--blue);margin-top:6px">지금 받으러 가기 ›</div>
+      <h3>7월 소비 ↻ <span class="arr">›</span></h3>
+      <div style="font-size:13px;color:#6B7280">📅 오늘 쓴 돈</div>
+      <div style="font-size:19px;font-weight:700">0원</div>
     </div>
 
     <div class="pointbar">
-      <div><div class="p1">마이신한포인트</div><div class="p2">180P</div></div>
-      <button>모으기</button>
+      <div><div class="p1">카드 쓸때마다 쌓이고, 현금처럼 쓰는</div><div class="p2">마이신한포인트</div></div>
+      <button>시작하기</button>
     </div>
 
     <div class="card">
       <h3>추천서비스 <span class="arr">›</span></h3>
+      <div class="svc"><div class="sq">⌂</div><div><div class="t1">SOL패밀리</div><div class="t2">가족과 함께하는 금융생활</div></div></div>
       <div class="svc"><div class="sq">🅦</div><div><div class="t1">급여클럽+</div><div class="t2">급여이체 우대 혜택</div></div></div>
-      <div class="svc"><div class="sq">⚾</div><div><div class="t1">SOL야구</div><div class="t2">야구팬 즐길거리 모음</div></div></div>
-      <div class="svc"><div class="sq">🎟</div><div><div class="t1">쿠폰 사고팔기</div><div class="t2">기프티콘 사고파는 장터</div></div></div>
-      <div style="text-align:center;font-size:14px;color:#5A6069;padding-top:10px;border-top:1px solid var(--line)">더보기 ⌄</div>
+      <div class="svc"><div class="sq">💳</div><div><div class="t1">내 카드 승인내역</div><div class="t2">모든 카드 실시간 승인내역</div></div></div>
+    </div>
+
+    <div class="card">
+      <div style="font-size:17px;font-weight:700">더 많은 금융자산 모두<br>연결하면 커피쿠폰 즉시지급!</div>
+      <div style="font-size:14px;color:var(--blue);margin-top:6px">이벤트 바로가기 ›</div>
     </div>
 
     <div class="card">
@@ -1333,46 +1352,31 @@ log('screen_enter', { to:'start' });
 
 <!-- ================= 2. 받는 사람 ================= -->
 <section class="screen" data-screen="recipient">
-  <div class="statusbar"><span>1:39</span><span class="right">5G 66</span></div>
+  <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="navbar">
     <span class="ico" data-action="back-home">‹</span>
     <span class="mid">다건이체</span>
     <span style="display:flex;gap:14px"><span class="ico">👤</span><span class="ico" data-action="back-home">✕</span></span>
   </div>
   <div class="body">
-    <div class="h1">누구에게 보낼까요?</div>
+    <div class="h1row"><div class="h1">누구에게 보낼까요?</div><span class="srch">⌕</span></div>
     <div class="inputline" data-action="go-account">
       <span class="ph">계좌번호 직접 입력</span><span style="font-size:19px">▣</span>
     </div>
-    <div class="filterrow"><span class="lbl">자주쓰는 계좌 <span class="tag">편집</span></span><span class="pill">2개 ⌄</span></div>
-    <div class="filterrow"><span class="lbl">내 계좌</span><span class="pill">14개 ⌄</span></div>
-    <div class="filterrow"><span class="lbl">최근</span><span class="pill">50개 ⌃</span></div>
-
-    <div class="person"><div class="av" style="background:#FEE500;color:#111">B</div>
-      <div><div class="nm">김시현</div><div class="ac">카카오뱅크 3333000000000</div></div><span class="st on">★</span></div>
-    <div class="person"><div class="av" style="background:#FEE500;color:#111">B</div>
-      <div><div class="nm">김시현</div><div class="ac">카카오뱅크 3333000000000</div></div><span class="st on">★</span></div>
-    <div class="person"><div class="av" style="background:#1B4EE8">S</div>
-      <div><div class="nm">안성진</div><div class="ac">신한 110-000-000000</div></div><span class="st">☆</span></div>
-    <div class="person"><div class="av" style="background:#0A4E9B">N</div>
-      <div><div class="nm">박정순</div><div class="ac">농협 1110000000000</div></div><span class="st">☆</span></div>
-    <div class="person"><div class="av" style="background:#1B4EE8">S</div>
-      <div><div class="nm">박숙자</div><div class="ac">신한 110-000-000000</div></div><span class="st">☆</span></div>
-    <div class="person"><div class="av" style="background:#3B7BF6">T</div>
-      <div><div class="nm">김시현</div><div class="ac">토스증권 14400000000</div></div><span class="st">☆</span></div>
-    <div class="person"><div class="av" style="background:#1B4EE8">S</div>
-      <div><div class="nm">김명희</div><div class="ac">신한 110-000-000000</div></div><span class="st">☆</span></div>
+    <div class="filterrow"><span class="lbl">자주쓰는 계좌 <span class="tag">편집</span></span><span class="pill">0개 ⌄</span></div>
+    <div class="filterrow"><span class="lbl">내 계좌</span><span class="pill">0개 ⌄</span></div>
+    <div class="filterrow"><span class="lbl">최근</span><span class="pill">0개 ⌄</span></div>
     <div style="height:30px"></div>
   </div>
 </section>
 
 <!-- ================= 3. 은행 선택 (바텀시트) ================= -->
 <section class="screen" data-screen="bank">
-  <div class="statusbar" style="background:#8A8F98;color:#fff"><span>1:40</span><span class="right">5G 66</span></div>
+  <div class="statusbar" style="background:#8A8F98;color:#fff"><span>4:31</span><span class="right">67</span></div>
   <div class="body" style="background:#8A8F98"></div>
   <div class="sheetwrap on">
     <div class="sheet">
-      <div class="sheethead"><b>은행 또는 증권사 선택</b><span class="ico" data-action="back-recipient">✕</span></div>
+      <div class="sheethead"><b>은행 또는 증권사 선택</b><span class="ico" data-action="close-bank">✕</span></div>
       <div class="tabs">
         <div class="act" id="tab-bank" data-action="tab-bank">은행</div>
         <div id="tab-sec" data-action="tab-sec">증권사</div>
@@ -1383,72 +1387,61 @@ log('screen_enter', { to:'start' });
   </div>
 </section>
 
-<!-- ================= 4. 계좌번호 입력 (임시) ================= -->
+<!-- ================= 4. 계좌번호 입력 ================= -->
 <section class="screen" data-screen="account">
-  <div class="statusbar"><span>3:33</span><span class="right">5G 56</span></div>
-  <div class="navbar"><span class="ico" data-action="back-recipient">‹</span><span></span><span class="ico" data-action="back-home">✕</span></div>
+  <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
+  <div class="navbar"><span class="ico" data-action="back-recipient">‹</span><span></span><span class="ico" data-action="close-account">✕</span></div>
   <div class="body">
     <div class="h1">누구에게 보낼까요?</div>
-    <div class="accfield">
+    <div class="accfield" id="acc-field">
       <div class="lab">계좌번호</div>
-      <div id="acc-input" class="val" data-empty="- 없이 숫자만 입력"></div>
+      <div class="accrow">
+        <div id="acc-input" class="val" data-empty="없이 숫자만 입력"></div>
+        <span class="accclear" id="acc-clear" data-action="acc-clear">ⓧ</span>
+      </div>
     </div>
+    <div class="accwarn" id="acc-warn">ⓘ 최대 14자리 입력 가능합니다.</div>
     <div class="bankpick" data-action="open-bank">
       <span id="picked-bank" class="ph">은행 또는 증권사 선택</span><span class="chev">⌄</span>
     </div>
   </div>
-  <div class="keypad">
-    <button data-action="acc-num" data-v="1">1</button><button data-action="acc-num" data-v="2">2</button><button data-action="acc-num" data-v="3">3</button>
-    <button data-action="acc-num" data-v="4">4</button><button data-action="acc-num" data-v="5">5</button><button data-action="acc-num" data-v="6">6</button>
-    <button data-action="acc-num" data-v="7">7</button><button data-action="acc-num" data-v="8">8</button><button data-action="acc-num" data-v="9">9</button>
-    <button class="blank" disabled></button><button data-action="acc-num" data-v="0">0</button><button data-action="acc-del">⌫</button>
-  </div>
+  <div class="keypad" id="acc-pad"></div>
   <button class="btn-next" id="acc-next" data-action="account-next">다음</button>
 </section>
 
 <!-- ================= 5. 금액 입력 ================= -->
 <section class="screen" data-screen="amount">
-  <div class="statusbar"><span>1:40</span><span class="right">5G 66</span></div>
+  <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="navbar"><span class="ico" data-action="back-account">‹</span><span></span><span class="ico" data-action="back-home">✕</span></div>
   <div class="amthead">
-    [금융거래한도계좌2]신한 주… 계좌에서 ⌄<br>
-    <b>김시현님 계좌로</b><br>
-    <span style="font-size:14px">카카오뱅크 <span id="amt-acc">3333000000000</span></span>
+    [금융거래한도계좌2]신한 주거래 우대통장 계좌에서 ⌄<br>
+    <b>아래 계좌로</b><br>
+    <span style="font-size:14px"><span id="amt-bank"></span> <span id="amt-acc"></span></span>
   </div>
   <div class="body">
     <div class="amtq" id="amt-display">얼마를 보낼까요?</div>
-    <div class="amtsub">출금가능금액 <u>100,000</u>원</div>
+    <div class="amtsub">출금가능금액 <u id="amt-balance"></u>원</div>
   </div>
-  <div class="quick">
-    <button data-action="quick" data-v="10000">+1만</button>
-    <button data-action="quick" data-v="50000">+5만</button>
-    <button data-action="quick" data-v="100000">+10만</button>
-    <button data-action="quick" data-v="all">전액</button>
-  </div>
-  <div class="keypad">
-    <button data-action="num" data-v="1">1</button><button data-action="num" data-v="2">2</button><button data-action="num" data-v="3">3</button>
-    <button data-action="num" data-v="4">4</button><button data-action="num" data-v="5">5</button><button data-action="num" data-v="6">6</button>
-    <button data-action="num" data-v="7">7</button><button data-action="num" data-v="8">8</button><button data-action="num" data-v="9">9</button>
-    <button data-action="num" data-v="00">00</button><button data-action="num" data-v="0">0</button><button data-action="del">⌫</button>
-  </div>
+  <div class="quick" id="amt-quick"></div>
+  <div class="keypad" id="amt-pad"></div>
   <button class="btn-next" id="amt-next" data-action="amount-next">다음</button>
 </section>
 
 <!-- ================= 6. 최종 확인 ================= -->
 <section class="screen" data-screen="confirm">
-  <div class="statusbar"><span>1:40</span><span class="right">5G 66</span></div>
+  <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="navbar"><span class="ico" data-action="back-amount">‹</span><span></span><span class="ico" data-action="back-home">✕</span></div>
   <div class="body">
     <div class="center">
-      <div class="bigav">B</div>
-      <div class="q2">김시현님 계좌로<br><span id="cf-amt">1</span>원 보낼까요?</div>
+      <div class="bigav" id="cf-mark"></div>
+      <div class="q2">아래 계좌로<br><span id="cf-amt">1</span>원 보낼까요?</div>
       <div class="fee">수수료 무료</div>
     </div>
     <div class="summary">
       <div class="srow"><span class="k">보내는 계좌</span><span class="v">신한 110-000-000000</span></div>
-      <div class="srow"><span class="k">받는 계좌</span><span class="v">카카오뱅크 <span id="cf-acc">3333000000000</span></span></div>
-      <div class="srow"><span class="k">받는분 메모</span><span class="v">김시현 ✎</span></div>
-      <div class="srow"><span class="k">내통장 메모</span><span class="v">김시현 ✎</span></div>
+      <div class="srow"><span class="k">받는 계좌</span><span class="v"><span id="cf-bank"></span> <span id="cf-acc"></span></span></div>
+      <div class="srow"><span class="k">받는분 메모</span><span class="v">김철수 ✎</span></div>
+      <div class="srow"><span class="k">내통장 메모</span><span class="v">김철수 ✎</span></div>
     </div>
   </div>
   <button class="btn-primary" data-action="send">보내기</button>
@@ -1456,8 +1449,8 @@ log('screen_enter', { to:'start' });
 
 <!-- ================= 7. 비밀번호 ================= -->
 <section class="screen" data-screen="password">
-  <div class="statusbar"><span>5:55</span><span class="right">5G 89</span></div>
-  <div class="navbar"><span></span><span></span><span class="ico" data-action="back-confirm">✕</span></div>
+  <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
+  <div class="navbar"><span></span><span></span><span class="ico" data-action="back-home">✕</span></div>
   <div class="pwtitle">계좌 비밀번호</div>
   <div class="dots" id="pw-dots"><i class="cur"></i><i></i><i></i><i></i></div>
   <div class="pwpad" id="pwpad"></div>
@@ -1465,15 +1458,37 @@ log('screen_enter', { to:'start' });
 
 <!-- ================= 8. 완료 ================= -->
 <section class="screen" data-screen="done">
-  <div class="statusbar"><span>1:41</span><span class="right">5G 66</span></div>
+  <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="body">
     <div class="okwrap">
       <div class="okc">✓</div>
-      <div class="q2">김시현님 계좌로<br><span id="dn-amt">1</span>원 보냈어요.</div>
+      <div class="q2">아래 계좌로<br><span id="dn-amt">1</span>원 보냈어요.</div>
       <div class="okbtns"><button>추가이체</button><button>상세보기</button></div>
     </div>
   </div>
   <div class="bottom2"><button class="ghost">공유</button><button class="fill" data-action="finish">확인</button></div>
+</section>
+
+<!-- ================= 9. 오류 팝업 - 계좌번호 (ELB00016) ================= -->
+<section class="screen" data-screen="err-account">
+  <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
+  <div class="dimmer" data-action="close-error"></div>
+  <div class="dialog">
+    <div class="ecode">ELB00016</div>
+    <div class="emsg">계좌번호[<span id="err-acc-no"></span>]<br>입력하신 계좌번호가 올바르지 않습니다.<br>계좌번호를 확인하시기 바랍니다.</div>
+    <button class="ebtn" data-action="close-error">확인</button>
+  </div>
+</section>
+
+<!-- ================= 10. 오류 팝업 - 은행 (ETA00325) ================= -->
+<section class="screen" data-screen="err-bank">
+  <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
+  <div class="dimmer" data-action="close-error"></div>
+  <div class="dialog">
+    <div class="ecode">ETA00325</div>
+    <div class="emsg">해당 계좌번호내 과목코드 오류입니다.<br>입력하신 계좌번호를 확인해주세요.</div>
+    <button class="ebtn" data-action="close-error">확인</button>
+  </div>
 </section>
 
 </div>
@@ -1518,15 +1533,44 @@ function show(name){
 }
 window.__screen = ()=>window.__task.screen;
 
-/* ============ 상태 ============ */
-const S = { bank:'카카오뱅크', bankPicked:false, account:'', amount:'', pw:'' };
+/* ============ 과제 값 (Flutter 더미앱 A1 과 같다) ============
+   정답은 신한 110234567890. 판정은 계좌 화면 [다음] 과 확인 화면 [보내기] 에서
+   한다. 받는 분 이름은 입력이 아니라 정해진 값이다. */
+const ANSWER_BANK = '신한';
+const ANSWER_ACCOUNT = '110234567890';
+const BALANCE = 1000000;
+const ACC_MAX = 14;
 
-/* ============ 계좌번호 표시 ============ */
-function renderAccount(){
-  document.getElementById('acc-input').textContent = S.account;
-  document.getElementById('acc-next')
-    .classList.toggle('on', S.account.length>0 && S.bankPicked);
+/* ============ 상태 ============ */
+const S = { bank:null, account:'', amount:0, pw:'', errFrom:null };
+
+/* ============ 고르는 버튼 묶음 ============
+   숫자판·빠른 금액은 마크업에 쓰지 않고 이 배열로 그린다. 그리는 줄에 배열
+   이름과 data-action 이름을 함께 적는다 (docs/input-contract.md). */
+const ACC_KEYS = ['1','2','3','4','5','6','7','8','9','0'];
+const AMT_KEYS = ['1','2','3','4','5','6','7','8','9','00','0'];
+const QUICK = ['10000','50000','100000','all'];
+const QUICK_LABEL = { '10000':'+1만', '50000':'+5만', '100000':'+10만', 'all':'전액' };
+const PW_KEYS = ['0','1','2','3','4','5','6','7','8','9'];
+
+function keyButtons(keys, action){
+  return keys.map(v=>`<button data-action="${action}" data-v="${v}">${v}</button>`);
 }
+function shuffled(list){ return list.slice().sort(()=>Math.random()-0.5); }
+
+/* 계좌 숫자판: 1~9 / 빈칸 · 0 · 지우기 */
+const accCells = keyButtons(ACC_KEYS, 'acc-num');
+accCells.splice(9, 0, '<button class="blank" disabled></button>');
+accCells.push('<button data-action="acc-del">⌫</button>');
+document.getElementById('acc-pad').innerHTML = accCells.join('');
+
+/* 금액 숫자판: 1~9 / 00 · 0 · 지우기 */
+const amtCells = keyButtons(AMT_KEYS, 'num');
+amtCells.push('<button data-action="del">⌫</button>');
+document.getElementById('amt-pad').innerHTML = amtCells.join('');
+
+document.getElementById('amt-quick').innerHTML =
+  QUICK.map(v=>`<button data-action="quick" data-v="${v}">${QUICK_LABEL[v]}</button>`).join('');
 
 /* ============ 은행 목록 ============ */
 const BANKS = ['신한','제주','국민','기업','농협','산업','수협','신협','우리','하나','한국씨티','카카오뱅크',
@@ -1548,16 +1592,33 @@ function fillGrid(el, list){
 fillGrid(document.getElementById('grid-bank'), BANKS);
 fillGrid(document.getElementById('grid-sec'), SECS);
 
+function bankTab(sec){
+  document.getElementById('tab-bank').classList.toggle('act', !sec);
+  document.getElementById('tab-sec').classList.toggle('act', sec);
+  document.getElementById('grid-bank').style.display = sec ? 'none' : 'grid';
+  document.getElementById('grid-sec').style.display = sec ? 'grid' : 'none';
+}
+
+/* ============ 계좌번호 표시 ============ */
+function renderAccount(){
+  const atMax = S.account.length >= ACC_MAX;
+  document.getElementById('acc-input').textContent = S.account;
+  document.getElementById('acc-field').classList.toggle('max', atMax);
+  document.getElementById('acc-warn').classList.toggle('on', atMax);
+  document.getElementById('acc-clear').classList.toggle('on', S.account.length>0);
+  const pb = document.getElementById('picked-bank');
+  pb.textContent = S.bank || '은행 또는 증권사 선택';
+  pb.classList.toggle('set', !!S.bank);
+  document.getElementById('acc-next')
+    .classList.toggle('on', S.account.length>0 && !!S.bank);
+}
+
 /* ============ 비밀번호 키패드 (배열 섞임) ============ */
 function buildPwPad(){
-  const nums = [0,1,2,3,4,5,6,7,8,9].sort(()=>Math.random()-0.5);
-  const pad = document.getElementById('pwpad');
-  const cells = nums.slice(0,9).map(n=>`<button data-action="pw" data-v="${n}">${n}</button>`);
-  cells.splice(9,0,
-    `<button class="sm" data-action="pw-shuffle">재배열</button>`,
-    `<button data-action="pw" data-v="${nums[9]}">${nums[9]}</button>`,
-    `<button data-action="pw-del">⌫</button>`);
-  pad.innerHTML = cells.join('');
+  const cells = keyButtons(shuffled(PW_KEYS), 'pw');
+  cells.splice(9, 0, '<button class="sm" data-action="pw-shuffle">재배열</button>');
+  cells.push('<button data-action="pw-del">⌫</button>');
+  document.getElementById('pwpad').innerHTML = cells.join('');
 }
 function renderDots(){
   document.querySelectorAll('#pw-dots i').forEach((d,i)=>{
@@ -1569,8 +1630,17 @@ function renderDots(){
 function renderAmount(){
   const d = document.getElementById('amt-display');
   const n = document.getElementById('amt-next');
-  if(S.amount){ d.textContent = Number(S.amount).toLocaleString()+'원'; d.classList.add('filled'); n.classList.add('on'); }
+  if(S.amount){ d.textContent = S.amount.toLocaleString()+'원'; d.classList.add('filled'); n.classList.add('on'); }
   else { d.textContent = '얼마를 보낼까요?'; d.classList.remove('filled'); n.classList.remove('on'); }
+}
+document.getElementById('amt-balance').textContent = BALANCE.toLocaleString();
+
+/* ============ 오류 팝업 ============ */
+function showError(name, from){
+  S.errFrom = from;
+  document.getElementById('err-acc-no').textContent = S.account;
+  log('error_popup', { code: name==='err-account' ? 'ELB00016' : 'ETA00325' });
+  show(name);
 }
 
 /* ============ 동작 ============ */
@@ -1580,65 +1650,66 @@ document.getElementById('phone').addEventListener('click', function(e){
 
   if(a==='go-recipient') show('recipient');
   else if(a==='back-home') show('home');
-  else if(a==='go-account') show('account');
-  else if(a==='open-bank') show('bank');
-  /* the bank sheet is a modal over the account screen, so ✕ returns there */
-  else if(a==='back-recipient') show('account');
-  else if(a==='tab-bank'){
-    document.getElementById('tab-bank').classList.add('act');
-    document.getElementById('tab-sec').classList.remove('act');
-    document.getElementById('grid-bank').style.display='grid';
-    document.getElementById('grid-sec').style.display='none';
-  }
-  else if(a==='tab-sec'){
-    document.getElementById('tab-sec').classList.add('act');
-    document.getElementById('tab-bank').classList.remove('act');
-    document.getElementById('grid-sec').style.display='grid';
-    document.getElementById('grid-bank').style.display='none';
-  }
+  else if(a==='go-account'){ S.account=''; S.bank=null; renderAccount(); show('account'); }
+  else if(a==='back-recipient') show('recipient');
+  /* Flutter A1 의 계좌 화면 ✕ 는 홈이 아니라 받는 사람으로 돌아간다 (maybePop) */
+  else if(a==='close-account') show('recipient');
+  else if(a==='open-bank'){ bankTab(false); show('bank'); }
+  else if(a==='close-bank') show('account');
+  else if(a==='tab-bank') bankTab(false);
+  else if(a==='tab-sec') bankTab(true);
   else if(a==='pick-bank'){
     S.bank = el.dataset.bank;
-    S.bankPicked = true;
-    const pb = document.getElementById('picked-bank');
-    pb.textContent = S.bank;
-    pb.classList.add('set');
     log('pick_bank', { bank: S.bank });
     renderAccount();
     show('account');
   }
-  else if(a==='back-bank') show('bank');
   else if(a==='acc-num'){
-    if(S.account.length<16){ S.account += el.dataset.v; renderAccount(); }
+    if(S.account.length<ACC_MAX) S.account += el.dataset.v;
+    renderAccount();
   }
   else if(a==='acc-del'){ S.account = S.account.slice(0,-1); renderAccount(); }
+  else if(a==='acc-clear'){ S.account = ''; renderAccount(); }
   else if(a==='account-next'){
-    if(!S.account || !S.bankPicked) return;
+    if(!S.account || !S.bank) return;
+    if(S.account !== ANSWER_ACCOUNT){ showError('err-account', 'account'); return; }
+    document.getElementById('amt-bank').textContent = S.bank;
     document.getElementById('amt-acc').textContent = S.account;
+    document.getElementById('cf-mark').textContent = S.bank[0];
+    document.getElementById('cf-bank').textContent = S.bank;
     document.getElementById('cf-acc').textContent = S.account;
     log('account_entered', { account: S.account, bank: S.bank });
+    S.amount = 0; renderAmount();
     show('amount');
   }
   else if(a==='back-account') show('account');
-  else if(a==='num'){ if(S.amount.length<9){ S.amount = (S.amount + el.dataset.v).replace(/^0+/,''); renderAmount(); } }
-  else if(a==='del'){ S.amount = S.amount.slice(0,-1); renderAmount(); }
+  else if(a==='num'){
+    const next = Number(String(S.amount) + el.dataset.v);
+    if(next <= BALANCE){ S.amount = next; renderAmount(); }
+  }
+  else if(a==='del'){ S.amount = Math.floor(S.amount/10); renderAmount(); }
   else if(a==='quick'){
     const v = el.dataset.v;
-    S.amount = v==='all' ? '100000' : String((Number(S.amount)||0) + Number(v));
+    S.amount = v==='all' ? BALANCE : Math.min(S.amount + Number(v), BALANCE);
     renderAmount();
   }
   else if(a==='amount-next'){
     if(!S.amount) return;
-    document.getElementById('cf-amt').textContent = Number(S.amount).toLocaleString();
-    document.getElementById('dn-amt').textContent = Number(S.amount).toLocaleString();
+    document.getElementById('cf-amt').textContent = S.amount.toLocaleString();
+    document.getElementById('dn-amt').textContent = S.amount.toLocaleString();
     show('confirm');
   }
   else if(a==='back-amount') show('amount');
-  else if(a==='send'){ S.pw=''; buildPwPad(); renderDots(); show('password'); }
-  else if(a==='back-confirm') show('confirm');
+  else if(a==='send'){
+    if(S.account !== ANSWER_ACCOUNT){ showError('err-account', 'confirm'); return; }
+    if(S.bank !== ANSWER_BANK){ showError('err-bank', 'confirm'); return; }
+    S.pw=''; buildPwPad(); renderDots(); show('password');
+  }
+  else if(a==='close-error') show(S.errFrom);
   else if(a==='pw'){
     if(S.pw.length<4){ S.pw += el.dataset.v; renderDots(); }
     if(S.pw.length===4){
-      log('submit', { bank:S.bank, account:S.account, amount:Number(S.amount) });
+      log('submit', { bank:S.bank, account:S.account, amount:S.amount });
       setTimeout(()=>show('done'), 260);
     }
   }
@@ -1648,7 +1719,7 @@ document.getElementById('phone').addEventListener('click', function(e){
 });
 
 renderAccount();
-
+renderAmount();
 buildPwPad();
 log('screen_enter', { to:'home' });
 </script>

@@ -1,5 +1,6 @@
 {
   "name": "drive_slow",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
   "note": "전환이 1.2초 걸리는 화면을 재현한다. 고정 sleep(0.45) 으로는 아직 앞 화면에 서 있는 것을 긁는다.",
   "derived_from_original": false,
   "required_ids": ["start", "done"],

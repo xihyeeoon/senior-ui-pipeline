@@ -1,5 +1,6 @@
 {
   "name": "i_declared",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
   "note": "i_substring 과 같은 두 페이지에, 뺀 선택지를 선언해 둔 흐름이다. 선언한 값은 fatal 로 세지 않고 지표와 생략 목록에 남긴다.",
   "derived_from_original": false,
   "required_ids": [

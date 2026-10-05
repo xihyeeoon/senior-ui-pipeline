@@ -1,5 +1,6 @@
 {
   "name": "f_attrs",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
   "note": "검사 F 가 placeholder · 입력값 · alt · aria-label · title 의 영어를 보지 못하는 것을 재현한다. 원본 쪽 페이지는 같은 자리에 한글을 넣은 f_attrs_orig.html 이다.",
   "derived_from_original": false,
   "required_ids": [

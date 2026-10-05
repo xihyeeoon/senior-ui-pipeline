@@ -1,5 +1,6 @@
 {
   "name": "drive_dialog_late",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
   "note": "마지막 화면에 도착한 뒤 늦게 뜨는 대화상자를 재현한다. 브라우저를 닫기 전에 처리하지 않으면 기록되지도 닫히지도 않는다.",
   "derived_from_original": false,
   "required_ids": [

@@ -18,10 +18,12 @@
           "amount",
           "confirm",
           "password",
-          "done"
+          "done",
+          "err-account",
+          "err-bank"
         ],
         "onclicks": [],
-        "text": "1:39\n5G 66\nC\n김시현님\n☺\n▤\n♤\n⌕\n자산\n›\nS\n[금융거래한도계좌2]신한 주거래 우대통장\n(저축예금)\n100,000원\n이체\n김시현님의 SOL멤버십 등급은 클래식 입니다\nPick E 체크캐릭터형(하리보)\n8월 이용 금액 100,000원\n앱카드 가입\n땡겨요\n›\n🛵 8월 최대할인! 브랜드데이 확인하기\n쿠폰바로받기\n이벤트\n쿠폰\n포인트\n8월 소비 100,000원 ↻\n›\n전월 오늘 대비 +100,000원 증가\n오늘 쓴 돈\n1,000원\nPick E 체크 외 1개\n100,000원\n가입 즉시 1만원 올영 상품권\n지금 받으러 가기 ›\n마이신한포인트\n180P\n모으기\n추천서비스\n›\n🅦\n급여클럽+\n급여이체 우대 혜택\n⚾\nSOL야구\n야구팬 즐길거리 모음\n🎟\n쿠폰 사고팔기\n기프티콘 사고파는 장터\n더보기 ⌄\n신한금융그룹\n💳\n신한카드\n나에게 맞는 카드 찾기\n📈\n신한투자증권\n지금 뜨는 주식 보러가기\n🛡\n신한라이프\n내게 필요한 보험, 보장분석으로 확인하기\n쉬운홈\n홈화면 설정\n금액 숨기기\n⌂\n홈\nⓌ\n금융\n⌂\n상품\n🎁\n혜택\n📈\n주식",
+        "text": "4:31\n67\nC\n홍길동님\n☺\n▤\n♤\n⌕\n자산\n›\nS\n[금융거래한도계좌2]신한 주거래 우대통장\n(저축예금)\n금액 숨김\n이체\n절세혜택과 안정적인 노후, IRP로 준비하세요\n▭\nPick E 체크캐릭터형(하리보)\n금액 숨김\n앱카드 가입\n땡겨요\n›\n🍔\n할인쿠폰 드려요\nbhc치킨 최대 9,000원\n바로받기\n이벤트\n쿠폰\n포인트\n7월 소비 ↻\n›\n📅 오늘 쓴 돈\n0원\n카드 쓸때마다 쌓이고, 현금처럼 쓰는\n마이신한포인트\n시작하기\n추천서비스\n›\n⌂\nSOL패밀리\n가족과 함께하는 금융생활\n🅦\n급여클럽+\n급여이체 우대 혜택\n💳\n내 카드 승인내역\n모든 카드 실시간 승인내역\n더 많은 금융자산 모두\n연결하면 커피쿠폰 즉시지급!\n이벤트 바로가기 ›\n신한금융그룹\n💳\n신한카드\n나에게 맞는 카드 찾기\n📈\n신한투자증권\n지금 뜨는 주식 보러가기\n🛡\n신한라이프\n내게 필요한 보험, 보장분석으로 확인하기\n쉬운홈\n홈화면 설정\n금액 숨기기\n⌂\n홈\nⓌ\n금융\n⌂\n상품\n🎁\n혜택\n📈\n주식",
         "height": 844,
         "choices": {
           "pick-bank": [
@@ -125,16 +127,16 @@
             "0"
           ],
           "pw": [
-            "2",
-            "1",
-            "5",
             "4",
             "0",
-            "7",
             "9",
             "6",
+            "8",
+            "5",
             "3",
-            "8"
+            "1",
+            "7",
+            "2"
           ]
         },
         "contrast": [
@@ -163,45 +165,33 @@
             "need": 4.5
           },
           {
-            "text": "›",
-            "tag": "span",
-            "cls": "arr",
-            "color": "rgb(185, 190, 199)",
-            "seen": "rgb(185, 190, 199)",
-            "bg": "rgb(255, 255, 255)",
-            "opacity": 1,
-            "fontSize": 17,
-            "ratio": 1.87,
-            "need": 4.5
-          },
-          {
-            "text": "›",
-            "tag": "span",
-            "cls": "arr",
-            "color": "rgb(185, 190, 199)",
-            "seen": "rgb(185, 190, 199)",
-            "bg": "rgb(255, 255, 255)",
-            "opacity": 1,
-            "fontSize": 17,
-            "ratio": 1.87,
-            "need": 4.5
-          },
-          {
-            "text": "+100,000원 증가",
-            "tag": "span",
-            "cls": "",
-            "color": "rgb(229, 72, 77)",
-            "seen": "rgb(229, 72, 77)",
-            "bg": "rgb(255, 255, 255)",
-            "opacity": 1,
-            "fontSize": 13,
-            "ratio": 3.91,
-            "need": 4.5
-          },
-          {
-            "text": "오늘 쓴 돈",
+            "text": "▭",
             "tag": "div",
-            "cls": "",
+            "cls": "logo",
+            "color": "rgb(255, 255, 255)",
+            "seen": "rgb(255, 255, 255)",
+            "bg": "rgb(224, 138, 0)",
+            "opacity": 1,
+            "fontSize": 15,
+            "ratio": 2.69,
+            "need": 4.5
+          },
+          {
+            "text": "›",
+            "tag": "span",
+            "cls": "arr",
+            "color": "rgb(185, 190, 199)",
+            "seen": "rgb(185, 190, 199)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 17,
+            "ratio": 1.87,
+            "need": 4.5
+          },
+          {
+            "text": "할인쿠폰 드려요",
+            "tag": "div",
+            "cls": "t2",
             "color": "rgb(138, 143, 152)",
             "seen": "rgb(138, 143, 152)",
             "bg": "rgb(255, 255, 255)",
@@ -211,15 +201,15 @@
             "need": 4.5
           },
           {
-            "text": "Pick E 체크 외 1개",
-            "tag": "div",
-            "cls": "",
-            "color": "rgb(138, 143, 152)",
-            "seen": "rgb(138, 143, 152)",
-            "bg": "rgb(245, 246, 249)",
+            "text": "›",
+            "tag": "span",
+            "cls": "arr",
+            "color": "rgb(185, 190, 199)",
+            "seen": "rgb(185, 190, 199)",
+            "bg": "rgb(255, 255, 255)",
             "opacity": 1,
-            "fontSize": 12,
-            "ratio": 3.01,
+            "fontSize": 17,
+            "ratio": 1.87,
             "need": 4.5
           },
           {
@@ -232,6 +222,18 @@
             "opacity": 1,
             "fontSize": 17,
             "ratio": 1.87,
+            "need": 4.5
+          },
+          {
+            "text": "가족과 함께하는 금융생활",
+            "tag": "div",
+            "cls": "t2",
+            "color": "rgb(138, 143, 152)",
+            "seen": "rgb(138, 143, 152)",
+            "bg": "rgb(255, 255, 255)",
+            "opacity": 1,
+            "fontSize": 12,
+            "ratio": 3.25,
             "need": 4.5
           },
           {
@@ -247,19 +249,7 @@
             "need": 4.5
           },
           {
-            "text": "야구팬 즐길거리 모음",
-            "tag": "div",
-            "cls": "t2",
-            "color": "rgb(138, 143, 152)",
-            "seen": "rgb(138, 143, 152)",
-            "bg": "rgb(255, 255, 255)",
-            "opacity": 1,
-            "fontSize": 12,
-            "ratio": 3.25,
-            "need": 4.5
-          },
-          {
-            "text": "기프티콘 사고파는 장터",
+            "text": "모든 카드 실시간 승인내역",
             "tag": "div",
             "cls": "t2",
             "color": "rgb(138, 143, 152)",
@@ -405,7 +395,7 @@
         ],
         "contrast_undetermined": [
           {
-            "text": "마이신한포인트",
+            "text": "카드 쓸때마다 쌓이고, 현금처럼 쓰는",
             "tag": "div",
             "cls": "p1",
             "color": "rgb(255, 255, 255)",
@@ -415,7 +405,7 @@
             "behind": "div.pointbar"
           },
           {
-            "text": "180P",
+            "text": "마이신한포인트",
             "tag": "div",
             "cls": "p2",
             "color": "rgb(255, 255, 255)",
@@ -427,19 +417,19 @@
         ],
         "inherited": [
           {
-            "text": "1:39",
+            "text": "4:31",
             "tag": "span",
             "cls": "",
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "5G 66",
+            "text": "67",
             "tag": "span",
             "cls": "right",
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "김시현님",
+            "text": "홍길동님",
             "tag": "div",
             "cls": "name",
             "color": "rgb(26, 26, 26)"
@@ -475,15 +465,21 @@
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "100,000원",
+            "text": "금액 숨김",
             "tag": "div",
             "cls": "acctamt",
             "color": "rgb(26, 26, 26)"
           },
           {
             "text": "Pick E 체크캐릭터형(하리보)",
-            "tag": "h3",
+            "tag": "div",
             "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "금액 숨김",
+            "tag": "div",
+            "cls": "acctamt",
             "color": "rgb(26, 26, 26)"
           },
           {
@@ -493,9 +489,15 @@
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "🛵 8월 최대할인! 브랜드데이 확인하기",
+            "text": "🍔",
             "tag": "div",
-            "cls": "",
+            "cls": "sq",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "bhc치킨 최대 9,000원",
+            "tag": "div",
+            "cls": "t1",
             "color": "rgb(26, 26, 26)"
           },
           {
@@ -517,37 +519,25 @@
             "color": "rgb(90, 96, 105)"
           },
           {
-            "text": "8월 소비 100,000원 ↻",
+            "text": "7월 소비 ↻",
             "tag": "h3",
             "cls": "",
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "1,000원",
+            "text": "0원",
             "tag": "div",
             "cls": "",
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "100,000원",
-            "tag": "div",
-            "cls": "",
-            "color": "rgb(26, 26, 26)"
-          },
-          {
-            "text": "가입 즉시 1만원 올영 상품권",
-            "tag": "div",
-            "cls": "",
-            "color": "rgb(26, 26, 26)"
-          },
-          {
-            "text": "마이신한포인트",
+            "text": "카드 쓸때마다 쌓이고, 현금처럼 쓰는",
             "tag": "div",
             "cls": "p1",
             "color": "rgb(255, 255, 255)"
           },
           {
-            "text": "180P",
+            "text": "마이신한포인트",
             "tag": "div",
             "cls": "p2",
             "color": "rgb(255, 255, 255)"
@@ -556,6 +546,18 @@
             "text": "추천서비스",
             "tag": "h3",
             "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "⌂",
+            "tag": "div",
+            "cls": "sq",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "SOL패밀리",
+            "tag": "div",
+            "cls": "t1",
             "color": "rgb(26, 26, 26)"
           },
           {
@@ -571,27 +573,21 @@
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "⚾",
+            "text": "💳",
             "tag": "div",
             "cls": "sq",
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "SOL야구",
+            "text": "내 카드 승인내역",
             "tag": "div",
             "cls": "t1",
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "🎟",
+            "text": "더 많은 금융자산 모두 연결하면 커피쿠폰 즉시지급!",
             "tag": "div",
-            "cls": "sq",
-            "color": "rgb(26, 26, 26)"
-          },
-          {
-            "text": "쿠폰 사고팔기",
-            "tag": "div",
-            "cls": "t1",
+            "cls": "",
             "color": "rgb(26, 26, 26)"
           },
           {
@@ -687,54 +683,39 @@
         ],
         "overlap": [
           {
-            "a": "1,000원",
-            "b": "⌂홈",
-            "overlap_pct": 26
-          },
-          {
-            "a": "1,000원",
-            "b": "⌂",
-            "overlap_pct": 96
-          },
-          {
-            "a": "1,000원",
+            "a": "카드 쓸때마다 쌓이고, 현금처럼 쓰는",
             "b": "Ⓦ금융",
-            "overlap_pct": 43
+            "overlap_pct": 39
           },
           {
-            "a": "1,000원",
-            "b": "Ⓦ",
-            "overlap_pct": 100
-          },
-          {
-            "a": "1,000원",
+            "a": "카드 쓸때마다 쌓이고, 현금처럼 쓰는",
             "b": "⌂상품",
-            "overlap_pct": 43
+            "overlap_pct": 38
           },
           {
-            "a": "1,000원",
+            "a": "카드 쓸때마다 쌓이고, 현금처럼 쓰는",
             "b": "⌂",
-            "overlap_pct": 96
+            "overlap_pct": 27
           },
           {
-            "a": "1,000원",
+            "a": "마이신한포인트",
+            "b": "Ⓦ금융",
+            "overlap_pct": 29
+          },
+          {
+            "a": "마이신한포인트",
+            "b": "⌂상품",
+            "overlap_pct": 28
+          },
+          {
+            "a": "시작하기",
             "b": "🎁혜택",
-            "overlap_pct": 43
+            "overlap_pct": 38
           },
           {
-            "a": "1,000원",
-            "b": "🎁",
-            "overlap_pct": 98
-          },
-          {
-            "a": "1,000원",
+            "a": "시작하기",
             "b": "📈주식",
-            "overlap_pct": 26
-          },
-          {
-            "a": "1,000원",
-            "b": "📈",
-            "overlap_pct": 84
+            "overlap_pct": 51
           }
         ],
         "overflow": [],
@@ -744,6 +725,12 @@
             "tag": "div",
             "cls": "acctname",
             "lines": 3
+          },
+          {
+            "text": "더 많은 금융자산 모두 연결하면 커피쿠폰 즉시지급!",
+            "tag": "div",
+            "cls": "",
+            "lines": 2
           }
         ],
         "shown": []
@@ -767,10 +754,12 @@
           "amount",
           "confirm",
           "password",
-          "done"
+          "done",
+          "err-account",
+          "err-bank"
         ],
         "onclicks": [],
-        "text": "1:39\n5G 66\n‹\n다건이체\n👤\n✕\n누구에게 보낼까요?\n계좌번호 직접 입력\n▣\n자주쓰는 계좌\n편집\n2개 ⌄\n내 계좌\n14개 ⌄\n최근\n50개 ⌃\nB\n김시현\n카카오뱅크 3333000000000\n★\nB\n김시현\n카카오뱅크 3333000000000\n★\nS\n안성진\n신한 110-000-000000\n☆\nN\n박정순\n농협 1110000000000\n☆\nS\n박숙자\n신한 110-000-000000\n☆\nT\n김시현\n토스증권 14400000000\n☆\nS\n김명희\n신한 110-000-000000\n☆",
+        "text": "4:31\n67\n‹\n다건이체\n👤\n✕\n누구에게 보낼까요?\n⌕\n계좌번호 직접 입력\n▣\n자주쓰는 계좌\n편집\n0개 ⌄\n내 계좌\n0개 ⌄\n최근\n0개 ⌄",
         "height": 844,
         "choices": {
           "pick-bank": [
@@ -874,16 +863,16 @@
             "0"
           ],
           "pw": [
-            "2",
-            "1",
-            "5",
             "4",
             "0",
-            "7",
             "9",
             "6",
+            "8",
+            "5",
             "3",
-            "8"
+            "1",
+            "7",
+            "2"
           ]
         },
         "contrast": [
@@ -910,90 +899,18 @@
             "fontSize": 11,
             "ratio": 4.28,
             "need": 4.5
-          },
-          {
-            "text": "☆",
-            "tag": "span",
-            "cls": "st",
-            "color": "rgb(211, 215, 221)",
-            "seen": "rgb(211, 215, 221)",
-            "bg": "rgb(255, 255, 255)",
-            "opacity": 1,
-            "fontSize": 17,
-            "ratio": 1.44,
-            "need": 4.5
-          },
-          {
-            "text": "☆",
-            "tag": "span",
-            "cls": "st",
-            "color": "rgb(211, 215, 221)",
-            "seen": "rgb(211, 215, 221)",
-            "bg": "rgb(255, 255, 255)",
-            "opacity": 1,
-            "fontSize": 17,
-            "ratio": 1.44,
-            "need": 4.5
-          },
-          {
-            "text": "☆",
-            "tag": "span",
-            "cls": "st",
-            "color": "rgb(211, 215, 221)",
-            "seen": "rgb(211, 215, 221)",
-            "bg": "rgb(255, 255, 255)",
-            "opacity": 1,
-            "fontSize": 17,
-            "ratio": 1.44,
-            "need": 4.5
-          },
-          {
-            "text": "T",
-            "tag": "div",
-            "cls": "av",
-            "color": "rgb(255, 255, 255)",
-            "seen": "rgb(255, 255, 255)",
-            "bg": "rgb(59, 123, 246)",
-            "opacity": 1,
-            "fontSize": 15,
-            "ratio": 3.93,
-            "need": 4.5
-          },
-          {
-            "text": "☆",
-            "tag": "span",
-            "cls": "st",
-            "color": "rgb(211, 215, 221)",
-            "seen": "rgb(211, 215, 221)",
-            "bg": "rgb(255, 255, 255)",
-            "opacity": 1,
-            "fontSize": 17,
-            "ratio": 1.44,
-            "need": 4.5
-          },
-          {
-            "text": "☆",
-            "tag": "span",
-            "cls": "st",
-            "color": "rgb(211, 215, 221)",
-            "seen": "rgb(211, 215, 221)",
-            "bg": "rgb(255, 255, 255)",
-            "opacity": 1,
-            "fontSize": 17,
-            "ratio": 1.44,
-            "need": 4.5
           }
         ],
         "contrast_undetermined": [],
         "inherited": [
           {
-            "text": "1:39",
+            "text": "4:31",
             "tag": "span",
             "cls": "",
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "5G 66",
+            "text": "67",
             "tag": "span",
             "cls": "right",
             "color": "rgb(26, 26, 26)"
@@ -1027,48 +944,6 @@
             "tag": "span",
             "cls": "lbl",
             "color": "rgb(26, 26, 26)"
-          },
-          {
-            "text": "김시현",
-            "tag": "div",
-            "cls": "nm",
-            "color": "rgb(26, 26, 26)"
-          },
-          {
-            "text": "김시현",
-            "tag": "div",
-            "cls": "nm",
-            "color": "rgb(26, 26, 26)"
-          },
-          {
-            "text": "안성진",
-            "tag": "div",
-            "cls": "nm",
-            "color": "rgb(26, 26, 26)"
-          },
-          {
-            "text": "박정순",
-            "tag": "div",
-            "cls": "nm",
-            "color": "rgb(26, 26, 26)"
-          },
-          {
-            "text": "박숙자",
-            "tag": "div",
-            "cls": "nm",
-            "color": "rgb(26, 26, 26)"
-          },
-          {
-            "text": "김시현",
-            "tag": "div",
-            "cls": "nm",
-            "color": "rgb(26, 26, 26)"
-          },
-          {
-            "text": "김명희",
-            "tag": "div",
-            "cls": "nm",
-            "color": "rgb(26, 26, 26)"
           }
         ],
         "overlap": [],
@@ -1083,7 +958,8 @@
         "outside_text": "",
         "actions": [
           "back-recipient",
-          "back-home",
+          "close-account",
+          "acc-clear",
           "open-bank",
           "acc-num",
           "acc-num",
@@ -1099,8 +975,12 @@
           "account-next"
         ],
         "ids": [
+          "acc-field",
           "acc-input",
+          "acc-clear",
+          "acc-warn",
           "picked-bank",
+          "acc-pad",
           "acc-next"
         ],
         "screens": [
@@ -1111,10 +991,12 @@
           "amount",
           "confirm",
           "password",
-          "done"
+          "done",
+          "err-account",
+          "err-bank"
         ],
         "onclicks": [],
-        "text": "3:33\n5G 56\n‹\n✕\n누구에게 보낼까요?\n계좌번호\n은행 또는 증권사 선택\n⌄\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n⌫\n다음",
+        "text": "4:31\n67\n‹\n✕\n누구에게 보낼까요?\n계좌번호\n은행 또는 증권사 선택\n⌄\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n⌫\n다음",
         "height": 844,
         "choices": {
           "pick-bank": [
@@ -1218,16 +1100,16 @@
             "0"
           ],
           "pw": [
-            "2",
-            "1",
-            "5",
             "4",
             "0",
-            "7",
             "9",
             "6",
+            "8",
+            "5",
             "3",
-            "8"
+            "1",
+            "7",
+            "2"
           ]
         },
         "contrast": [
@@ -1271,13 +1153,13 @@
         "contrast_undetermined": [],
         "inherited": [
           {
-            "text": "3:33",
+            "text": "4:31",
             "tag": "span",
             "cls": "",
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "5G 56",
+            "text": "67",
             "tag": "span",
             "cls": "right",
             "color": "rgb(26, 26, 26)"
@@ -1300,7 +1182,7 @@
         "attr_text": "",
         "outside_text": "",
         "actions": [
-          "back-recipient",
+          "close-bank",
           "tab-bank",
           "tab-sec",
           "pick-bank",
@@ -1385,10 +1267,12 @@
           "amount",
           "confirm",
           "password",
-          "done"
+          "done",
+          "err-account",
+          "err-bank"
         ],
         "onclicks": [],
-        "text": "1:40\n5G 66\n은행 또는 증권사 선택\n✕\n은행\n증권사\n신\n신한\n제\n제주\n국\n국민\n기\n기업\n농\n농협\n산\n산업\n수\n수협\n신\n신협\n우\n우리\n하\n하나\n한\n한국씨티\n카\n카카오뱅크\n케\n케이뱅크\n토\n토스뱅크\n경\n경남\n광\n광주\n아\n아이엠뱅크(대구)\n부\n부산\n전\n전북\n회\n회원수협\n새\n새마을\n우\n우체국\n저\n저축은행\n지\n지역농.축협\n도\n도이치\n중\n중국\n중\n중국건설\n중\n중국공상\nB\nBNP파리바\nB\nBOA\nH\nHSBC\nJ\nJP모간\nS\nSC\n산\n산림조합\n국\n국세\n지\n지방세\n국\n국고금\n관\n관세",
+        "text": "4:31\n67\n은행 또는 증권사 선택\n✕\n은행\n증권사\n신\n신한\n제\n제주\n국\n국민\n기\n기업\n농\n농협\n산\n산업\n수\n수협\n신\n신협\n우\n우리\n하\n하나\n한\n한국씨티\n카\n카카오뱅크\n케\n케이뱅크\n토\n토스뱅크\n경\n경남\n광\n광주\n아\n아이엠뱅크(대구)\n부\n부산\n전\n전북\n회\n회원수협\n새\n새마을\n우\n우체국\n저\n저축은행\n지\n지역농.축협\n도\n도이치\n중\n중국\n중\n중국건설\n중\n중국공상\nB\nBNP파리바\nB\nBOA\nH\nHSBC\nJ\nJP모간\nS\nSC\n산\n산림조합\n국\n국세\n지\n지방세\n국\n국고금\n관\n관세",
         "height": 844,
         "choices": {
           "pick-bank": [
@@ -1492,21 +1376,21 @@
             "0"
           ],
           "pw": [
-            "2",
-            "1",
-            "5",
             "4",
             "0",
-            "7",
             "9",
             "6",
+            "8",
+            "5",
             "3",
-            "8"
+            "1",
+            "7",
+            "2"
           ]
         },
         "contrast": [
           {
-            "text": "1:40",
+            "text": "4:31",
             "tag": "span",
             "cls": "",
             "color": "rgb(255, 255, 255)",
@@ -1518,7 +1402,7 @@
             "need": 4.5
           },
           {
-            "text": "5G 66",
+            "text": "67",
             "tag": "span",
             "cls": "right",
             "color": "rgb(255, 255, 255)",
@@ -1773,13 +1657,13 @@
         "contrast_undetermined": [],
         "inherited": [
           {
-            "text": "1:40",
+            "text": "4:31",
             "tag": "span",
             "cls": "",
             "color": "rgb(255, 255, 255)"
           },
           {
-            "text": "5G 66",
+            "text": "67",
             "tag": "span",
             "cls": "right",
             "color": "rgb(255, 255, 255)"
@@ -2231,8 +2115,12 @@
           "amount-next"
         ],
         "ids": [
+          "amt-bank",
           "amt-acc",
           "amt-display",
+          "amt-balance",
+          "amt-quick",
+          "amt-pad",
           "amt-next"
         ],
         "screens": [
@@ -2243,10 +2131,12 @@
           "amount",
           "confirm",
           "password",
-          "done"
+          "done",
+          "err-account",
+          "err-bank"
         ],
         "onclicks": [],
-        "text": "1:40\n5G 66\n‹\n✕\n[금융거래한도계좌2]신한 주… 계좌에서 ⌄\n김시현님 계좌로\n카카오뱅크 3333000000000\n얼마를 보낼까요?\n출금가능금액 100,000원\n+1만\n+5만\n+10만\n전액\n1\n2\n3\n4\n5\n6\n7\n8\n9\n00\n0\n⌫\n다음",
+        "text": "4:31\n67\n‹\n✕\n[금융거래한도계좌2]신한 주거래 우대통장 계좌에서 ⌄\n아래 계좌로\n신한 110234567890\n얼마를 보낼까요?\n출금가능금액 1,000,000원\n+1만\n+5만\n+10만\n전액\n1\n2\n3\n4\n5\n6\n7\n8\n9\n00\n0\n⌫\n다음",
         "height": 844,
         "choices": {
           "pick-bank": [
@@ -2350,16 +2240,16 @@
             "0"
           ],
           "pw": [
-            "2",
-            "1",
-            "5",
             "4",
             "0",
-            "7",
             "9",
             "6",
+            "8",
+            "5",
             "3",
-            "8"
+            "1",
+            "7",
+            "2"
           ]
         },
         "contrast": [
@@ -2388,7 +2278,7 @@
             "need": 4.5
           },
           {
-            "text": "100,000",
+            "text": "1,000,000",
             "tag": "u",
             "cls": "",
             "color": "rgb(138, 143, 152)",
@@ -2415,31 +2305,31 @@
         "contrast_undetermined": [],
         "inherited": [
           {
-            "text": "1:40",
+            "text": "4:31",
             "tag": "span",
             "cls": "",
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "5G 66",
+            "text": "67",
             "tag": "span",
             "cls": "right",
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "카카오뱅크",
+            "text": "신한",
             "tag": "span",
             "cls": "",
             "color": "rgb(75, 81, 88)"
           },
           {
-            "text": "3333000000000",
+            "text": "110234567890",
             "tag": "span",
             "cls": "",
             "color": "rgb(75, 81, 88)"
           },
           {
-            "text": "100,000",
+            "text": "1,000,000",
             "tag": "u",
             "cls": "",
             "color": "rgb(138, 143, 152)"
@@ -2447,11 +2337,22 @@
         ],
         "overlap": [],
         "overflow": [],
-        "wrapped": [],
+        "wrapped": [
+          {
+            "text": "[금융거래한도계좌2]신한 주거래 우대통장 계좌에서 ⌄",
+            "tag": "div",
+            "cls": "amthead",
+            "lines": 2
+          }
+        ],
         "shown": [
           [
+            "#amt-bank",
+            "신한"
+          ],
+          [
             "#amt-acc",
-            "3333000000000"
+            "110234567890"
           ]
         ]
       },
@@ -2466,7 +2367,9 @@
           "send"
         ],
         "ids": [
+          "cf-mark",
           "cf-amt",
+          "cf-bank",
           "cf-acc"
         ],
         "screens": [
@@ -2477,10 +2380,12 @@
           "amount",
           "confirm",
           "password",
-          "done"
+          "done",
+          "err-account",
+          "err-bank"
         ],
         "onclicks": [],
-        "text": "1:40\n5G 66\n‹\n✕\nB\n김시현님 계좌로\n10,000원 보낼까요?\n수수료 무료\n보내는 계좌\n신한 110-000-000000\n받는 계좌\n카카오뱅크 3333000000000\n받는분 메모\n김시현 ✎\n내통장 메모\n김시현 ✎\n보내기",
+        "text": "4:31\n67\n‹\n✕\n신\n아래 계좌로\n32,000원 보낼까요?\n수수료 무료\n보내는 계좌\n신한 110-000-000000\n받는 계좌\n신한 110234567890\n받는분 메모\n김철수 ✎\n내통장 메모\n김철수 ✎\n보내기",
         "height": 844,
         "choices": {
           "pick-bank": [
@@ -2584,16 +2489,16 @@
             "0"
           ],
           "pw": [
-            "2",
-            "1",
-            "5",
             "4",
             "0",
-            "7",
             "9",
             "6",
+            "8",
+            "5",
             "3",
-            "8"
+            "1",
+            "7",
+            "2"
           ]
         },
         "contrast": [
@@ -2661,25 +2566,25 @@
         "contrast_undetermined": [],
         "inherited": [
           {
-            "text": "1:40",
+            "text": "4:31",
             "tag": "span",
             "cls": "",
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "5G 66",
+            "text": "67",
             "tag": "span",
             "cls": "right",
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "김시현님 계좌로 원 보낼까요?",
+            "text": "아래 계좌로 원 보낼까요?",
             "tag": "div",
             "cls": "q2",
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "10,000",
+            "text": "32,000",
             "tag": "span",
             "cls": "",
             "color": "rgb(26, 26, 26)"
@@ -2691,25 +2596,25 @@
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "카카오뱅크",
-            "tag": "span",
-            "cls": "v",
-            "color": "rgb(26, 26, 26)"
-          },
-          {
-            "text": "3333000000000",
+            "text": "신한",
             "tag": "span",
             "cls": "",
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "김시현 ✎",
+            "text": "110234567890",
+            "tag": "span",
+            "cls": "",
+            "color": "rgb(26, 26, 26)"
+          },
+          {
+            "text": "김철수 ✎",
             "tag": "span",
             "cls": "v",
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "김시현 ✎",
+            "text": "김철수 ✎",
             "tag": "span",
             "cls": "v",
             "color": "rgb(26, 26, 26)"
@@ -2719,7 +2624,7 @@
         "overflow": [],
         "wrapped": [
           {
-            "text": "김시현님 계좌로 원 보낼까요?",
+            "text": "아래 계좌로 원 보낼까요?",
             "tag": "div",
             "cls": "q2",
             "lines": 2
@@ -2727,12 +2632,16 @@
         ],
         "shown": [
           [
+            "#cf-bank",
+            "신한"
+          ],
+          [
             "#cf-acc",
-            "3333000000000"
+            "110234567890"
           ],
           [
             "#cf-amt",
-            "10,000"
+            "32,000"
           ]
         ]
       },
@@ -2742,7 +2651,7 @@
         "attr_text": "",
         "outside_text": "",
         "actions": [
-          "back-confirm",
+          "back-home",
           "pw",
           "pw",
           "pw",
@@ -2768,10 +2677,12 @@
           "amount",
           "confirm",
           "password",
-          "done"
+          "done",
+          "err-account",
+          "err-bank"
         ],
         "onclicks": [],
-        "text": "5:55\n5G 89\n✕\n계좌 비밀번호\n0\n3\n6\n4\n8\n1\n7\n9\n5\n재배열\n2\n⌫",
+        "text": "4:31\n67\n✕\n계좌 비밀번호\n7\n0\n1\n3\n4\n5\n6\n9\n2\n재배열\n8\n⌫",
         "height": 844,
         "choices": {
           "pick-bank": [
@@ -2875,29 +2786,29 @@
             "0"
           ],
           "pw": [
-            "0",
-            "3",
-            "6",
-            "4",
-            "8",
-            "1",
             "7",
-            "9",
+            "0",
+            "1",
+            "3",
+            "4",
             "5",
-            "2"
+            "6",
+            "9",
+            "2",
+            "8"
           ]
         },
         "contrast": [],
         "contrast_undetermined": [],
         "inherited": [
           {
-            "text": "5:55",
+            "text": "4:31",
             "tag": "span",
             "cls": "",
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "5G 89",
+            "text": "67",
             "tag": "span",
             "cls": "right",
             "color": "rgb(26, 26, 26)"
@@ -2933,10 +2844,12 @@
           "amount",
           "confirm",
           "password",
-          "done"
+          "done",
+          "err-account",
+          "err-bank"
         ],
         "onclicks": [],
-        "text": "1:41\n5G 66\n✓\n김시현님 계좌로\n10,000원 보냈어요.\n추가이체\n상세보기\n공유\n확인",
+        "text": "4:31\n67\n✓\n아래 계좌로\n32,000원 보냈어요.\n추가이체\n상세보기\n공유\n확인",
         "height": 844,
         "choices": {
           "pick-bank": [
@@ -3040,41 +2953,41 @@
             "0"
           ],
           "pw": [
-            "0",
-            "3",
-            "6",
-            "4",
-            "8",
-            "1",
             "7",
-            "9",
+            "0",
+            "1",
+            "3",
+            "4",
             "5",
-            "2"
+            "6",
+            "9",
+            "2",
+            "8"
           ]
         },
         "contrast": [],
         "contrast_undetermined": [],
         "inherited": [
           {
-            "text": "1:41",
+            "text": "4:31",
             "tag": "span",
             "cls": "",
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "5G 66",
+            "text": "67",
             "tag": "span",
             "cls": "right",
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "김시현님 계좌로 원 보냈어요.",
+            "text": "아래 계좌로 원 보냈어요.",
             "tag": "div",
             "cls": "q2",
             "color": "rgb(26, 26, 26)"
           },
           {
-            "text": "10,000",
+            "text": "32,000",
             "tag": "span",
             "cls": "",
             "color": "rgb(26, 26, 26)"
@@ -3084,7 +2997,7 @@
         "overflow": [],
         "wrapped": [
           {
-            "text": "김시현님 계좌로 원 보냈어요.",
+            "text": "아래 계좌로 원 보냈어요.",
             "tag": "div",
             "cls": "q2",
             "lines": 2
@@ -3093,7 +3006,7 @@
         "shown": [
           [
             "#dn-amt",
-            "10,000"
+            "32,000"
           ]
         ]
       }
@@ -3169,12 +3082,45 @@
           "background-color=rgb(238, 240, 244)",
           "color=rgb(154, 160, 168)"
         ]
+      },
+      {
+        "base": ".accclear",
+        "state": "on",
+        "props": [
+          "display"
+        ],
+        "differing": [
+          "display"
+        ],
+        "base_values": [
+          "display=none"
+        ]
+      },
+      {
+        "base": ".accwarn",
+        "state": "on",
+        "props": [
+          "display"
+        ],
+        "differing": [
+          "display"
+        ],
+        "base_values": [
+          "display=none"
+        ]
       }
     ],
     "load_failed": null,
     "notes": [],
     "js_error_details": [],
     "flow": "original",
+    "truth": {
+      "ACCOUNT": "110234567890",
+      "AMOUNT": "32000",
+      "BANK": "신한",
+      "NAME": "김철수",
+      "AMOUNT_SHOWN": "32,000"
+    },
     "undefined_classes": []
   },
   "rep": {
@@ -4660,6 +4606,13 @@
     "notes": [],
     "js_error_details": [],
     "flow": "run2",
+    "truth": {
+      "ACCOUNT": "3333000000000",
+      "AMOUNT": "10000",
+      "BANK": "카카오뱅크",
+      "NAME": "김시현",
+      "AMOUNT_SHOWN": "10,000"
+    },
     "undefined_classes": []
   }
 }

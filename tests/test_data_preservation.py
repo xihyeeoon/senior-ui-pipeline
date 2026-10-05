@@ -51,13 +51,17 @@ def snap(choices):
 # 1. 뽑기
 # --------------------------------------------------------------------- #
 def test_script_arrays_behind_a_choice_group_are_extracted():
-    """원본의 은행 목록은 마크업에 없다 - 스크립트 배열이 런타임에 그린다.
-    그 배열을 이름과 원소로 꺼내야 도구가 그 데이터를 들고 있을 수 있다."""
+    """원본의 고르는 버튼 묶음은 전부 스크립트 배열이 런타임에 그린다 (입력
+    약속 2번, docs/input-contract.md). 그 배열을 이름과 원소로 꺼내야 도구가 그
+    데이터를 들고 있을 수 있다."""
     got = preserve.preserved_data(orig_snapshot(), original_html())
-    assert sorted(got) == ["BANKS", "SECS", "nums"]
+    assert sorted(got) == ["ACC_KEYS", "AMT_KEYS", "BANKS", "PW_KEYS", "QUICK", "SECS"]
     assert len(got["BANKS"]) == 38
     assert len(got["SECS"]) == 29
-    assert len(got["nums"]) == 10
+    assert len(got["AMT_KEYS"]) == 11
+    assert len(got["ACC_KEYS"]) == 10
+    assert len(got["PW_KEYS"]) == 10
+    assert len(got["QUICK"]) == 4
 
 
 def test_extracted_values_are_the_originals_own_strings():
@@ -65,16 +69,26 @@ def test_extracted_values_are_the_originals_own_strings():
     assert got["BANKS"][0] == "신한"
     assert got["BANKS"][-1] == "관세"
     assert got["SECS"][-1] == "NH투자증권"
-    assert got["nums"] == [str(n) for n in range(10)]
+    assert got["PW_KEYS"] == [str(n) for n in range(10)]
+    assert got["QUICK"] == ["10000", "50000", "100000", "all"]
 
 
-def test_choices_written_straight_into_the_markup_are_not_preserved():
-    """숫자판처럼 마크업에 직접 쓰인 선택지는 대상이 아니다. LLM 이 그대로
-    옮기거나 바꿀 수 있고, 도구가 지켜야 할 데이터가 아니다."""
+def test_the_keypad_values_once_written_into_the_markup_are_now_preserved():
+    """예전 원본은 숫자판과 빠른 금액을 마크업에 썼고, 그 둘은 보호받지 못했다 -
+    Run 1~3 이 `00` 과 `전액` 을 뺐다. 이제 배열이므로 도구가 들고 있다."""
     got = preserve.preserved_data(orig_snapshot(), original_html())
-    flat = [v for items in got.values() for v in items]
-    assert "00" not in flat          # num 숫자판
-    assert "all" not in flat         # quick 전액
+    assert "00" in got["AMT_KEYS"]
+    assert "all" in got["QUICK"]
+
+
+def test_each_group_of_the_original_has_one_source():
+    """원본의 숫자판 셋은 값 0~9 가 겹친다. 묶음마다 출처 배열이 하나로 정해져야
+    한다 - 은행 목록만 설계대로 배열 둘(은행 + 증권사)이다."""
+    generated, inline = preserve.split_groups(orig_snapshot(), original_html())
+    got = {action: [n for n, _ in src] for action, _c, src in generated}
+    assert got == {"pick-bank": ["BANKS", "SECS"], "num": ["AMT_KEYS"],
+                   "acc-num": ["ACC_KEYS"], "pw": ["PW_KEYS"], "quick": ["QUICK"]}
+    assert inline == []
 
 
 def test_arrays_that_are_not_choices_are_not_preserved():
@@ -98,6 +112,48 @@ def test_extraction_works_on_any_input():
 def test_a_group_with_one_value_is_not_a_choice():
     html = "<html><body><script>const X = ['하나'];</script></body></html>"
     assert preserve.preserved_data(snap({"pick": ["하나"]}), html) == {}
+
+
+# 값이 거의 같은 숫자판 셋. 원소가 절반 넘게 겹치므로 값만으로는 어느 배열이
+# 어느 묶음의 출처인지 가를 수 없다 - 그리는 줄에 적힌 data-action 이름으로
+# 짝을 짓는다 (preserve.backing).
+PADS_HTML = (
+    "<html><body><div id=\"a\"></div><div id=\"b\"></div><div id=\"c\"></div>"
+    "<script>\n"
+    "const AMT_KEYS = ['1','2','3','4','5','6','7','8','9','00','0'];\n"
+    "const ACC_KEYS = ['1','2','3','4','5','6','7','8','9','0'];\n"
+    "const PW_KEYS = ['0','1','2','3','4','5','6','7','8','9'];\n"
+    "drawKeys('a', AMT_KEYS, 'num');\n"
+    "drawKeys('b', ACC_KEYS, 'acc-num');\n"
+    "drawKeys('c', shuffled(PW_KEYS), 'pw');\n"
+    "</script></body></html>")
+PADS_SNAP = snap({
+    "num": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "00", "0"],
+    "acc-num": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+    "pw": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+})
+
+
+def test_each_keypad_group_has_exactly_one_source_array():
+    """값이 겹치는 배열 셋이 묶음 셋 모두의 출처로 붙으면 안 된다. 프롬프트의
+    선택지 요약에 `num — 11개 (AMT_KEYS 11 + ACC_KEYS 10 + PW_KEYS 10)` 처럼
+    나와, 모델이 숫자판 하나를 배열 셋을 이어 그리라는 뜻으로 읽는다."""
+    generated, _inline = preserve.split_groups(PADS_SNAP, PADS_HTML)
+    got = {action: [name for name, _n in src] for action, _c, src in generated}
+    assert got == {"num": ["AMT_KEYS"], "acc-num": ["ACC_KEYS"], "pw": ["PW_KEYS"]}
+
+
+def test_a_group_drawn_from_two_arrays_keeps_both():
+    """한 묶음이 배열 둘로 그려지는 경우(은행 + 증권사)는 그대로 둘이다. 짝짓기는
+    여러 배열 중 그 묶음의 이름과 함께 적힌 것이 있을 때만 좁힌다."""
+    html = ("<html><body><script>\n"
+            "const A = ['가','나','다','라'];\n"
+            "const B = ['마','바','사'];\n"
+            "fill(gridA, A); fill(gridB, B);\n"
+            "</script></body></html>")
+    generated, _ = preserve.split_groups(
+        snap({"pick": ["가", "나", "다", "라", "마", "바", "사"]}), html)
+    assert [[n for n, _ in src] for _a, _c, src in generated] == [["A", "B"]]
 
 
 # --------------------------------------------------------------------- #

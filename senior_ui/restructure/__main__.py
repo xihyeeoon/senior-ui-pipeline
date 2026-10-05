@@ -50,16 +50,19 @@ Usage:
   python -m senior_ui.restructure --mock pass     # no API: replays Run 1
   python -m senior_ui.restructure --mock fail     # no API: a broken flow, every attempt fails
 
-mock 모드는 다섯이고 Run 1 빌드의 은행 목록 한 줄에서만 다르다 (model.MOCKS).
+mock 모드는 다섯이고 Run 1 빌드를 되읽는다. 모드마다 은행 목록 한 줄과,
+원본에 있고 Run 1 에 없는 두 값(금액 숫자판의 00 · 빠른 금액의 전액)을 채우는
+방법이 다르다 (model.MOCKS). 받는 사람 이름은 다섯 모두 지금 원본의 정답으로
+바꿔 끼운다 (model.NAME_SWAP).
 
   다섯 모두 진단·계획 답은 같다 (model.MOCK_PLAN - Run 1 빌드의 아홉 화면).
 
-  pass            목록을 window.PRESERVED 로 바꿔 끼운다 - 검사까지 가고 떨어진다.
-                  pass 는 지금 검사 I(00·전액 누락)에서 떨어진다. 통과 경로 확인은 preserved-all 로 한다.
-                  통과해야 생기는 것(designer_brief.md, outputs/ 로의 승격)도
-                  preserved-all 에서만 생긴다
-  fail            같은 빌드 + 둘째 걸음이 없는 선택자를 클릭하는 흐름
-  preserved-all   데이터를 참조해 전부 그린다 (+ 원본 숫자판의 '00'·'전액')  -> 통과
+  pass            은행 목록 · 금액 숫자판 · 빠른 금액을 window.PRESERVED 의
+                  배열(BANKS·SECS · AMT_KEYS · QUICK)을 읽어 그린다  -> 통과.
+                  통과하므로 outputs/restructured_auto.* 를 덮는다 - 덮지 않으려면
+                  SENIOR_UI_OUTPUTS 로 다른 폴더를 준다
+  fail            pass 와 같은 빌드 + 둘째 걸음이 없는 선택자를 클릭하는 흐름
+  preserved-all   목록은 참조하고 '00'·'전액' 은 마크업에 직접 쓴다  -> 통과
   preserved-some  참조는 하지만 slice(0, 4) 로 일부만 그린다  -> 검사 I 에서 실패
   preserved-none  참조하지 않고 직접 네 개를 쓴다  -> 형식 검사에서 실패
 
@@ -83,10 +86,11 @@ from .loop import PLAN_MAX_TOKENS, run
 from .model import MODES, SEED, TEMPERATURE
 
 
-# --mock pass 가 통과하지 않는 이유. Run 1 빌드에는 원본 숫자판의 00 과 금액
-# 버튼의 전액이 없다. 원본 숫자판을 배열로 바꾸는 단계(9번)에서 mock 도 다시
-# 손보므로 지금은 고치지 않고 적어만 둔다.
-MOCK_PASS_NOTE = ("pass 는 지금 검사 I(00·전액 누락)에서 떨어진다. 통과 경로 확인은 preserved-all 로 한다.")
+# --mock pass 가 무엇을 하는가. Run 1 빌드에는 원본 숫자판의 00 과 금액 버튼의
+# 전액이 없다. 원본의 숫자판이 배열이 된 뒤로 pass 는 그 배열을 읽어 그리므로
+# 통과한다.
+MOCK_PASS_NOTE = ("pass 는 숫자판·빠른 금액까지 도구가 넣은 배열에서 그려 통과한다 "
+                  "(통과하면 outputs/restructured_auto.* 를 덮는다).")
 
 
 def build_parser():

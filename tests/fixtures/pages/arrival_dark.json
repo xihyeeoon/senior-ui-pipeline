@@ -1,5 +1,6 @@
 {
   "name": "arrival_dark",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
   "note": "켜진 화면(.screen.on)이 하나도 없는 경우를 재현한다.",
   "derived_from_original": false,
   "required_ids": ["start"],

@@ -11,6 +11,7 @@ import os
 
 from senior_ui import audit as A
 from senior_ui.audit import stage as S
+from senior_ui.audit.flow import original_truth
 from senior_ui.config import FLOWS_DIR
 
 
@@ -70,6 +71,10 @@ def run_audit(orig_snapshot, orig_html, html_path, flow_path, url, shots, stage,
     대비·레이아웃·상태 색·미정의 클래스를 보지 않는다 - 아직 채우지 않은
     디테일이기 때문이다. 걸러낸 이유는 checks_stood_down 에 남는다."""
     flow = merge_allowed_removals(A.load_flow(flow_path), allowed_removals or {})
+    # 정답도 모델의 말을 듣지 않는다. 모델이 흐름 명세에 truth 를 적어도 검사는
+    # 원본 과제의 정답(flows/original.json)으로 한다 - 모델이 정답을 고르게 두면
+    # 자기가 보여 주는 값을 정답으로 적어 검사 B 를 끌 수 있다.
+    flow["truth"] = original_truth()
     rep_html = io.open(html_path, encoding="utf-8").read()
     rep = asyncio.run(A.drive(url, flow, want_shots=shots))
     report = A.audit(orig_snapshot, rep, orig_html, rep_html, flow)

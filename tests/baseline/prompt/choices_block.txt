@@ -2,10 +2,13 @@
 
 원본의 반복 선택지 (스크립트가 런타임에 그린다):
   pick-bank — 67개 (BANKS 38 + SECS 29)
-  pw — 10개 (nums 10)
+  num — 11개 (AMT_KEYS 11)
+  acc-num — 10개 (ACC_KEYS 10)
+  pw — 10개 (PW_KEYS 10)
+  quick — 4개 (QUICK 4)
 
 이 데이터는 도구가 다음 이름으로 넣어 준다:
-  window.PRESERVED.BANKS (38개) · window.PRESERVED.SECS (29개) · window.PRESERVED.nums (10개)
+  window.PRESERVED.BANKS (38개) · window.PRESERVED.SECS (29개) · window.PRESERVED.AMT_KEYS (11개) · window.PRESERVED.ACC_KEYS (10개) · window.PRESERVED.PW_KEYS (10개) · window.PRESERVED.QUICK (4개)
 
 목록을 직접 쓰지 마라. 이것을 참조해 그려라. 몇 개를 어떻게 보일지는 네가
 정한다 (검색, 자주 쓰는 것 먼저, 탭, 가나다 묶음 등). 다만 모든 값을 고를
@@ -16,8 +19,3 @@
 안에 있어야 한다 (숨김·접힘은 괜찮다). 검색창을 두더라도 검색어가 비었을
 때는 전체 목록이 DOM 에 있어야 한다. 도구가 넣어 준 데이터 블록은 증거로
 세지 않는다 - 그 데이터를 읽어 **그린** 것만 센다.
-
-마크업에 직접 있는 것 (그대로 두면 된다):
-  num — 11개
-  acc-num — 10개
-  quick — 4개
