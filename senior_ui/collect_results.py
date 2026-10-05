@@ -10,6 +10,7 @@ Usage: python -m senior_ui.collect_results
 import os
 import shutil
 
+from senior_ui._cli import setup_stdout
 from senior_ui.config import RESULTS_DIR as RESULTS
 from senior_ui.config import ROOT
 
@@ -48,6 +49,8 @@ def copy(src, dst):
 
 
 def main():
+    # 무엇이든 찍기 전에 맞춘다 (senior_ui/_cli.py).
+    setup_stdout()
     kept, missing = 0, []
     for rel, dest in FILES:
         s = os.path.join(ROOT, rel.replace("/", os.sep))

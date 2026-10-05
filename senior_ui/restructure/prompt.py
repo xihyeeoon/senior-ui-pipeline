@@ -130,7 +130,7 @@ def js_cause(report, prev_html):
 
     메시지만으로는 어디를 고칠지 알 수 없으므로 stack 에서 줄 번호를 뽑아
     그 줄의 코드를 함께 보여 준다."""
-    details = (report.get("metrics") or {}).get("js_error_details") or []
+    details = ((report or {}).get("metrics") or {}).get("js_error_details") or []
     if not details:
         return None
     counts, first = {}, {}
@@ -155,7 +155,42 @@ def js_cause(report, prev_html):
     return out
 
 
-def retry_block(report, prev_html, prev_flow_text):
+def truncated_part(n):
+    """답이 길이 제한에서 잘렸다는 것만 따로 알린다.
+
+    잘린 답은 형식 오류와 겉모양이 같다 - 코드 블록이 닫히지 않았으니 "블록이
+    없다" 로 보인다. 그래서 "군더더기 없이 쓰라" 는 말만 전달되고, 같은 길이의
+    답이 다시 와서 같은 자리에서 또 잘린다. 잘렸다는 사실과 몇 번째인지를
+    적는 이유가 그것이다 - 둘째 번부터는 짧게 쓰는 것 말고 할 일이 없다.
+    """
+    head = "직전 답이 길이 제한에서 잘렸다 (finish_reason=length)."
+    if n >= 2:
+        head += " 이번까지 %d번 연속으로 잘렸다." % n
+    return ["[잘린 답]", "  " + head,
+            "  답의 끝이 사라진 것이지 내용이 틀린 것이 아니다. 같은 분량으로 다시 "
+            "쓰면 같은 자리에서 또 잘린다.",
+            "  설명·주석·빈 줄을 모두 빼고, 코드 블록 두 개만 출력하라. 그래도 "
+            "길면 화면 수를 줄여서라도 문서를 끝까지 닫아라.", ""]
+
+
+def error_part(error, has_build):
+    """이번 답의 형식 오류. 검사 결과와 같은 자리에 섞이면 안 된다.
+
+    파싱이 실패한 시도는 검사를 받은 적이 없다. 그런데 재시도 프롬프트에는
+    실패 목록이 하나뿐이라, 이 오류를 거기 넣으면 그 전 시도에서 실제로 검사받은
+    실패가 사라진다. 둘은 다른 것이므로 따로 적고, 아래 목록이 어느 빌드의
+    것인지도 한 줄로 밝힌다.
+    """
+    items = error if isinstance(error, (list, tuple)) else [error]
+    out = ["[이번 답의 형식 오류]"] + ["  " + one_line(x) for x in items]
+    if has_build:
+        out.append("  아래 [고칠 것] 과 직전 HTML·흐름 명세는 그 전에 검사까지 간 "
+                   "빌드의 것이다. 그 빌드를 고쳐서, 이번에는 형식에 맞게 출력하라.")
+    out.append("")
+    return out
+
+
+def retry_block(report, prev_html, prev_flow_text, error=None, truncated=0):
     """The slot the template leaves for a retry.
 
     Listing every fatal buries the one that matters. A task that stops early
@@ -168,6 +203,7 @@ def retry_block(report, prev_html, prev_flow_text):
     So: the cause first, the stall point next, and the consequences in one line
     that says not to fix them.
     """
+    report = report or {}
     fatals = report.get("fatal") or []
     derived = [f for f in fatals if f.get("derived_from")]
     root = [f for f in fatals if not f.get("derived_from")]
@@ -175,6 +211,12 @@ def retry_block(report, prev_html, prev_flow_text):
     other = [f for f in root if f not in js]
 
     parts = ["## 이전 시도의 실패", ""]
+    # 규칙 0: 답이 아예 쓸 수 없는 모양이면 그것부터. 검사 결과는 그보다 앞
+    # 시도의 것이므로 덮지 않고 아래에 그대로 둔다.
+    if truncated:
+        parts += truncated_part(truncated)
+    if error:
+        parts += error_part(error, bool(fatals or prev_html))
     cause = js_cause(report, prev_html)
 
     if cause:
@@ -200,7 +242,7 @@ def retry_block(report, prev_html, prev_flow_text):
                 where = (f.get("screen") + ": ") if f.get("screen") else ""
                 parts.append("  " + where + brief_failure(f.get("detail", "")))
             parts.append("")
-        elif not derived:
+        elif not derived and not (error or truncated):
             parts += ["(fatal 목록이 비어 있지만 통과하지 못했다)", ""]
 
     # 규칙 3: 파생은 한 줄로 묶는다.
@@ -210,7 +252,8 @@ def retry_block(report, prev_html, prev_flow_text):
             else "[도달하지 못한 화면]"
         parts += [head, "  %s — 도달 못 함" % names, ""]
 
-    parts += ["직전 출력을 고쳐라. 설계를 처음부터 새로 하지 마라.", ""]
+    if prev_html or prev_flow_text:
+        parts += ["직전 출력을 고쳐라. 설계를 처음부터 새로 하지 마라.", ""]
     if prev_flow_text:
         parts += ["### 직전 흐름 명세", "", "```json", prev_flow_text.strip(), "```", ""]
     if prev_html:

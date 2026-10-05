@@ -34,6 +34,7 @@ import os
 import re
 import sys
 
+from senior_ui._cli import setup_stdout
 from senior_ui.config import CONDITIONS, ROOT
 from senior_ui.config import FLOWS_DIR as FLOWS
 from senior_ui.config import OUTPUTS_DIR as OUTPUTS
@@ -538,6 +539,8 @@ def build():
 
 
 def main():
+    # 무엇이든 찍기 전에 맞춘다 (senior_ui/_cli.py).
+    setup_stdout()
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=os.path.join(OUTPUTS, "index.json"))
     ap.add_argument("--print", dest="show", action="store_true")
@@ -548,8 +551,6 @@ def main():
     with io.open(args.out, "w", encoding="utf-8", newline="\n") as f:
         json.dump(idx, f, ensure_ascii=False, indent=1)
 
-    if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(encoding="utf-8")
     print("빌드 %d개, 변경 %d건, 규칙 %d개 -> %s"
           % (len(idx["builds"]), len(idx["changes"]), len(idx["rules"]), rel(args.out)))
     if args.show:

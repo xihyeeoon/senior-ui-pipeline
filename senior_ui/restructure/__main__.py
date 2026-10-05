@@ -40,17 +40,26 @@ Usage:
 The key comes from .envs (OPENAI_API_KEY=...) or the environment. The model
 comes from --model, then RESTRUCTURE_MODEL, then DESIGNREPAIR_MODEL, then gpt-4o.
 Exit: 0 = a build passed, 1 = every attempt failed, 2 = could not run.
+
+"돌지 못했다"(2)에 들어가는 것은 넷이다 - 레이트 리밋으로 멈춤, API 가 요청을
+거절함(키·권한·잘못된 요청), 인프라 예산 소진, 시작 자체를 못 함(입력·흐름·
+서버). 전부 "다시 만들 빌드가 없다" 이므로 떨어진 빌드(1)와 구분해야 한다.
+정하는 곳은 loop.exit_code() 한 곳이다.
 """
 import argparse
 import sys
 
+from senior_ui._cli import setup_stdout
 from senior_ui.audit.stage import STAGES
 from senior_ui.config import ORIGINAL_FILE
 
 from .loop import run
+from .model import SEED, TEMPERATURE
 
 
 def main():
+    # 무엇이든 찍기 전에 맞춘다 (senior_ui/_cli.py).
+    setup_stdout()
     ap = argparse.ArgumentParser()
     ap.add_argument("--attempts", type=int, default=3,
                     help="두 예산의 기본값")
@@ -58,7 +67,13 @@ def main():
                     help="흐름 명세 형식 오류에 쓸 재시도 횟수 (기본: --attempts)")
     ap.add_argument("--audit-attempts", type=int, default=None,
                     help="검사 fatal 에 쓸 재시도 횟수 (기본: --attempts)")
+    ap.add_argument("--infra-attempts", type=int, default=3,
+                    help="모델에 닿지 못했을 때(연결 실패) 쓸 재시도 횟수")
     ap.add_argument("--model", default=None)
+    ap.add_argument("--temperature", type=float, default=TEMPERATURE,
+                    help="못박아 보낸다. 기본 %s - 재현에 가장 가깝다" % TEMPERATURE)
+    ap.add_argument("--seed", type=int, default=SEED,
+                    help="못박아 보낸다. 기본 %s" % SEED)
     ap.add_argument("--max-tokens", type=int, default=16000,
                     help="completion cap; the HTML alone is ~12k tokens")
     ap.add_argument("--mock", choices=["pass", "fail"], default=None,

@@ -15,6 +15,9 @@ __pycache__/
 # copied into results/, which IS tracked.
 /outputs/
 /logs/
+# 테스트가 쓰는 산출물 폴더 (SENIOR_UI_OUTPUTS). 서버가 서빙하는 범위 안에
+# 있어야 하므로 저장소 루트 아래에 둔다 - tests/test_restructure_bugs.py 참고.
+/.pytest-outputs/
 
 # OS --------------------------------------------------------------------
 Thumbs.db

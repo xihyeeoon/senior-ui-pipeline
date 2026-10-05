@@ -9,14 +9,21 @@ r"""프로젝트 루트를 127.0.0.1:3003 에 서빙하는 개발용 서버.
 들어 있어서, LAN 에 열면 검사기를 한 번 돌리는 동안 다 나간다.
 
 ensure_server() 는 이미 떠 있는 서버를 재사용한다 - 그때는 None 을 돌려주고,
-부른 쪽은 끝에서도 그 서버를 건드리지 않는다.
+부른 쪽은 끝에서도 그 서버를 건드리지 않는다. 다만 재사용 전에 그것이 이
+저장소를 서빙하는지 확인한다 (알려진 파일 하나의 해시 대조). 다르면 멈춘다 -
+남의 서버로 돌린 검사는 통과하든 떨어지든 뜻을 알 수 없다.
 """
+import hashlib
+import io
+import os
 import socket
 import subprocess
 import sys
 import time
+import urllib.error
+import urllib.request
 
-from .config import PORT, ROOT
+from .config import ORIGINAL_REL, PORT, ROOT
 
 
 # 루프백만. http.server 는 아무것도 주지 않으면 0.0.0.0 에 띄우고, 그러면
@@ -31,10 +38,43 @@ def listening(port):
         return s.connect_ex((HOST, port)) == 0
 
 
+# 떠 있는 서버가 이 저장소를 서빙하는지 확인할 때 대조하는 파일. 모든 흐름의
+# 출발점이므로 없는 저장소가 없고, 내용이 바뀌면 검사 기준 자체가 바뀐다.
+PROBE_REL = ORIGINAL_REL
+
+
+def serves_this_repo(port, probe=PROBE_REL):
+    """:port 가 이 저장소를 서빙하는가. 알려진 파일 하나의 해시를 대조한다.
+
+    해시로 보는 이유는 경로만으로는 모자라서다. 다른 저장소의 사본도 같은
+    경로에 같은 이름의 파일을 두고 있을 수 있고, 그것이 한 글자라도 다르면
+    검사 결과는 비교할 수 없는 것이 된다.
+    """
+    url = "http://%s:%d/%s" % (HOST, port, probe.replace(os.sep, "/"))
+    try:
+        with urllib.request.urlopen(url, timeout=3) as r:
+            served = r.read()
+    except (urllib.error.URLError, OSError):
+        return False
+    want = io.open(os.path.join(ROOT, probe), "rb").read()
+    return hashlib.sha256(served).hexdigest() == hashlib.sha256(want).hexdigest()
+
+
 def ensure_server(log, port=PORT):
     """Return the Popen we started, or None if the port was already up (then we
-    leave it alone at the end too)."""
+    leave it alone at the end too).
+
+    이미 떠 있으면 그것이 **이 저장소를** 서빙하는지 먼저 본다. 무엇이든 떠
+    있으면 그대로 쓰던 것을 바꿨다 - 다른 폴더를 서빙하는 서버를 모르고 쓰면
+    검사는 돌긴 하지만 결과가 무엇을 뜻하는지 알 수 없다. 빌드를 못 열어 전부
+    fatal 이 나거나, 더 나쁘게 같은 이름의 다른 문서를 열어 통과한다.
+    """
     if listening(port):
+        if not serves_this_repo(port):
+            raise RuntimeError(
+                ":%d 에 이미 서버가 있지만 이 저장소를 서빙하지 않는다 "
+                "(%s 가 %s 와 다르다). 그 서버를 끄고 다시 실행하라."
+                % (port, PROBE_REL, os.path.join(ROOT, PROBE_REL)))
         log("server: :%d already listening, reusing it" % port)
         return None
     proc = subprocess.Popen(

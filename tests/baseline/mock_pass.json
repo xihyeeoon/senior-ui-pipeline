@@ -2,11 +2,27 @@
   "model": "gpt-4o",
   "mock": "pass",
   "stage": "styled",
+  "repro": {
+    "temperature": 0.0,
+    "seed": 20260101,
+    "response_model": null,
+    "system_fingerprint": null,
+    "openai_sdk": "<sdk>",
+    "prompt_template_sha256": "28b2b6b80afe62c978600eb7eae04d7a2ba94afdb01417b33b185d2465c11f7c"
+  },
   "attempts": [
     {
       "n": 1,
       "finish_reason": "stop",
       "usage": null,
+      "repro": {
+        "temperature": 0.0,
+        "seed": 20260101,
+        "response_model": null,
+        "system_fingerprint": null,
+        "openai_sdk": "<sdk>",
+        "prompt_template_sha256": "28b2b6b80afe62c978600eb7eae04d7a2ba94afdb01417b33b185d2465c11f7c"
+      },
       "html": "<run>/attempt_1.html",
       "flow": "<run>/attempt_1.flow.json",
       "stage": "audit",
@@ -26,7 +42,9 @@
     "format_used": 0,
     "format_budget": 1,
     "audit_used": 1,
-    "audit_budget": 1
+    "audit_budget": 1,
+    "infra_used": 0,
+    "infra_budget": 3
   },
   "stopped_reason": "budget_exhausted",
   "trend": [

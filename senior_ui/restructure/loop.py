@@ -14,6 +14,7 @@ r"""재시도 루프. 한 번의 시도는 네 단계다.
 """
 import asyncio
 import datetime
+import hashlib
 import io
 import json
 import os
@@ -22,15 +23,19 @@ import sys
 import time
 
 from senior_ui import audit as A
-from senior_ui.config import ORIGINAL_URL, OUTPUTS_DIR, ROOT, url_for
+from senior_ui.config import OUTPUTS_ENV, ROOT, inside_root, outputs_dir, url_for
 from senior_ui.devserver import ensure_server
 
-from .audit_call import run_audit
-from .model import RateLimited, call_model, load_env, mock_reply
+from .audit_call import load_allowed_removals, run_audit
+from .model import (TEMPERATURE, SEED, ApiRejected, InfraFailed, RateLimited,
+                    call_model, load_env, mock_reply, sdk_version)
 from .prompt import build_prompt, choices_block, load_template, one_line, retry_block
-from .reply import failure_report, parse_reply, validate_flow
+from .reply import (FlowShape, failure_report, parse_reply,
+                    problems_report, validate_flow)
 
-RUNS_DIR = os.path.join(OUTPUTS_DIR, "restructure_auto")
+def runs_dir():
+    """실행 폴더들이 쌓이는 곳. 산출물 폴더와 같이 움직인다 (config.outputs_dir)."""
+    return os.path.join(outputs_dir(), "restructure_auto")
 
 # 한 번의 시도가 끝나는 방식
 STOP = "stop"            # 루프를 끝낸다
@@ -41,11 +46,20 @@ GO_ON = "go_on"          # 다음 시도로
 # 예산
 # --------------------------------------------------------------------------- #
 class Budget:
-    """형식 오류와 검사 fatal 에 따로 주는 재시도 예산."""
+    """재시도 예산 셋. 셋인 이유는 실패의 종류가 셋이기 때문이다.
 
-    def __init__(self, fmt, aud):
-        self.budget = {"format": fmt, "audit": aud}
-        self.used = {"format": 0, "audit": 0}
+        format  흐름 명세가 규격에 안 맞는다      - 모델이 고칠 수 있다
+        audit   설계가 과제를 통과 못 한다        - 모델이 고칠 수 있다
+        infra   연결이 되지 않았다                - 모델과 무관하다
+
+    앞의 둘을 가른 이유는 Run 2 다 - 한쪽이 예산을 다 쓰면 다른 쪽은 재시도를
+    한 번도 못 받았다. infra 를 더한 이유는 그 반대다. 호출 실패는 예산을 전혀
+    쓰지 않아서, 키가 틀리면 루프가 끝나지 않았다.
+    """
+
+    def __init__(self, fmt, aud, infra=3):
+        self.budget = {"format": fmt, "audit": aud, "infra": infra}
+        self.used = {"format": 0, "audit": 0, "infra": 0}
 
     @property
     def format_used(self):
@@ -55,6 +69,10 @@ class Budget:
     def audit_used(self):
         return self.used["audit"]
 
+    @property
+    def infra_used(self):
+        return self.used["infra"]
+
     def spend(self, kind):
         self.used[kind] += 1
 
@@ -62,33 +80,53 @@ class Budget:
         return self.used[kind] >= self.budget[kind]
 
     def exhausted(self):
+        """설계를 고칠 기회가 더 없다. infra 는 설계와 무관하므로 세지 않는다."""
         return self.out_of("format") and self.out_of("audit")
 
     def as_dict(self):
         return {"format_used": self.used["format"], "format_budget": self.budget["format"],
-                "audit_used": self.used["audit"], "audit_budget": self.budget["audit"]}
+                "audit_used": self.used["audit"], "audit_budget": self.budget["audit"],
+                "infra_used": self.used["infra"], "infra_budget": self.budget["infra"]}
 
 
 class Run:
     """한 실행이 공유하는 것들. 단계 함수들은 이것만 주고받는다."""
 
-    def __init__(self, args, log, run_dir, model, template, original_html):
+    def __init__(self, args, log, run_dir, model, template, original_html,
+                 original_url):
         self.args = args
+        # 프롬프트에 넣는 원본과 브라우저가 걷는 원본은 같은 문서다.
+        self.original_url = original_url
         self.log = log
         self.run_dir = run_dir
         self.model = model
         self.template = template
         self.original_html = original_html
+        # 못박아 두는 값. 지정하지 않으면 공급자의 기본값이 쓰이고 그 값은
+        # 기록에 남지 않는다 - 나중에 "그때 무엇이 달랐나" 를 물을 수 없다.
+        self.temperature = getattr(args, "temperature", TEMPERATURE)
+        self.seed = getattr(args, "seed", SEED)
         self.choices = ""
+        # 연구자가 관리하는 "빼도 되는 선택지" 목록. 검사 직전에 흐름에 합친다.
+        self.allowed_removals = {}
         self.orig_snapshot = None
         self.budget = Budget(
             args.format_attempts if args.format_attempts is not None else args.attempts,
-            args.audit_attempts if args.audit_attempts is not None else args.attempts)
-        self.prev = {"report": None, "html": None, "flow_text": None}
+            args.audit_attempts if args.audit_attempts is not None else args.attempts,
+            getattr(args, "infra_attempts", 3))
+        # 마지막으로 **검사까지 간** 빌드와 그 결과. 셋은 늘 같은 시도의 것이다.
+        self.last = {"report": None, "html": None, "flow_text": None}
+        # 마지막 형식 오류. 검사 결과와 다른 것이므로 따로 들고 있는다 - 한쪽을
+        # 다른 쪽에 넣으면 재시도 프롬프트가 둘 중 하나를 잃는다.
+        self.last_error = None
+        # 길이 제한에 잘린 답이 연속 몇 번인지. 둘째 번부터는 안내가 달라진다.
+        self.truncated = 0
         self.summary = {"run_dir": run_dir, "model": model, "mock": args.mock,
-                        "stage": args.stage, "attempts": [], "passed": False,
-                        "final": None, "budget": {}, "stopped_reason": None,
-                        "trend": []}
+                        "stage": args.stage,
+                        "repro": repro(template, temperature=self.temperature,
+                                       seed=self.seed),
+                        "attempts": [], "passed": False, "final": None,
+                        "budget": {}, "stopped_reason": None, "trend": []}
 
 
 # --------------------------------------------------------------------------- #
@@ -104,9 +142,45 @@ def make_logger(log_path):
     return log
 
 
+def original_url(path):
+    """원본 파일을 서버가 서빙하는 URL 로.
+
+    프롬프트에 넣는 HTML 과 브라우저로 걷는 문서는 같아야 한다. 걷는 쪽만
+    config.ORIGINAL_URL 로 못박혀 있으면, --original 로 다른 파일을 줬을 때
+    대비·언어 검사의 기준이 프롬프트에 넣은 원본과 다른 문서가 된다 - 아무
+    경고 없이.
+
+    서버는 저장소 루트만 서빙하므로 그 밖의 파일은 URL 이 없다. 열 수 없는
+    것을 연 척하는 대신 RuntimeError 로 멈춘다.
+    """
+    rel = os.path.relpath(os.path.abspath(path), ROOT)
+    if rel.startswith(os.pardir) or os.path.isabs(rel):
+        raise RuntimeError("--original 은 저장소 안의 파일이어야 한다 (서버가 "
+                           "서빙하는 범위 밖이다): %s" % path)
+    return url_for(rel.replace(os.sep, "/"))
+
+
 def pick_model(args):
     return args.model or os.environ.get("RESTRUCTURE_MODEL") \
         or os.environ.get("DESIGNREPAIR_MODEL") or "gpt-4o"
+
+
+def repro(template, reply=None, temperature=TEMPERATURE, seed=SEED):
+    """이 시도를 다시 돌리려면 알아야 하는 것.
+
+    같은 프롬프트를 같은 모델에 보내도 답은 달라진다. 무엇이 달랐는지 나중에
+    물을 수 있으려면 보낸 쪽(temperature · seed · 프롬프트 템플릿)과 답한
+    쪽(실제 응답 모델 · system_fingerprint · SDK 판)을 함께 적어야 한다 -
+    `--model gpt-4o` 는 별명이고, 그 별명이 가리키는 판본은 말없이 바뀐다.
+    """
+    reply = reply or {}
+    return {"temperature": reply.get("temperature", temperature),
+            "seed": reply.get("seed", seed),
+            "response_model": reply.get("model"),
+            "system_fingerprint": reply.get("system_fingerprint"),
+            "openai_sdk": sdk_version(),
+            "prompt_template_sha256":
+                hashlib.sha256(template.encode("utf-8")).hexdigest()}
 
 
 def _dump(obj, path):
@@ -121,8 +195,9 @@ def request_reply(r, n, p):
 
     돌려주는 것은 (reply, outcome). reply 가 None 이면 이 시도가 모델 호출에서
     끝난 것이고 outcome 이 다음에 할 일이다."""
-    block = retry_block(r.prev["report"], r.prev["html"], r.prev["flow_text"]) \
-        if r.prev["report"] else ""
+    block = retry_block(r.last["report"], r.last["html"], r.last["flow_text"],
+                        error=r.last_error, truncated=r.truncated) \
+        if (r.last["report"] or r.last_error or r.truncated) else ""
     prompt = build_prompt(r.template, r.original_html, block, r.choices)
     io.open(p + ".prompt.txt", "w", encoding="utf-8", newline="\n").write(prompt)
     r.log("prompt: %d chars%s" % (len(prompt), " (with retry block)" if block else ""))
@@ -131,7 +206,8 @@ def request_reply(r, n, p):
         reply = mock_reply(r.args.mock)
     else:
         try:
-            reply = call_model(r.model, prompt, r.args.max_tokens, r.log)
+            reply = call_model(r.model, prompt, r.args.max_tokens, r.log,
+                               temperature=r.temperature, seed=r.seed)
         except RateLimited as e:
             # 설계 실패가 아니다. 예산을 깎지 않고 여기서 멈춘다.
             r.log("중단: 인프라 한도 — 백오프를 다 쓰고도 429 (%s)" % e)
@@ -140,21 +216,67 @@ def request_reply(r, n, p):
             r.summary["attempts"].append({"n": n, "stage": "rate_limit",
                                           "passed": False, "error": str(e)})
             return None, STOP
-        except Exception as e:                       # network, auth
-            # TODO 버그: 429 가 아닌 호출 실패는 예산을 쓰지 않고 다음 시도로 간다.
-            # 키가 틀리면 같은 실패가 영원히 반복되고 루프가 끝나지 않는다.
-            r.log("model: call failed: %s" % e)
-            report = failure_report("LLM", "모델 호출 실패: %s" % e)
-            _dump(report, p + ".audit.json")
+        except ApiRejected as e:
+            # 키·권한·요청 자체가 틀렸다. 다시 보내도 같은 답이 오므로, 여기서
+            # 멈추지 않으면 예산과 무관하게 같은 실패만 반복된다.
+            r.log("중단: API 가 요청을 거절했다 — 다시 보내도 같은 답이 온다 (%s)" % e)
+            r.summary["stopped_reason"] = "api_rejected"
+            _dump(failure_report("INFRA", "API 가 요청을 거절했다: %s" % e),
+                  p + ".audit.json")
+            r.summary["attempts"].append({"n": n, "stage": "api_rejected",
+                                          "passed": False, "error": str(e)})
+            return None, STOP
+        except Exception as e:                       # 연결 실패·타임아웃·그 밖
+            # 설계 실패가 아니므로 형식·검사 예산은 건드리지 않는다. 대신 인프라
+            # 예산을 쓴다 - 다시 될 수도 있지만 무한히 기다리지는 않는다.
+            #
+            # 오류 문구는 프롬프트로 가지 않는다 (r.last 를 그대로 둔다). 모델이
+            # 고칠 수 있는 것이 아니고, 직전에 검사받은 빌드의 실패 목록을
+            # API 오류로 덮으면 다음 시도가 고칠 것을 잃는다.
+            kind = "InfraFailed" if isinstance(e, InfraFailed) else type(e).__name__
+            r.budget.spend("infra")
+            r.log("model: 호출 실패 (인프라 %d/%d) — %s: %s"
+                  % (r.budget.infra_used, r.budget.budget["infra"], kind, e))
+            _dump(failure_report("INFRA", "모델 호출 실패: %s: %s" % (kind, e)),
+                  p + ".audit.json")
             r.summary["attempts"].append({"n": n, "stage": "call", "passed": False,
-                                          "error": str(e)})
-            r.prev = {"report": report, "html": r.prev["html"],
-                      "flow_text": r.prev["flow_text"]}
+                                          "error": "%s: %s" % (kind, e)})
+            if r.budget.out_of("infra"):
+                r.log("인프라 재시도 예산 소진 (%d회) — 모델에 닿지 못했다"
+                      % r.budget.infra_used)
+                r.summary["stopped_reason"] = "infra_exhausted"
+                return None, STOP
             return None, GO_ON
     io.open(p + ".response.txt", "w", encoding="utf-8", newline="\n").write(reply["text"])
     r.log("model: %s chars, finish=%s, %ss, usage=%s"
           % (len(reply["text"]), reply["finish_reason"], reply["seconds"], reply["usage"]))
+    if reply.get("model") or reply.get("system_fingerprint"):
+        r.log("model: 응답 %s (fingerprint %s)"
+              % (reply.get("model"), reply.get("system_fingerprint")))
     return reply, None
+
+
+def drop_declared_removals(r, flow):
+    """모델이 쓴 choices_removed 를 지운다. 지운 action 이름을 돌려준다.
+
+    검사 I 는 흐름 명세의 choices_removed 를 읽어 그 값을 누락으로 세지 않는다.
+    그 선언은 "연구자가 안전을 이유로 뺐다" 는 뜻인데, 여기서는 흐름 명세를
+    모델이 쓴다 - 모델이 스스로 그것을 적으면 자기가 뺀 선택지를 자기가 면제해
+    검사 I 를 피해 간다.
+
+    허용하는 제거는 연구자가 관리하는 파일에서만 온다 (audit_call). 그 목록은
+    검사 직전에 합쳐지므로, 여기서 지우는 것은 모델의 말뿐이다.
+
+    조용히 지우지 않는다. 남기지 않으면 "모델이 적지 않았다" 와 "적었는데
+    지웠다" 를 구분할 수 없고, 모델이 검사를 피하려 했다는 사실 자체가 결과다.
+    """
+    spec = flow.pop("choices_removed", None)
+    if not spec:
+        return []
+    names = sorted(spec) if isinstance(spec, dict) else [str(spec)]
+    r.log("flow: 모델이 쓴 choices_removed 를 지웠다 (%s). 허용하는 제거는 "
+          "flows/allowed_removals.json 에서만 읽는다." % ", ".join(names))
+    return names
 
 
 def check_reply(r, p, entry, reply):
@@ -162,29 +284,57 @@ def check_reply(r, p, entry, reply):
 
     돌려주는 것은 (build, outcome). build 가 None 이면 파싱이 실패해 이 시도가
     끝난 것이다."""
+    truncated = reply["finish_reason"] == "length"
     try:
-        if reply["finish_reason"] == "length":
+        if truncated:
             raise ValueError("답이 길이 제한에서 잘렸다 (finish_reason=length). "
                              "코드 블록 두 개만, 군더더기 없이 출력하라")
         html, flow, flow_text = parse_reply(reply["text"])
         flow.setdefault("name", "auto")
         flow["derived_from_original"] = False
+        dropped = drop_declared_removals(r, flow)
+        if dropped:
+            entry["choices_removed_dropped"] = dropped
         problems = validate_flow(flow, html)
-    except ValueError as e:
-        r.log("parse: %s" % e)
-        report = failure_report("PARSE", str(e))
-        entry.update(stage="parse", passed=False, fatal=1)
-        _dump(report, p + ".audit.json")
+    except FlowShape as e:
+        # 타입이 틀린 흐름 명세. 답의 형식 문제(PARSE)가 아니라 FLOW 문제다.
+        r.log("flow: %d problem(s): %s" % (len(e.problems),
+                                           " | ".join(e.problems)[:300]))
+        entry.update(stage="flow", passed=False, fatal=len(e.problems))
+        _dump(problems_report(e.problems), p + ".audit.json")
         r.summary["attempts"].append(entry)
-        # TODO 버그: 직전 HTML 은 그대로 두면서 그 HTML 의 검사 결과(report)는
-        # 버린다. 재시도 프롬프트가 HTML 과 어긋난 실패 목록을 보게 된다.
-        r.prev = {"report": report, "html": r.prev["html"],
-                  "flow_text": r.prev["flow_text"]}
+        r.truncated, r.last_error = 0, list(e.problems)
         r.budget.spend("format")
         if r.budget.out_of("format"):
             r.log("형식 재시도 예산 소진 (%d회)" % r.budget.format_used)
             return None, STOP
         return None, GO_ON
+    except ValueError as e:
+        r.log("parse: %s" % e)
+        report = failure_report("PARSE", str(e))
+        entry.update(stage="parse", passed=False, fatal=1)
+        if truncated:
+            entry["truncated"] = True
+        _dump(report, p + ".audit.json")
+        r.summary["attempts"].append(entry)
+        # 이 시도는 검사를 받은 적이 없다. r.last 는 마지막으로 **검사까지 간**
+        # 빌드와 그 결과이므로 건드리지 않는다 - 덮으면 다음 프롬프트가 그 HTML
+        # 에서 나오지 않은 실패 목록을 "이것을 고쳐라" 와 함께 보게 된다.
+        if truncated:
+            # 잘린 답은 형식 오류와 겉모양이 같다. 한 번만 말하게 한다.
+            r.truncated += 1
+            r.last_error = None
+        else:
+            r.truncated = 0
+            r.last_error = str(e)
+        r.budget.spend("format")
+        if r.budget.out_of("format"):
+            r.log("형식 재시도 예산 소진 (%d회)" % r.budget.format_used)
+            return None, STOP
+        return None, GO_ON
+
+    # 여기까지 왔으면 답은 읽을 수 있는 모양이다. 형식 오류는 해결되었다.
+    r.truncated, r.last_error = 0, None
 
     html_path, flow_path = p + ".html", p + ".flow.json"
     io.open(html_path, "w", encoding="utf-8", newline="\n").write(html)
@@ -203,10 +353,7 @@ def audit_build(r, n, entry, build):
         r.log("flow: %d problem(s): %s" % (len(problems), " | ".join(problems)[:300]))
         entry.update(stage="flow", passed=False, fatal=len(problems))
         r.budget.spend("format")
-        return {"passed": False, "warning": [],
-                "metrics": {"flow": "auto", "not_audited": True},
-                "fatal": [{"check": "FLOW", "screen": None, "detail": d}
-                          for d in problems]}
+        return problems_report(problems)
 
     report = _drive_audit(r, n, build)
     entry.update(stage="audit", passed=bool(report.get("passed")),
@@ -226,7 +373,9 @@ def _drive_audit(r, n, build):
     os.makedirs(shots, exist_ok=True)
     try:
         return run_audit(r.orig_snapshot, r.original_html, build["html_path"],
-                         build["flow_path"], url_for(rel), shots, r.args.stage)
+                         build["flow_path"], url_for(rel), shots, r.args.stage,
+                         original_url=r.original_url,
+                         allowed_removals=r.allowed_removals)
     except Exception as e:                           # a flow the audit cannot drive
         r.log("audit: crashed: %s: %s" % (type(e).__name__, e))
         return failure_report("AUDIT", "검사기가 흐름 명세를 실행하지 못했다: %s: %s"
@@ -260,7 +409,7 @@ def record(r, n, p, entry, report, build):
         r.summary["passed"] = True
         r.log("PASSED on attempt %d" % n)
         return STOP
-    r.prev = {"report": report, "html": build["html"], "flow_text": build["flow_text"]}
+    r.last = {"report": report, "html": build["html"], "flow_text": build["flow_text"]}
     return _budget_stop(r, entry)
 
 
@@ -290,7 +439,7 @@ def attempt(r, n):
     if reply is None:
         return outcome
     entry = {"n": n, "finish_reason": reply["finish_reason"], "usage": reply["usage"],
-             "seconds": reply["seconds"]}
+             "seconds": reply["seconds"], "repro": repro(r.template, reply)}
     build, outcome = check_reply(r, p, entry, reply)
     if build is None:
         return outcome
@@ -314,28 +463,82 @@ def log_trend(r):
                  t["fatal_derived"], t["screens"], t["stopped_at"] or "-"))
 
 
+# outputs/ 안에서 "지금 쓰는 것" 을 가리키는 이름들. 실행 이름이 붙은 사본은
+# 같은 이름에 실행 폴더 이름이 하나 끼어든다.
+PROMOTED = [("html", "restructured_auto%s.html"),
+            ("flow", "restructured_auto%s.flow.json"),
+            ("audit", "audit_auto%s.json")]
+
+
 def copy_final(r):
-    """파일까지 간 마지막 빌드를 통과 여부와 무관하게 outputs/ 로 복사한다."""
+    """통과한 빌드만 outputs/ 로 올린다. 사본은 실행 이름으로도 하나 남긴다.
+
+    통과 여부와 무관하게 복사하던 것을 바꿨다. `restructured_auto.html` 은
+    뷰어와 실험 조건이 "지금 쓰는 재구성본" 으로 읽는 이름인데, 떨어진 빌드가
+    그 자리에 올라오면 마지막으로 통과한 빌드가 조용히 사라진다 - 떨어졌다는
+    사실은 summary.json 에만 남고, 그 자리의 파일은 멀쩡해 보인다.
+
+    실행 이름이 붙은 사본을 함께 두는 이유는 그 반대다. 통과한 실행이 둘 이상
+    이면 나중 것이 앞의 것을 덮는데, 둘을 비교할 수 있어야 한다.
+    """
     f = r.summary["final"]
     if not f:
         return
-    shutil.copy2(f["html"], os.path.join(OUTPUTS_DIR, "restructured_auto.html"))
-    shutil.copy2(f["flow"], os.path.join(OUTPUTS_DIR, "restructured_auto.flow.json"))
-    shutil.copy2(f["audit"], os.path.join(OUTPUTS_DIR, "audit_auto.json"))
-    r.log("final: attempt %d -> outputs/restructured_auto.html (+ .flow.json, audit_auto.json)"
-          % f["attempt"])
+    if not r.summary.get("passed"):
+        r.log("final: 통과한 빌드가 없다 — outputs/restructured_auto.* 는 그대로 둔다")
+        return
+    out, name = outputs_dir(), os.path.basename(r.run_dir)
+    os.makedirs(out, exist_ok=True)
+    for key, pattern in PROMOTED:
+        shutil.copy2(f[key], os.path.join(out, pattern % ""))
+        shutil.copy2(f[key], os.path.join(out, pattern % ("." + name)))
+    r.log("final: attempt %d -> %s (+ .%s 사본)"
+          % (f["attempt"], ", ".join(p % "" for _k, p in PROMOTED), name))
 
 
 # --------------------------------------------------------------------------- #
+# 종료 코드
+# --------------------------------------------------------------------------- #
+# 이 이유로 멈춘 실행은 "빌드가 떨어졌다" 가 아니라 "돌지 못했다" 다. 부르는
+# 쪽은 둘을 구분해야 한다 - 떨어진 빌드는 다시 만들고, 돌지 못한 실행은 다시
+# 만들 것이 없다. senior_ui.audit 의 종료 코드 규약과 같다 (docs/README.md).
+CANNOT_RUN = {"rate_limit", "api_rejected", "infra_exhausted", "cannot_start"}
+
+
+def exit_code(summary):
+    """0 = 통과한 빌드가 있다, 1 = 전부 실패, 2 = 아예 돌지 못했다."""
+    if summary.get("passed"):
+        return 0
+    return 2 if summary.get("stopped_reason") in CANNOT_RUN else 1
+
+
 def run(args):
-    """한 실행 전체. 돌려주는 것이 프로세스의 종료 코드다 -
-    0 = 통과한 빌드가 있다, 1 = 전부 실패, 2 = 아예 돌지 못했다."""
+    """한 실행 전체. 돌려주는 것이 프로세스의 종료 코드다 - exit_code 참고."""
+    # 검사기는 빌드를 :3003 이 서빙하는 http:// 로 연다. 그 서버는 저장소
+    # 루트만 서빙하므로, 산출물 폴더가 밖에 있으면 검사기가 빌드를 열지 못해
+    # 첫 화면에서 멈춘다 - 그것이 설계 실패처럼 보인다.
+    if not inside_root(outputs_dir()):
+        print("cannot start: %s 가 저장소 루트 밖을 가리킨다 (%s). 검사기는 "
+              ":3003 이 서빙하는 %s 안의 파일만 열 수 있다."
+              % (OUTPUTS_ENV, outputs_dir(), ROOT), file=sys.stderr)
+        return 2
+
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    run_dir = os.path.join(RUNS_DIR, stamp + ("-mock-" + args.mock if args.mock else ""))
+    run_dir = os.path.join(runs_dir(),
+                           stamp + ("-mock-" + args.mock if args.mock else ""))
     os.makedirs(run_dir, exist_ok=True)
     log = make_logger(os.path.join(run_dir, "run.log"))
 
-    load_env()
+    try:
+        load_env()
+    except RuntimeError as e:
+        log("cannot start: %s" % e)
+        print("cannot start: %s" % e, file=sys.stderr)
+        _dump({"run_dir": run_dir, "passed": False, "attempts": [],
+               "stopped_reason": "cannot_start", "error": str(e)},
+              os.path.join(run_dir, "summary.json"))
+        log("summary: %s" % os.path.join(run_dir, "summary.json"))
+        return 2
     model = pick_model(args)
     if not args.mock and not os.environ.get("OPENAI_API_KEY"):
         print("no OPENAI_API_KEY in the environment or .envs", file=sys.stderr)
@@ -344,20 +547,39 @@ def run(args):
     try:
         template = load_template()
         original_html = io.open(args.original, encoding="utf-8").read()
+        orig_url = original_url(args.original)
+        allowed = load_allowed_removals()
     except (OSError, RuntimeError) as e:
+        log("cannot start: %s" % e)
         print("cannot start: %s" % e, file=sys.stderr)
+        _dump({"run_dir": run_dir, "passed": False, "attempts": [],
+               "stopped_reason": "cannot_start", "error": str(e)},
+              os.path.join(run_dir, "summary.json"))
+        log("summary: %s" % os.path.join(run_dir, "summary.json"))
         return 2
 
-    log("run: %s | model=%s | attempts=%d | stage=%s | mock=%s"
-        % (run_dir, model, args.attempts, args.stage, args.mock))
-    r = Run(args, log, run_dir, model, template, original_html)
+    log("run: %s | model=%s | attempts=%d | stage=%s | mock=%s | original=%s"
+        % (run_dir, model, args.attempts, args.stage, args.mock, orig_url))
+    r = Run(args, log, run_dir, model, template, original_html, orig_url)
+    r.allowed_removals = allowed
+    if allowed:
+        log("선택지 제거 허용 (연구자 파일): %s" % ", ".join(sorted(allowed)))
     server = None
     try:
-        server = ensure_server(log)
+        # 띄우지 못했거나, 떠 있는 것이 이 저장소를 서빙하지 않는다. 둘 다
+        # "빌드가 떨어졌다" 가 아니라 "돌지 못했다" 다.
+        try:
+            server = ensure_server(log)
+        except RuntimeError as e:
+            log("cannot start: %s" % e)
+            print("cannot start: %s" % e, file=sys.stderr)
+            r.summary["stopped_reason"] = "cannot_start"
+            r.summary["error"] = str(e)
+            return exit_code(r.summary)
         # 대비·언어 검사의 기준이 되는 원본 스냅샷. 실행마다 한 번만 걷는다.
         base_flow = A.load_flow(None)
         log("audit: driving the original once (baseline for contrast / language)")
-        r.orig_snapshot = asyncio.run(A.drive(ORIGINAL_URL, base_flow))
+        r.orig_snapshot = asyncio.run(A.drive(r.original_url, base_flow))
         r.choices = choices_block(r.orig_snapshot, original_html)
         if r.choices:
             log("선택지: %s" % " / ".join(
@@ -377,13 +599,15 @@ def run(args):
             if r.summary["stopped_reason"] is None:
                 r.summary["stopped_reason"] = "budget_exhausted"
         log_trend(r)
-        r.summary["budget"] = r.budget.as_dict()
     finally:
         if server:
             server.terminate()
             log("server: stopped (pid %d)" % server.pid)
-
-    copy_final(r)
-    _dump(r.summary, os.path.join(run_dir, "summary.json"))
-    log("summary: %s" % os.path.join(run_dir, "summary.json"))
-    return 0 if r.summary["passed"] else 1
+        # 요약은 이 실행의 기록이다. 루프가 터져도(흐름 명세가 검사기를 터뜨린다,
+        # 사용자가 끊는다) 남아야 한다 - 밖에 두면 그런 실행은 run.log 조각
+        # 말고는 아무것도 남기지 않는다.
+        r.summary["budget"] = r.budget.as_dict()
+        copy_final(r)
+        _dump(r.summary, os.path.join(run_dir, "summary.json"))
+        log("summary: %s" % os.path.join(run_dir, "summary.json"))
+    return exit_code(r.summary)

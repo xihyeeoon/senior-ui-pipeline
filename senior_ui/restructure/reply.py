@@ -16,6 +16,65 @@ from ..audit.handlers import handled_actions
 FENCE = re.compile(r"```(html|json)[ \t]*\r?\n(.*?)\r?\n[ \t]*```", re.S)
 
 
+class FlowShape(ValueError):
+    """흐름 명세의 타입이 틀렸다. 아래 검사들이 읽을 수 있는 모양이 아니다.
+
+    형식 오류와 따로 두는 이유는 부르는 쪽이 다르게 다루기 때문이다 - 이것은
+    PARSE 가 아니라 FLOW 문제이고, 문제 목록이 그대로 다음 프롬프트로 간다.
+    """
+
+    def __init__(self, problems):
+        ValueError.__init__(self, " | ".join(problems))
+        self.problems = list(problems)
+
+
+# JSON 의 타입을 모델이 읽을 말로.
+TYPE_NAME = {dict: "객체", list: "배열", str: "문자열", bool: "참/거짓",
+             int: "숫자", float: "숫자", type(None): "빈 값"}
+
+
+def type_of(v):
+    return TYPE_NAME.get(type(v), type(v).__name__)
+
+
+def shape_problems(flow):
+    """json.loads 바로 뒤에 보는 타입 검사.
+
+    아래의 다른 검사들은 전부 "흐름 명세는 이런 모양이다" 를 전제로 쓰여 있다.
+    그 전제가 깨지면 검사가 문제를 돌려주는 대신 터진다 - 흐름 명세가 배열이면
+    `flow.setdefault` 가 AttributeError 로, screen 이 목록이면 집합 검사가
+    TypeError 로 죽는다. 둘 다 ValueError 가 아니라서 아무도 받지 못하고 실행
+    전체가 역추적만 남겼다.
+
+    그래서 타입만 먼저 보고, 틀린 것은 FLOW 문제로 돌려준다. 여기를 통과한
+    흐름 명세는 아래 검사들이 터뜨릴 수 없는 모양이다.
+    """
+    if not isinstance(flow, dict):
+        return ["흐름 명세가 객체가 아니다 (지금은 %s). 최상위는 steps · "
+                "required_ids · expect 를 가진 객체 하나여야 한다." % type_of(flow)]
+    problems = []
+    steps = flow.get("steps")
+    if steps is not None and not isinstance(steps, list):
+        problems.append("steps 가 목록이 아니다 (지금은 %s)" % type_of(steps))
+        steps = None
+    for i, st in enumerate(steps or []):
+        if not isinstance(st, dict):
+            problems.append("steps[%d] 가 객체가 아니다 (지금은 %s). 단계 하나는 "
+                            "screen 과 동작을 가진 객체다." % (i, type_of(st)))
+            continue
+        if "screen" in st and not isinstance(st["screen"], str):
+            problems.append("steps[%d].screen 이 문자열이 아니다 (지금은 %s). 화면 "
+                            "이름 하나만 적는다 - 한 단계는 한 화면이다."
+                            % (i, type_of(st["screen"])))
+        if "click" in st and not isinstance(st["click"], str):
+            problems.append("steps[%d].click 이 문자열이 아니다 (지금은 %s). CSS "
+                            "선택자 하나를 적는다." % (i, type_of(st["click"])))
+        if "do" in st and not isinstance(st["do"], (list, dict)):
+            problems.append("steps[%d].do 가 목록도 객체도 아니다 (지금은 %s)"
+                            % (i, type_of(st["do"])))
+    return problems
+
+
 def parse_reply(text):
     """Last ```html``` block and last ```json``` block. Raises ValueError with
     a message meant to go straight into the next prompt."""
@@ -33,6 +92,10 @@ def parse_reply(text):
         flow = json.loads(blocks["json"])
     except json.JSONDecodeError as e:
         raise ValueError("흐름 명세가 JSON 으로 읽히지 않는다: %s" % e)
+    # 타입 검사는 여기서 끝낸다. 아래 어디에서도 모양을 다시 의심하지 않는다.
+    problems = shape_problems(flow)
+    if problems:
+        raise FlowShape(problems)
     return html, flow, blocks["json"]
 
 
@@ -202,9 +265,14 @@ CHECKS = [_check_steps, _check_handlers, _check_step_screens, _check_transitions
 
 
 def validate_flow(flow, html):
-    """Shape checks the audit would otherwise crash on, phrased for the model."""
-    if not isinstance(flow, dict):
-        return ["흐름 명세가 객체가 아니다"]
+    """Shape checks the audit would otherwise crash on, phrased for the model.
+
+    타입은 shape_problems 가 먼저 본다. 여기 아래의 검사들은 그 결과를 전제로
+    쓰여 있으므로, 타입이 틀렸으면 그 목록만 돌려주고 끝낸다 - 전제가 깨진
+    상태로 더 보면 문제를 돌려주는 대신 터진다."""
+    bad_shape = shape_problems(flow)
+    if bad_shape:
+        return bad_shape
     # literal names only - a template literal like data-screen="${x}" in the
     # script is not a screen
     screens = set(re.findall(r'data-screen="([a-z0-9_-]+)"', html))
@@ -213,6 +281,15 @@ def validate_flow(flow, html):
     for check in CHECKS:
         problems += check(flow, html, steps, screens)
     return problems
+
+
+def problems_report(problems):
+    """문제 목록을 검사 리포트 모양으로. 흐름 명세가 규격에 안 맞아 검사까지
+    가지 못한 시도도 다른 실패와 같은 모양으로 기록된다."""
+    return {"passed": False, "warning": [],
+            "metrics": {"flow": "auto", "not_audited": True},
+            "fatal": [{"check": "FLOW", "screen": None, "detail": d}
+                      for d in problems]}
 
 
 def failure_report(kind, detail):

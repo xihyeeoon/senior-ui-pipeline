@@ -317,9 +317,19 @@ def capture_parse_reply(out):
 # [5] mock 실행
 # --------------------------------------------------------------------- #
 def strip_volatile(summary):
-    """실행마다 바뀌는 값을 지운다: run_dir, 경로 속 타임스탬프, seconds."""
+    """실행마다 바뀌는 값을 지운다: run_dir, 경로 속 타임스탬프, seconds.
+
+    재현 기록의 `openai_sdk` 는 설치된 SDK 판이라 PC 마다 다르다. 지우지 않고
+    자리만 바꿔 둔다 - 값은 비교하지 않되 "기록이 있다" 는 것은 비교한다.
+    """
     s = copy.deepcopy(summary)
     run_dir = (s.pop("run_dir", None) or "").replace("\\", "/")
+
+    def fix_repro(d):
+        if isinstance(d.get("repro"), dict) and "openai_sdk" in d["repro"]:
+            d["repro"]["openai_sdk"] = "<sdk>"
+
+    fix_repro(s)
 
     def fix(p):
         if not isinstance(p, str) or not run_dir:
@@ -328,6 +338,7 @@ def strip_volatile(summary):
 
     for a in s.get("attempts") or []:
         a.pop("seconds", None)
+        fix_repro(a)
         for k in ("html", "flow"):
             if k in a:
                 a[k] = fix(a[k])
