@@ -53,10 +53,17 @@ def snap(screens, **kw):
     return d
 
 
+# 이 파일의 손으로 만든 스냅샷은 옛 원본의 값(10,000 등)으로 쓰였다. 정답이
+# 흐름 파일로 옮겨 간 뒤로 블록이 없는 흐름은 지금 원본의 정답을 쓰므로, 옛 값을
+# 명시한다.
+OLD_TRUTH = {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000",
+             "NAME": "김시현"}
+
+
 def flow(steps, expect=None, **kw):
     f = {"name": "t", "derived_from_original": False, "required_ids": [],
          "steps": [{"screen": s} for s in steps], "expect": expect or {},
-         "done_amount": "#dn-amt"}
+         "done_amount": "#dn-amt", "truth": OLD_TRUTH}
     f.update(kw)
     return f
 

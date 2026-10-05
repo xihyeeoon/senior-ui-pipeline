@@ -1,5 +1,6 @@
 {
   "name": "d_newdesign",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
   "note": "검사 D 가 새 설계에서 상속 색 검사를 아예 돌리지 않고, 이름만 같은 남의 화면과 저대비 요소를 견주는 것을 재현한다.",
   "derived_from_original": false,
   "required_ids": [

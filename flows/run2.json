@@ -1,5 +1,6 @@
 {
   "name": "run2",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
   "note": "LLM-restructured design, second run: 7 screens. Differs from run 1 (restructured.json) in two merges - the bank step lives inside the account screen as a strip under the number, and the payee check lives at the top of the amount screen instead of being its own yes/no screen. Same long path (first-time account) so every screen is exercised; the saved-recipient path skips account. type 액션은 숫자판(key 에 %s, 글자마다 클릭)과 입력 칸(%s 없이 fill) 둘 다 쓸 수 있다. 이 흐름은 숫자판 형식이다.",
   "derived_from_original": false,
   "required_ids": [

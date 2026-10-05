@@ -82,15 +82,44 @@ def choice_groups(snapshot):
     return groups
 
 
-def backing(vals, arrays):
+def drawn_with(html, names, actions):
+    """배열 이름과 같은 줄에 적힌 선택지 이름. `{배열 이름: {action, …}}`.
+
+    선언한 줄은 보지 않는다 - 그리는 줄이 짝을 말한다. 따옴표 안의 글자
+    (`drawKeys(el, ACC_KEYS, 'acc-num')`)와 `data-action="pw"` 를 둘 다 본다.
+    """
+    out = {n: set() for n in names}
+    for line in scripts(html).splitlines():
+        if ARRAY_DECL.search(line):
+            continue
+        said = {a for a in actions
+                if re.search(r"[\"'`]%s[\"'`]" % re.escape(a), line)}
+        for n in names:
+            if re.search(r"\b%s\b" % re.escape(n), line):
+                out[n] |= said
+    return out
+
+
+def backing(vals, arrays, action=None, drawn=None):
     """그 선택지 값을 담고 있는 스크립트 배열. `[(이름, 원소 수)]`.
 
     절반 넘게 겹치면 그 배열이 그 목록이라고 본다. 전부 겹칠 것을 요구하면
     배열 하나가 두 묶음으로 나뉘어 그려지는 경우(원본의 은행 38 + 증권사 29)를
     놓치고, 하나만 겹쳐도 된다고 하면 색 배열 같은 것이 섞여 들어온다.
+
+    값만으로는 가를 수 없는 경우가 있다. 숫자판 셋(금액 · 계좌 · 비밀번호)은
+    모두 0~9 를 가져서, 배열 셋이 묶음 셋 모두의 출처로 붙는다. 그래서 후보가
+    둘 이상이면 그리는 줄에 이 묶음의 `data-action` 이름이 함께 적힌 배열만
+    남긴다 (`drawn_with`). 그런 배열이 하나도 없으면 후보를 그대로 둔다 - 한
+    묶음을 배열 둘로 그리는 경우(은행 + 증권사)가 그렇다.
     """
-    return [(name, len(items)) for name, items in arrays
-            if items and len(set(items) & vals) >= max(2, len(items) // 2)]
+    found = [(name, len(items)) for name, items in arrays
+             if items and len(set(items) & vals) >= max(2, len(items) // 2)]
+    if len(found) > 1 and action and drawn:
+        paired = [(n, k) for n, k in found if action in drawn.get(n, ())]
+        if paired:
+            return paired
+    return found
 
 
 def split_groups(snapshot, html):
@@ -106,6 +135,7 @@ def split_groups(snapshot, html):
     """
     groups = choice_groups(snapshot)
     arrays = script_arrays(html)
+    drawn = drawn_with(html, [n for n, _ in arrays], list(groups))
     generated, inline = [], []
     for action, vals in sorted(groups.items(), key=lambda kv: -len(kv[1])):
         if len(vals) < 2:
@@ -113,7 +143,8 @@ def split_groups(snapshot, html):
         in_markup = len(re.findall(r'data-action="%s"' % re.escape(action),
                                    html or ""))
         if in_markup < len(vals):
-            generated.append((action, len(vals), backing(vals, arrays)))
+            generated.append((action, len(vals),
+                              backing(vals, arrays, action, drawn)))
         else:
             inline.append((action, len(vals), []))
     return generated, inline

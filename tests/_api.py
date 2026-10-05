@@ -127,6 +127,7 @@ devserver_module = _devserver
 cli_module = _cli
 PORT = _config.PORT
 ROOT_DIR = _config.ROOT
+config_module = _config
 
 # ---- senior_ui/experiment/server.py (대시보드 서버) --------------------- #
 srv_make_handler = _exp_server.make_handler

@@ -1,5 +1,6 @@
 {
   "name": "d_modern_colour",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
   "note": "검사 D 가 oklch() · color(srgb …) 처럼 rgb 가 아닌 색 표기를 읽지 못하는 것을 재현한다. 걷지 않는다 - 색만 잰다.",
   "derived_from_original": false,
   "required_ids": [

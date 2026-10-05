@@ -1,5 +1,6 @@
 {
   "name": "arrival_lies",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
   "note": "__screen() 은 done 이라 하고 .screen.on 은 start 인 경우를 재현한다. expect 의 #amt 는 켜진 화면 안에 있고 값도 맞다 - 도착 판정만 걸리게.",
   "derived_from_original": false,
   "required_ids": ["start", "done"],

@@ -1,5 +1,6 @@
 {
   "name": "d_bg_alpha",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
   "note": "검사 D 가 반투명 배경을 건너뛰고 불투명한 조상을 배경으로 쓰는 것을 재현한다. 걷지 않는다 - 색만 잰다.",
   "derived_from_original": false,
   "required_ids": [

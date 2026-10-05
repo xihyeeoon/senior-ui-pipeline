@@ -1,5 +1,6 @@
 {
   "name": "run4",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
   "note": "A streamlined process for transferring money.",
   "derived_from_original": false,
   "required_ids": [

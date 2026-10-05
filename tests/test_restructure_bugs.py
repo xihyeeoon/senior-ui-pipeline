@@ -1081,3 +1081,43 @@ def test_nothing_extra_is_promoted_when_there_is_no_data(fake_run_env,
     assert summary["final"]["preserved"] is None
     assert not os.path.exists(os.path.join(out_root,
                                            "restructured_auto.model.html"))
+
+
+# ===================================================================== #
+# 13. --mock 은 실제 산출물 자리를 덮지 않는다
+# ===================================================================== #
+# 고치기 전: --mock 은 SENIOR_UI_OUTPUTS 를 주지 않으면 outputs/ 에 썼다.
+# pass · preserved-all 은 통과하므로 outputs/restructured_auto.* 가 mock 결과로
+# 바뀐다 - 연구자가 연습으로 mock 을 돌리다 실제 결과를 덮는다.
+def mock_args():
+    return _api.restructure_parser().parse_args(
+        ["--mock", "pass", "--attempts", "1", "--delay", "0"])
+
+
+def point_outputs(monkeypatch, out_root):
+    """산출물 폴더 둘(실제 · mock)을 이 테스트의 폴더 안으로 옮긴다."""
+    real = os.path.join(out_root, "real")
+    mock = os.path.join(out_root, "mock")
+    monkeypatch.delenv("SENIOR_UI_OUTPUTS", raising=False)
+    monkeypatch.setattr(_api.config_module, "OUTPUTS_DIR", real)
+    monkeypatch.setattr(_api.config_module, "MOCK_OUTPUTS_DIR", mock, raising=False)
+    return real, mock
+
+
+def test_a_mock_run_writes_to_the_mock_folder_by_default(fake_run_env, out_root):
+    real, mock = point_outputs(fake_run_env, out_root)
+    code = loop.run(mock_args())
+    assert code == 0                                   # 통과해서 승격까지 간다
+    assert os.path.exists(os.path.join(mock, "restructured_auto.html"))
+    assert os.path.isdir(os.path.join(mock, "restructure_auto"))
+    assert not os.path.exists(os.path.join(real, "restructured_auto.html"))
+    assert not os.path.exists(os.path.join(real, "restructure_auto"))
+
+
+def test_an_explicit_outputs_folder_still_wins_for_a_mock_run(fake_run_env, out_root):
+    real, mock = point_outputs(fake_run_env, out_root)
+    chosen = os.path.join(out_root, "chosen")
+    fake_run_env.setenv("SENIOR_UI_OUTPUTS", chosen)
+    assert loop.run(mock_args()) == 0
+    assert os.path.exists(os.path.join(chosen, "restructured_auto.html"))
+    assert not os.path.exists(os.path.join(mock, "restructured_auto.html"))

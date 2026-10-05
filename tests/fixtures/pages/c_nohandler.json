@@ -1,5 +1,6 @@
 {
   "name": "c_nohandler",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
   "note": "클릭 처리기가 아예 없는 빌드를 재현한다. orig_html 로 진짜 원본을 넘기면, 못 찾았을 때 원본 목록으로 대신하는 검사기는 통과시킨다.",
   "derived_from_original": false,
   "required_ids": [

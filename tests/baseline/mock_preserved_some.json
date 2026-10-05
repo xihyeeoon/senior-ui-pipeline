@@ -5,7 +5,10 @@
   "preserved": {
     "BANKS": 38,
     "SECS": 29,
-    "nums": 10
+    "AMT_KEYS": 11,
+    "ACC_KEYS": 10,
+    "PW_KEYS": 10,
+    "QUICK": 4
   },
   "plan": {
     "attempt": 1,
@@ -31,7 +34,7 @@
     "response_model": null,
     "system_fingerprint": null,
     "openai_sdk": "<sdk>",
-    "prompt_template_sha256": "12dc12079dcf3b5056b0607b8d807b6ad137915ee4e9240a8521437123c00b6e"
+    "prompt_template_sha256": "4d46b9548c7821f64326bb65d015d8060a59327e57ca4cdb16bfd33cbd1e328f"
   },
   "attempts": [
     {
@@ -44,20 +47,20 @@
         "response_model": null,
         "system_fingerprint": null,
         "openai_sdk": "<sdk>",
-        "prompt_template_sha256": "12dc12079dcf3b5056b0607b8d807b6ad137915ee4e9240a8521437123c00b6e"
+        "prompt_template_sha256": "4d46b9548c7821f64326bb65d015d8060a59327e57ca4cdb16bfd33cbd1e328f"
       },
       "plan": "<run>/attempt_1.plan.json",
       "calls": [
         {
           "stage": "plan",
-          "estimated_prompt": 11657,
+          "estimated_prompt": 12242,
           "method": "tiktoken:o200k_base",
           "max_tokens": 6000,
           "usage": null
         },
         {
           "stage": "generate",
-          "estimated_prompt": 13590,
+          "estimated_prompt": 14166,
           "method": "tiktoken:o200k_base",
           "max_tokens": 14000,
           "usage": null
@@ -72,7 +75,10 @@
         "injected": {
           "BANKS": 38,
           "SECS": 29,
-          "nums": 10
+          "AMT_KEYS": 11,
+          "ACC_KEYS": 10,
+          "PW_KEYS": 10,
+          "QUICK": 4
         },
         "redeclared": [],
         "read": [
@@ -101,7 +107,10 @@
       "injected": {
         "BANKS": 38,
         "SECS": 29,
-        "nums": 10
+        "AMT_KEYS": 11,
+        "ACC_KEYS": 10,
+        "PW_KEYS": 10,
+        "QUICK": 4
       },
       "redeclared": [],
       "read": [
@@ -141,14 +150,14 @@
     "by_stage": {
       "plan": {
         "calls": 1,
-        "estimated_prompt": 11657,
+        "estimated_prompt": 12242,
         "max_tokens": 6000,
         "prompt": null,
         "completion": null
       },
       "generate": {
         "calls": 1,
-        "estimated_prompt": 13590,
+        "estimated_prompt": 14166,
         "max_tokens": 14000,
         "prompt": null,
         "completion": null
@@ -156,14 +165,14 @@
     },
     "total": {
       "calls": 2,
-      "estimated_prompt": 25247,
+      "estimated_prompt": 26408,
       "max_tokens": 20000,
       "prompt": null,
       "completion": null
     },
     "first_attempt": {
       "calls": 2,
-      "estimated_prompt": 25247,
+      "estimated_prompt": 26408,
       "max_tokens": 20000,
       "prompt": null,
       "completion": null

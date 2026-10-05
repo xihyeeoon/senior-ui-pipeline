@@ -1,8 +1,8 @@
 r"""과제가 쓰는 정답 값과 흐름 파일 읽기.
 
-검사가 "보여 주는 값이 맞는가" 를 판정할 기준이 되는 값들, 흐름 파일의
-{ACCOUNT} 같은 자리표시자를 그 값으로 바꾸는 fill(), 그리고 흐름 파일을 읽는
-load_flow() 가 여기 있다.
+검사가 "보여 주는 값이 맞는가" 를 판정할 기준이 되는 값들(흐름 파일의 truth
+블록), 흐름 파일의 {ACCOUNT} 같은 자리표시자를 그 값으로 바꾸는 fill(), 그리고
+흐름 파일을 읽는 load_flow() 가 여기 있다.
 
 흐름 파일은 화면이 무엇이고 어디를 눌러 거기까지 가는지, 각 화면이 무엇을 보여
 주어야 하는지를 적은 JSON 이다. 코드 밖에 두는 것이 재구성된 설계 - 화면도
@@ -13,20 +13,61 @@ import os
 
 from ..config import FLOWS_DIR
 
-# Ground truth for the drive; every displayed value is checked against these.
-ACCOUNT = "3333000000000"
-AMOUNT = "10000"
-AMOUNT_SHOWN = "10,000"
-BANK = "카카오뱅크"
-NAME = "김시현"
+# 과제의 정답 값은 흐름 파일의 "truth" 블록에 있다. 원본이 바뀌면 정답도 바뀌고,
+# 옛 원본으로 만든 옛 빌드는 옛 정답으로 다시 검사할 수 있어야 하기 때문이다 -
+# 값을 코드에 두면 한 번에 하나의 원본만 검사할 수 있다.
+#
+#   "truth": {"BANK": "신한", "ACCOUNT": "110234567890",
+#             "AMOUNT": "32000", "NAME": "김철수"}
+#
+# AMOUNT_SHOWN (화면에 보이는 금액, 32,000) 은 AMOUNT 에서 만든다. 블록이 없는
+# 흐름 - 재구성 루프에서 모델이 쓴 흐름 명세, 테스트가 손으로 만든 흐름 - 은
+# 원본 흐름(flows/original.json)의 정답을 쓴다. 과제는 원본의 과제다.
+TRUTH_KEYS = ("ACCOUNT", "AMOUNT", "BANK", "NAME")
 
-SUBST = {"{ACCOUNT}": ACCOUNT, "{AMOUNT}": AMOUNT, "{AMOUNT_SHOWN}": AMOUNT_SHOWN,
-         "{BANK}": BANK, "{NAME}": NAME}
+_original_truth = None
 
 
-def fill(s):
-    for k, v in SUBST.items():
-        s = s.replace(k, v)
+def make_truth(block, where="truth"):
+    """흐름 파일의 truth 블록을 자리표시자 값으로. 빠진 키가 있으면 멈춘다 -
+    조용히 넘어가면 `{BANK}` 같은 글자가 그대로 눌려 엉뚱한 곳에서 멈춘다."""
+    if not isinstance(block, dict):
+        raise ValueError("%s 는 객체여야 한다" % where)
+    missing = [k for k in TRUTH_KEYS if not str(block.get(k) or "")]
+    if missing:
+        raise ValueError("%s 에 %s 가 없다" % (where, ", ".join(missing)))
+    amount = str(block["AMOUNT"])
+    if not amount.isdigit():
+        raise ValueError("%s.AMOUNT 는 쉼표 없는 숫자여야 한다: %r" % (where, amount))
+    truth = {k: str(block[k]) for k in TRUTH_KEYS}
+    truth["AMOUNT_SHOWN"] = "{:,}".format(int(amount))
+    return truth
+
+
+def original_truth():
+    """원본 흐름(flows/original.json)의 정답. 한 번 읽고 들고 있는다."""
+    global _original_truth
+    if _original_truth is None:
+        path = os.path.join(FLOWS_DIR, "original.json")
+        with open(path, encoding="utf-8") as f:
+            _original_truth = make_truth(json.load(f).get("truth"),
+                                         "flows/original.json 의 truth")
+    return _original_truth
+
+
+def truth_of(flow):
+    """그 흐름이 쓰는 정답. 블록이 없으면 원본 흐름의 것.
+
+    load_flow 를 거치지 않고 손으로 만든 흐름(테스트)도 같은 모양의 블록을 쓸 수
+    있게, 여기서도 make_truth 로 한 번 더 맞춘다.
+    """
+    block = (flow or {}).get("truth")
+    return make_truth(block) if block else original_truth()
+
+
+def fill(s, truth):
+    for k, v in truth.items():
+        s = s.replace("{%s}" % k, v)
     return s
 
 
@@ -69,6 +110,10 @@ def load_flow(path):
             raise FileNotFoundError("audit: the default flow is missing: %s" % path)
     with open(path, encoding="utf-8") as f:
         flow = json.load(f)
+    if "truth" in flow:
+        flow["truth"] = make_truth(flow["truth"], "%s 의 truth" % os.path.basename(path))
+    else:
+        flow["truth"] = original_truth()
     flow.setdefault("derived_from_original", True)
     flow.setdefault("expect", {})
     flow.setdefault("done_amount", "#dn-amt")

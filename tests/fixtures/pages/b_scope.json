@@ -1,5 +1,6 @@
 {
   "name": "b_scope",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
   "note": "검사 B 가 꺼진 화면과 숨은 요소에서 값을 읽는 것을 재현한다. 선택자는 둘 이상에 걸리는 것으로 둔다 - id 는 문서에 하나뿐이어야 하므로 이 상황을 만들 수 없다.",
   "derived_from_original": false,
   "required_ids": ["start", "old"],

@@ -24,9 +24,16 @@ RESULTS_DIR = os.path.join(ROOT, "results")      # 추적함 - 남겨야 할 증
 # 산출물 폴더를 옮길 수 있게 하는 환경 변수. 테스트가 쓴다.
 OUTPUTS_ENV = "SENIOR_UI_OUTPUTS"
 
+# --mock 실행의 기본 산출물 폴더 (.gitignore). mock 의 pass · preserved-all 은
+# 실제로 통과해 restructured_auto.* 로 승격되므로, outputs/ 를 같이 쓰면 연습으로
+# 돌린 mock 이 실제 실행의 결과를 덮는다. outputs/restructured_auto.* 는 실제
+# 실행만 쓴다.
+MOCK_OUTPUTS_DIR = os.path.join(ROOT, ".mock-outputs")
 
-def outputs_dir():
+
+def outputs_dir(mock=False):
     """산출물을 쓸 폴더. 기본은 OUTPUTS_DIR 이고 SENIOR_UI_OUTPUTS 로 바꾼다.
+    mock 실행의 기본은 MOCK_OUTPUTS_DIR 이다 (환경 변수를 주면 그것이 이긴다).
 
     상수가 아니라 함수인 이유는 테스트다. 재구성 루프를 한 번 돌리면 마지막
     빌드가 `outputs/restructured_auto.*` 로 복사되는데, 그 루프를 돌리는 테스트가
@@ -38,7 +45,7 @@ def outputs_dir():
     :3003 이 서빙하는 http:// 로 열고, 그 서버는 ROOT 만 서빙한다. 밖에 두면
     검사기가 빌드를 열지 못해 첫 화면에서 멈추고, 그것이 설계 실패처럼 보인다.
     """
-    return os.environ.get(OUTPUTS_ENV) or OUTPUTS_DIR
+    return os.environ.get(OUTPUTS_ENV) or (MOCK_OUTPUTS_DIR if mock else OUTPUTS_DIR)
 
 
 def inside_root(path):
