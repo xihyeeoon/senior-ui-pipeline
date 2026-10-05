@@ -267,6 +267,32 @@ def shrink_for_minute(message, cap, log=None):
     return smaller
 
 
+# 분당 한도를 알려 주는 응답 헤더 (https://developers.openai.com/api/docs/guides/rate-limits).
+# 모델마다 · 계정 등급마다 다르고 문서의 표가 실제와 다를 수 있으므로, 실제
+# 호출이 받은 값을 남긴다. 이 계정은 gpt-4o 에서 분당 30,000 토큰이었다.
+RATELIMIT_HEADERS = [("limit_tokens", "x-ratelimit-limit-tokens"),
+                     ("remaining_tokens", "x-ratelimit-remaining-tokens"),
+                     ("limit_requests", "x-ratelimit-limit-requests")]
+
+
+def read_ratelimit(headers):
+    """응답 헤더의 분당 한도. 셋 다 없으면 None (모른다)."""
+    out = {}
+    for key, name in RATELIMIT_HEADERS:
+        v = (headers or {}).get(name)
+        out[key] = int(v) if v is not None and str(v).isdigit() else v
+    return out if any(v is not None for v in out.values()) else None
+
+
+def describe_ratelimit(rl):
+    """run.log 와 확인 명령에 쓰는 한 줄."""
+    if not rl:
+        return "응답 헤더에 없음"
+    return ("토큰 %s (남은 %s) · 요청 %s"
+            % (rl.get("limit_tokens"), rl.get("remaining_tokens"),
+               rl.get("limit_requests")))
+
+
 def request_kwargs(model, prompt, cap, profile, temperature=None, seed=None,
                    reasoning_effort=None):
     """그 모델의 방식대로 만든 요청 인자."""
@@ -366,6 +392,10 @@ def call_model(model, prompt, max_tokens, log=None, backoff=(20, 45, 90, 180),
             resp = raw.parse()
             break
         except RateLimitError as e:
+            if log:
+                rl = read_ratelimit(getattr(getattr(e, "response", None), "headers", None))
+                if rl:
+                    log("429 — 분당 한도 %s" % describe_ratelimit(rl))
             smaller = shrink_for_minute(str(e), kw[profile["length_param"]], log)
             if smaller is not None:
                 kw[profile["length_param"]] = smaller   # 기다리지 않고 바로 다시 보낸다
@@ -411,6 +441,8 @@ def call_model(model, prompt, max_tokens, log=None, backoff=(20, 45, 90, 180),
         # 프롬프트를 뺀 실제 요청 인자, 그리고 모델이 거절해 뺀 인자
         "sent": {k: v for k, v in kw.items() if k not in ("messages", "input")},
         "dropped": dropped,
+        # 이 호출이 받은 응답 헤더의 분당 한도
+        "ratelimit": read_ratelimit(raw.headers),
     }
 
 

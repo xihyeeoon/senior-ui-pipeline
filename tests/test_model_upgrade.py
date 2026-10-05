@@ -301,3 +301,59 @@ def test_the_summary_tokens_keep_reasoning_apart(fake_run_env, out_root):
     t = summary["tokens"]
     assert t["by_stage"]["generate"]["reasoning"] == 600
     assert t["total"]["reasoning"] == 600
+
+
+# ===================================================================== #
+# 3. 분당 한도 - 응답 헤더를 호출마다 남긴다
+# ===================================================================== #
+def test_rate_limit_headers_are_read_from_every_call(monkeypatch):
+    F.install(monkeypatch)
+    reply = model.call_model("gpt-4o", "p", 14000)
+    assert reply["ratelimit"] == {"limit_tokens": 30000, "remaining_tokens": 29000,
+                                  "limit_requests": 500}
+
+
+def test_missing_rate_limit_headers_are_none(monkeypatch):
+    F.install(monkeypatch, [F.Reply(headers={})])
+    reply = model.call_model("gpt-4o", "p", 14000)
+    assert reply["ratelimit"] is None
+
+
+def test_rate_limits_reach_run_log_and_summary(fake_run_env, out_root):
+    rl = {"limit_tokens": 30000, "remaining_tokens": 1234, "limit_requests": 500}
+    _code, summary = run_loop(fake_run_env, out_root, replying(ratelimit=rl),
+                              attempts=1, model="gpt-4o")
+    assert summary["attempts"][0]["calls"][-1]["ratelimit"] == rl
+    assert summary["ratelimit"] == rl
+    lines = [l for l in run_log(summary) if "분당 한도" in l and "30000" in l]
+    assert lines and "1234" in lines[0] and "500" in lines[0]
+
+
+def test_mock_runs_have_no_rate_limits(fake_run_env, out_root):
+    _code, summary = run_loop(fake_run_env, out_root, replying(), attempts=1)
+    assert summary["ratelimit"] is None
+
+
+@pytest.mark.parametrize("name,param", [("gpt-4o", "max_completion_tokens"),
+                                        ("gpt-5", "max_completion_tokens"),
+                                        ("gpt-5-pro", "max_output_tokens")])
+def test_too_large_for_the_minute_shrinks_the_new_length_parameter(monkeypatch,
+                                                                   name, param):
+    """7번에서 만든 "요청이 분당 한도보다 큼" 처리가 길이 인자의 이름과 상관없이
+    작동해야 한다."""
+    slept = []
+    monkeypatch.setattr(model.time, "sleep", slept.append)
+    client = F.install(monkeypatch, [F.too_large(30000, 38000, name), "ok"])
+    reply = model.call_model(name, "p", 14000, backoff=(20,))
+    sent = [kw[param] for _api_name, kw in client.sent]
+    assert sent == [14000, 14000 - 8000 - model.MARGIN]
+    assert reply["max_tokens"] == sent[1]
+    assert slept == []
+    assert "max_tokens" not in client.sent[1][1]
+
+
+def test_a_reasoning_request_that_cannot_fit_stops_at_once(monkeypatch):
+    monkeypatch.setattr(model.time, "sleep", lambda s: None)
+    F.install(monkeypatch, [F.too_large(30000, 50000, "gpt-5-pro")])
+    with pytest.raises(model.RateLimited):
+        model.call_model("gpt-5-pro", "p", 14000)

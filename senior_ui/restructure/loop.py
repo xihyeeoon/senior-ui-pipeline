@@ -38,8 +38,9 @@ from senior_ui.tasks import DEFAULT_TASK, abs_path, load_task
 from .audit_call import load_allowed_removals, run_audit
 from .brief import write_brief
 from .model import (MOCK_TASK, TEMPERATURE, SEED, ApiRejected, InfraFailed,
-                    RateLimited, call_model, describe, estimate_tokens, load_env,
-                    mock_plan_reply, mock_reply, profile_for, sdk_version)
+                    RateLimited, call_model, describe, describe_ratelimit,
+                    estimate_tokens, load_env, mock_plan_reply, mock_reply, profile_for,
+                    sdk_version)
 from .plan import (PlanProblems, apply_changes, match_problems, parse_plan,
                    parse_reflection, plan_report, screens_in, unaddressed)
 from .preserve import inject, names_read, preserved_data
@@ -183,7 +184,9 @@ class Run:
                                        seed=self.seed),
                         "attempts": [], "passed": False, "final": None,
                         "budget": {}, "stopped_reason": None, "trend": [],
-                        "git": None, "tokens": None}
+                        "git": None, "tokens": None,
+                        # 마지막 실제 호출이 받은 분당 한도 (호출마다는 calls[].ratelimit)
+                        "ratelimit": None}
 
 
 # --------------------------------------------------------------------------- #
@@ -468,6 +471,12 @@ def ask_model(r, n, p, prompt, max_tokens, mock, stage):
     if reply.get("dropped"):
         # 모델이 거절해 빼고 보낸 인자 (model.DROPPABLE)
         call["dropped"] = list(reply["dropped"])
+    if not r.args.mock:
+        # 분당 한도는 모델·계정마다 다르다. 실제 호출이 받은 값을 남긴다.
+        call["ratelimit"] = reply.get("ratelimit")
+        if call["ratelimit"]:
+            r.summary["ratelimit"] = call["ratelimit"]
+        r.log("분당 한도 (%s 응답 헤더): %s" % (stage, describe_ratelimit(call["ratelimit"])))
     if reply.get("max_tokens") not in (None, max_tokens):
         # 분당 한도에 맞추느라 줄여서 보냈다 (model.shrink_for_minute)
         call["max_tokens_sent"] = reply["max_tokens"]
