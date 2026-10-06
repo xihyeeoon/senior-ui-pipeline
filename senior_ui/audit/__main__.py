@@ -16,10 +16,12 @@ r"""검사기 CLI. 원본과 생성물을 같은 과제로 한 번씩 걷고 비
                 예전과 똑같이 전부 검사한다.
   모델 흐름     그 밖 (재구성 루프의 attempt_N.flow.json 등). 루프와 같은 판정
                 입력(inputs.judged_flow)을 거친다 - 판정 기준은 흐름이 아니라
-                과제에서 온다. 과제는 --task, 없으면 transfer. 단계는 --stage,
-                없으면 config.DEFAULT_STAGE. 흐름에 적힌 task · stage · truth 는
-                듣지 않는다. 그래서 루프가 실행의 과제 · 단계로 판정한 빌드는
-                같은 --task · --stage 로 다시 검사하면 같은 판정을 받는다.
+                과제에서 온다. 과제는 --task 로만 정한다 - 없으면 판정하지
+                않고 2 로 끝난다 (짐작하면 공과금 빌드를 이체 정답으로 판정한다).
+                단계는 --stage, 없으면 config.DEFAULT_STAGE. 흐름에 적힌 task ·
+                stage · truth 는 듣지 않는다. 그래서 루프가 실행의 과제 · 단계로
+                판정한 빌드는 같은 --task · --stage 로 다시 검사하면 같은 판정을
+                받는다.
 
 Usage:
   python -m senior_ui.audit \
@@ -83,9 +85,10 @@ def main(argv=None):
     setup_stdout()
     ap = argparse.ArgumentParser(prog="python -m senior_ui.audit")
     ap.add_argument("--task", choices=task_names(), default=None,
-                    help="과제 (tasks/<이름>.json). 주지 않으면 연구자 흐름은 흐름 "
-                         "파일의 task, 모델 흐름은 transfer. 기본 원본과 원본을 "
-                         "걷는 흐름, 모델 흐름의 판정 기준이 여기서 온다")
+                    help="과제 (tasks/<이름>.json). 모델 흐름(flows/ 밖)에는 꼭 "
+                         "준다 - 판정 기준이 여기서 온다. 연구자 흐름은 주지 않으면 "
+                         "흐름 파일의 task, 그것도 없으면 transfer. 기본 원본과 "
+                         "원본을 걷는 흐름도 여기서 온다")
     ap.add_argument("--original", default=None,
                     help="원본의 URL. 주지 않으면 과제 파일의 original")
     ap.add_argument("--build", "--repaired", dest="build", required=True,
@@ -108,6 +111,14 @@ def main(argv=None):
     # 흐름을 먼저 읽는다 - 과제(그리고 기본 원본)는 흐름이 정할 수 있다.
     # 모델 흐름은 루프와 같은 판정 입력으로 바꾼다 - 판정 기준은 과제에서 온다.
     author = "researcher" if researcher_flow(args.flow) else "model"
+    if author == "model" and not args.task:
+        # 루프가 저장하는 모델 흐름에는 과제가 없고, 흐름에 적힌 task 는 모델의
+        # 말이라 듣지 않는다. 기본값으로 짐작하면 공과금 빌드를 이체의 정답 ·
+        # 완료 화면 값으로 조용히 판정한다 - 판정하지 않고 멈춘다.
+        return cannot_run("모델 흐름은 --task 가 필요하다 (%s). 판정 기준(정답 · 완료 "
+                          "화면 값 · 오류 경로)은 과제에서 온다. 그 실행의 과제를 "
+                          "--task 로 준다 (가능: %s)"
+                          % (args.flow, ", ".join(task_names())), args.out)
     try:
         if author == "researcher":
             flow = load_flow(args.flow, task=args.task)

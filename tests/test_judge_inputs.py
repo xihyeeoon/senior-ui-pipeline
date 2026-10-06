@@ -368,13 +368,14 @@ def test_the_cli_and_the_loop_judge_a_model_flow_alike(monkeypatch, tmp_path, fl
     필수 오류 경로 없음 (감사 B-03 의 (a)~(e)). 루프는 그 다섯을 과제로 정했다.
 
     루프는 실행의 과제 · 단계로 부르고, CLI 는 --task · --stage 로 같은 것을 준다.
-    둘 다 주지 않으면 양쪽 모두 기본값(이체 · config.DEFAULT_STAGE)이다."""
+    모델 흐름에는 --task 가 꼭 있어야 한다 (8 절). 단계를 주지 않으면 양쪽 모두
+    config.DEFAULT_STAGE 다."""
     (tmp_path / "loop").mkdir()
     (tmp_path / "cli").mkdir()
     loop_report, _ = loop_verdict(monkeypatch, tmp_path / "loop", flow, rep,
                                   stage=stage or _api.config_module.DEFAULT_STAGE,
                                   task=task)
-    extra = (["--stage", stage] if stage else []) + (["--task", task] if task else [])
+    extra = (["--stage", stage] if stage else []) + ["--task", task or "transfer"]
     code, cli_report = cli_verdict(monkeypatch, tmp_path / "cli", flow, rep, extra)
     assert without_inputs(cli_report) == without_inputs(loop_report)
     assert cli_report["inputs"]["stage"] == loop_report["inputs"]["stage"]
@@ -486,3 +487,31 @@ def test_a_walk_that_never_reached_the_wrong_input_adds_nothing():
     del r["dialogs_at_trigger"]
     report = judge_error_path(r, happy_dialogs=["확인하세요"])
     assert len([f for f in report["fatal"] if f["check"] == "B"]) == 1
+
+
+# --------------------------------------------------------------------- #
+# 8. 검사기 CLI 는 모델 흐름의 과제를 짐작하지 않는다
+# --------------------------------------------------------------------- #
+def test_the_cli_stops_on_a_model_flow_without_a_task(monkeypatch, tmp_path):
+    """고치기 전(7b54796 부터): 모델 흐름에 --task 가 없으면 transfer 로 판정했다.
+    루프가 저장하는 흐름에는 과제가 없으므로, 공과금 빌드를 --task 없이 다시
+    검사하면 이체 정답 · 이체 완료 화면 값으로 조용히 판정했다.
+
+    과제를 모르면 판정 기준을 모른다 - 걷지 않고 종료 2 로 멈추고, --out 에도
+    그렇게 적는다."""
+    html_path, flow_path = write_build(tmp_path, model_flow())
+    CLI = _api.audit_cli_module
+
+    async def never(*a, **kw):
+        raise AssertionError("과제를 모르는데 걸었다")
+    monkeypatch.setattr(CLI, "drive", never)
+    monkeypatch.setattr(sys, "stdout", io.StringIO())
+    out = tmp_path / "audit.json"
+    code = _api.audit_cli_main(["--build", BUILD_URL, "--build-file", html_path,
+                                "--flow", flow_path, "--out", str(out)])
+    assert code == 2
+    report = json.load(io.open(str(out), encoding="utf-8"))
+    assert report["passed"] is False
+    detail = report["fatal"][0]["detail"]
+    assert "모델 흐름은 --task 가 필요하다" in detail
+    assert "attempt_1.flow.json" in detail

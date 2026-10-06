@@ -247,7 +247,9 @@ def test_the_cli_writes_the_out_file_when_the_flow_cannot_be_read(monkeypatch, t
     code = _api.audit_cli_main([
         "--build", "http://localhost:3003/x.html",
         "--build-file", os.path.join(root, "results", "restructured_transfer.html"),
-        "--flow", str(tmp_path / "없는-흐름.json"), "--out", str(out)])
+        "--flow", str(tmp_path / "없는-흐름.json"), "--out", str(out),
+        # 모델 흐름에는 과제가 필요하다 - 여기서 보는 것은 읽기 실패다
+        "--task", "transfer"])
     assert code == 2
     report = json.load(io.open(str(out), encoding="utf-8"))
     assert "없는-흐름.json" in report["fatal"][0]["detail"]

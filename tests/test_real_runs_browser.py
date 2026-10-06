@@ -76,7 +76,8 @@ def verdicts(server):  # noqa: F811
         saved, sys.stdout = sys.stdout, io.StringIO()
         try:
             code = _api.audit_cli_main(["--build", url, "--build-file", html_path,
-                                        "--flow", flow_path, "--out", cli_out])
+                                        "--flow", flow_path, "--out", cli_out,
+                                        "--task", "transfer"])
         finally:
             sys.stdout = saved
         cli_report = json.load(io.open(cli_out, encoding="utf-8"))
@@ -116,7 +117,8 @@ def test_astra_first_attempt_still_has_one_J_fatal(verdicts):
 
 def test_the_cli_gives_the_same_verdicts(verdicts):
     """같은 빌드 · 같은 흐름 파일을 CLI 로 다시 검사하면 같은 판정이다 (감사 B-03).
-    CLI 에는 --task · --stage 를 주지 않았다 - 루프의 기본값과 같다."""
+    CLI 에는 그 실행의 과제(--task transfer)만 주고 --stage 는 주지 않았다 -
+    루프의 기본 단계와 같다."""
     for model in ("sol", "astra"):
         v = verdicts[model]
         assert strip(v["cli"]) == strip(v["loop"]), model

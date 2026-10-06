@@ -329,9 +329,10 @@ def test_the_placeholder_line_agrees_with_the_truth(name):
 # --------------------------------------------------------------------- #
 # 6. 검사기 CLI - 과제의 원본과 흐름
 # --------------------------------------------------------------------- #
-def cli_drives(monkeypatch, tmp_path, extra):
+def cli_drives(monkeypatch, tmp_path, extra, flow_path=None):
     """CLI 를 부르고, drive 가 받은 (URL, 흐름 이름, 흐름의 과제) 를 돌려준다.
-    drive · audit 은 대역이다 - 무엇을 걷는지만 본다."""
+    drive · audit 은 대역이다 - 무엇을 걷는지만 본다. 흐름은 BILL_FLOW 를 쓴
+    모델 흐름이고, `flow_path` 를 주면 그 흐름이다."""
     CLI = _api.audit_cli_module
     seen = []
 
@@ -350,8 +351,8 @@ def cli_drives(monkeypatch, tmp_path, extra):
     import sys
     monkeypatch.setattr(sys, "stdout", io.StringIO())
     code = _api.audit_cli_main(["--build", "http://x/b.html", "--build-file", str(build),
-                                "--flow", str(flow), "--out", str(tmp_path / "a.json")]
-                               + extra)
+                                "--flow", flow_path or str(flow),
+                                "--out", str(tmp_path / "a.json")] + extra)
     assert code == 0
     return seen
 
@@ -366,8 +367,12 @@ def test_the_cli_walks_the_bill_original_with_the_bill_flow(monkeypatch, tmp_pat
     assert seen[1][2] == "bill"                 # 빌드도 공과금 정답으로 걷는다
 
 
-def test_the_cli_defaults_to_transfer(monkeypatch, tmp_path):
-    seen = cli_drives(monkeypatch, tmp_path, [])
+def test_the_cli_defaults_to_transfer_for_a_researcher_flow(monkeypatch, tmp_path):
+    """연구자 흐름(flows/ 아래)은 --task 가 없으면 흐름의 task, 없으면 이체다.
+    모델 흐름은 --task 가 꼭 있어야 한다 (test_judge_inputs.py 8 절)."""
+    seen = cli_drives(monkeypatch, tmp_path, [],
+                      flow_path=os.path.join(_api.ROOT_DIR, "flows",
+                                             "restructured.json"))
     assert seen[0][0].endswith("/inputs/original_transfer.html")
     assert seen[0][1:] == ("original", "transfer")
 
