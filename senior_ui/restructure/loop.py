@@ -680,6 +680,13 @@ def ask_model(r, n, p, prompt, max_tokens, mock, stage, images=None):
             # 키·권한·요청 자체가 틀렸다. 다시 보내도 같은 답이 오므로, 여기서
             # 멈추지 않으면 예산과 무관하게 같은 실패만 반복된다.
             r.log("중단: API 가 요청을 거절했다 — 다시 보내도 같은 답이 온다 (%s)" % e)
+            if images:
+                # 그림을 빼고 다시 보내면 모델이 화면을 보지 않은 답이 "본 답" 으로
+                # 기록된다. 조용히 바꾸지 않고 멈춘다.
+                r.log("중단: 그림 %d장을 넣은 %s 요청이었다 — 그림을 빼고 다시 보내지 "
+                      "않는다. 그림 없이 돌리려면 --see off · --refine 0. 이 모델이 그림을 "
+                      "받는지는 --probe %s --image 로 먼저 본다"
+                      % (len(images), stage, r.model))
             r.summary["stopped_reason"] = "api_rejected"
             _dump(failure_report("INFRA", "API 가 요청을 거절했다: %s" % e),
                   p + ".audit.json")

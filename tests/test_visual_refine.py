@@ -945,3 +945,46 @@ def test_the_prompts_carry_the_stripped_original_and_the_audit_the_full_one(
     for name in ("attempt_1.plan_prompt.txt", "attempt_1.prompt.txt"):
         assert "<!--" not in read(os.path.join(d, name))
     assert "<!--" in got["orig_html"]
+
+
+# --------------------------------------------------------------------------- #
+# 감사 2. 그림을 넣은 요청이 거절되면 멈춘다 - 그림을 빼고 다시 보내지 않는다
+# --------------------------------------------------------------------------- #
+def run_with_fake_client(env, out_root, outcomes, original_images=(), build_images=(),
+                         **kw):
+    """call_model 은 그대로 두고 openai.OpenAI 만 대역으로 바꾼다."""
+    client = F.install(env, outcomes)
+    env.setattr(loop, "see_images",
+                lambda shots, labels, ids=(): list(
+                    original_images if labels is loop.ORIGINAL_LABELS else build_images))
+    kw.setdefault("refine", 0)
+    code = loop.run(make_args(out_root, model="gpt-6.1-sol", **kw))
+    summary, last = summary_of(out_root)
+    return code, summary, client, last
+
+
+def test_a_rejected_image_request_stops_and_is_not_resent_without_images(
+        fake_run_env, out_root, tmp_path):
+    code, s, client, d = run_with_fake_client(
+        fake_run_env, out_root, [F.no_images()], original_images=images(tmp_path, 3))
+    assert code == 2 and s["stopped_reason"] == "api_rejected"
+    assert len(client.sent) == 1                       # 다시 보내지 않았다
+    assert len(F.images_in(client.sent[0][1])) == 3
+    log = read(os.path.join(d, "run.log"))
+    assert "중단: 그림 3장을 넣은 plan 요청이었다 — 그림을 빼고 다시 보내지 않는다" in log
+    assert s["attempts"][-1]["stage"] == "api_rejected"
+    assert s["attempts"][-1]["calls"][0]["images"] == 3
+
+
+def test_a_rejected_refine_request_keeps_the_passed_build(audit_by_marker, out_root,
+                                                          tmp_path):
+    ok = F.Reply(text=plan_reply())
+    gen = F.Reply(text=GOOD_REPLY)
+    code, s, client, d = run_with_fake_client(
+        audit_by_marker, out_root, [ok, gen, F.no_images()], refine=2,
+        build_images=images(tmp_path, 2))
+    assert code == 0 and s["passed"] and s["final"]["attempt"] == 1
+    assert len(client.sent) == 3
+    r1 = s["refine"]["rounds"][0]
+    assert r1["stopped"] == "call_failed" and len(s["refine"]["rounds"]) == 1
+    assert "중단: 그림 2장을 넣은 refine 요청이었다" in read(os.path.join(d, "run.log"))
