@@ -126,8 +126,8 @@ warning 3 은 검사 D 가 기준에 못 미치는 글자를 하나씩 적은 �
   새 세션은 `senior-ui-pipeline` 에서 시작해야 맞다. 명령은 절대경로로 쓰는 편이
   안전하다.
 - **서버는 프로젝트 루트를 3003 으로 서빙한다.** 모든 도구의 기본 URL 이 여기를
-  가정한다. 안 떠 있으면:
-  `.\.venv\Scripts\python.exe -m http.server 3003 --directory .`
+  가정한다. 안 떠 있으면 (루프백 전용):
+  `.\.venv\Scripts\python.exe -m senior_ui.devserver`
 - **`.venv` 에는 pip 이 없다.** 패키지는 `uv pip install -r requirements.txt` 로
   넣는다.
 
@@ -162,7 +162,7 @@ cd C:\Users\xihye\senior-ui-pipeline
 ```powershell
 cd C:\Users\xihye\senior-ui-pipeline
 git log --oneline -3
-.\.venv\Scripts\python.exe -m http.server 3003 --directory .   # 다른 터미널에서
+.\.venv\Scripts\python.exe -m senior_ui.devserver   # 다른 터미널에서 (루프백 전용)
 .\.venv\Scripts\python.exe -m senior_ui.audit --flow flows\restructured.json `
    --build http://localhost:3003/results/restructured_transfer.html `
    --build-file results\restructured_transfer.html

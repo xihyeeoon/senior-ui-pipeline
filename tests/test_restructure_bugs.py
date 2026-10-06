@@ -890,7 +890,8 @@ def test_a_build_that_simply_failed_still_exits_1(fake_run_env, out_root):
 CLI_FILES = ["senior_ui/audit/__main__.py", "senior_ui/audit/report.py",
              "senior_ui/restructure/__main__.py", "senior_ui/collect_results.py",
              "senior_ui/experiment/report.py", "senior_ui/experiment/server.py",
-             "senior_ui/viewer/build_index.py", "senior_ui/select/__main__.py"]
+             "senior_ui/viewer/build_index.py", "senior_ui/select/__main__.py",
+             "senior_ui/devserver.py"]
 
 
 def test_the_list_of_clis_is_complete():

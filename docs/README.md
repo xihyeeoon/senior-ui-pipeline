@@ -54,11 +54,19 @@ LLM 이 쓴 것이라 다시 만들려면 API 비용이 들고 바이트까지 �
 
 ## 실행
 
-서버를 한 번 띄워 두고 그대로 둔다. 모든 도구가 이 포트의 같은 루트를 본다.
+재구성 루프는 서버를 스스로 띄우고 끈다 (`senior_ui.devserver.ensure_server`). 검사기
+CLI 를 여러 번 돌리거나 빌드를 브라우저로 열어 볼 때만 따로 띄워 둔다 — 이 작업 트리를
+**루프백(127.0.0.1)에만** 서빙한다.
 
 ```powershell
-.\.venv\Scripts\python.exe -m http.server 3003 --directory .
+.\.venv\Scripts\python.exe -m senior_ui.devserver    # 127.0.0.1:3003, Ctrl+C 로 끈다
 ```
+
+표준 라이브러리의 `http.server` 를 `--bind` 없이 띄우지 않는다 — 그러면 0.0.0.0 에
+열려 같은 Wi-Fi 의 누구나 `.envs`(API 키) · `sessions/` 까지 받아 간다.
+떠 있는 서버는 그것이 이 작업 트리를 서빙할 때만 재사용한다 — 작업 트리마다 다른 확인
+파일 `/.devserver-id`(추적하지 않음)의 값을 대조한다. 다른 worktree 의 서버나 허용
+목록만 서빙하는 대시보드 서버(`시작.bat`)가 떠 있으면 루프는 이유와 함께 멈춘다 (종료 2).
 
 재구성 루프 — 프롬프트 조립 → 모델 호출 → 검사 → fatal 을 다음 프롬프트에
 되먹임, 통과하거나 예산이 끝날 때까지:

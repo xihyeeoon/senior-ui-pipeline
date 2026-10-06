@@ -12,10 +12,20 @@ ensure_server() 는 이미 떠 있는 서버를 재사용한다 - 그때는 None
 트리의 파일을** 서빙하는지 확인한다 (serves_this_tree). 아니면 멈춘다 - 남의
 서버로 돌린 검사는 통과하든 떨어지든 뜻을 알 수 없다.
 
+서버를 따로 띄워 두려면 (뷰어로 빌드를 열어 보거나 검사기 CLI 를 여러 번 돌릴 때):
+
+  python -m senior_ui.devserver            (127.0.0.1:3003, Ctrl+C 로 끈다)
+  python -m senior_ui.devserver --port 3010
+
+`python -m http.server 3003 --directory .` 로 띄우지 마라 - --bind 가 없으면 0.0.0.0
+에 열려 .envs · sessions/ 가 같은 망에 나간다 (감사 B-27).
+
 대시보드 서버(python -m senior_ui.experiment.server · 시작.bat)와는 다르다. 그쪽은
 허용 목록만 서빙하므로 .mock-outputs/ · SENIOR_UI_OUTPUTS 의 빌드를 열지 못하고,
 ensure_server 도 그것을 재사용하지 않는다.
 """
+import argparse
+import functools
 import io
 import os
 import socket
@@ -25,7 +35,9 @@ import time
 import urllib.error
 import urllib.request
 import uuid
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
+from ._cli import setup_stdout
 from .config import PORT, ROOT
 
 
@@ -121,3 +133,37 @@ def ensure_server(log, port=PORT):
     proc.kill()
     raise RuntimeError("could not start http.server on :%d" % port)
 
+
+def main(argv=None):
+    """`python -m senior_ui.devserver` - 이 작업 트리를 루프백에 띄워 두고 기다린다.
+
+    ensure_server 와 같은 판단을 하되, 서버는 이 프로세스 안에서 돈다 (자식 프로세스를
+    띄우지 않는다). 그래야 이 창을 닫거나 프로세스를 끝내면 서버도 함께 끝난다 -
+    Windows 에서는 부모를 끝내도 자식 http.server 가 포트를 쥔 채 남는다."""
+    setup_stdout()
+    ap = argparse.ArgumentParser(prog="python -m senior_ui.devserver")
+    ap.add_argument("--port", type=int, default=PORT)
+    args = ap.parse_args(argv)
+    if listening(args.port):
+        if not serves_this_tree(args.port):
+            print("cannot start: :%d 에 이미 서버가 있지만 이 작업 트리(%s)를 서빙하지 "
+                  "않는다. 그 서버를 끄고 다시 실행하라." % (args.port, ROOT), file=sys.stderr)
+            return 2
+        print("이미 이 작업 트리를 서빙하는 서버가 :%d 에 있다 - 그대로 쓴다." % args.port)
+        return 0
+    tree_id()
+    handler = functools.partial(SimpleHTTPRequestHandler, directory=ROOT)
+    srv = ThreadingHTTPServer((HOST, args.port), handler)
+    print("http://localhost:%d/ - %s 를 루프백(%s)에만 서빙한다. 끄려면 Ctrl+C."
+          % (args.port, ROOT, HOST), flush=True)
+    try:
+        srv.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        srv.server_close()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

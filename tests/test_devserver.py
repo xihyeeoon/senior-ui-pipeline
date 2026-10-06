@@ -115,6 +115,55 @@ def test_테스트가_띄우는_http_server_는_모두_루프백에만_묶인다
     assert bad == [], "http.server 를 --bind 127.0.0.1 없이 띄운다: %s" % ", ".join(bad)
 
 
+# --------------------------------------------------------------------- #
+# 문서가 알려 주는 서버 명령도 LAN 에 열지 않는다 (감사 B-27)
+# --------------------------------------------------------------------- #
+# 코드가 일부러 막은 LAN 노출을 문서의 명령이 다시 열었다 -
+# `python -m http.server 3003 --directory .` 는 0.0.0.0 에 띄운다.
+def test_문서의_서버_명령은_LAN_에_열지_않는다():
+    import glob
+    import re
+    root = _api.ROOT_DIR
+    docs = sorted(glob.glob(os.path.join(root, "docs", "*.md"))
+                  + [os.path.join(root, "tests", "README.md"),
+                     os.path.join(root, "kb", "README.md")])
+    bad = []
+    for path in docs:
+        for n, line in enumerate(io.open(path, encoding="utf-8").read().splitlines(), 1):
+            if re.search(r"-m\s+http\.server\b", line) and "--bind 127.0.0.1" not in line:
+                bad.append("%s:%d" % (os.path.relpath(path, root), n))
+    assert bad == [], "문서가 0.0.0.0 에 여는 명령을 알려 준다: %s" % ", ".join(bad)
+
+
+def test_devserver_명령은_루프백에만_열린다():
+    """문서가 대신 알려 주는 명령 (python -m senior_ui.devserver)."""
+    import subprocess
+    import sys
+    import time
+    port = free_port()
+    proc = subprocess.Popen([sys.executable, "-m", "senior_ui.devserver", "--port", str(port)],
+                            cwd=_api.ROOT_DIR, stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT)
+    try:
+        for _ in range(100):
+            if reachable("127.0.0.1", port):
+                break
+            time.sleep(0.1)
+        assert reachable("127.0.0.1", port), "devserver 가 뜨지 않았다"
+        ip = lan_ip()
+        if ip != "127.0.0.1":
+            assert not reachable(ip, port), "LAN 주소로 들어올 수 있다 - %s:%d" % (ip, port)
+        assert _api.devserver_module.serves_this_tree(port)
+    finally:
+        proc.terminate()
+        proc.wait(timeout=10)
+        # 자식 http.server 까지 끝났는지 - 끝나지 않으면 포트가 남는다
+        for _ in range(50):
+            if not reachable("127.0.0.1", port):
+                break
+            time.sleep(0.1)
+
+
 def test_기준값_캡처의_서버는_LAN_에_열리지_않는다():
     import subprocess
     import sys
