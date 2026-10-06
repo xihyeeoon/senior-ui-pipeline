@@ -175,7 +175,10 @@ def test_the_plan_example_is_a_blank_form_not_a_design_idea():
 # 방법을 알려 주면 그 원칙이 깨진다 - 모델은 받은 예시를 베낀다.
 DESIGN_HINTS = ["검색, 자주 쓰는 것 먼저", "가나다 묶음", "자주 쓰는 항목 먼저",
                 "(검색, 자주 쓰는 것", "[전체 보기] 같은", "4.5:1",
-                "오류 코드는 쉬운 말로"]
+                "오류 코드는 쉬운 말로",
+                # 11-7b: 오류를 보이는 방식의 대안 나열, 공과금 흐름 명세 예시의 찾기 화면
+                "팝업이 아니어도", "넣는 즉시 같은 화면에서", "[다음] 을 끄고 이유를",
+                "여러 오류를 한", "#find-input", '"find"']
 
 
 def _snapshot(task):
@@ -211,9 +214,39 @@ def test_the_prompts_leave_how_to_show_choices_to_the_model(task):
     assert "일부만 먼저 보이고" not in text and "처음에는 일부만 보이고" not in text
 
 
-def test_the_error_conditions_allow_rewording_without_a_direction():
+def test_the_error_conditions_leave_the_way_of_showing_free_without_options():
+    """대안을 나열하면 그것이 권유가 된다 - "보여 주는 방식은 자유다." 만 남긴다."""
     text = _api.prompt_module.errors_block(_api.flow_module.required_errors("transfer"))
-    assert "오류 안내 문구는 바꿔도 되고" in text
+    assert "보여 주는 방식은 자유다. 지킬 것은 셋이다." in " ".join(text.split())
+    assert "되고," not in text and "보여도 된다" not in text
+
+
+def test_the_missing_choice_message_does_not_suggest_a_design():
+    """검사 I 의 fatal 은 재시도 블록으로 모델에게 간다."""
+    from test_audit_bugs import done_row, flow, row, snap
+    orig = snap({"start": row("start", choices={"pick": ["가", "나", "다"]}),
+                 "done": done_row()})
+    rep = snap({"start": row("start", choices={"pick": ["가"]}), "done": done_row()})
+    report = _api.audit(orig, rep, "<html></html>", "<html></html>",
+                        flow(["start", "done"]))
+    detail = [f["detail"] for f in report["fatal"] if f["check"] == "I"][0]
+    assert "모든 값을 고를 수 있게 포함하라" in detail
+    assert "검색" not in detail and "단계적" not in detail
+
+
+def test_the_truncation_note_does_not_ask_for_fewer_screens():
+    text = "\n".join(_api.prompt_module.truncated_part(2))
+    assert "답을 줄여서라도 문서를 끝까지 닫아라" in text
+    assert "화면 수" not in text
+
+
+def test_the_bill_flow_example_is_a_blank_form():
+    """예시의 찾기 화면 · #find-input 걸음은 검색 중심 설계를 권한다. 화면 이름과
+    선택자는 빈칸이다 (이체의 오류 경로 예시처럼)."""
+    example = json.loads("\n".join(_api.tasks_module.load_task("bill")["prompt"]["flow_example"]))
+    screens = [s["screen"] for s in example["steps"]]
+    assert all(s.startswith("<") and s.endswith(">") for s in screens), screens
+    assert "find" not in json.dumps(example)
 
 
 def test_the_preserve_note_does_not_name_designs_either():
