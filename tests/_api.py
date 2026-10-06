@@ -48,6 +48,11 @@ from senior_ui.select import rule as _select_rule            # noqa: E402
 audit = _audit.audit
 drive = _audit.drive
 load_flow = _audit.load_flow
+# 보기(see) - 모델에게 보여 줄 그림을 잘라 찍는다
+import importlib                                              # noqa: E402
+_audit_drive = importlib.import_module("senior_ui.audit.drive")
+capture_see = _audit_drive.capture_see
+see_parts = _audit_drive.see_parts
 
 # ---- senior_ui/audit/stage.py ------------------------------------------ #
 apply_stage = _audit_stage.apply_stage

@@ -332,15 +332,162 @@ def wait_for_tokens(rl, need, elapsed):
     return int(math.ceil(short / per_sec))
 
 
+# --------------------------------------------------------------------------- #
+# 그림 (화면 스크린샷)
+# --------------------------------------------------------------------------- #
+# 프롬프트는 글 하나로 만들고, 그림이 들어갈 자리에 IMAGE_MARK 를 한 번 둔다
+# (prompt.shots_section). 보낼 때 그 자리에서 글을 가르고 "이름표 글 + 그림" 을
+# 차례로 끼운다 - 그림마다 바로 앞에 화면 이름이 온다. 기록(attempt_N.*prompt.txt)
+# 에는 그림 대신 파일 경로 줄을 적는다 (prompt_record).
+#
+# 그림 하나는 {"label": 이름표, "path": PNG 경로} 다. 이 도구가 찍는 그림은
+# 모두 PNG 이고, 크기는 파일 머리에서 읽는다 (Pillow 없이).
+IMAGE_MARK = "[[그림 자리 - 도구가 이 자리에 그림을 끼운다]]"
+
+
+PNG_MAGIC = bytes([0x89]) + b"PNG" + bytes([13, 10, 26, 10])
+
+
+def png_size(path):
+    """`(폭, 높이)`. PNG 가 아니면 ValueError."""
+    with open(path, "rb") as f:
+        head = f.read(24)
+    if head[:8] != PNG_MAGIC:
+        raise ValueError("PNG 가 아니다: %s" % path)
+    return int.from_bytes(head[16:20], "big"), int.from_bytes(head[20:24], "big")
+
+
+def image_rule(model):
+    """그 모델의 그림 토큰 규칙 (config.IMAGE_TOKENS). 표에 없으면 기본 규칙에
+    known=False."""
+    from senior_ui import config
+    rule = config.IMAGE_TOKENS.get(model)
+    if rule:
+        return dict(rule, known=True)
+    return dict(config.IMAGE_TOKENS_DEFAULT, known=False)
+
+
+def image_tokens(width, height, model):
+    """`(토큰, 어떻게 셌는가)`. 보내기 전 어림이다 - 실측은 usage 로 안다.
+
+    패치 방식 (gpt-5.4 이후 · gpt-6-astra): 32px 패치 수 x 배수. 패치가 상한을
+    넘으면 상한에 맞게 줄인 크기로 다시 센다. 타일 방식 (gpt-4o · gpt-4.1 ·
+    gpt-5.1): 2048 정사각형 안으로 줄이고, 짧은 변이 768 을 넘으면 768 로 줄인
+    뒤 512px 타일 수 x 타일 토큰 + 기본 토큰. 작은 그림은 키우지 않는다.
+    출처: OpenAI 비전 안내 (2026-10-06 확인)."""
+    rule = image_rule(model)
+    w, h = float(width), float(height)
+    if rule["method"] == "patch":
+        patches = math.ceil(w / 32) * math.ceil(h / 32)
+        if patches > rule["budget"]:
+            k = math.sqrt(32 * 32 * rule["budget"] / (w * h))
+            w, h = math.floor(w * k), math.floor(h * k)
+            patches = min(rule["budget"], math.ceil(w / 32) * math.ceil(h / 32))
+        tokens = int(math.ceil(patches * rule["multiplier"]))
+        how = "patch x%s" % rule["multiplier"]
+    else:
+        if max(w, h) > 2048:
+            k = 2048 / max(w, h)
+            w, h = w * k, h * k
+        if min(w, h) > 768:
+            k = 768 / min(w, h)
+            w, h = w * k, h * k
+        tiles = math.ceil(math.floor(w) / 512) * math.ceil(math.floor(h) / 512)
+        tokens = rule["base"] + tiles * rule["tile"]
+        how = "tile %d+%d" % (rule["base"], rule["tile"])
+    if not rule["known"]:
+        how += " (표에 없는 모델 - 기본 규칙)"
+    elif rule.get("estimated"):
+        how += " (추정)"
+    return tokens, how
+
+
+def describe_images(images, model):
+    """그림들의 `{"count", "estimated", "method", "sizes"}`. 없으면 count 0."""
+    total, how, sizes = 0, None, []
+    for img in images or []:
+        w, h = png_size(img["path"])
+        t, how = image_tokens(w, h, model)
+        total += t
+        sizes.append([w, h])
+    return {"count": len(images or []), "estimated": total, "method": how,
+            "sizes": sizes}
+
+
+def _data_url(path):
+    import base64
+    with open(path, "rb") as f:
+        return "data:image/png;base64," + base64.b64encode(f.read()).decode("ascii")
+
+
+def image_label(i, n, img):
+    return "[그림 %d/%d] %s" % (i, n, img["label"])
+
+
+def content_parts(prompt, images, api, detail):
+    """글과 그림을 그 API 의 content 목록으로. 그림은 IMAGE_MARK 자리에 들어간다.
+    자리가 없으면 글 끝에 붙인다."""
+    head, mark, tail = prompt.partition(IMAGE_MARK)
+    if not mark:
+        head, tail = prompt, ""
+    text_type = "text" if api == "chat" else "input_text"
+    parts = [{"type": text_type, "text": head}]
+    for i, img in enumerate(images, 1):
+        parts.append({"type": text_type, "text": image_label(i, len(images), img)})
+        url = _data_url(img["path"])
+        if api == "chat":
+            parts.append({"type": "image_url", "image_url": {"url": url, "detail": detail}})
+        else:
+            parts.append({"type": "input_image", "image_url": url, "detail": detail})
+    if tail:
+        parts.append({"type": text_type, "text": tail})
+    return parts
+
+
+def model_text(prompt, images):
+    """보내는 글만 - 그림 자리에 이름표들. 글 토큰의 어림은 이것으로 센다."""
+    labels = "\n".join(image_label(i, len(images), img)
+                       for i, img in enumerate(images or [], 1))
+    return prompt.replace(IMAGE_MARK, labels)
+
+
+def prompt_record(prompt, images, model=None, base=None):
+    """기록에 남기는 프롬프트. 그림 자리에 그림마다 한 줄 - 이름표 · 파일 · 크기 ·
+    예상 토큰. 그림이 없으면 자리 표시를 지운다 (프롬프트는 그대로다). 자리가
+    없는 프롬프트에 그림을 보내면 끝에 붙으므로 (content_parts) 기록도 끝에 적는다."""
+    if IMAGE_MARK not in prompt:
+        if not images:
+            return prompt
+        prompt = prompt + "\n" + IMAGE_MARK
+    lines = []
+    for i, img in enumerate(images or [], 1):
+        w, h = png_size(img["path"])
+        t, _how = image_tokens(w, h, model)
+        path = (os.path.relpath(img["path"], base).replace(os.sep, "/") if base
+                else img["path"])
+        lines.append("%s  <그림: %s %dx%d · 예상 %d토큰>"
+                     % (image_label(i, len(images), img), path, w, h, t))
+    return prompt.replace(IMAGE_MARK, "\n".join(lines))
+
+
 def request_kwargs(model, prompt, cap, profile, temperature=None, seed=None,
-                   reasoning_effort=None):
-    """그 모델의 방식대로 만든 요청 인자."""
+                   reasoning_effort=None, images=None, detail=None):
+    """그 모델의 방식대로 만든 요청 인자. 그림이 있으면 content 를 목록으로
+    보낸다 (글 · 이름표 · 그림 …). 없으면 전과 같이 글 하나다."""
     chat = profile["api"] == "chat"
     kw = {"model": model}
-    if chat:
-        kw["messages"] = [{"role": "user", "content": prompt}]
+    if images:
+        from senior_ui import config
+        content = content_parts(prompt, images, profile["api"],
+                                detail or config.IMAGE_DETAIL)
     else:
-        kw["input"] = prompt
+        content = prompt.replace(IMAGE_MARK, "")
+    if chat:
+        kw["messages"] = [{"role": "user", "content": content}]
+    elif images:
+        kw["input"] = [{"role": "user", "content": content}]
+    else:
+        kw["input"] = content
     kw[profile["length_param"]] = cap
     if profile["temperature"] and temperature is not None:
         kw["temperature"] = temperature
@@ -394,7 +541,8 @@ def read_reply(resp, api):
 
 
 def call_model(model, prompt, max_tokens, log=None, backoff=(20, 45, 90, 180),
-               temperature=TEMPERATURE, seed=SEED, reasoning_effort=None, api=None):
+               temperature=TEMPERATURE, seed=SEED, reasoning_effort=None, api=None,
+               images=None, detail=None):
     """시도마다 직전 HTML 전체를 다시 보내므로 프롬프트가 크다. 이 계정은 전에
     TPM 30,000 한도에 걸린 적이 있으므로 429 를 지수적으로 기다렸다 다시 친다.
     그래도 안 되면 RateLimited 를 올려 설계 실패와 섞이지 않게 한다.
@@ -421,7 +569,7 @@ def call_model(model, prompt, max_tokens, log=None, backoff=(20, 45, 90, 180),
     endpoint = (client.responses if profile["api"] == "responses"
                 else client.chat.completions)
     kw = request_kwargs(model, prompt, max_tokens, profile, temperature, seed,
-                        reasoning_effort)
+                        reasoning_effort, images=images, detail=detail)
     t0 = time.time()
     waits, dropped = list(backoff), []
     while True:
@@ -479,6 +627,8 @@ def call_model(model, prompt, max_tokens, log=None, backoff=(20, 45, 90, 180),
         "status": status,
         # 프롬프트를 뺀 실제 요청 인자, 그리고 모델이 거절해 뺀 인자
         "sent": {k: v for k, v in kw.items() if k not in ("messages", "input")},
+        # 이 호출에 넣은 그림 수 (화면 스크린샷)
+        "images": len(images or []),
         "dropped": dropped,
         # 이 호출이 받은 응답 헤더의 분당 한도
         "ratelimit": read_ratelimit(raw.headers),

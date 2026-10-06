@@ -30,6 +30,7 @@ import time
 
 from senior_ui import audit as A
 from senior_ui import config
+from senior_ui.audit.drive import SHOT_SAFE
 from senior_ui.audit.flow import required_errors
 from senior_ui.config import OUTPUTS_ENV, ROOT, inside_root, outputs_dir, url_for
 from senior_ui.devserver import ensure_server
@@ -40,13 +41,14 @@ from .brief import write_brief
 from .model import (MOCK_TASK, TEMPERATURE, SEED, ApiRejected, InfraFailed,
                     RateLimited, call_model, cost_usd, describe, describe_ratelimit,
                     estimate_tokens, load_env, mock_plan_reply, mock_reply, price_for,
-                    profile_for, sdk_version, wait_for_tokens)
-from .plan import (PlanProblems, apply_changes, match_problems, parse_plan,
-                   parse_reflection, plan_report, screens_in, unaddressed)
+                    profile_for, sdk_version, wait_for_tokens, describe_images,
+                    model_text, prompt_record)
+from .plan import (PlanProblems, apply_changes, evidence_kinds, match_problems,
+                   parse_plan, parse_reflection, plan_report, screens_in, unaddressed)
 from .preserve import inject, names_read, preserved_data
 from .prompt import (build_plan_prompt, build_prompt, choices_block, errors_block,
                      load_plan_template, load_template, one_line, plan_retry_block,
-                     retry_block, with_reflection)
+                     retry_block, shots_section, with_reflection)
 from .reply import (FlowShape, accept_done_alias, failure_report, parse_reply,
                     preserved_problems, problems_report, validate_flow)
 
@@ -105,6 +107,58 @@ def budget_choice(args):
             out[kind] = (both, "--attempts")
         else:
             out[kind] = (config.DEFAULT_BUDGET[kind], "config.DEFAULT_BUDGET")
+    return out
+
+
+def see_choice(args):
+    """`(보기를 켜는가, 어디서 왔나)`. --see off 면 끈다 - 화면을 보여 주지 않던
+    전의 동작으로, 보여 준 효과를 견줄 때 쓴다."""
+    given = getattr(args, "see", None)
+    if given:
+        return given != "off", "--see"
+    return True, "기본값 (켜짐)"
+
+
+def refine_choice(args):
+    """`(다듬기 횟수, 어디서 왔나)`. --refine N, 아니면 config.DEFAULT_REFINE."""
+    given = getattr(args, "refine", None)
+    if given is not None:
+        return given, "--refine"
+    return config.DEFAULT_REFINE, "config.DEFAULT_REFINE"
+
+
+# 그림 이름표. 원본은 진단·계획 호출에, 빌드는 다듬기 호출에 들어간다.
+ORIGINAL_LABELS = {"screen": "원본 화면", "error": "원본 오류 상태"}
+BUILD_LABELS = {"screen": "화면", "error": "오류 상태"}
+
+
+def see_images(shots, labels, error_ids=()):
+    """찍어 둔 그림들을 `[{"label", "path"}]` 로. 화면은 see/index.json 순서,
+    그 뒤에 오류 상태(audit_error_<id>.png, 과제의 오류 순서). 없는 것은 건너뛴다.
+
+    이름표에는 화면 이름과, 스크롤되는 화면이면 몇 번째 장인지와 몇 px 내린
+    모습인지를 적는다. 4장에서 끊긴 화면은 남은 높이도 적는다."""
+    if not shots:
+        return []
+    out = []
+    index = os.path.join(shots, "see", "index.json")
+    items = json.load(io.open(index, encoding="utf-8")) if os.path.exists(index) else []
+    for it in items:
+        label = "%s %s" % (labels["screen"], it["visit"])
+        if it["parts"] > 1:
+            label += " — 스크롤 %d/%d (%s)" % (
+                it["part"], it["parts"],
+                "맨 위" if it["offset"] == 0 else "%dpx 내린 모습" % it["offset"])
+        if it.get("more_px"):
+            label += " · 아래로 %dpx 더 있음 (찍지 않음)" % it["more_px"]
+        path = os.path.join(shots, "see", it["file"])
+        if os.path.exists(path):
+            out.append({"label": label, "path": path})
+    for eid in error_ids:
+        path = os.path.join(shots, "audit_error_%s.png" % SHOT_SAFE.sub("_", eid))
+        if os.path.exists(path):
+            out.append({"label": "%s %s — 잘못된 값을 넣은 직후" % (labels["error"], eid),
+                        "path": path})
     return out
 
 
@@ -238,6 +292,13 @@ class Run:
         budget = budget_choice(args)
         self.budget = Budget(budget["format"][0], budget["audit"][0],
                              getattr(args, "infra_attempts", 3))
+        # 보기 (--see): 원본 그림을 진단·계획 호출에 넣는가. 원본 그림은 실행
+        # 시작 때 한 번 찍는다 (run).
+        self.see, see_source = see_choice(args)
+        self.original_images = []
+        # 보고 다듬기 (--refine): 통과한 빌드를 그림으로 보여 주고 다듬게 하는
+        # 횟수. 형식 · 검사 예산과 따로 센다.
+        self.refine, refine_source = refine_choice(args)
         # 마지막으로 **검사까지 간** 빌드와 그 결과. 셋은 늘 같은 시도의 것이다.
         self.last = {"report": None, "html": None, "flow_text": None}
         # 마지막 형식 오류. 검사 결과와 다른 것이므로 따로 들고 있는다 - 한쪽을
@@ -266,7 +327,12 @@ class Run:
                         # 마지막 실제 호출이 받은 분당 한도 (호출마다는 calls[].ratelimit)
                         "ratelimit": None,
                         # 시도별·전체 예상 금액 (config.MODEL_PRICES, tally_cost)
-                        "cost": None}
+                        "cost": None,
+                        "see": {"on": self.see, "source": see_source,
+                                "original_images": 0},
+                        "refine": {"budget": self.refine, "source": refine_source,
+                                   "rounds": [], "final_from": None,
+                                   "reverted": None}}
 
 
 # --------------------------------------------------------------------------- #
@@ -388,6 +454,8 @@ def _tally(calls):
     그중 생각에 쓴 몫 - 추론형이 아니면 None 이거나 0 이다."""
     return {"calls": len(calls),
             "estimated_prompt": sum(c["estimated_prompt"] for c in calls),
+            "images": sum(c.get("images") or 0 for c in calls),
+            "estimated_images": sum(c.get("estimated_images") or 0 for c in calls),
             "max_tokens": sum(c["max_tokens"] for c in calls),
             "prompt": _sum(calls, "prompt"),
             "completion": _sum(calls, "completion"),
@@ -465,13 +533,18 @@ def request_plan(r, n, p):
     outcome 이 None 이면 계획이 섰다 (r.diagnosis · r.plan). 아니면 이 시도는
     여기서 끝났고 outcome 이 다음에 할 일이다. 쓸 수 없는 답은 형식 실패다 -
     모델이 고칠 수 있는 것이므로 형식 예산을 쓴다."""
+    images = r.original_images
     prompt = build_plan_prompt(r.plan_template, r.original_html, r.choices,
                                r.original_screens, plan_retry_block(r.plan_error),
-                               errors=errors_block(r.errors))
-    io.open(p + ".plan_prompt.txt", "w", encoding="utf-8", newline="\n").write(prompt)
-    r.log("plan prompt: %d chars%s" % (len(prompt),
-                                       " (with retry block)" if r.plan_error else ""))
-    reply, outcome = ask_model(r, n, p, prompt, r.caps["plan"], mock_plan_reply, "plan")
+                               errors=errors_block(r.errors),
+                               shots=shots_section(images))
+    io.open(p + ".plan_prompt.txt", "w", encoding="utf-8", newline="\n").write(
+        prompt_record(prompt, images, r.model, base=r.run_dir))
+    r.log("plan prompt: %d chars%s%s" % (len(prompt),
+                                         " (with retry block)" if r.plan_error else "",
+                                         " + 그림 %d장" % len(images) if images else ""))
+    reply, outcome = ask_model(r, n, p, prompt, r.caps["plan"], mock_plan_reply, "plan",
+                               images=images)
     if reply is None:
         return None, outcome
     io.open(p + ".plan_response.txt", "w", encoding="utf-8",
@@ -507,11 +580,16 @@ def request_plan(r, n, p):
     r.diagnosis, r.plan = diagnosis, plan
     _dump(diagnosis, p + ".diagnosis.json")
     left = unaddressed(diagnosis, plan)
+    kinds = evidence_kinds(diagnosis)
     r.summary["plan"] = {"attempt": n, "diagnosis": p + ".diagnosis.json",
                          "diagnosis_count": len(diagnosis),
+                         # 근거의 종류 - 화면 그림을 보고 한 진단이 얼마나 되나
+                         "evidence_kinds": kinds,
                          "screens": [sc["name"] for sc in plan["screens"]],
                          "changes": len(plan["changes"]),
                          "unaddressed": left}
+    r.log("plan: 근거 화면 %d · 코드 %d · 둘 다 %d · 미표시 %d"
+          % (kinds["screen"], kinds["code"], kinds["both"], kinds["missing"]))
     r.log("plan: 진단 %d · 화면 %d (%s) · 변경 %d%s"
           % (len(diagnosis), len(plan["screens"]),
              ", ".join(sc["name"] for sc in plan["screens"]), len(plan["changes"]),
@@ -537,22 +615,38 @@ def wait_tokens(r, need):
     return wait
 
 
-def ask_model(r, n, p, prompt, max_tokens, mock, stage):
+def ask_model(r, n, p, prompt, max_tokens, mock, stage, images=None):
     """모델에 한 번 묻는다. 진단·계획과 생성이 같은 길을 쓴다.
 
     보내기 전에 예상 토큰을 로그에 남긴다. 분당 한도는 입력에 max_tokens 를
     더해 세므로 그 합도 적는다 - 한도에 걸렸을 때 어느 호출이 얼마였는지를
     로그만 보고 알 수 있어야 한다.
 
+    그림(images)이 있으면 그 수와 예상 토큰을 호출 기록에 남기고, 예상 입력에
+    더한다 (model.describe_images). 한 호출의 그림이 config.IMAGE_WARN_COUNT 를
+    넘으면 경고 한 줄을 쓴다 - 막지는 않는다.
+
     돌려주는 것은 (reply, outcome). reply 가 None 이면 이 시도가 모델 호출에서
     끝난 것이고 outcome 이 다음에 할 일이다."""
-    est, method = estimate_tokens(prompt, r.model)
+    images = images or []
+    text_est, method = estimate_tokens(model_text(prompt, images), r.model)
+    pics = describe_images(images, r.model)
+    est = text_est + pics["estimated"]
     call = {"stage": stage, "estimated_prompt": est, "method": method,
-            "max_tokens": max_tokens, "usage": None}
+            "max_tokens": max_tokens, "usage": None,
+            "images": pics["count"], "estimated_images": pics["estimated"]}
+    if images:
+        call["image_method"] = pics["method"]
     r.calls.append(call)
     r.all_calls.append((n, call))
-    r.log("tokens: %s 예상 입력 %d (%s) + max_tokens %d = 분당 한도 계산 %d"
-          % (stage, est, method, max_tokens, est + max_tokens))
+    r.log("tokens: %s 예상 입력 %d (%s%s) + max_tokens %d = 분당 한도 계산 %d"
+          % (stage, est, method,
+             " · 그림 %d장 %d토큰 %s" % (pics["count"], pics["estimated"], pics["method"])
+             if images else "", max_tokens, est + max_tokens))
+    if pics["count"] > config.IMAGE_WARN_COUNT:
+        r.log("경고: %s 호출에 그림이 %d장이다 (config.IMAGE_WARN_COUNT %d 초과) — 그림만 "
+              "예상 %d토큰" % (stage, pics["count"], config.IMAGE_WARN_COUNT,
+                            pics["estimated"]))
     if r.args.mock:
         reply = mock(r.args.mock)
     else:
@@ -562,7 +656,8 @@ def ask_model(r, n, p, prompt, max_tokens, mock, stage):
         try:
             reply = call_model(r.model, prompt, max_tokens, r.log,
                                temperature=r.temperature, seed=r.seed,
-                               reasoning_effort=r.reasoning_effort, api=r.api)
+                               reasoning_effort=r.reasoning_effort, api=r.api,
+                               **({"images": images} if images else {}))
         except RateLimited as e:
             # 설계 실패가 아니다. 예산을 깎지 않고 여기서 멈춘다.
             r.log("중단: 인프라 한도 — 백오프를 다 쓰고도 429 (%s)" % e)
@@ -606,6 +701,12 @@ def ask_model(r, n, p, prompt, max_tokens, mock, stage):
                 return None, STOP
             return None, GO_ON
     call["usage"] = reply.get("usage")
+    if images and (call["usage"] or {}).get("prompt") is not None:
+        # 실측 입력에서 글의 어림을 뺀 것. 그림 토큰의 실측에 가장 가까운 값이다.
+        call["measured_images"] = call["usage"]["prompt"] - text_est
+        r.log("그림: %d장 — 실측 입력 %d − 글 어림 %d = %d (어림 %d)"
+              % (pics["count"], call["usage"]["prompt"], text_est,
+                 call["measured_images"], pics["estimated"]))
     if reply.get("dropped"):
         # 모델이 거절해 빼고 보낸 인자 (model.DROPPABLE)
         call["dropped"] = list(reply["dropped"])
@@ -1276,8 +1377,21 @@ def run(args):
         log("audit: driving the original once (baseline for contrast / language)")
         # 비교 기준으로만 쓰므로 원본의 오류 경로는 걷지 않는다 - 모델의 설계는
         # 원본과 화면이 다르고, 오류 경로는 생성물의 흐름으로 걷는다.
-        r.orig_snapshot = asyncio.run(A.drive(r.original_url, base_flow,
-                                              errors=False))
+        #
+        # 보기가 켜져 있으면(--see) 같은 걷기에서 원본 화면을 찍는다 - 진단·계획
+        # 호출에 그림으로 들어간다. 오류 상태도 찍으려고 오류 경로까지 걷지만,
+        # 그 결과는 스냅샷에서 떼어 둔다 - 비교 기준은 전과 같아야 한다.
+        shots = os.path.join(run_dir, "shots", "original") if r.see else None
+        snap = asyncio.run(A.drive(r.original_url, base_flow, errors=r.see,
+                                   want_shots=shots, see=r.see))
+        snap.pop("error_paths", None)
+        r.orig_snapshot = snap
+        r.original_images = see_images(shots, ORIGINAL_LABELS,
+                                       [e["id"] for e in r.errors]) if r.see else []
+        r.summary["see"]["original_images"] = len(r.original_images)
+        if r.see:
+            log("보기: 원본 그림 %d장 (%s)" % (len(r.original_images),
+                                          os.path.relpath(shots, run_dir)))
         r.choices = choices_block(r.orig_snapshot, original_html)
         if r.choices:
             log("선택지: %s" % " / ".join(

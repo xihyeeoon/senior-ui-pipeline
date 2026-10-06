@@ -26,6 +26,7 @@ from senior_ui.config import ROOT
 from senior_ui.preserved import GLOBAL_NAME
 from senior_ui.tasks import load_task
 
+from .model import IMAGE_MARK
 from .preserve import preserved_data, split_groups
 from .reply import read_forms
 
@@ -87,14 +88,31 @@ def build_prompt(template, original_html, retry_block, choices="", plan="",
 
 
 def build_plan_prompt(template, original_html, choices, original_screens,
-                      retry="", errors=None):
+                      retry="", errors=None, shots=""):
+    """`shots` 는 shots_section 이 만든 "원본 화면" 머리 + 그림 자리다. 그림이
+    없으면 빈 글자 - 전의 프롬프트와 같다."""
     if errors is None:
         errors = errors_block(original_error_paths())
     return (template.replace("{{ORIGINAL_HTML}}", original_html)
                     .replace("{{RETRY_BLOCK}}", retry)
                     .replace("{{CHOICES}}", choices)
                     .replace("{{ERRORS}}", errors)
+                    .replace("{{ORIGINAL_SHOTS}}", shots)
                     .replace("{{ORIGINAL_SCREENS}}", ", ".join(original_screens)))
+
+
+ORIGINAL_SHOTS_INTRO = (
+    "아래 그림들은 원본을 휴대폰(폭 390px, 높이 844px)에서 연 모습이다. 그림마다 앞에 "
+    "화면 이름이 있다.\n스크롤되는 화면은 맨 위부터 창 높이씩 잘라 여러 장으로 찍었다. "
+    "오류 상태는 잘못된 값을 넣은 직후의 모습이다.")
+
+
+def shots_section(images, title="원본 화면", intro=ORIGINAL_SHOTS_INTRO):
+    """그림이 들어갈 절. 글에는 머리와 그림 자리 표시(IMAGE_MARK) 하나만 들어가고,
+    그림은 보낼 때 그 자리에 끼운다 (model.content_parts). 그림이 없으면 빈 글자."""
+    if not images:
+        return ""
+    return "## %s\n\n%s\n\n%s\n\n" % (title, intro, IMAGE_MARK)
 
 
 def errors_block(paths):

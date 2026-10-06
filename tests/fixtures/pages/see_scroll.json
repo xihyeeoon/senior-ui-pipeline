@@ -1,0 +1,15 @@
+{
+  "name": "see_scroll",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
+  "note": "보기(see) 찍기. inner 는 들어갈 때 이미 300px 내려가 있다 - 첫 장은 맨 위에서 찍고, 다 찍은 뒤에는 300px 로 되돌려야 한다.",
+  "derived_from_original": false,
+  "required_ids": ["phone", "dn-amt"],
+  "steps": [
+    {"screen": "short"},
+    {"screen": "inner", "click": "[data-action='go-inner']"},
+    {"screen": "page", "click": "#to-page"},
+    {"screen": "end", "click": "[data-action='go-end']"}
+  ],
+  "expect": {"end": [["#dn-amt", "{AMOUNT_SHOWN}"]]},
+  "done_amount": "#dn-amt"
+}

@@ -382,6 +382,21 @@ def apply_changes(plan, diagnosis, changes, original_screens):
     return new, []
 
 
+# 진단의 근거가 무엇이었나 - 화면 그림을 보고, 코드를 보고, 둘 다. 화면을 보여
+# 준 효과를 세려는 칸이다. 빠지거나 틀린 값은 형식 실패로 다시 묻지 않고
+# "missing" 으로 센다 - 진단·계획 호출 한 번을 이 칸 하나 때문에 쓰지 않는다.
+EVIDENCE_KINDS = ("screen", "code", "both")
+
+
+def evidence_kinds(diagnosis):
+    """`{"screen": n, "code": n, "both": n, "missing": n}`."""
+    out = dict.fromkeys(EVIDENCE_KINDS + ("missing",), 0)
+    for d in diagnosis or []:
+        k = d.get("evidence_kind") if isinstance(d, dict) else None
+        out[k if k in EVIDENCE_KINDS else "missing"] += 1
+    return out
+
+
 def plan_report(problems):
     """계획을 세우지 못한 시도도 다른 실패와 같은 리포트 모양으로 남긴다."""
     return {"passed": False, "warning": [],
