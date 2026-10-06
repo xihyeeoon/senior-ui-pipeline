@@ -309,6 +309,12 @@ async def drive(url, flow, want_shots=None, errors=True, see=False):
             tasks = attach_listeners(page, data)
             await walk(page, flow, data, want_shots, url, see=see)
             await drain_dialogs(tasks)
+            reveal = flow.get("reveal")
+            if isinstance(reveal, dict) and reveal:
+                data["revealed"] = {}
+                for action, spec in reveal.items():
+                    data["revealed"][action] = await walk_reveal(
+                        browser, url, flow, spec if isinstance(spec, dict) else {})
             paths = [e for e in flow.get("error_paths") or []
                      if isinstance(e, dict) and e.get("id")] if errors else []
             if paths:
@@ -462,6 +468,73 @@ def write_see_index(folder, items):
     os.makedirs(out, exist_ok=True)
     with open(os.path.join(out, SEE_INDEX), "w", encoding="utf-8") as f:
         json.dump(items, f, ensure_ascii=False, indent=1)
+
+
+async def walk_reveal(browser, url, flow, spec):
+    """펼치기 조작 하나를 새 페이지에서 걷는다. 판정은 하지 않는다 (검사 I).
+
+      1. 정답 걸음을 `at` (방문 이름) 에 도착할 때까지 밟는다.
+      2. `do` 의 동작을 하나씩 실행하고, 하나 끝날 때마다 선택지(CHOICE_GROUPS)를
+         모아 합친다. 탭처럼 누를 때마다 다시 그려지는 목록도 그래서 다 센다.
+
+    정답 경로의 걷기와 따로 걷는다 - 펼친 상태가 A~H 가 보는 화면을 바꾸지
+    않게. 돌려주는 것은 `{"at", "choices": {action: [값]}, "error"}`."""
+    truth = truth_of(flow)
+    row = {"at": spec.get("at"), "choices": {}, "error": None}
+    page = await browser.new_page(viewport={"width": 390, "height": 844})
+    ed = {"js_errors": [], "js_error_details": [], "dialogs": [], "reached": []}
+    tasks = attach_listeners(page, ed)
+
+    async def failed(phase, e):
+        msg = "%s: %s" % (type(e).__name__, e) if isinstance(e, Exception) else e
+        hint = await where_is(page, msg) if isinstance(e, Exception) else None
+        row["error"] = {"phase": phase, "detail": msg + (" || " + hint if hint else "")}
+
+    def merge(groups):
+        for action, vals in (groups or {}).items():
+            have = row["choices"].setdefault(action, [])
+            have += [v for v in vals if v not in have]
+
+    try:
+        try:
+            await page.goto(url, wait_until="networkidle")
+        except Exception as e:
+            await failed("load", e)
+            return row
+        visits = visit_keys(flow["steps"])
+        if spec.get("at") not in visits:
+            await failed("replay", "at %r 은 steps 의 방문 이름이 아니다 (%s)"
+                         % (spec.get("at"), ", ".join(visits)))
+            return row
+        for step, visit in zip(flow["steps"], visits):
+            try:
+                if "do" in step:
+                    await run_actions(page, step["do"], None, truth)
+                elif "click" in step:
+                    await run_actions(page, {"click": step["click"]}, None, truth)
+            except Exception as e:
+                await failed("replay", e)
+                return row
+            if not await settle(page, step["screen"]):
+                await failed("replay", "정답 걸음 %r 화면이 켜지지 않았다" % visit)
+                return row
+            if visit == spec.get("at"):
+                break
+        merge(await page.evaluate(P.CHOICE_GROUPS))
+        actions = spec.get("do") or []
+        for act in (actions if isinstance(actions, list) else [actions]):
+            try:
+                await run_actions(page, [act], None, truth)
+            except Exception as e:
+                await failed("do", e)
+                return row
+            await page.wait_for_timeout(100)
+            merge(await page.evaluate(P.CHOICE_GROUPS))
+        return row
+    finally:
+        await drain_dialogs(tasks)
+        row["js_errors"] = ed["js_errors"]
+        await page.close()
 
 
 def _not_walked(data, ep):

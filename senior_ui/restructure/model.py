@@ -819,7 +819,31 @@ MOCKS = {
     # 오류 경로는 적었지만 HTML 에 오류 처리가 없다. 형식 검사는 지나고, 검사 J
     # 가 "틀린 값으로 다음 화면에 넘어갔다" 로 잡는다.
     "errors-unhandled": (BANKS_ALL, "arrays", False, "unhandled"),
+    # 은행 목록을 처음에는 6개만 그리고 [전체 보기] 를 눌러야 나머지를 그린다.
+    # 흐름 명세의 reveal 에 그 조작을 적었다 - 통과해야 한다.
+    "reveal": (BANKS_ALL, "arrays", False, "handled"),
+    # 같은 HTML 인데 reveal 을 적지 않았다. 검사 I 에서 떨어져야 한다.
+    "reveal-undeclared": (BANKS_ALL, "arrays", False, "handled"),
 }
+# 펼치기 설계를 쓰는 모드와, 흐름 명세에 reveal 을 적는가.
+REVEAL_MODES = {"reveal": True, "reveal-undeclared": False}
+# 은행 목록을 6개 + [전체 보기] 로 그리는 고침. Run 1 의 fillBankList 와 클릭 처리기.
+REVEAL_SWAPS = [
+    ("  const list=BANKS.filter(n=>!filter || n.indexOf(filter)>-1);",
+     "  const found=BANKS.filter(n=>!filter || n.indexOf(filter)>-1);\n"
+     "  const list=(filter || S.allBanks) ? found : found.slice(0, 6);"),
+    ("    '<span>'+n+'</span></button>').join('');",
+     "    '<span>'+n+'</span></button>').join('') +\n"
+     "    ((filter || S.allBanks) ? '' : '<button class=\"bankrow\" "
+     "data-action=\"show-all-banks\" id=\"show-all-banks\">전체 보기</button>');"),
+    ("  else if(a==='bank-other'){",
+     "  else if(a==='show-all-banks'){ S.allBanks=true; fillBankList(''); }\n"
+     "  else if(a==='bank-other'){"),
+]
+# reveal 모드의 흐름 명세에 더하는 펼치기 조작. bank 화면에서 [다른 은행이에요] 로
+# 목록을 열고 [전체 보기] 를 누른다.
+MOCK_REVEAL = {"pick-bank": {"at": "bank", "do": [
+    {"click": "[data-action='bank-other']"}, {"click": "#show-all-banks"}]}}
 MODES = sorted(MOCKS)
 
 
@@ -843,6 +867,9 @@ def mock_build(mode):
     html = swap(html, *NAME_SWAP).replace(*NAME_SWAP)
     for old, new in PADS[pad]:
         html = swap(html, old, new)
+    if mode in REVEAL_MODES:
+        for old, new in REVEAL_SWAPS:
+            html = swap(html, old, new)
     return html
 
 
@@ -1041,6 +1068,8 @@ def mock_reply(mode, reflect=False):
             flow["steps"][1]["click"] = "[data-action='does-not-exist']"
         if ERRORS[MOCKS[mode][3]][1]:
             flow["error_paths"] = json.loads(json.dumps(MOCK_ERROR_PATHS))
+        if REVEAL_MODES.get(mode):
+            flow["reveal"] = json.loads(json.dumps(MOCK_REVEAL))
     text = "```html\n%s\n```\n\n```json\n%s\n```\n" % (
         html, json.dumps(flow, ensure_ascii=False, indent=2))
     if reflect:

@@ -161,6 +161,13 @@ def build_parser():
     ap.add_argument("--stage", choices=sorted(STAGES), default=None,
                     help="검사 단계. wireframe 은 A·B·C·F·I·J 만 본다. 주지 않으면 "
                          "config.DEFAULT_STAGE (%s)" % config.DEFAULT_STAGE)
+    ap.add_argument("--see", choices=["on", "off"], default=None,
+                    help="원본 화면 그림을 진단·계획 호출에 넣는가. 주지 않으면 on. "
+                         "off 는 그림 없이 글만 보내던 전의 동작이다")
+    ap.add_argument("--refine", type=int, default=None, metavar="N",
+                    help="보고 다듬기 횟수. 검사를 통과한 빌드의 스크린샷을 보여 주고 "
+                         "다듬게 한다. 0 이면 끈다. 형식 · 검사 예산과 따로 센다. 주지 "
+                         "않으면 config.DEFAULT_REFINE (%d)" % config.DEFAULT_REFINE)
     ap.add_argument("--list-models", action="store_true",
                     help="이 키로 쓸 수 있는 gpt- 모델을 보이고 끝난다 (models.list, 요금 "
                          "없음). 실행 폴더를 만들지 않는다 - outputs/model-probe.log")

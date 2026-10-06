@@ -376,3 +376,109 @@ def test_the_contract_is_one_block_shared_by_generation_and_refinement():
 def test_the_recover_button_may_appear_only_in_the_error_state():
     text = _api.load_template("transfer")
     assert "되돌아가는 버튼은 오류 상태에서만 보여도 된다" in text
+
+
+# --------------------------------------------------------------------------- #
+# 4. 펼치기 (reveal)
+# --------------------------------------------------------------------------- #
+from senior_ui.audit.checks import i_choices  # noqa: E402
+from senior_ui.audit.context import AuditContext  # noqa: E402
+
+reply_mod = _api.reply_module
+REVEAL_HTML = """<html><body>
+<section data-screen="start"><button data-action="go" id="phone">시작</button></section>
+<section data-screen="bank"><div id="list"></div>
+<button data-action="show-all" id="show-all">전체 보기</button></section>
+<section data-screen="done"><span id="dn-amt">10,000</span></section>
+<script>
+const L = ['a','b','c'];
+document.getElementById('list').innerHTML =
+  L.slice(0,1).map(n => '<button data-action="pick-bank" data-v="'+n+'">'+n+'</button>').join('');
+function onClick(el){ const a = el.dataset.action;
+  if (a === 'go') {} else if (a === 'show-all') {} else if (a === 'pick-bank') {} }
+</script></body></html>"""
+
+
+def reveal_flow(reveal):
+    flow = {"name": "auto", "required_ids": ["phone", "dn-amt"],
+            "steps": [{"screen": "start"}, {"screen": "bank", "click": "#phone"},
+                      {"screen": "done", "click": "[data-action='pick-bank']"}],
+            "expect": {"done": [["#dn-amt", "{AMOUNT_SHOWN}"]]}}
+    if reveal is not None:
+        flow["reveal"] = reveal
+    return flow
+
+
+GOOD_REVEAL = {"pick-bank": {"at": "bank", "do": [{"click": "#show-all"}]}}
+
+
+def test_a_good_reveal_has_no_problems():
+    assert reply_mod.validate_flow(reveal_flow(GOOD_REVEAL), REVEAL_HTML, [], []) == []
+
+
+@pytest.mark.parametrize("reveal,needle", [
+    ([{"click": "#show-all"}], "reveal 이 객체가 아니다"),
+    ({"pick-bank": [{"click": "#show-all"}]}, "reveal.pick-bank 가 객체가 아니다"),
+    ({"pick-bank": {"do": [{"click": "#show-all"}]}}, "reveal.pick-bank.at 이 문자열이"),
+    ({"pick-bank": {"at": "bank", "do": "click"}}, "reveal.pick-bank.do 가 목록도"),
+    ({"pick-bank": {"at": "nowhere", "do": [{"click": "#x"}]}},
+     "reveal.pick-bank.at='nowhere' 은 steps 의 화면이 아니다"),
+    ({"pick-bank": {"at": "bank", "do": []}}, "reveal.pick-bank.do 가 비어 있다"),
+    ({"pick-x": {"at": "bank", "do": [{"click": "#x"}]}}, "'pick-x' 은 HTML 의 data-action"),
+])
+def test_a_bad_reveal_says_what_is_wrong(reveal, needle):
+    flow = reveal_flow(reveal)
+    shape = reply_mod.shape_problems(flow)
+    problems = shape or reply_mod.validate_flow(flow, REVEAL_HTML, [], [])
+    assert any(needle in p for p in problems), problems
+
+
+def i_ctx(revealed=None):
+    orig = {"screens": {"bank": {"choices": {"pick-bank": ["a", "b", "c"]}}}}
+    rep = {"screens": {"bank": {"choices": {"pick-bank": ["a"]}}}}
+    if revealed is not None:
+        rep["revealed"] = revealed
+    return AuditContext(orig=orig, rep=rep, orig_html="", rep_html="<html></html>",
+                        flow={"choices_removed": {}}, derived=False, want=[], shared=[])
+
+
+def test_without_reveal_values_drawn_only_after_a_click_are_missing():
+    ctx = i_ctx()
+    i_choices.run(ctx)
+    assert [f["missing"] for f in ctx.fatal] == [["b", "c"]]
+    assert "reveal" not in ctx.metrics
+
+
+def test_check_i_counts_what_the_reveal_walk_collected():
+    ctx = i_ctx({"pick-bank": {"at": "bank", "error": None,
+                               "choices": {"pick-bank": ["a", "b", "c"]}}})
+    i_choices.run(ctx)
+    assert ctx.fatal == []
+    assert ctx.metrics["choice_values_selectable"] == {"pick-bank": 3}
+    assert ctx.metrics["reveal"] == {"pick-bank": {"at": "bank", "values": 3,
+                                                   "error": None}}
+
+
+def test_a_failed_reveal_is_named_in_the_missing_choices_fatal():
+    ctx = i_ctx({"pick-bank": {"at": "bank", "choices": {"pick-bank": ["a"]},
+                               "error": {"phase": "do", "detail": "no #show-all"}}})
+    i_choices.run(ctx)
+    assert len(ctx.fatal) == 1
+    assert "흐름 명세의 reveal.pick-bank 조작이 실패했다 (do: no #show-all)" \
+        in ctx.fatal[0]["detail"]
+
+
+def test_the_prompts_tell_the_model_about_reveal():
+    gen = _api.load_template()
+    assert '"reveal": {"<선택지의 data-action>": {"at": "<steps 의 화면 이름>"' in gen
+    assert "그 누르는 조작을 흐름 명세의 `reveal` 에 적는다" in gen
+
+
+def test_the_reveal_mocks_differ_only_in_the_flow():
+    pick = model.mock_reply("reveal")["text"]
+    undecl = model.mock_reply("reveal-undeclared")["text"]
+    h1, f1, _ = reply_mod.parse_reply(pick)
+    h2, f2, _ = reply_mod.parse_reply(undecl)
+    assert h1 == h2 and "show-all-banks" in h1
+    assert f1["reveal"] == model.MOCK_REVEAL and "reveal" not in f2
+    assert reply_mod.validate_flow(f1, h1, _api.flow_module.required_errors("transfer")) == []

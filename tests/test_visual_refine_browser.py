@@ -88,3 +88,31 @@ def test_see_puts_the_scroll_back_where_it_was(server, tmp_path):
     assert top == 300
     assert marked == 0
     assert items[0]["file"] == "inner.1.png"
+
+
+# --------------------------------------------------------------------------- #
+# 펼치기 (reveal) - mock 실행을 끝까지
+# --------------------------------------------------------------------------- #
+def run_mock(mode, *extra):
+    summary, code = C.run_mock(["--mock", mode, "--attempts", "1", "--refine", "0"]
+                               + list(extra))
+    report = json.load(open(summary["final"]["audit"], encoding="utf-8")) \
+        if summary.get("final") else None
+    return summary, code, report
+
+
+def test_a_list_revealed_by_a_declared_click_passes(server):
+    """은행 목록을 6개 + [전체 보기] 로 그린 설계. 흐름 명세의 reveal 에 그
+    조작을 적었다 - 검사기가 따로 걸어 펼친 값을 센다."""
+    summary, code, report = run_mock("reveal")
+    assert code == 0 and summary["passed"], summary.get("stopped_reason")
+    assert [f for f in report["fatal"] if f["check"] == "I"] == []
+    rv = report["metrics"]["reveal"]["pick-bank"]
+    assert rv["error"] is None and rv["values"] >= 67
+
+
+def test_the_same_list_without_reveal_fails_check_i(server):
+    summary, code, report = run_mock("reveal-undeclared")
+    assert code == 1 and not summary["passed"]
+    i = [f for f in report["fatal"] if f["check"] == "I"]
+    assert i and "reveal" not in report["metrics"]
