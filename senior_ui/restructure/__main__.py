@@ -163,10 +163,12 @@ def build_parser():
                          "보내고, 분당 한도 · 실제 모델 이름 · 지원하지 않는 인자 오류를 "
                          "보이고 끝난다. --api · --reasoning-effort · --temperature · "
                          "--seed 를 따른다. 실행 폴더를 만들지 않는다")
-    ap.add_argument("--delay", type=float, default=60.0,
+    ap.add_argument("--delay", type=float, default=None,
                     help="모델 호출 사이 대기(초) - 진단·계획과 생성 사이, 시도와 "
-                         "시도 사이. 원본 HTML 이 두 호출에 모두 들어가서 같은 1분 "
-                         "안에 보내면 분당 한도(30,000)를 넘는다")
+                         "시도 사이. 주지 않으면 gpt-4o %(g4)g, 추론형 %(rs)g "
+                         "(config.DELAY). 추론형은 그와 함께 호출 직전에 직전 응답 "
+                         "헤더의 남은 토큰을 보고, 다음 요청보다 적을 때만 더 기다린다"
+                         % {"g4": config.DELAY["gpt-4o"], "rs": config.DELAY["reasoning"]})
     return ap
 
 

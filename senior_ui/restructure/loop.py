@@ -40,7 +40,7 @@ from .brief import write_brief
 from .model import (MOCK_TASK, TEMPERATURE, SEED, ApiRejected, InfraFailed,
                     RateLimited, call_model, cost_usd, describe, describe_ratelimit,
                     estimate_tokens, load_env, mock_plan_reply, mock_reply, price_for,
-                    profile_for, sdk_version)
+                    profile_for, sdk_version, wait_for_tokens)
 from .plan import (PlanProblems, apply_changes, match_problems, parse_plan,
                    parse_reflection, plan_report, screens_in, unaddressed)
 from .preserve import inject, names_read, preserved_data
@@ -66,6 +66,14 @@ def output_caps(profile, args=None):
              "plan": getattr(args, "plan_max_tokens", None)}
     caps.update({k: v for k, v in given.items() if v})
     return caps
+
+
+def call_delay(profile, args=None):
+    """모델 호출 사이 대기(초). --delay 를 주면 그 값, 아니면 config.DELAY."""
+    given = getattr(args, "delay", None)
+    if given is not None:
+        return given
+    return config.DELAY["reasoning" if profile["reasoning"] else "gpt-4o"]
 
 
 def cap_source(profile):
@@ -167,6 +175,11 @@ class Run:
         self.profile = profile_for(model, self.api)
         # 두 호출의 길이 제한 (output_caps). 주지 않았으면 모델에 맞춘 기본값.
         self.caps = output_caps(self.profile, args)
+        # 호출 사이 대기 (call_delay). 추론형이면 호출 직전에 직전 응답 헤더의
+        # 남은 토큰도 본다 (wait_tokens) - 그 헤더와 받은 때를 들고 있는다.
+        self.delay = call_delay(self.profile, args)
+        self.last_ratelimit = None
+        self.last_ratelimit_at = None
         self.choices = ""
         # 입력이 가진 선택지 데이터. 실행마다 한 번 뽑아 시도마다 넣는다.
         # {배열 이름: [원소들]} (preserve.preserved_data).
@@ -457,6 +470,24 @@ def request_plan(r, n, p):
     return call, None
 
 
+def wait_tokens(r, need):
+    """추론형이면, 직전 응답 헤더의 남은 토큰이 이번 요청(need)보다 적을 때만
+    모자란 만큼 기다린다. 기다린 초를 돌려준다 (안 기다렸으면 0).
+
+    gpt-4o 는 보지 않는다 - 늘 60초를 기다리던 동작 그대로다 (config.DELAY)."""
+    if not r.profile["reasoning"] or not r.last_ratelimit:
+        return 0
+    elapsed = time.monotonic() - r.last_ratelimit_at
+    wait = wait_for_tokens(r.last_ratelimit, need, elapsed)
+    if wait:
+        r.log("대기 %ds — 남은 토큰 %s (직전 응답 헤더, %.0f초 전) 이 이번 요청 %d "
+              "(예상 입력 + max_tokens) 보다 적다. 분당 한도 %s"
+              % (wait, r.last_ratelimit.get("remaining_tokens"), elapsed, need,
+                 r.last_ratelimit.get("limit_tokens")))
+        time.sleep(wait)
+    return wait
+
+
 def ask_model(r, n, p, prompt, max_tokens, mock, stage):
     """모델에 한 번 묻는다. 진단·계획과 생성이 같은 길을 쓴다.
 
@@ -476,6 +507,9 @@ def ask_model(r, n, p, prompt, max_tokens, mock, stage):
     if r.args.mock:
         reply = mock(r.args.mock)
     else:
+        waited = wait_tokens(r, est + max_tokens)
+        if waited:
+            call["waited_for_tokens"] = waited
         try:
             reply = call_model(r.model, prompt, max_tokens, r.log,
                                temperature=r.temperature, seed=r.seed,
@@ -531,6 +565,7 @@ def ask_model(r, n, p, prompt, max_tokens, mock, stage):
         call["ratelimit"] = reply.get("ratelimit")
         if call["ratelimit"]:
             r.summary["ratelimit"] = call["ratelimit"]
+            r.last_ratelimit, r.last_ratelimit_at = call["ratelimit"], time.monotonic()
         r.log("분당 한도 (%s 응답 헤더): %s" % (stage, describe_ratelimit(call["ratelimit"])))
     if reply.get("max_tokens") not in (None, max_tokens):
         # 분당 한도에 맞추느라 줄여서 보냈다 (model.shrink_for_minute)
@@ -888,9 +923,9 @@ def attempt(r, n):
             return outcome
         # 두 호출이 같은 1분 안에 들어가면 분당 한도를 넘는다 - 원본 HTML 이
         # 두 프롬프트에 다 들어 있다.
-        if r.args.delay and not r.args.mock:
-            r.log("대기 %ss (진단·계획 → 생성)" % r.args.delay)
-            time.sleep(r.args.delay)
+        if r.delay and not r.args.mock:
+            r.log("대기 %ss (진단·계획 → 생성)" % r.delay)
+            time.sleep(r.delay)
     # 이 시도가 따른 계획. 재시도에서 계획이 바뀌면 시도마다 다른 파일이 된다.
     _dump(r.plan, p + ".plan.json")
 
@@ -1189,8 +1224,8 @@ def run(args):
         n = 0
         while True:
             n += 1
-            if n > 1 and args.delay and not args.mock:
-                time.sleep(args.delay)
+            if n > 1 and r.delay and not args.mock:
+                time.sleep(r.delay)
             if attempt(r, n) is STOP:
                 break
 

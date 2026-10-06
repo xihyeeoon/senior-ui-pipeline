@@ -89,3 +89,80 @@ def test_run_log_says_which_caps_were_used(fake_run_env, out_root):
                               model="gpt-6.1-sol", max_tokens=None)
     line = next(l for l in run_log(summary) if "max_tokens" in l and "기본값" in l)
     assert "32000" in line and "25000" in line
+
+
+# ===================================================================== #
+# 2. 호출 사이 대기 - 60초는 분당 30,000 때문이었다
+# ===================================================================== #
+PLENTY = {"limit_tokens": 500000, "remaining_tokens": 490000, "limit_requests": 500}
+SHORT = {"limit_tokens": 500000, "remaining_tokens": 10000, "limit_requests": 500}
+
+
+@pytest.fixture
+def slept(fake_run_env):
+    out = []
+    fake_run_env.setattr(loop.time, "sleep", out.append)
+    return out
+
+
+def test_the_cli_leaves_the_delay_to_the_model():
+    assert _api.restructure_parser().parse_args([]).delay is None
+
+
+def test_the_delays_are_written_in_config():
+    assert config.DELAY == {"gpt-4o": 60.0, "reasoning": 5.0}
+
+
+def test_gpt_4o_still_waits_a_minute_and_nothing_else(fake_run_env, out_root, slept):
+    """남은 토큰이 0 이어도 gpt-4o 는 전처럼 60초 하나만 기다린다."""
+    run_loop(fake_run_env, out_root, recording([], ratelimit=dict(SHORT, remaining_tokens=0)),
+             attempts=1, model="gpt-4o", delay=None)
+    assert slept == [60.0]
+
+
+def test_a_reasoning_model_waits_briefly_when_tokens_are_left(fake_run_env, out_root,
+                                                              slept):
+    run_loop(fake_run_env, out_root, recording([], ratelimit=PLENTY), attempts=1,
+             model="gpt-6.1-sol", delay=None)
+    assert slept == [5.0]
+
+
+def test_a_reasoning_model_waits_for_tokens_when_too_few_are_left(fake_run_env,
+                                                                 out_root, slept):
+    """진단·계획 답의 헤더가 남은 토큰 10,000 을 말한다. 다음 생성 요청은 입력
+    약 11,000 + max_tokens 32,000 이므로 모자란 33,000 이 찰 때까지 (분당
+    500,000 = 초당 약 8,333) 약 4초를 더 기다린다."""
+    _code, summary = run_loop(fake_run_env, out_root, recording([], ratelimit=SHORT),
+                              plan_reply=False, attempts=1, model="gpt-6.1-sol",
+                              delay=None, max_tokens=None)
+    assert slept[0] == 5.0
+    assert len(slept) == 2 and 3 <= slept[1] <= 5
+    line = next(l for l in run_log(summary) if "남은 토큰" in l and "대기" in l)
+    assert "10000" in line
+    gen = summary["attempts"][0]["calls"][-1]
+    assert gen["stage"] == "generate" and gen["waited_for_tokens"] == slept[1]
+
+
+def test_a_given_delay_still_checks_the_tokens_left(fake_run_env, out_root, slept):
+    run_loop(fake_run_env, out_root, recording([], ratelimit=SHORT), plan_reply=False,
+             attempts=1, model="gpt-6.1-sol", delay=0)
+    assert len(slept) == 1 and slept[0] > 0
+
+
+def test_mock_runs_never_wait(fake_run_env, out_root, slept):
+    run_loop(fake_run_env, out_root, recording([]), attempts=1, model="gpt-6.1-sol",
+             delay=None, mock="pass")
+    assert slept == []
+
+
+@pytest.mark.parametrize("rl,need,elapsed,expected", [
+    (None, 50000, 0, 0),                                       # 모른다 - 기다리지 않는다
+    ({"limit_tokens": None, "remaining_tokens": 5}, 50000, 0, 0),
+    (PLENTY, 50000, 0, 0),                                      # 넉넉하다
+    ({"limit_tokens": 60000, "remaining_tokens": 0}, 5000, 0, 5),    # 초당 1,000
+    ({"limit_tokens": 60000, "remaining_tokens": 0}, 5000, 2, 3),    # 2초 동안 2,000 찼다
+    ({"limit_tokens": 60000, "remaining_tokens": 0}, 5000, 9, 0),
+    ({"limit_tokens": 60000, "remaining_tokens": 0}, 90000, 0, 60),  # 한도보다 크다 - 다 찰 때까지만
+])
+def test_how_long_to_wait_for_tokens(rl, need, elapsed, expected):
+    assert model.wait_for_tokens(rl, need, elapsed) == expected

@@ -123,6 +123,18 @@ MODEL_PRICES = {
 OUTPUT_CAPS = {"gpt-4o": {"generate": 14000, "plan": 6000},
                "reasoning": {"generate": 32000, "plan": 25000}}
 
+# 모델 호출 사이 대기(초) - 진단·계획과 생성 사이, 시도와 시도 사이. --delay 를
+# 주지 않으면 OUTPUT_CAPS 와 같은 방식으로 고른다 (restructure.loop.call_delay).
+#
+#   gpt-4o    원본 HTML 이 두 호출에 다 들어가서 같은 1분 안에 보내면 분당
+#             30,000 을 넘었다. 그 동작 그대로 - 헤더는 보지 않고 늘 60초.
+#   reasoning gpt-6.1-sol · gpt-6-astra 는 분당 500,000 이다 (2026-10-06 --probe).
+#             짧게 5초만 두고, 대신 호출 직전에 직전 응답 헤더의 남은 토큰을 본다
+#             - 다음 요청(예상 입력 + max_tokens)보다 적을 때만 모자란 만큼 더
+#             기다린다 (restructure.model.wait_for_tokens). 한도가 작은 추론형을
+#             불러도 그 확인이 지킨다.
+DELAY = {"gpt-4o": 60.0, "reasoning": 5.0}
+
 # The two builds under comparison. `url` is what the phone loads in the frame.
 CONDITIONS = [
     {"key": "original",

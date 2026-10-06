@@ -6,6 +6,7 @@ mock_reply 가 여기 있다. 돌려주는 모양은 셋 다 같다:
 """
 import io
 import json
+import math
 import os
 import re
 import time
@@ -306,6 +307,28 @@ def describe_ratelimit(rl):
     return ("토큰 %s (남은 %s) · 요청 %s"
             % (rl.get("limit_tokens"), rl.get("remaining_tokens"),
                rl.get("limit_requests")))
+
+
+def wait_for_tokens(rl, need, elapsed):
+    """다음 요청 전에 기다릴 초 (정수). 기다릴 일이 없거나 모르면 0.
+
+    rl 은 직전 응답 헤더의 분당 한도(read_ratelimit), need 는 다음 요청이
+    한도에서 먹을 양(예상 입력 + max_tokens), elapsed 는 그 헤더를 받은 뒤 지난
+    초다. 분당 한도는 1분에 걸쳐 고르게 다시 찬다고 보고(초당 한도/60), 그동안
+    찬 몫을 더한 남은 양이 need 보다 적을 때만 모자란 만큼 기다린다.
+
+    need 가 한도보다 크면 기다려도 들어가지 않는다 - 다 찰 때까지만 기다리고
+    나머지는 shrink_for_minute 이 맡는다. 그래서 60초를 넘지 않는다."""
+    limit = (rl or {}).get("limit_tokens")
+    left = (rl or {}).get("remaining_tokens")
+    if not isinstance(limit, int) or not isinstance(left, int) or limit <= 0:
+        return 0
+    per_sec = limit / 60.0
+    now = min(limit, left + elapsed * per_sec)
+    short = min(need, limit) - now
+    if short <= 0:
+        return 0
+    return int(math.ceil(short / per_sec))
 
 
 def request_kwargs(model, prompt, cap, profile, temperature=None, seed=None,
