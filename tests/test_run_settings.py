@@ -137,7 +137,7 @@ def test_a_reasoning_model_waits_for_tokens_when_too_few_are_left(fake_run_env,
                               delay=None, max_tokens=None)
     assert slept[0] == 5.0
     assert len(slept) == 2 and 3 <= slept[1] <= 5
-    line = next(l for l in run_log(summary) if "남은 토큰" in l and "대기" in l)
+    line = next(l for l in run_log(summary) if "직전 응답 헤더" in l and "대기" in l)
     assert "10000" in line
     gen = summary["attempts"][0]["calls"][-1]
     assert gen["stage"] == "generate" and gen["waited_for_tokens"] == slept[1]
@@ -166,3 +166,65 @@ def test_mock_runs_never_wait(fake_run_env, out_root, slept):
 ])
 def test_how_long_to_wait_for_tokens(rl, need, elapsed, expected):
     assert model.wait_for_tokens(rl, need, elapsed) == expected
+
+
+# ===================================================================== #
+# 3. reasoning_effort - 모델의 기본값에 맡기지 않고 보내고 남긴다
+# ===================================================================== #
+def efforts(calls):
+    return [kw.get("reasoning_effort") for _stage, _cap, kw in calls]
+
+
+def test_the_default_effort_is_written_in_config():
+    assert config.DEFAULT_REASONING_EFFORT == "medium"
+    assert config.DEFAULT_REASONING_EFFORT in model.REASONING_EFFORTS
+
+
+def test_a_reasoning_model_is_sent_the_config_effort(fake_run_env, out_root):
+    """주지 않았을 때 보내지 않으면 모델의 기본값이 쓰이고 그 값은 어디에도
+    남지 않는다 - 모델이 기본값을 바꾸면 같은 명령이 다른 조건으로 돈다."""
+    calls = []
+    _code, summary = run_loop(fake_run_env, out_root, recording(calls),
+                              plan_reply=False, attempts=1, model="gpt-6.1-sol")
+    assert efforts(calls) == ["medium", "medium"]
+    assert summary["model_call"]["reasoning_effort"] == "medium"
+    first = run_log(summary)[0]
+    assert "reasoning_effort=medium" in first
+    assert "config.DEFAULT_REASONING_EFFORT" in first
+
+
+def test_a_given_effort_wins_and_says_so(fake_run_env, out_root):
+    calls = []
+    _code, summary = run_loop(fake_run_env, out_root, recording(calls),
+                              plan_reply=False, attempts=1, model="gpt-6-astra",
+                              reasoning_effort="high")
+    assert efforts(calls) == ["high", "high"]
+    assert summary["model_call"]["reasoning_effort"] == "high"
+    first = run_log(summary)[0]
+    assert "reasoning_effort=high" in first and "--reasoning-effort" in first
+
+
+def test_gpt_4o_gets_no_effort_and_its_first_line_is_unchanged(fake_run_env, out_root):
+    calls = []
+    _code, summary = run_loop(fake_run_env, out_root, recording(calls),
+                              plan_reply=False, attempts=1, model="gpt-4o")
+    assert efforts(calls) == [None, None]
+    assert summary["model_call"]["reasoning_effort"] is None
+    assert "reasoning_effort" not in run_log(summary)[0]
+
+
+def test_the_effort_reaches_the_request(monkeypatch, fake_run_env, out_root):
+    """루프에서 SDK 요청 인자까지 - 가짜 클라이언트가 받은 것을 본다."""
+    import fake_openai as F
+    from test_restructure_bugs import GOOD_REPLY
+    client = F.install(monkeypatch, [F.Reply(text=GOOD_PLAN_REPLY),
+                                     F.Reply(text=GOOD_REPLY)])
+    code = loop.run(_make_args(out_root, model="gpt-6.1-sol"))
+    assert code == 0
+    assert [kw.get("reasoning_effort") for _api_name, kw in client.sent] == \
+        ["medium", "medium"]
+
+
+def _make_args(out_root, **kw):
+    from test_restructure_bugs import make_args
+    return make_args(out_root, **kw)

@@ -145,8 +145,9 @@ UNSUPPORTED = ("unsupported_parameter", "unsupported_value")
 
 # 생각에 쓸 노력. SDK 의 ReasoningEffort 와 같은 값들이다. 모델마다 받는 값과
 # 기본값이 다르다 (gpt-5 는 minimal~high · 기본 medium, gpt-5.1 은 기본 none,
-# gpt-6.1-sol 은 none 이 없다). 그래서 주지 않으면 보내지 않고 모델의 기본값을
-# 쓴다 - 그 사실은 summary 의 model_call.reasoning_effort = null 로 남는다.
+# gpt-6.1-sol 은 none 이 없다). call_model 은 받은 것만 보낸다. 재구성 루프는
+# 추론형이면 주지 않아도 config.DEFAULT_REASONING_EFFORT 를 넘긴다 - 모델의
+# 기본값에 맡기면 그 값이 기록에 남지 않는다 (loop.effort_choice).
 REASONING_EFFORTS = ["none", "minimal", "low", "medium", "high", "xhigh", "max"]
 APIS = ["auto", "chat", "responses"]
 

@@ -73,6 +73,15 @@ ORIGINAL_URL = url_for(ORIGINAL_REL)
 DEFAULT_MODEL = "gpt-4o"
 MODEL_ENV_VARS = ("RESTRUCTURE_MODEL", "DESIGNREPAIR_MODEL")
 
+# 추론형 모델이 생각에 쓸 노력. --reasoning-effort 를 주지 않으면 이 값을 보낸다
+# (restructure.loop.effort_choice). 모델의 기본값에 맡기면 그 값이 어디에도 남지
+# 않고, 모델이 기본값을 바꾸면 같은 명령이 다른 조건으로 돈다. 보낸 값과 출처는
+# run.log 첫 줄과 summary.json 의 model_call.reasoning_effort 에 남는다.
+# medium 은 gpt-6.1-sol · gpt-6-astra 가 받는 값(low~max)이고, OpenAI 문서가 말하는
+# gpt-5.5 · gpt-6.1-sol 의 기본값과 같다 (2026-10-06 확인). 추론형이 아니면 보내지
+# 않는다.
+DEFAULT_REASONING_EFFORT = "medium"
+
 # 모델별 100만 토큰당 가격 (USD). summary.json 의 cost 가 이 표로 시도별·전체
 # 예상 금액을 센다. None 이면 금액은 null 이다 - 0 이 아니라 "모른다".
 #

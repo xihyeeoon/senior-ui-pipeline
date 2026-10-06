@@ -129,8 +129,10 @@ def build_parser():
                     help="못박아 보낸다. 기본 %s. Responses API 로 부를 때는 보내지 "
                          "않는다 (인자가 없다)" % SEED)
     ap.add_argument("--reasoning-effort", choices=REASONING_EFFORTS, default=None,
-                    help="추론형 모델이 생각에 쓸 노력. 주지 않으면 보내지 않고 모델의 "
-                         "기본값을 쓴다 (모델마다 받는 값과 기본값이 다르다)")
+                    help="추론형 모델이 생각에 쓸 노력. 주지 않으면 config."
+                         "DEFAULT_REASONING_EFFORT (%s) 를 보낸다 - 모델의 기본값에 "
+                         "맡기지 않는다. run.log 첫 줄과 summary 의 model_call 에 남는다. "
+                         "--probe 는 줄 때만 보낸다" % config.DEFAULT_REASONING_EFFORT)
     ap.add_argument("--api", choices=APIS, default="auto",
                     help="auto 는 모델 이름으로 정한다 (model.profile_for). chat · "
                          "responses 로 덮을 수 있다")

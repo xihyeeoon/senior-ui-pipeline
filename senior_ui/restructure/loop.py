@@ -68,6 +68,20 @@ def output_caps(profile, args=None):
     return caps
 
 
+def effort_choice(profile, args=None):
+    """`(reasoning_effort, 어디서 왔나)`. 추론형이 아니면 (None, None) - 보내지 않는다.
+
+    추론형인데 --reasoning-effort 를 주지 않았으면 config.DEFAULT_REASONING_EFFORT
+    를 보낸다. 모델의 기본값에 맡기면 그 값이 기록에 남지 않는다 - 모델마다
+    다르고, 같은 모델도 바뀔 수 있다."""
+    if not profile["reasoning"]:
+        return None, None
+    given = getattr(args, "reasoning_effort", None)
+    if given:
+        return given, "--reasoning-effort"
+    return config.DEFAULT_REASONING_EFFORT, "config.DEFAULT_REASONING_EFFORT"
+
+
 def call_delay(profile, args=None):
     """모델 호출 사이 대기(초). --delay 를 주면 그 값, 아니면 config.DELAY."""
     given = getattr(args, "delay", None)
@@ -168,11 +182,11 @@ class Run:
         # 기록에 남지 않는다 - 나중에 "그때 무엇이 달랐나" 를 물을 수 없다.
         self.temperature = getattr(args, "temperature", TEMPERATURE)
         self.seed = getattr(args, "seed", SEED)
-        # 모델마다 부르는 방식 (model.profile_for). 생각에 쓸 노력은 주지 않으면
-        # 보내지 않는다 - 모델마다 받는 값과 기본값이 다르다.
+        # 모델마다 부르는 방식 (model.profile_for). 생각에 쓸 노력은 추론형이면
+        # 주지 않아도 config 의 기본값을 보낸다 (effort_choice).
         self.api = getattr(args, "api", None)
-        self.reasoning_effort = getattr(args, "reasoning_effort", None)
         self.profile = profile_for(model, self.api)
+        self.reasoning_effort = effort_choice(self.profile, args)[0]
         # 두 호출의 길이 제한 (output_caps). 주지 않았으면 모델에 맞춘 기본값.
         self.caps = output_caps(self.profile, args)
         # 호출 사이 대기 (call_delay). 추론형이면 호출 직전에 직전 응답 헤더의
@@ -204,8 +218,7 @@ class Run:
         self.summary = {"run_dir": run_dir, "model": model, "model_source": model_source,
                         "response_models": [],
                         "model_call": dict(self.profile,
-                                           reasoning_effort=self.reasoning_effort
-                                           if self.profile["reasoning"] else None),
+                                           reasoning_effort=self.reasoning_effort),
                         "mock": args.mock,
                         "task": self.task["id"],
                         "stage": args.stage, "preserved": {}, "plan": None,
@@ -1134,23 +1147,29 @@ def run(args):
     # run.log 를 여는 사람에게 가장 먼저 보여야 한다. 실행은 막지 않는다.
     model, source = model_choice(args)
     warning = dirty_warning(git)
-    log("model=%s (출처 %s) — API 가 답한 판 이름은 호출마다 '응답 모델' 줄에 남는다"
-        % (model, source) + (" | " + warning if warning else ""))
+    #
+    # 추론형이면 보낸 reasoning_effort 와 그 출처도 첫 줄에 남긴다 - 모델과 같이
+    # 결과를 가르는 조건이다 (effort_choice). gpt-4o 의 첫 줄은 전과 같다.
     profile = profile_for(model, getattr(args, "api", None))
+    effort, effort_source = effort_choice(profile, args)
+    log("model=%s (출처 %s)%s — API 가 답한 판 이름은 호출마다 '응답 모델' 줄에 남는다"
+        % (model, source,
+           " · reasoning_effort=%s (출처 %s)" % (effort, effort_source) if effort else "")
+        + (" | " + warning if warning else ""))
     if not profile["known"]:
         log("경고: 모르는 모델 %s — gpt-4o 처럼 부른다 (%s). 모델이 거절하는 인자는 "
             "빼고 다시 보낸다. 처음이면 --probe %s 로 먼저 확인한다"
             % (model, describe(profile), model))
-    effort = getattr(args, "reasoning_effort", None)
     log("model: 부르는 방식 %s · 토큰 어림 %s · reasoning_effort %s"
-        % (describe(profile), profile["encoding"],
-           (effort or "보내지 않음(모델 기본값)") if profile["reasoning"] else "해당 없음"))
+        % (describe(profile), profile["encoding"], effort or "해당 없음"))
     caps = output_caps(profile, args)
-    log("model: max_tokens 생성 %d (%s) · 진단·계획 %d (%s)"
+    log("model: max_tokens 생성 %d (%s) · 진단·계획 %d (%s) · 호출 사이 대기 %gs%s"
         % (caps["generate"], "--max-tokens" if getattr(args, "max_tokens", None)
            else cap_source(profile),
            caps["plan"], "--plan-max-tokens" if getattr(args, "plan_max_tokens", None)
-           else cap_source(profile)))
+           else cap_source(profile),
+           call_delay(profile, args),
+           " + 남은 토큰이 모자라면 더" if profile["reasoning"] else ""))
     if not args.mock and not os.environ.get("OPENAI_API_KEY"):
         print("no OPENAI_API_KEY in the environment or .envs", file=sys.stderr)
         return 2
