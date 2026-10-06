@@ -99,3 +99,47 @@ def test_the_literal_names_live_next_to_the_branch_reader():
     assert H.literal_actions('<b data-action="go"></b><b data-action="a-${x}"></b>') == \
         {"go"}
     assert reply.literal_actions is H.literal_actions
+
+
+# --------------------------------------------------------------------- #
+# 3. 완료 화면의 값 짝은 모델에게 요구하지 않는다 - 판정이 과제에서 읽는다
+# --------------------------------------------------------------------- #
+from test_restructure_bugs import GOOD_FLOW, GOOD_HTML  # noqa: E402
+
+
+def done_expect(task):
+    return _api.load_task(task)["done_expect"]
+
+
+def test_the_format_check_does_not_ask_for_the_done_pairs():
+    """고치기 전: 완료 화면 칸에 과제의 짝(`["#dn-amt", "{AMOUNT_SHOWN}"]`)이 없으면
+    형식 문제("expect.done 에 … 이 없다")였다 - 재시도 하나. 판정은 이제 모델의
+    expect 가 아니라 과제의 done_expect 로 한다 (judged_flow, 16e0880). 이 요구는
+    판정을 바꾸지 않고 재시도만 쓴다."""
+    for expect in ({}, {"done": []}, {"done": [["#dn-amt", ""]]},
+                   {"done": [["#note", "{NAME}"]]}):
+        flow = dict(GOOD_FLOW, expect=expect)
+        probs = reply.validate_flow(flow, GOOD_HTML, [], done_expect("transfer"))
+        assert probs == [], (expect, probs)
+
+
+def test_a_stray_expect_key_is_still_a_problem():
+    """steps 의 방문 이름이 아닌 칸은 검사기가 보지 않는다 - 그것은 그대로 알린다."""
+    flow = dict(GOOD_FLOW, expect={"nowhere": [["#x", "1"]]})
+    probs = reply.validate_flow(flow, GOOD_HTML, [], done_expect("transfer"))
+    assert len(probs) == 1 and "expect 의 키 'nowhere'" in probs[0]
+
+
+def test_the_prompt_no_longer_asks_for_the_done_pairs():
+    """프롬프트(과제 파일의 flow_done · flow_example)도 그 짝을 적으라고 하지 않는다."""
+    import json
+    for task in ("transfer", "bill"):
+        p = _api.load_task(task)["prompt"]
+        done = "\n".join(p["flow_done"])
+        for sel, val in done_expect(task):
+            assert '["%s", "%s"]' % (sel, val) not in done, task
+        example = json.loads("\n".join(p["flow_example"]))
+        sels = {sel for sel, _ in done_expect(task)}
+        assert not [pair for pairs in example.get("expect", {}).values()
+                    for pair in pairs if pair[0] in sels], task
+        assert "done_amount" not in example, task

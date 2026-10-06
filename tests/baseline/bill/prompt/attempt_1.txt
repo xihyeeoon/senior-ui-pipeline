@@ -180,10 +180,7 @@
       {"repeat": 4, "click": "#pwpad [data-action='pw']", "wait": 0.15}
     ]}
   ],
-  "expect": {
-    "paid": [["#dn-paid", "{AMOUNT_SHOWN}"], ["#dn-eno", "{ENO}"]]
-  },
-  "done_amount": "#dn-paid"
+  "expect": {}
 }
 ```
 
@@ -199,9 +196,9 @@
   보여야 할 값이다. 설계에 검색어를 미리 채워 두라는 뜻이 아니다.
 - `steps` 는 홈에서 납부 메뉴를 찾아 납부를 마치는 가장 긴 경로다. HTML 의 모든 화면을 `steps` 가 지나가야 한다.
 - `required_ids` 는 네 HTML 에 실제로 있는 id 만 적는다. `phone` · `dn-paid` · `dn-eno` 는 반드시 포함.
-- 완료 화면은 `steps` 의 마지막 화면이다. `expect` 에서 완료 화면의 키는 **마지막 화면의 이름** 이다 —
-  네가 지은 이름을 그대로 쓴다 (예시의 `paid` 도 그 설계의 마지막 화면 이름일 뿐이다). 그 칸에는
-  반드시 `["#dn-paid", "{AMOUNT_SHOWN}"]` 과 `["#dn-eno", "{ENO}"]` 이 있어야 한다. `expect` 의 키는 `steps` 의 화면 이름이다.
+- 완료 화면은 `steps` 의 마지막 화면이다 (예시의 `paid` 도 그 설계의 마지막 화면 이름일 뿐이다).
+  완료 화면의 `#dn-paid` · `#dn-eno` 가 낸 금액과 전자납부번호를 보이는지는 검사기가 과제에서 읽어 직접
+  확인하므로 `expect` 에 적지 않아도 된다. `expect` 는 다른 값을 더 확인하고 싶을 때만 쓰고, 키는 `steps` 의 화면 이름이다.
 - 선택지 목록의 일부만 먼저 보이고 눌러야 나머지가 만들어지는 설계라면, 그 조작을 `reveal` 에
   적는다: `"reveal": {"<선택지의 data-action>": {"at": "<steps 의 화면 이름>", "do": [{"click": "<선택자>"}]}}`.
   `do` 의 항목은 `{"click": 선택자}` 하나뿐이다. 누를 것은 `at` 화면에 보이는 `data-action`

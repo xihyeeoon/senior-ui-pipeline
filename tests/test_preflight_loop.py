@@ -172,13 +172,16 @@ def test_the_loop_records_that_it_took_done_as_the_last_screen(tmp_path):
 
 def test_the_prompt_examples_no_longer_name_the_last_screen_done():
     """예시의 마지막 화면이 done 이면 모델은 그것을 고정된 키로 읽는다. 완료
-    화면의 키가 마지막 화면의 이름이라는 것을 글로도 적는다."""
+    화면은 마지막 화면이라는 것을 글로도 적는다.
+
+    11-6 부터 예시의 expect 는 비어 있다 - 완료 화면의 값 짝은 판정이 과제에서
+    읽으므로 모델에게 요구하지 않는다 (test_format_rules.py 3 절)."""
     for task in ("transfer", "bill"):
         p = _api.load_task(task)["prompt"]
         example = json.loads("\n".join(p["flow_example"]).replace("\"...\"", "\"x\""))
         assert example["steps"][-1]["screen"] != "done"
-        assert list(example["expect"]) == [example["steps"][-1]["screen"]]
-        assert "마지막 화면의 이름" in "\n".join(p["flow_done"])
+        assert "done" not in example["expect"]
+        assert "마지막 화면" in "\n".join(p["flow_done"])
         assert "`done`" not in "\n".join(p["flow_done"])
 
 

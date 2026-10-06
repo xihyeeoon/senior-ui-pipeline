@@ -209,7 +209,9 @@ def test_a_bill_reply_still_needs_the_bill_done_ids(fake_run_env, out_root):  # 
         ".html", ".audit.json"), encoding="utf-8"))
     details = [f["detail"] for f in report["fatal"]]
     assert "required_ids 에 'dn-paid' 이 없다" in details
-    assert 'expect.done 에 ["#dn-eno", "{ENO}"] 이 없다' in details
+    assert "HTML 에 id='dn-eno' 요소가 없다" in details
+    # 값 짝은 요구하지 않는다 - 판정이 과제의 done_expect 로 본다 (11-6)
+    assert not [d for d in details if d.startswith("expect.")]
 
 
 def test_the_bill_prompts_carry_the_bill_task_and_no_transfer_errors(
@@ -235,7 +237,8 @@ def test_validate_flow_reads_the_done_values_from_the_task():
     # 과제를 주지 않으면 이체 - 문구도 전과 같다
     got = _api.validate_flow(dict(BILL_FLOW), BILL_HTML)
     assert "required_ids 에 'dn-amt' 이 없다" in got
-    assert 'expect.done 에 ["#dn-amt", "{AMOUNT_SHOWN}"] 이 없다' in got
+    # 값 짝은 요구하지 않는다 - 판정이 과제의 done_expect 로 본다 (11-6)
+    assert not [p for p in got if p.startswith("expect.")]
 
 
 def test_required_errors_follow_the_task():
@@ -302,9 +305,12 @@ def test_the_bill_prompt_has_no_transfer_text(load):
 
 
 def test_the_bill_prompt_names_the_bill_done_values():
+    """공과금 프롬프트는 공과금의 완료 화면 자리를 말한다. 값 짝을 expect 에
+    적으라고는 하지 않는다 - 판정이 과제에서 읽는다 (11-6)."""
     text = _api.load_template("bill")
-    assert '"#dn-paid", "{AMOUNT_SHOWN}"' in text
-    assert '"#dn-eno", "{ENO}"' in text
+    assert "#dn-paid" in text and "#dn-eno" in text
+    assert '"#dn-paid", "{AMOUNT_SHOWN}"' not in text
+    assert '"#dn-eno", "{ENO}"' not in text
 
 
 def placeholder_pairs(text):
@@ -577,10 +583,15 @@ def test_the_format_check_reads_the_done_values_on_the_last_screen():
     done = _api.load_task("bill")["done_expect"]
     flow = finish_flow({"done": [["#dn-paid", "{AMOUNT_SHOWN}"], ["#dn-eno", "{ENO}"]]})
     got = _api.validate_flow(flow, FINISH_HTML, [], done)
-    assert 'expect.finish 에 ["#dn-eno", "{ENO}"] 이 없다' in got
+    # 11-6: 완료 화면의 값 짝은 요구하지 않는다 - 판정이 과제에서 읽고(judged_flow),
+    # 마지막 화면(finish)의 칸에 과제의 짝을 넣는다. 화면이 아닌 칸은 그대로 알린다.
+    assert not [p for p in got if p.startswith("expect.")]
     assert any("expect 의 키 'done'" in p for p in got)
-    ok = finish_flow({"finish": [["#dn-paid", "{AMOUNT_SHOWN}"], ["#dn-eno", "{ENO}"]]})
-    assert _api.validate_flow(ok, FINISH_HTML, [], done) == []
+    judged = _api.judged_flow(flow, task="bill")
+    assert judged["expect"]["finish"] == done
+    for expect in ({"finish": [["#dn-paid", "{AMOUNT_SHOWN}"], ["#dn-eno", "{ENO}"]]},
+                   {}):
+        assert _api.validate_flow(finish_flow(expect), FINISH_HTML, [], done) == []
 
 
 def finish_ctx(expect, shown):

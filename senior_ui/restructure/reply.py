@@ -280,33 +280,28 @@ def _check_ids(flow, html, steps, screens, done=None):
     return problems
 
 
-def _check_expect(flow, html, steps, screens, done=None):
-    """완료 화면에서 과제의 값(done_expect - 이체는 금액)을 확인할 짝이 있는지.
+def _check_expect(flow, html, steps, screens):
+    """expect 가 객체이고, 칸이 모두 steps 의 방문 이름인지.
 
-    완료 화면은 steps 의 마지막 화면이다 - 이름이 "done" 이 아니어도. 전에는
-    expect 의 "done" 칸만 보아서, 마지막 화면을 finish 로 지은 설계가
-    expect.done 을 적으면 형식 검사를 지나고 검사 B 는 그 칸을 말없이 건너뛰었다.
-    같은 이유로 steps 의 방문 이름이 아닌 expect 칸도 문제로 센다 - 검사기는
-    그 칸의 값을 보지 않는다."""
+    steps 의 방문 이름이 아닌 칸은 검사기가 보지 않는다 - 모델은 확인한다고 적었는데
+    아무도 확인하지 않게 되므로 문제로 센다.
+
+    완료 화면에서 과제의 값(done_expect)을 확인하는 짝은 요구하지 않는다. 판정은
+    모델의 expect 가 아니라 과제의 done_expect 로 한다 (audit.inputs.judged_flow).
+    전에는 그 짝이 없으면 형식 실패였다 - 판정을 바꾸지 않는 요구로 재시도 하나를
+    썼다."""
     problems = []
     expect = flow.get("expect")
     if not isinstance(expect, dict):
         problems.append("expect 가 객체가 아니다")
         return problems
     visits = visit_keys(steps)
-    last = visits[-1] if visits else "done"
-    pairs = expect.get(last) or []
-    for sel, val in _done_of(done):
-        if not any(isinstance(p, list) and len(p) == 2 and p[0] == sel for p in pairs):
-            problems.append("expect.%s 에 %s 이 없다"
-                            % (last, json.dumps([sel, val], ensure_ascii=False)))
     stray = [k for k in expect if visits and k not in visits]
     if stray:
         problems.append("expect 의 키 %s 는 steps 의 화면이 아니다 - 검사기는 그 값을 "
                         "보지 않는다. 키는 steps 의 screen 이름(같은 화면을 두 번 지나면 "
-                        "\"이름#2\")이고, 완료 화면의 값은 마지막 화면(%s) 칸에 적는다 "
-                        "(있는 것: %s)" % (", ".join(repr(k) for k in stray), last,
-                                         ", ".join(visits)))
+                        "\"이름#2\")이다 (있는 것: %s)"
+                        % (", ".join(repr(k) for k in stray), ", ".join(visits)))
     return problems
 
 
@@ -474,8 +469,8 @@ CHECKS = [_check_steps, _check_handlers, _check_step_screens, _check_transitions
           _check_omissions, _check_ids, _check_expect, _check_coverage]
 # derived_from_original 은 보지 않는다. 판정 입력(audit.inputs.judged_flow)이 모델
 # 흐름을 늘 새 설계로 판정하므로, 그 칸 하나로 형식 재시도를 쓰게 할 까닭이 없다.
-# 과제의 완료 화면 짝(done_expect)을 함께 받는 검사들.
-DONE_CHECKS = (_check_ids, _check_expect)
+# 과제의 완료 화면 짝(done_expect)을 함께 받는 검사 - 그 id 가 있는지만 본다.
+DONE_CHECKS = (_check_ids,)
 
 
 def validate_flow(flow, html, required_errors=None, done_expect=None):
@@ -490,7 +485,8 @@ def validate_flow(flow, html, required_errors=None, done_expect=None):
     오류 경로가 생기기 전의 흐름(Run 1~4)을 다시 볼 때 결과가 같아야 한다.
 
     `done_expect` 는 과제가 정한 완료 화면의 짝(tasks/<과제>.json)이다. 주지
-    않으면 기본 과제(이체)의 것이다."""
+    않으면 기본 과제(이체)의 것이다. 그 선택자의 id 가 HTML 과 required_ids 에
+    있는지만 본다 (_check_ids) - 값 짝은 판정이 과제에서 읽으므로 요구하지 않는다."""
     bad_shape = shape_problems(flow)
     if bad_shape:
         return bad_shape
