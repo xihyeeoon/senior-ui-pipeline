@@ -144,15 +144,19 @@ def task_from_name(name):
     return DEFAULT_TASK
 
 
-def _notice_warnings(report):
-    """검사 J 의 "오류 알림 글에 과제 단어가 없음" 경고가 붙은 오류 경로들.
-
-    J 의 경고는 이것 하나다 (j_errors 의 알아챔). 오류 경로 id 를 가진 J 경고만
-    센다. 리포트가 없으면 None - 모른다."""
+def _warnings_by_check(report):
+    """최종 검사의 경고를 검사별로 `{검사: {"count", "first"}}`. 리포트가 없으면
+    None - 모른다. 고르기 규칙의 no_warning_checks 가 이것을 본다 (warning 총수만
+    세면 "어느 검사의 경고인가" 를 규칙으로 말할 수 없다)."""
     if report is None:
         return None
-    return [w.get("error_path") for w in report.get("warning") or []
-            if w.get("check") == "J" and w.get("error_path")]
+    out = {}
+    for w in report.get("warning") or []:
+        c = out.setdefault(w.get("check") or "?", {"count": 0, "first": None})
+        c["count"] += 1
+        if c["first"] is None:
+            c["first"] = w.get("detail")
+    return out
 
 
 def empty_row(name, run_dir, error):
@@ -223,8 +227,8 @@ def collect(run_dir):
         "final_attempt": final.get("attempt"),
         "fatal": _count(entry, report, "fatal"),
         "warning": _count(entry, report, "warning"),
-        # 검사 J 의 알림 글 경고가 붙은 오류 경로 (고르기 규칙의 문지기)
-        "error_notice_warnings": _notice_warnings(report),
+        # 검사별 경고 (고르기 규칙의 no_warning_checks)
+        "warning_by_check": _warnings_by_check(report),
         # 최종 빌드가 어디서 왔나 (보고 다듬기)
         "final_from": (s.get("refine") or {}).get("final_label"),
         # 도구가 고친 흔적 · 재현 조건

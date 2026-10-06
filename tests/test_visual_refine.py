@@ -808,12 +808,12 @@ def test_the_default_rule_drops_runs_with_a_j_notice_warning(tmp_path):
     TS.make_run(str(runs), "20261007-100000-ok")
     bad = TS.make_run(str(runs), "20261007-100001-astra-like")
     add_j_warning(bad)
-    assert TS.DEFAULT_RULE["gates"]["no_error_notice_warning"] is True
+    assert TS.DEFAULT_RULE["gates"]["no_warning_checks"] == ["J"]
     code, result, _md = TS.select(tmp_path)
     assert code == 0 and TS.order(result) == ["20261007-100000-ok"]
     assert TS.reasons(result) == {
-        "20261007-100001-astra-like": ["검사 J 경고: 오류 알림 글에 과제 단어가 없음 "
-                                       "(wrong-bank)"]}
+        "20261007-100001-astra-like": ["검사 J 경고 1건 (오류 경로 wrong-bank: 새로 나타난 "
+                                       "글에 은행 중 어느 단어도 없다)"]}
 
 
 def test_the_j_gate_can_be_turned_off(tmp_path):
@@ -821,7 +821,7 @@ def test_the_j_gate_can_be_turned_off(tmp_path):
     runs.mkdir()
     add_j_warning(TS.make_run(str(runs), "20261007-100001-astra-like"))
     rule = TS.write_rule(tmp_path, gates=dict(TS.DEFAULT_RULE["gates"],
-                                              no_error_notice_warning=False))
+                                              no_warning_checks=[]))
     code, result, _md = TS.select(tmp_path, "--rule", rule)
     assert TS.order(result) == ["20261007-100001-astra-like"]
 
@@ -1109,3 +1109,27 @@ def test_the_refine_fix_prompt_says_the_screens_stay(audit_by_marker, out_root, 
 def test_the_refine_answer_has_no_plan_changes_slot():
     text = _api.prompt_module.load_refine_template()
     assert "plan_changes" not in text
+
+
+
+def test_no_warning_checks_is_a_general_rule(tmp_path):
+    """검사 이름 목록이다 - J 말고 다른 검사의 경고로도 뺄 수 있다."""
+    runs = tmp_path / "runs"
+    runs.mkdir()
+    TS.make_run(str(runs), "20261007-100000-d-warn", warning=2)      # 검사 D 경고 둘
+    add_j_warning(TS.make_run(str(runs), "20261007-100001-j-warn"))
+    rule = TS.write_rule(tmp_path, gates=dict(TS.DEFAULT_RULE["gates"],
+                                              no_warning_checks=["D"]))
+    code, result, _md = TS.select(tmp_path, "--rule", rule)
+    assert TS.order(result) == ["20261007-100001-j-warn"]
+    assert TS.reasons(result) == {"20261007-100000-d-warn": ["검사 D 경고 2건 (w)"]}
+    rows = {r["name"]: r for r in result["ranking"]}
+    assert rows["20261007-100001-j-warn"]["warning_by_check"]["J"]["count"] == 1
+
+
+@pytest.mark.parametrize("bad", [True, "J", [1], [""]])
+def test_no_warning_checks_must_be_a_list_of_names(tmp_path, bad):
+    rule = dict(TS.DEFAULT_RULE, gates=dict(TS.DEFAULT_RULE["gates"],
+                                            no_warning_checks=bad))
+    with pytest.raises(_api.select_rule_module.RuleError):
+        _api.select_rule_module.validate(rule)
