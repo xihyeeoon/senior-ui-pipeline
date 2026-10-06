@@ -60,7 +60,9 @@
 쓸 수 있는 기능이다. 배치 · 묶음 · 크기는 바꿔도 되지만 없애지 마라." 어디에 어떻게 두라는
 말은 하지 않는다 (연구자 결정 (나), 2026-10-06). 목록을 프롬프트에 넣지도 않는다 — 원본
 HTML 의 그 요소들에 `data-action="oos-…"` 와 `aria-label`(이름)이 붙어 있어 모델은 원본에서
-읽는다. 빠지면 재시도 블록의 K fatal 이 빠진 이름을 적는다.
+읽는다. 검사 K 는 그 data-action 이름으로 찾으므로(글자 · aria-label 은 기록만), 기술 계약에
+"oos- 로 시작하는 data-action 이름은 원본 그대로 둔다" 한 줄이 있다 (2026-10-07). 빠지면
+재시도 블록의 K fatal 이 빠진 이름을 적는다.
 
 **선택지 데이터.** 스크립트 배열로 그려지는 선택지는 도구가 꺼내서
 (`senior_ui/restructure/preserve.py`) 재설계 HTML 에 `<script id="preserved-data">
@@ -232,6 +234,8 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   처리기 안에서 `const a = el.dataset.action;` 뒤 `if(a==='이름'){…} else if(a==='이름'){…}`
   형식으로 분기한다. 처리되지 않는 `data-action` 을 남기지 마라. `onclick` 속성, `alert()`,
   `confirm()`, `prompt()` 는 쓰지 마라.
+- 원본의 과제 밖 입구(data-action 이 oos- 로 시작하는 요소)는 data-action 이름을 원본 그대로
+  둔다. 글자 · 배치 · 묶음은 바꿔도 된다.
 - 숫자판은 버튼마다 `data-action` 과 `data-v="숫자"` 를 둔다.
 - 전역에 `window.__screen()` (현재 화면 이름 반환), `window.__log` (배열), `window.__startTask()`,
   `window.__dump()` 를 둔다. 화면이 바뀔 때마다 `__log` 에 `{type:'screen_enter', to:이름}` 을 넣는다.

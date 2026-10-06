@@ -384,7 +384,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 <section class="screen" data-screen="info">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="navbar"><span class="ico" data-action="to-bill-home">‹</span><span class="title">전기요금 납부</span>
-    <span class="ico" data-action="oos-support" aria-label="고객센터">💬</span><span class="ico" data-action="oos-home" aria-label="홈">⌂</span></div>
+    <span class="ico" data-action="oos-info-support" aria-label="고객센터">💬</span><span class="ico" data-action="oos-info-home" aria-label="홈">⌂</span></div>
   <div class="body pad20">
     <div class="h2">납부정보</div>
     <div class="rule"></div>
@@ -417,7 +417,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 
 <section class="screen" data-screen="done">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
-  <div class="navbar"><span class="sp"></span><span class="ico" data-action="oos-support" aria-label="고객센터">💬</span><span class="ico" data-action="finish">⌂</span></div>
+  <div class="navbar"><span class="sp"></span><span class="ico" data-action="oos-done-support" aria-label="고객센터">💬</span><span class="ico" data-action="finish">⌂</span></div>
   <div class="body pad20">
     <div class="okc">✓</div>
     <div class="donet">납부완료</div>
@@ -625,6 +625,7 @@ document.getElementById('phone').addEventListener('click', function(e){
           a==='oos-chat' ||
           a==='oos-connect-event' ||
           a==='oos-coupon' ||
+          a==='oos-done-support' ||
           a==='oos-easy-home' ||
           a==='oos-event' ||
           a==='oos-get-coupon' ||
@@ -632,6 +633,8 @@ document.getElementById('phone').addEventListener('click', function(e){
           a==='oos-hide-amount' ||
           a==='oos-home' ||
           a==='oos-home-setting' ||
+          a==='oos-info-home' ||
+          a==='oos-info-support' ||
           a==='oos-irp' ||
           a==='oos-logout' ||
           a==='oos-message' ||

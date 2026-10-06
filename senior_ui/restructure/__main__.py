@@ -54,7 +54,7 @@ Usage:
   python -m senior_ui.restructure --list-models   # 이 키로 쓸 수 있는 gpt- 모델 (요금 없음)
   python -m senior_ui.restructure --probe gpt-5   # 아주 짧은 요청 하나: 분당 한도 · 실제 모델
 
-이체 mock 모드는 열하나이고 Run 1 빌드를 되읽는다 (공과금은 bill-identity 하나). 모드마다
+이체 mock 모드는 열둘이고 Run 1 빌드를 되읽는다 (공과금은 bill-identity 하나). 모드마다
 은행 목록 한 줄과,
 원본에 있고 Run 1 에 없는 두 값(금액 숫자판의 00 · 빠른 금액의 전액)을 채우는
 방법과, 원본의 두 오류(계좌번호 틀림 · 은행 틀림)를 다루는 방법이 다르다
@@ -81,12 +81,13 @@ Usage:
   reveal-undeclared  같은 HTML 인데 reveal 을 적지 않았다 -> 검사 I 에서 실패
   entrances-reveal   과제 밖 입구(tasks/transfer.json 의 entrances)를 [다른 메뉴] 를
                   눌러야 그리고 흐름 명세에 reveal 을 적는다 -> 통과
+  entrances-folded   입구를 접힌 블록(<details>)에 넣고 펼치는 조작을 reveal 에 적는다
+                  -> 통과
   entrances-none  입구를 넣지 않는다 (Run 1 그대로 - 다른 메뉴를 다 지운 설계)
                   -> 검사 K 에서 실패
 
-  위 둘이 아닌 이체 모드는 모두 첫 화면에 접힌 블록(<details>)으로 입구를 넣는다
-  (model.ENTRANCE_MODES) - Run 1 에는 입구가 하나도 없어서, 넣지 않으면 모든 모드가
-  검사 K 에서 떨어진다.
+  위 셋이 아닌 이체 모드는 모두 첫 화면에 입구를 보이게 넣는다 (model.ENTRANCE_MODES)
+  - Run 1 에는 입구가 하나도 없어서, 넣지 않으면 모든 모드가 검사 K 에서 떨어진다.
 
 The key comes from .envs (OPENAI_API_KEY=...) or the environment. The model
 comes from --model, then RESTRUCTURE_MODEL, then config.DEFAULT_MODEL (지금

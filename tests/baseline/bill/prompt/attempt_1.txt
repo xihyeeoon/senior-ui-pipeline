@@ -25,6 +25,8 @@
   처리기 안에서 `const a = el.dataset.action;` 뒤 `if(a==='이름'){…} else if(a==='이름'){…}`
   형식으로 분기한다. 처리되지 않는 `data-action` 을 남기지 마라. `onclick` 속성, `alert()`,
   `confirm()`, `prompt()` 는 쓰지 마라.
+- 원본의 과제 밖 입구(data-action 이 oos- 로 시작하는 요소)는 data-action 이름을 원본 그대로
+  둔다. 글자 · 배치 · 묶음은 바꿔도 된다.
 - 숫자판은 버튼마다 `data-action` 과 `data-v="숫자"` 를 둔다.
 - 전역에 `window.__screen()` (현재 화면 이름 반환), `window.__log` (배열), `window.__startTask()`,
   `window.__dump()` 를 둔다. 화면이 바뀔 때마다 `__log` 에 `{type:'screen_enter', to:이름}` 을 넣는다.
@@ -513,7 +515,7 @@
 <section class="screen" data-screen="info">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="navbar"><span class="ico" data-action="to-bill-home">‹</span><span class="title">전기요금 납부</span>
-    <span class="ico" data-action="oos-support" aria-label="고객센터">💬</span><span class="ico" data-action="oos-home" aria-label="홈">⌂</span></div>
+    <span class="ico" data-action="oos-info-support" aria-label="고객센터">💬</span><span class="ico" data-action="oos-info-home" aria-label="홈">⌂</span></div>
   <div class="body pad20">
     <div class="h2">납부정보</div>
     <div class="rule"></div>
@@ -546,7 +548,7 @@
 
 <section class="screen" data-screen="done">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
-  <div class="navbar"><span class="sp"></span><span class="ico" data-action="oos-support" aria-label="고객센터">💬</span><span class="ico" data-action="finish">⌂</span></div>
+  <div class="navbar"><span class="sp"></span><span class="ico" data-action="oos-done-support" aria-label="고객센터">💬</span><span class="ico" data-action="finish">⌂</span></div>
   <div class="body pad20">
     <div class="okc">✓</div>
     <div class="donet">납부완료</div>
@@ -754,6 +756,7 @@ document.getElementById('phone').addEventListener('click', function(e){
           a==='oos-chat' ||
           a==='oos-connect-event' ||
           a==='oos-coupon' ||
+          a==='oos-done-support' ||
           a==='oos-easy-home' ||
           a==='oos-event' ||
           a==='oos-get-coupon' ||
@@ -761,6 +764,8 @@ document.getElementById('phone').addEventListener('click', function(e){
           a==='oos-hide-amount' ||
           a==='oos-home' ||
           a==='oos-home-setting' ||
+          a==='oos-info-home' ||
+          a==='oos-info-support' ||
           a==='oos-irp' ||
           a==='oos-logout' ||
           a==='oos-message' ||

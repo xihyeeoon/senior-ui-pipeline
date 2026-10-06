@@ -558,28 +558,37 @@ CHOICE_GROUPS = r"""
 """
 
 
-# --- K: 누를 수 있는 요소의 이름 ---------------------------------------------
-# 과제 밖 입구(과제 파일의 entrances)가 빌드에 남았는지 보려고, 문서 전체의
-# data-action 요소마다 보이는 글자와 aria-label 을 모은다. 켜진 화면만이 아니라
-# 문서 전체다 - 같은 화면이 아니어도, 접혀 있어도 된다는 규칙(검사 I 와 같다).
-# 글자는 글자 노드를 공백 하나로 이어 붙인다 - textContent 는 `<div>쓰는</div>
-# <div>마이신한포인트</div>` 를 "쓰는마이신한포인트" 로 붙여, 낱말 경계로 찾는
-# 검사 I 의 규칙이 맞지 않는다.
-ACTION_TEXTS = r"""
+# --- K: 과제 밖 입구 ------------------------------------------------------------
+# 과제 밖 입구(과제 파일의 entrances)는 원본의 data-action 이름(oos-*)으로 찾는다.
+# 이름마다 지금 누를 수 있게 보이는가(그려져 있고 disabled 가 아니다)와, 기록용으로
+# 그 요소의 글자 · aria-label 을 모은다 - 글자는 판정에 쓰지 않는다 (11-7b).
+# 같은 이름이 여럿이면 보이는 것 하나를 고른다. 문서 전체를 보지만 숨은 화면 안의
+# 요소는 크기가 0 이라 보이지 않는 것이 된다 - 그 화면에 도착한 걸음에서 보인다.
+ENTRANCE_PREFIX = "oos-"
+ENTRANCES = r"""
 () => {
-  const out = new Set();
+  const out = {};
   const clean = s => (s || '').replace(/\s+/g, ' ').trim();
-  document.querySelectorAll('[data-action]').forEach(el => {
+  const shown = e => {
+    const cs = getComputedStyle(e);
+    if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+    if (+cs.opacity === 0) return false;
+    if (e.disabled || e.getAttribute('aria-disabled') === 'true') return false;
+    const r = e.getBoundingClientRect();
+    return r.width >= 1 && r.height >= 1;
+  };
+  document.querySelectorAll('[data-action^="__PREFIX__"]').forEach(el => {
+    const a = el.getAttribute('data-action');
     const parts = [];
     const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
     for (let n = w.nextNode(); n; n = w.nextNode()) {
       const t = clean(n.nodeValue);
       if (t) parts.push(t);
     }
-    if (parts.length) out.add(parts.join(' '));
-    const aria = clean(el.getAttribute('aria-label'));
-    if (aria) out.add(aria);
+    const row = {visible: shown(el), text: parts.join(' '),
+                 aria: clean(el.getAttribute('aria-label'))};
+    if (!out[a] || (row.visible && !out[a].visible)) out[a] = row;
   });
-  return Array.from(out);
+  return out;
 }
-"""
+""".replace("__PREFIX__", ENTRANCE_PREFIX)

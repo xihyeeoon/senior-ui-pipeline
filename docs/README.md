@@ -602,7 +602,7 @@ in `metrics.flow_notes`. It does not silently accept the mismatch.
 | H | classes the markup uses that no stylesheet defines | warning |
 | I | values the original offered as choices must still exist somewhere in the build | fatal |
 | J | each required wrong input (the task's `required_error_paths`) brings up an error state with new text and `recover` leads back to a screen where it can be fixed; warns when the text has none of the task's words | fatal |
-| K | 과제 밖 입구 — 과제 파일 `entrances` 의 메뉴 · 버튼 (더미앱 A1 의 OutOfScope 탭 대상, 연구자 확정)이 빌드 어딘가에 누를 수 있는 요소로 남아 있다. 걷는 동안(reveal 포함) DOM 의 `data-action` 요소의 글자나 `aria-label` 이 [원본 글자, 더미 라벨] 중 하나와 맞으면 있다 (경계 규칙은 I 와 같다). 원본을 걷는 동안 찾은 입구만 센다 | fatal |
+| K | 과제 밖 입구 — 과제 파일 `entrances` 의 메뉴 · 버튼 (더미앱 A1 의 OutOfScope 탭 대상, 연구자 확정)이 빌드 어딘가에 남아 있다. 원본의 `data-action` 이름(`oos-*`)을 그대로 가진 요소가 걷는 동안(reveal 포함) 누를 수 있게 보이면 있다 (그려져 있고 disabled 가 아니다, 같은 화면이 아니어도 된다). 원본을 걷는 동안 보인 입구만 센다. 글자 · `aria-label` 은 기록만 한다 (`entrances_shown_as`) | fatal |
 
 H is not in the original brief. It was added because it is the shared root cause
 of two rendering failures: example1's `bg-primary`/`text-primary` and the

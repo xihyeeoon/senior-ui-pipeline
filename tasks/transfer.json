@@ -39,8 +39,8 @@
       "연구자 확정 2026-10-07 (11-7): A1 에서 누를 수 있는 것은 모두 보존한다. 선택지 데이터(메뉴 항목 · 납부 항목)는 검사 I 가 세므로 여기 없다.",
       "id: T = 이체 경로 · B = 공과금 경로 · R = 더미앱에서는 범위 안이지만 원본 HTML 에서는 죽어 있던 요소.",
       "action: 원본 HTML 에 붙인 data-action (ASCII - 분기를 읽는 규칙 audit/handlers.py 가 ASCII 만 읽는다). 원본의 처리기는 그것을 받고 아무 일도 하지 않는다.",
-      "label: 더미앱 OutOfScope 의 라벨 = 원본에 붙인 aria-label. text: 원본에 보이는 글자 (null 이면 이름으로 쓰지 않는다).",
-      "판정 (검사 K): 원본을 걷는 동안 찾은 입구마다, 빌드를 걷는 동안(reveal 포함) DOM 의 data-action 요소의 글자나 aria-label 이 [text, label] 중 하나와 맞아야 한다. 경계 규칙은 검사 I 와 같다. 같은 화면이 아니어도 · 접혀 있어도 된다."
+      "label: 더미앱 OutOfScope 의 라벨 = 원본에 붙인 aria-label. text: 원본에 보이는 글자. 둘 다 판정에 쓰지 않는다 - 재시도 문구에 이름을 적고, 빌드에서 어떤 글자로 보였는지 기록할 때만 쓴다.",
+      "판정 (검사 K, 연구자 결정 2026-10-07): 원본을 걷는 동안 누를 수 있게 보인 입구마다, 빌드에 같은 data-action 이름(oos-*)을 가진 요소가 걷는 동안(reveal 포함) 누를 수 있게 보여야 한다 - 그려져 있고 disabled 가 아니다. 같은 화면이 아니어도 되고, 접어 두었으면 펼치는 조작을 reveal 에 적는다. 기술 계약이 oos-* 이름을 원본 그대로 두라고 한다."
     ],
     "source": "senior-ui-dummy-app 00834ca 의 OutOfScope · showOutOfScope 코드 - lib/screens/a1_home.dart · a1_transfer_entry.dart · a1_transfer_amount.dart · a1_transfer_done.dart (+ R1 menuEntry · R3 home_link_쉬운홈 · R4 home_nav_홈 은 범위 안이지만 원본 HTML 에서는 죽어 있던 요소). 표: 11-7 입구 후보표",
     "items": [

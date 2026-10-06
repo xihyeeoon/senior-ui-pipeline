@@ -88,7 +88,7 @@
     {
       "check": "K",
       "screen": null,
-      "detail": "원본의 과제 밖 입구 31개 중 31개가 생성물에 없다: 메시지(☺), 지갑(▤), 알림(♤), IRP 안내, 앱카드 가입, 바로받기, 이벤트, 쿠폰, 포인트, 소비 상세, 마이신한포인트, 자산 연결 이벤트, 홈화면 설정, 금액 숨기기, 금융, 상품, 혜택, 주식, 다건이체, 받는 사람 관리(👤), 검색(⌕), 자주쓰는 계좌, 내 계좌, 최근, 출금계좌 변경, 추가이체, 상세보기, 공유, 전체메뉴(⌕), 쉬운홈, 홈. 원본의 다른 메뉴와 버튼도 사용자가 쓸 수 있는 기능이다. 배치 · 묶음 · 크기는 바꿔도 되지만 없애지 마라. 검사기는 걷는 동안 DOM 에 있는 data-action 요소의 글자나 aria-label 에서 이 이름을 찾는다. 눌러야 만들어지는 요소라면 그 조작을 흐름 명세의 reveal 에 적어라.",
+      "detail": "원본의 과제 밖 입구 31개 중 31개가 생성물에서 누를 수 있게 보이지 않는다: 메시지(oos-message), 지갑(oos-wallet), 알림(oos-alarm), IRP 안내(oos-irp), 앱카드 가입(oos-appcard), 바로받기(oos-get-coupon), 이벤트(oos-event), 쿠폰(oos-coupon), 포인트(oos-point), 소비 상세(oos-spend-detail), 마이신한포인트(oos-my-point), 자산 연결 이벤트(oos-connect-event), 홈화면 설정(oos-home-setting), 금액 숨기기(oos-hide-amount), 금융(oos-tab-finance), 상품(oos-tab-goods), 혜택(oos-tab-benefit), 주식(oos-tab-stock), 다건이체(oos-multi-transfer), 받는 사람 관리(oos-payee-manage), 검색(oos-search), 자주쓰는 계좌(oos-frequent), 내 계좌(oos-my-accounts), 최근(oos-recent), 출금계좌 변경(oos-from-account), 추가이체(oos-more-transfer), 상세보기(oos-detail), 공유(oos-share), 전체메뉴(oos-menu), 쉬운홈(oos-easy-home), 홈(oos-tab-home). 원본의 다른 메뉴와 버튼도 사용자가 쓸 수 있는 기능이다. 배치 · 묶음 · 크기는 바꿔도 되지만 없애지 마라. 검사기는 원본의 data-action 이름(oos-…)을 그대로 가진 요소가 걷는 동안 누를 수 있게 보이는지 본다. 눌러야 보이는 요소라면 그 조작을 흐름 명세의 reveal 에 적어라.",
       "missing": [
         "T1",
         "T2",
@@ -425,7 +425,9 @@
       "R3",
       "R4"
     ],
+    "entrances_hidden": [],
     "entrances_not_in_original": [],
+    "entrances_shown_as": {},
     "fatal_duplicates_removed": 0,
     "fatal_total": 4,
     "fatal_derived": 0,

@@ -1,9 +1,9 @@
 {
   "pass": {
     "reply_finish_reason": "stop",
-    "reply_text_sha256": "b8e57fd06fee9e7d1463bdc929db8bfdd7a6b7926122d3150898e408fd3259cf",
-    "html_len": 30031,
-    "html_sha256": "2dd312ce6112302fb89f898bae8b45eacb39e22f3030a0f441ed4cf83563e159",
+    "reply_text_sha256": "714574c453ce02ba1d751f664e9091590155000ad630819f69479fe6b24acc77",
+    "html_len": 29975,
+    "html_sha256": "4c395627a88b1ff80f662a4e60c292c4a7cf459cbc11edeec2786a3a268210cf",
     "flow": {
       "name": "auto",
       "truth": {
@@ -206,9 +206,9 @@
   },
   "fail": {
     "reply_finish_reason": "stop",
-    "reply_text_sha256": "7cf92b947cd9cc6be3b225b3996d6d1f8f9ac95d83fe21fbdf33c712b10cc6f9",
-    "html_len": 30031,
-    "html_sha256": "2dd312ce6112302fb89f898bae8b45eacb39e22f3030a0f441ed4cf83563e159",
+    "reply_text_sha256": "a7c20d82bc6411d57416a11250a5c6d61dfe35cb166d50f3810e428e947f507b",
+    "html_len": 29975,
+    "html_sha256": "4c395627a88b1ff80f662a4e60c292c4a7cf459cbc11edeec2786a3a268210cf",
     "flow": {
       "name": "auto",
       "truth": {

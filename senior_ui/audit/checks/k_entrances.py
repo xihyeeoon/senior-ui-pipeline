@@ -9,28 +9,27 @@ r"""검사 K - 과제 밖 입구 보존. fatal.
 하나만 남겼다).
 
 무엇이 입구인지는 과제 파일의 `entrances` 가 정한다 - 더미앱 A1 에서 누를 수 있고
-OutOfScope 로 처리되는 탭 대상, 연구자가 확정한 목록이다. 선택지 데이터(메뉴 항목 ·
-은행 목록)는 검사 I 가 센다.
+OutOfScope 로 처리되는 탭 대상, 연구자가 확정한 목록이다. 원본 HTML 의 그 요소에는
+`data-action="oos-…"` 가 붙어 있다. 선택지 데이터(메뉴 항목 · 은행 목록)는 검사 I 가 센다.
 
-세는 방식은 검사 I 와 같다.
+판정 (연구자 결정 2026-10-07):
 
-    어디서   걷는 동안(reveal 포함) DOM 에 있는 data-action 요소 - 문서 전체다. 같은
-             화면이 아니어도, 접혀 있어도 된다. 눌러야 만들어지는 요소는 흐름 명세의
-             reveal 로 걸어 모은 것도 센다 (drive.ACTION_TEXTS)
-    무엇을   그 요소의 보이는 글자나 aria-label 이 입구의 [원본 글자, 더미 라벨] 중
-             하나와 맞는가. 경계 규칙은 검사 I 의 present() 다
-    무엇만   **원본을 걷는 동안 찾은 입구만** 센다 - 검사 I 가 원본의 선택지만 세는
-             것과 같다. 원본에서 찾지 못한 입구는 지표에만 남긴다
+    이름     원본의 data-action 이름(oos-*)을 그대로 가진 요소가 빌드에 있다 (기술
+             계약이 이름을 원본 그대로 두라고 한다)
+    보임     그 요소가 걷는 동안 - 정답 경로의 어느 걸음에서든, 흐름 명세의 reveal 로
+             펼친 뒤에든 - 누를 수 있게 보인다 (그려져 있고 disabled 가 아니다). 같은
+             화면이 아니어도 된다. 늘 숨어 있는 요소는 사용자가 쓸 수 없다
+    무엇만   원본을 걷는 동안 누를 수 있게 보인 입구만 센다 - 검사 I 가 원본의 선택지만
+             세는 것과 같다. 원본에서 보이지 않은 입구는 지표에만 남긴다
 
-원본에서 찾은 입구만 세는 이유는 둘이다. 목록이 원본과 어긋나면(원본을 바꿨는데 목록을
-안 고쳤다) 고칠 수 없는 fatal 이 생기지 않고 지표로 드러난다. 그리고 원본이 이 과제의
-원본이 아닌 검사(fixture 페이지)에서는 아무것도 요구하지 않는다.
+글자 · aria-label 은 판정에 쓰지 않고 기록만 한다 (`entrances_shown_as`). 전에는 글자로
+맞췄는데, 다른 요소의 글자가 그 입구로 읽혔다 - 배너의 "금융자산" 이 하단 탭 "금융" 으로,
+메뉴 항목 "이체결과 조회" 가 홈의 [이체] 로 (outputs/11-7_entrance_collisions.txt).
 
 입구를 눌렀을 때 무슨 일이 일어나는지는 보지 않는다 - 원본도 아무 일도 하지 않는다.
 """
 from ... import tasks as T
 from ..flow import task_of
-from .i_choices import present
 
 
 def entrances(flow):
@@ -43,61 +42,66 @@ def entrances(flow):
     return [e for e in group.get("items") or [] if isinstance(e, dict) and e.get("id")]
 
 
-def names(entrance):
-    """그 입구로 인정하는 이름 - [원본 글자, 더미 라벨] 중 비지 않은 것."""
-    return [n for n in (entrance.get("text"), entrance.get("label")) if n]
+def seen(snapshot):
+    """그 스냅샷의 입구 상태 `{action: {visible, text, aria}}` - 정답 경로 + 펼치기.
+    한 번이라도 보였으면 보인 것이다 (drive.merge_entrances 와 같은 규칙)."""
+    out = {}
+    rows = [snapshot.get("entrances_seen") or {}] + [
+        (res or {}).get("entrances_seen") or {}
+        for res in (snapshot.get("revealed") or {}).values()]
+    for got in rows:
+        for action, row in got.items():
+            old = out.get(action)
+            if old is None or (row.get("visible") and not old.get("visible")):
+                out[action] = row
+    return out
 
 
-def shown(entrance):
-    """사람과 모델이 읽는 이름. 원본 글자가 아이콘처럼 짧고 라벨과 다르면 괄호로 함께
-    적는다 (메시지(☺)) - 긴 문장(배너 글)까지 붙이면 목록이 읽히지 않는다."""
-    label, text = entrance.get("label"), entrance.get("text")
-    return "%s(%s)" % (label, text) if text and text != label and len(text) <= 2 else label
-
-
-def texts(snapshot):
-    """그 스냅샷의 data-action 요소 이름 전부 - 정답 경로 + 펼치기. 한 덩어리 글로
-    (검사 I 의 dom_values 와 같은 이유 - 경계 규칙을 원문과 똑같이 쓴다)."""
-    seen = set(snapshot.get("action_texts") or [])
-    for res in (snapshot.get("revealed") or {}).values():
-        seen.update((res or {}).get("action_texts") or [])
-    return "\n".join(sorted(seen))
-
-
-def found(entrance, text):
-    return any(present(n, text) for n in names(entrance))
+def shown(state, action):
+    return bool((state.get(action) or {}).get("visible"))
 
 
 def run(ctx):
     items = entrances(ctx.flow)
     if not items:
         return
-    if "action_texts" not in ctx.orig or "action_texts" not in ctx.rep:
+    if "entrances_seen" not in ctx.orig or "entrances_seen" not in ctx.rep:
         ctx.skipped.append(
-            "K/과제 밖 입구 - 스냅샷에 data-action 요소의 이름(action_texts)이 없다 "
-            "(수집이 생기기 전의 스냅샷이거나 손으로 만든 것). 판정하지 않았다.")
+            "K/과제 밖 입구 - 스냅샷에 입구 수집(entrances_seen)이 없다 (수집이 생기기 "
+            "전의 스냅샷이거나 손으로 만든 것). 판정하지 않았다.")
         return
-    orig_text, rep_text = texts(ctx.orig), texts(ctx.rep)
-    in_orig = [e for e in items if found(e, orig_text)]
-    missing = [e for e in in_orig if not found(e, rep_text)]
+    orig, rep = seen(ctx.orig), seen(ctx.rep)
+    in_orig = [e for e in items if shown(orig, e["action"])]
+    missing = [e for e in in_orig if not shown(rep, e["action"])]
+    hidden = [e["id"] for e in missing if e["action"] in rep]
     not_in_orig = [e["id"] for e in items if e not in in_orig]
 
     m = ctx.metrics
     m["entrances_original"] = len(in_orig)
     m["entrances_kept"] = len(in_orig) - len(missing)
     m["entrances_missing"] = [e["id"] for e in missing]
+    # 이름은 있지만 걷는 동안 한 번도 누를 수 있게 보이지 않은 것 (missing 의 일부)
+    m["entrances_hidden"] = hidden
     m["entrances_not_in_original"] = not_in_orig
+    # 기록만 한다 - 남은 입구가 빌드에서 어떤 글자 · aria-label 로 보였나
+    m["entrances_shown_as"] = {e["id"]: {"text": rep[e["action"]].get("text") or "",
+                                         "aria": rep[e["action"]].get("aria") or ""}
+                               for e in in_orig if e not in missing}
     if not_in_orig and in_orig:
-        # 원본이 이 과제의 원본인데 목록의 일부를 찾지 못했다 - 목록이나 원본이
+        # 원본이 이 과제의 원본인데 목록의 일부가 보이지 않았다 - 목록이나 원본이
         # 바뀌었다. 판정에서는 빼고 사람이 볼 줄을 남긴다.
-        ctx.skipped.append("K/과제 밖 입구 - 원본에서 찾지 못한 입구 %d개는 세지 않았다: %s"
-                           % (len(not_in_orig), ", ".join(not_in_orig)))
+        ctx.skipped.append("K/과제 밖 입구 - 원본을 걷는 동안 보이지 않은 입구 %d개는 세지 "
+                           "않았다: %s" % (len(not_in_orig), ", ".join(not_in_orig)))
     if missing:
         ctx.fatal_(
             "K", None,
-            "원본의 과제 밖 입구 %d개 중 %d개가 생성물에 없다: %s. 원본의 다른 메뉴와 버튼도 "
-            "사용자가 쓸 수 있는 기능이다. 배치 · 묶음 · 크기는 바꿔도 되지만 없애지 마라. "
-            "검사기는 걷는 동안 DOM 에 있는 data-action 요소의 글자나 aria-label 에서 이 "
-            "이름을 찾는다. 눌러야 만들어지는 요소라면 그 조작을 흐름 명세의 reveal 에 적어라."
-            % (len(in_orig), len(missing), ", ".join(shown(e) for e in missing)),
+            "원본의 과제 밖 입구 %d개 중 %d개가 생성물에서 누를 수 있게 보이지 않는다: %s.%s "
+            "원본의 다른 메뉴와 버튼도 사용자가 쓸 수 있는 기능이다. 배치 · 묶음 · 크기는 "
+            "바꿔도 되지만 없애지 마라. 검사기는 원본의 data-action 이름(oos-…)을 그대로 가진 "
+            "요소가 걷는 동안 누를 수 있게 보이는지 본다. 눌러야 보이는 요소라면 그 조작을 "
+            "흐름 명세의 reveal 에 적어라."
+            % (len(in_orig), len(missing),
+               ", ".join("%s(%s)" % (e["label"], e["action"]) for e in missing),
+               " 그중 %s 는 문서에는 있지만 한 번도 보이지 않았다." % ", ".join(
+                   by["action"] for by in missing if by["id"] in hidden) if hidden else ""),
             missing=[e["id"] for e in missing])
