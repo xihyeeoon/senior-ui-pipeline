@@ -258,3 +258,61 @@ def test_only_files_under_flows_are_researcher_flows(tmp_path):
     assert I.researcher_flow(os.path.join(ROOT, "flows", "run2.json"))
     assert not I.researcher_flow(os.path.join(ROOT, "outputs", "x.flow.json"))
     assert not I.researcher_flow(str(tmp_path / "flows" / "run2.json"))
+
+
+# --------------------------------------------------------------------- #
+# 5. 완료 화면 값은 늘 과제의 done_expect 로 판정한다 (B-01)
+# --------------------------------------------------------------------- #
+@pytest.mark.parametrize("value", ["", "999", "{AMOUNT}"],
+                         ids=["empty", "literal", "other-placeholder"])
+def test_the_done_value_is_the_tasks_whatever_the_model_wrote(monkeypatch, tmp_path,
+                                                              value):
+    """완료 화면이 999 를 보인다. 과제가 넣은 금액은 32,000 이다.
+
+    고치기 전: 검사 B 는 모델이 expect 에 적은 값과 비교했다. 빈 값이면 무조건
+    통과였고(감사 R-1), 999 로 적으면 999 가 정답이 됐다. 형식 검사는 선택자만
+    본다."""
+    flow = model_flow(expect={"done": [["#dn-amt", value]]})
+    report, judged = loop_verdict(monkeypatch, tmp_path, flow, build_snapshot("999"))
+    assert judged["expect"]["done"] == [["#dn-amt", "{AMOUNT_SHOWN}"]]
+    b = [f for f in report["fatal"] if f["check"] == "B"]
+    assert [(f["selector"], f["got"], f["expected"]) for f in b] == \
+        [("#dn-amt", "999", TASK_AMOUNT_SHOWN)]
+
+
+def test_the_models_done_amount_cannot_move_the_done_check(monkeypatch, tmp_path):
+    """모델이 done_amount 로 금액 자리를 맞는 값을 보이는 다른 요소로 옮기고,
+    과제의 자리(#dn-amt)는 expect 에 적지 않았다.
+
+    고치기 전: 검사 A 는 done_amount 가 가리키는 #fake(32,000)만 보고, #dn-amt 의
+    999 는 아무도 보지 않아 통과했다."""
+    flow = model_flow(expect={"done": []}, done_amount="#fake")
+    rep = snap({"start": row("start", actions=["go"], ids=["phone"]),
+                "done": row("done", ids=["dn-amt", "fake"],
+                            shown=[["#dn-amt", "999"], ["#fake", TASK_AMOUNT_SHOWN]])})
+    report, judged = loop_verdict(monkeypatch, tmp_path, flow, rep)
+    assert judged["done_amount"] == "#dn-amt"
+    fatal = [f for f in report["fatal"] if f["check"] in ("A", "B")]
+    assert len(fatal) == 1, fatal
+    assert "#dn-amt" in fatal[0]["detail"] and "999" in fatal[0]["detail"]
+
+
+def test_the_models_other_done_pairs_are_kept(monkeypatch, tmp_path):
+    """완료 화면에서 모델이 더 확인하겠다고 적은 짝은 그대로 둔다 - 걷는 법이고
+    과제의 기준을 바꾸지 않는다. 과제의 짝은 모델이 적은 자리에 그 값으로 들어간다."""
+    flow = model_flow(expect={"done": [["#note", "{NAME}"], ["#dn-amt", ""],
+                                       ["#dn-amt", "1"]]})
+    out = _api.judged_flow(flow)
+    assert out["expect"]["done"] == [["#note", "{NAME}"],
+                                     ["#dn-amt", "{AMOUNT_SHOWN}"]]
+    assert "expect.done" in out["model_claims_dropped"]
+
+
+def test_the_done_pairs_follow_the_last_screen_and_the_task():
+    """완료 화면은 이름이 아니라 마지막 걸음의 화면이다. 공과금은 두 짝이다."""
+    flow = model_flow(steps=[{"screen": "start"},
+                             {"screen": "finish", "click": "[data-action='go']"}],
+                      expect={})
+    out = _api.judged_flow(flow, task="bill")
+    assert out["expect"]["finish"] == _api.load_task("bill")["done_expect"]
+    assert out["done_amount"] == "#dn-paid"

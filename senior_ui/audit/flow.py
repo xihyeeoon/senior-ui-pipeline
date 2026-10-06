@@ -192,7 +192,9 @@ def visit_keys(steps):
     """
     seen, out = {}, []
     for step in steps:
-        name = step["screen"]
+        # 화면 이름이 없는 걸음(모델이 빠뜨린 것)은 None 의 방문이다. 그런 흐름은
+        # 형식 검사가 문제로 세지만, 그 검사도 이 함수로 방문 이름을 센다.
+        name = step.get("screen") if isinstance(step, dict) else None
         seen[name] = seen.get(name, 0) + 1
         out.append(name if seen[name] == 1 else "%s#%d" % (name, seen[name]))
     return out

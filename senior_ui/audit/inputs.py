@@ -30,7 +30,7 @@ import os
 from .. import config
 from ..config import FLOWS_DIR
 from ..tasks import DEFAULT_TASK, load_task
-from .flow import done_selector, task_truth
+from .flow import done_selector, task_truth, visit_keys
 from .stage import STAGES
 
 # 허용하는 제거를 적는 파일. 연구자가 손으로 관리하는 것이고, 이것 말고는
@@ -89,6 +89,33 @@ def read_flow(path):
         return json.load(f)
 
 
+def _done_visit(flow):
+    """완료 화면의 방문 이름 - 흐름의 마지막 걸음. 걸음이 없으면 None."""
+    steps = flow.get("steps")
+    visits = visit_keys(steps) if isinstance(steps, list) else []
+    return visits[-1] if visits else None
+
+
+def _done_expect(pairs, task_pairs):
+    """완료 화면에서 확인할 짝들. 과제의 짝(done_expect)은 과제의 값으로 들어간다.
+
+    모델이 과제의 선택자를 적은 자리에 과제의 값을 넣고(두 번 적었으면 한 번만),
+    모델이 적지 않은 과제의 짝은 뒤에 더한다. 과제의 선택자가 아닌 짝은 모델이
+    더 확인하겠다고 적은 것이므로 그대로 둔다."""
+    want = dict((sel, val) for sel, val in task_pairs)
+    out, placed = [], set()
+    for p in pairs if isinstance(pairs, list) else []:
+        sel = p[0] if isinstance(p, list) and p else None
+        if sel in want:
+            if sel not in placed:
+                out.append([sel, want[sel]])
+                placed.add(sel)
+            continue
+        out.append(p)
+    out += [[sel, val] for sel, val in task_pairs if sel not in placed]
+    return out
+
+
 def model_claims(flow, task=DEFAULT_TASK):
     """모델이 적었지만 judged_flow 가 버리는 판정 기준 칸의 이름들.
 
@@ -110,6 +137,15 @@ def model_claims(flow, task=DEFAULT_TASK):
         out.append("error_paths_required")
     if flow.get("derived_from_original"):
         out.append("derived_from_original")
+    if "done_amount" in flow and flow["done_amount"] != done_selector(task):
+        out.append("done_amount")
+    last, expect = _done_visit(flow), flow.get("expect")
+    if last and isinstance(expect, dict):
+        want = dict(load_task(task)["done_expect"])
+        mine = [p for p in expect.get(last) or []
+                if isinstance(p, list) and p and p[0] in want]
+        if any(len(p) != 2 or p[1] != want[p[0]] for p in mine)                 or len(mine) != len({p[0] for p in mine}):
+            out.append("expect.%s" % last)
     return out
 
 
@@ -144,6 +180,9 @@ def judged_flow(flow, task=None, stage=None, allowed_removals=None):
       choices_removed        연구자 파일(flows/allowed_removals.json)의 그 과제 칸
       error_paths_required   과제 파일의 required_error_paths
       stage                  부르는 쪽이 정한 단계, 없으면 config.DEFAULT_STAGE
+      done_amount            과제의 완료 화면 금액 자리 (done_expect 첫 짝)
+      expect[완료 화면]      과제의 done_expect 짝은 과제의 값으로 (_done_expect).
+                             모델이 비우거나 다른 값을 적어도 과제의 값으로 본다
       reveal                 모델의 펼치기 조작, 한 가지 모양으로 (_reveal_of)
       model_claims_dropped   위 칸 중 모델이 적었다가 버려진 것 (model_claims)
 
@@ -167,8 +206,17 @@ def judged_flow(flow, task=None, stage=None, allowed_removals=None):
     out["error_paths_required"] = list(spec["required_error_paths"])
     out["stage"] = stage
     out.setdefault("expect", {})
+    if not isinstance(out["expect"], dict):
+        raise ValueError("expect 가 객체가 아니다 (%s)" % type(out["expect"]).__name__)
     out.setdefault("error_paths", [])
-    out.setdefault("done_amount", done_selector(task))
+    # 완료 화면의 값은 과제가 정한다 (감사 B-01). 모델이 적은 값으로 보면 빈 값은
+    # 무조건 통과이고, 틀린 값을 적으면 틀린 값이 정답이 된다. 금액 자리를 옮기는
+    # done_amount 도 같은 구멍이다 - 검사 A 가 그 자리만 본다.
+    out["done_amount"] = done_selector(task)
+    last = _done_visit(out)
+    if last:
+        out["expect"][last] = _done_expect(out["expect"].get(last),
+                                           spec["done_expect"])
     reveal = _reveal_of(flow)
     if reveal is None:
         out.pop("reveal", None)
