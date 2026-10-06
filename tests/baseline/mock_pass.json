@@ -78,7 +78,7 @@
       "calls": [
         {
           "stage": "plan",
-          "estimated_prompt": 19395,
+          "estimated_prompt": 18574,
           "method": "tiktoken:o200k_base",
           "max_tokens": 6000,
           "usage": null,
@@ -88,7 +88,7 @@
         },
         {
           "stage": "generate",
-          "estimated_prompt": 15681,
+          "estimated_prompt": 14860,
           "method": "tiktoken:o200k_base",
           "max_tokens": 14000,
           "usage": null,
@@ -187,7 +187,7 @@
     "by_stage": {
       "plan": {
         "calls": 1,
-        "estimated_prompt": 19395,
+        "estimated_prompt": 18574,
         "images": 14,
         "estimated_images": 5950,
         "max_tokens": 6000,
@@ -197,7 +197,7 @@
       },
       "generate": {
         "calls": 1,
-        "estimated_prompt": 15681,
+        "estimated_prompt": 14860,
         "images": 0,
         "estimated_images": 0,
         "max_tokens": 14000,
@@ -218,7 +218,7 @@
     },
     "total": {
       "calls": 3,
-      "estimated_prompt": 54056,
+      "estimated_prompt": 52414,
       "images": 25,
       "estimated_images": 10625,
       "max_tokens": 34000,
@@ -228,7 +228,7 @@
     },
     "first_attempt": {
       "calls": 2,
-      "estimated_prompt": 35076,
+      "estimated_prompt": 33434,
       "images": 14,
       "estimated_images": 5950,
       "max_tokens": 20000,
@@ -283,6 +283,8 @@
         "fix_passed": null,
         "became_final": false,
         "stopped": "done",
+        "format_failures": 0,
+        "audit_failures": 0,
         "tokens": {
           "calls": 1,
           "estimated_prompt": 18980,
@@ -298,6 +300,8 @@
     ],
     "final_from": "generate",
     "final_label": "생성",
-    "reverted": null
+    "reverted": null,
+    "format_failures": 0,
+    "audit_failures": 0
   }
 }
