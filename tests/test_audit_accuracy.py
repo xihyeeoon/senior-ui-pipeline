@@ -14,8 +14,6 @@ r"""검사기가 결함을 놓치는(거짓 통과) 것의 재현 테스트. `py
 import asyncio
 import io
 import os
-import subprocess
-import time
 
 import pytest
 
@@ -30,29 +28,8 @@ PAGES = os.path.join(HERE, "fixtures", "pages")
 PAGES_REL = "tests/fixtures/pages"
 
 
-# --------------------------------------------------------------------- #
-# 서버 - test_drive.py 와 같은 규칙: 떠 있으면 그대로 쓰고 건드리지 않는다.
-# 내가 띄운 것만 내가 끈다.
-# --------------------------------------------------------------------- #
-@pytest.fixture(scope="module")
-def server():
-    if C.listening(C.PORT):
-        yield None
-        return
-    proc = subprocess.Popen(C.server_cmd(C.PORT),
-                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    for _ in range(50):
-        if C.listening(C.PORT):
-            break
-        time.sleep(0.1)
-    else:
-        proc.kill()
-        pytest.fail(":%d 에 http.server 를 띄우지 못했습니다." % C.PORT)
-    try:
-        yield proc
-    finally:
-        proc.terminate()
-        proc.wait()
+# 서버는 tests/conftest.py 의 `server` 다 - 전에는 여기서 무엇이 떠 있든 확인 없이
+# 재사용했다 (감사 B-25). 이제 모든 브라우저 테스트가 같은 판단을 쓴다.
 
 
 # --------------------------------------------------------------------- #

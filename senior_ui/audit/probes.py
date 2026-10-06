@@ -556,3 +556,39 @@ CHOICE_GROUPS = r"""
   return out;
 }
 """
+
+
+# --- K: 과제 밖 입구 ------------------------------------------------------------
+# 과제 밖 입구(과제 파일의 entrances)는 원본의 data-action 이름(oos-*)으로 찾는다.
+# 이름마다 지금 누를 수 있게 보이는가(그려져 있고 disabled 가 아니다)와, 기록용으로
+# 그 요소의 글자 · aria-label 을 모은다 - 글자는 판정에 쓰지 않는다 (11-7b).
+# 같은 이름이 여럿이면 보이는 것 하나를 고른다. 문서 전체를 보지만 숨은 화면 안의
+# 요소는 크기가 0 이라 보이지 않는 것이 된다 - 그 화면에 도착한 걸음에서 보인다.
+ENTRANCE_PREFIX = "oos-"
+ENTRANCES = r"""
+() => {
+  const out = {};
+  const clean = s => (s || '').replace(/\s+/g, ' ').trim();
+  const shown = e => {
+    const cs = getComputedStyle(e);
+    if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+    if (+cs.opacity === 0) return false;
+    if (e.disabled || e.getAttribute('aria-disabled') === 'true') return false;
+    const r = e.getBoundingClientRect();
+    return r.width >= 1 && r.height >= 1;
+  };
+  document.querySelectorAll('[data-action^="__PREFIX__"]').forEach(el => {
+    const a = el.getAttribute('data-action');
+    const parts = [];
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let n = w.nextNode(); n; n = w.nextNode()) {
+      const t = clean(n.nodeValue);
+      if (t) parts.push(t);
+    }
+    const row = {visible: shown(el), text: parts.join(' '),
+                 aria: clean(el.getAttribute('aria-label'))};
+    if (!out[a] || (row.visible && !out[a].visible)) out[a] = row;
+  });
+  return out;
+}
+""".replace("__PREFIX__", ENTRANCE_PREFIX)

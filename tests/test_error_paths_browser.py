@@ -16,7 +16,6 @@ import pytest
 
 import _api
 import capture_baseline as C
-from test_drive import server  # noqa: F401  (같은 서버 fixture 를 쓴다)
 from test_error_paths import ORIGINAL_TRIGGERS
 
 pytestmark = pytest.mark.browser

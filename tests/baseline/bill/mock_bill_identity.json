@@ -1,17 +1,17 @@
 {
-  "model": "gpt-4o",
+  "model": "gpt-6.1-sol",
   "model_source": "config.DEFAULT_MODEL",
   "response_models": [],
   "model_call": {
     "api": "chat",
-    "reasoning": false,
-    "temperature": true,
+    "reasoning": true,
+    "temperature": false,
     "seed": true,
-    "family": "gpt-4o",
+    "family": "gpt-5+",
     "known": true,
     "length_param": "max_completion_tokens",
-    "encoding": "o200k_base",
-    "reasoning_effort": null
+    "encoding": "o200k_base(대체)",
+    "reasoning_effort": "medium"
   },
   "mock": "bill-identity",
   "task": "bill",
@@ -58,12 +58,12 @@
     "unaddressed": []
   },
   "repro": {
-    "temperature": 0.0,
+    "temperature": null,
     "seed": 20260101,
     "response_model": null,
     "system_fingerprint": null,
     "openai_sdk": "<sdk>",
-    "prompt_template_sha256": "41eede3762767ca5a45c317b160db6d2ff331b3e5046ad27387f229dfd7dfa3b"
+    "prompt_template_sha256": "88a57297dd4e7916e610e99b280d5f32f81e8e4cbdaabede5fd85464ec901ea4"
   },
   "attempts": [
     {
@@ -71,30 +71,30 @@
       "finish_reason": "stop",
       "usage": null,
       "repro": {
-        "temperature": 0.0,
+        "temperature": null,
         "seed": 20260101,
         "response_model": null,
         "system_fingerprint": null,
         "openai_sdk": "<sdk>",
-        "prompt_template_sha256": "41eede3762767ca5a45c317b160db6d2ff331b3e5046ad27387f229dfd7dfa3b"
+        "prompt_template_sha256": "88a57297dd4e7916e610e99b280d5f32f81e8e4cbdaabede5fd85464ec901ea4"
       },
       "plan": "<run>/attempt_1.plan.json",
       "calls": [
         {
           "stage": "plan",
-          "estimated_prompt": 19844,
-          "method": "tiktoken:o200k_base",
-          "max_tokens": 6000,
+          "estimated_prompt": 20319,
+          "method": "tiktoken:o200k_base(대체)",
+          "max_tokens": 25000,
           "usage": null,
           "images": 15,
-          "estimated_images": 6375,
-          "image_method": "tile 85+170"
+          "estimated_images": 6330,
+          "image_method": "patch x1.2 (추정)"
         },
         {
           "stage": "generate",
-          "estimated_prompt": 14689,
-          "method": "tiktoken:o200k_base",
-          "max_tokens": 14000,
+          "estimated_prompt": 15143,
+          "method": "tiktoken:o200k_base(대체)",
+          "max_tokens": 32000,
           "usage": null,
           "images": 0,
           "estimated_images": 0
@@ -207,34 +207,34 @@
     "dirty_files": "<dirty_files>"
   },
   "tokens": {
-    "method": "tiktoken:o200k_base",
+    "method": "tiktoken:o200k_base(대체)",
     "by_stage": {
       "plan": {
         "calls": 1,
-        "estimated_prompt": 19844,
+        "estimated_prompt": 20319,
         "images": 15,
-        "estimated_images": 6375,
-        "max_tokens": 6000,
+        "estimated_images": 6330,
+        "max_tokens": 25000,
         "prompt": null,
         "completion": null,
         "reasoning": null
       },
       "generate": {
         "calls": 1,
-        "estimated_prompt": 14689,
+        "estimated_prompt": 15143,
         "images": 0,
         "estimated_images": 0,
-        "max_tokens": 14000,
+        "max_tokens": 32000,
         "prompt": null,
         "completion": null,
         "reasoning": null
       },
       "refine": {
         "calls": 1,
-        "estimated_prompt": 19955,
+        "estimated_prompt": 20684,
         "images": 15,
-        "estimated_images": 6375,
-        "max_tokens": 14000,
+        "estimated_images": 6330,
+        "max_tokens": 32000,
         "prompt": null,
         "completion": null,
         "reasoning": null
@@ -242,20 +242,20 @@
     },
     "total": {
       "calls": 3,
-      "estimated_prompt": 54488,
+      "estimated_prompt": 56146,
       "images": 30,
-      "estimated_images": 12750,
-      "max_tokens": 34000,
+      "estimated_images": 12660,
+      "max_tokens": 89000,
       "prompt": null,
       "completion": null,
       "reasoning": null
     },
     "first_attempt": {
       "calls": 2,
-      "estimated_prompt": 34533,
+      "estimated_prompt": 35462,
       "images": 15,
-      "estimated_images": 6375,
-      "max_tokens": 20000,
+      "estimated_images": 6330,
+      "max_tokens": 57000,
       "prompt": null,
       "completion": null,
       "reasoning": null
@@ -264,9 +264,9 @@
   "ratelimit": null,
   "cost": {
     "currency": "USD",
-    "price_model": "gpt-4o",
+    "price_model": "gpt-6.1-sol",
     "per_million": {
-      "input": 2.5,
+      "input": 2.0,
       "output": 10.0
     },
     "by_attempt": [
@@ -311,10 +311,10 @@
         "audit_failures": 0,
         "tokens": {
           "calls": 1,
-          "estimated_prompt": 19955,
+          "estimated_prompt": 20684,
           "images": 15,
-          "estimated_images": 6375,
-          "max_tokens": 14000,
+          "estimated_images": 6330,
+          "max_tokens": 32000,
           "prompt": null,
           "completion": null,
           "reasoning": null

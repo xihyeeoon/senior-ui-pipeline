@@ -10,8 +10,8 @@ later. So the wireframe stage runs only the checks that are about whether the
 thing works at all, and the styled stage runs everything.
 
     wireframe   A 과제 완주 · B 표시 정확성 · C 죽은 컨트롤 · F 언어 · I 선택지 ·
-                J 오류 경로
-    styled      A~J 전부
+                J 오류 경로 · K 과제 밖 입구
+    styled      A~K 전부
 
 This does not modify core.py. It takes the report core.audit() already produced,
 drops the findings whose check is out of scope for the stage, and records what
@@ -35,13 +35,14 @@ STAGES = {
     "wireframe": {
         # I(선택지 보존)는 시각 디테일이 아니라 구조 문제이므로 여기서도 본다.
         # J(오류 경로)도 구조다 - 잘못된 입력에서 알리고 되돌아가는가.
-        "checks": ["A", "B", "C", "F", "I", "J"],
+        # K(과제 밖 입구)도 구조다 - 사용자가 할 수 있는 일이 줄었는가.
+        "checks": ["A", "B", "C", "F", "I", "J", "K"],
         "label": "와이어프레임",
         "why": "시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 "
                "스타일 이식 후에 봅니다.",
     },
     "styled": {
-        "checks": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
+        "checks": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"],
         "label": "스타일 이식본",
         "why": None,
     },

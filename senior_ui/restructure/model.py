@@ -826,6 +826,14 @@ MOCKS = {
     "reveal": (BANKS_ALL, "arrays", False, "handled"),
     # 같은 HTML 인데 reveal 을 적지 않았다. 검사 I 에서 떨어져야 한다.
     "reveal-undeclared": (BANKS_ALL, "arrays", False, "handled"),
+    # 과제 밖 입구(tasks/transfer.json 의 entrances)를 [다른 메뉴] 를 눌러야 그리는
+    # 설계. 흐름 명세의 reveal 에 그 조작을 적었다 - 통과해야 한다 (검사 K).
+    "entrances-reveal": (BANKS_ALL, "arrays", False, "handled"),
+    # 입구를 접힌 블록(<details>)에 넣고, 펼치는 조작을 reveal 에 적었다 - 통과해야 한다.
+    "entrances-folded": (BANKS_ALL, "arrays", False, "handled"),
+    # 입구를 모두 지운 빌드 - Run 1 그대로 (예비 실행 20261006-215902 처럼 "돈 보내기"
+    # 만 남았다). 검사 K 에서 떨어져야 한다.
+    "entrances-none": (BANKS_ALL, "arrays", False, "handled"),
 }
 # 펼치기 설계를 쓰는 모드와, 흐름 명세에 reveal 을 적는가.
 REVEAL_MODES = {"reveal": True, "reveal-undeclared": False}
@@ -847,6 +855,64 @@ REVEAL_SWAPS = [
 MOCK_REVEAL = {"pick-bank": {"at": "bank", "do": [
     {"click": "[data-action='bank-other']"}, {"click": "#show-all-banks"}]}}
 MODES = sorted(MOCKS)
+
+# 과제 밖 입구를 어떻게 두는가 (검사 K). Run 1 빌드에는 입구가 하나도 없다 - 원본의
+# 다른 메뉴를 다 지운 설계다. 그대로면 모든 모드가 검사 K 에서 떨어지므로, 다른 모드는
+# 첫 화면에 입구를 모두 보이게 넣는다 (원본의 data-action 이름 그대로). 검사 K 는 걷는
+# 동안 누를 수 있게 보인 것만 센다 - 접어 두면 펼치는 조작을 reveal 에 적어야 한다.
+#
+#   shown    첫 화면에 보이는 블록 (기본 - 아래 셋이 아닌 모든 이체 모드)
+#   folded   접힌 블록(<details>). 흐름 명세의 reveal 에 펼치는 조작을 적는다
+#   reveal   [다른 메뉴] 를 눌러야 그린다. 흐름 명세의 reveal 에 그 조작을 적는다
+#   none     넣지 않는다 (Run 1 그대로)
+ENTRANCE_MODES = {"entrances-reveal": "reveal", "entrances-folded": "folded",
+                  "entrances-none": "none"}
+ENTRANCES_AT = '<button class="secondary" data-action="noop">쓴 내역 보기</button>'
+ENTRANCE_BRANCH_AT = "  else if(a==='bank-other'){"
+
+
+def entrance_items():
+    from senior_ui.tasks import load_task
+    return load_task("transfer")["entrances"]["items"]
+
+
+def entrance_buttons():
+    return "".join('<button data-action="%s" aria-label="%s">%s</button>'
+                   % (e["action"], e["label"], e["label"]) for e in entrance_items())
+
+
+def entrance_branch(extra=""):
+    names = ["mock-more"] + sorted({e["action"] for e in entrance_items()})
+    return ("  else if(%s){ %s}\n"
+            % (" || ".join("a==='%s'" % n for n in names),
+               extra or "/* 과제 밖 입구 - 원본처럼 아무 일도 하지 않는다 */ "))
+
+
+def entrance_swaps(how):
+    """그 방식으로 입구를 넣는 바꿔치기들."""
+    if how == "none":
+        return []
+    if how == "shown":
+        return [(ENTRANCES_AT, ENTRANCES_AT + '\n    <div class="mock-more">'
+                 + entrance_buttons() + '</div>'),
+                (ENTRANCE_BRANCH_AT, entrance_branch() + ENTRANCE_BRANCH_AT)]
+    if how == "folded":
+        return [(ENTRANCES_AT, ENTRANCES_AT + '\n    <details class="mock-more"><summary '
+                 'data-action="mock-more" id="mock-more">다른 메뉴</summary>'
+                 + entrance_buttons() + '</details>'),
+                (ENTRANCE_BRANCH_AT, entrance_branch() + ENTRANCE_BRANCH_AT)]
+    # reveal: [다른 메뉴] 를 누르면 그린다. 그려진 입구는 아무 일도 하지 않는다.
+    draw = ("if(a==='mock-more'){ document.getElementById('mock-more-list').innerHTML = %s; } "
+            % repr(entrance_buttons()))
+    return [(ENTRANCES_AT, ENTRANCES_AT + '\n    <button class="secondary" '
+             'data-action="mock-more" id="mock-more">다른 메뉴</button>'
+             '<span id="mock-more-list"></span>'),
+            (ENTRANCE_BRANCH_AT, entrance_branch(draw) + ENTRANCE_BRANCH_AT)]
+
+
+# entrances-reveal · entrances-folded 의 흐름 명세에 더하는 펼치기 조작. 첫 화면에서
+# [다른 메뉴] 를 누른다 (접힌 블록이면 그것이 펼친다).
+MOCK_ENTRANCE_REVEAL = {"oos-message": {"at": "start", "do": [{"click": "#mock-more"}]}}
 
 
 def swap(html, old, new):
@@ -872,6 +938,8 @@ def mock_build(mode):
     if mode in REVEAL_MODES:
         for old, new in REVEAL_SWAPS:
             html = swap(html, old, new)
+    for old, new in entrance_swaps(ENTRANCE_MODES.get(mode, "shown")):
+        html = swap(html, old, new)
     return html
 
 
@@ -1067,6 +1135,8 @@ def mock_base(mode):
             flow["error_paths"] = json.loads(json.dumps(MOCK_ERROR_PATHS))
         if REVEAL_MODES.get(mode):
             flow["reveal"] = json.loads(json.dumps(MOCK_REVEAL))
+        if ENTRANCE_MODES.get(mode) in ("reveal", "folded"):
+            flow["reveal"] = json.loads(json.dumps(MOCK_ENTRANCE_REVEAL))
     return html, flow
 
 

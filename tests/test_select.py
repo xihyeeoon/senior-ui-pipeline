@@ -33,7 +33,9 @@ ELSEWHERE = "C:\\gone\\outputs\\restructure_auto\\%s\\%s"
 def make_run(root, name, passed=True, warning=0, fatal=0, screens=9, actions=30,
              changes=7, attempts=1, redeclared=(), dirty=False, truncated=False,
              mock=None, model="gpt-6.1-sol", task="transfer", unaddressed_changes=0,
-             effort="medium", brief=True):
+             effort="medium", brief=True, stage="wireframe", fmt_budget=5, audit_budget=6,
+             refine_budget=2, reverted=None, commit="abcdef1234567890",
+             stopped_reason=None):
     d = os.path.join(root, name)
     os.makedirs(d)
     n = attempts
@@ -81,14 +83,21 @@ def make_run(root, name, passed=True, warning=0, fatal=0, screens=9, actions=30,
         "plan": {"diagnosis_count": 6, "changes": changes, "unaddressed": []},
         "attempts": entries, "final": final,
         "budget": {"format_used": 1 if truncated else 0,
-                   "audit_used": n - (1 if passed else 0) - (1 if truncated else 0)},
-        "stopped_reason": None if passed else "budget_exhausted",
-        "git": {"commit": "abcdef1234567890", "branch": "main", "dirty": dirty,
+                   "audit_used": n - (1 if passed else 0) - (1 if truncated else 0),
+                   "format_budget": fmt_budget, "audit_budget": audit_budget},
+        "stage": stage,
+        "stopped_reason": stopped_reason or (None if passed else "budget_exhausted"),
+        "git": {"commit": commit, "branch": "main", "dirty": dirty,
                 "dirty_files": ["x.py"] if dirty else []},
         "tokens": {"total": {"prompt": 30000 * n, "completion": 20000 * n,
                              "reasoning": 15000 * n}},
         "cost": {"total_usd": round(0.1 * n, 4)},
     }
+    # 다듬기 기록은 다듬기가 생긴 뒤(11-5)의 실행에만 있다. refine_budget=None 이면 옛 실행.
+    if refine_budget is not None:
+        summary["refine"] = {"budget": refine_budget, "reverted": reverted,
+                             "final_label": "생성" if not reverted else
+                             "생성 (다듬기 %s회차가 실패해 되돌림)" % reverted["round"]}
     dump = lambda obj, f: json.dump(obj, io.open(os.path.join(d, f), "w", encoding="utf-8"))
     dump(summary, "summary.json")
     dump(report, "attempt_%d.audit.json" % n)
@@ -270,6 +279,151 @@ def test_the_shipped_rule_keeps_only_gpt_6_1_sol(tmp_path):
     assert order(result) == ["20261007-100000-sol"]
     assert reasons(result) == {
         "20261007-100001-astra": ["모델이 gpt-6.1-sol 아님 (gpt-6-astra)"]}
+
+
+# ===================================================================== #
+# 2b. 실행 조건 문지기 - 단계 · 예산 · 커밋 · 되돌림 · 내부 오류 (감사 B-04 · D-4 (가))
+# ===================================================================== #
+def runs_dir(tmp_path):
+    runs = tmp_path / "runs"
+    runs.mkdir(exist_ok=True)
+    return runs
+
+
+def test_the_shipped_rule_names_the_run_conditions():
+    """12번 본 실행의 조건이 규칙 파일에 적혀 있어야 고르기가 그것을 본다.
+    예산은 config 의 기본값과 같다 - 기본값으로 돈 실행이 빠지지 않게."""
+    from senior_ui import config
+    g = DEFAULT_RULE["gates"]
+    assert g["stage"] == config.DEFAULT_STAGE == "wireframe"
+    assert g["budget"] == {"format": config.DEFAULT_BUDGET["format"],
+                           "audit": config.DEFAULT_BUDGET["audit"],
+                           "refine": config.DEFAULT_REFINE}
+    assert g["commit"] is None
+    assert g["reverted"] == "allow"
+    assert g["no_internal_error"] is True
+
+
+def test_a_run_in_another_stage_is_excluded(tmp_path):
+    """고르기가 검사 단계를 보지 않아, styled 로 말없이 돈 실행이 1등이었다 (R-5)."""
+    runs = runs_dir(tmp_path)
+    make_run(str(runs), "20261007-100000-wire")
+    make_run(str(runs), "20261007-100001-styled", stage="styled")
+    make_run(str(runs), "20261007-100002-old", stage=None)
+    _code, result, _md = select(tmp_path)
+    assert order(result) == ["20261007-100000-wire"]
+    assert reasons(result) == {
+        "20261007-100001-styled": ["검사 단계가 wireframe 아님 (styled)"],
+        "20261007-100002-old": ["검사 단계가 wireframe 아님 (기록 없음)"]}
+
+
+def test_a_run_with_another_budget_is_excluded(tmp_path):
+    runs = runs_dir(tmp_path)
+    make_run(str(runs), "20261007-100000-ok")
+    make_run(str(runs), "20261007-100001-3x3", fmt_budget=3, audit_budget=3)
+    make_run(str(runs), "20261007-100002-refine0", refine_budget=0)
+    make_run(str(runs), "20261007-100003-norefine", refine_budget=None)
+    _code, result, _md = select(tmp_path)
+    assert order(result) == ["20261007-100000-ok"]
+    assert reasons(result) == {
+        "20261007-100001-3x3": ["예산이 규칙과 다름: 형식 3 (규칙 5) · 검사 3 (규칙 6)"],
+        "20261007-100002-refine0": ["예산이 규칙과 다름: 다듬기 0 (규칙 2)"],
+        "20261007-100003-norefine": ["예산이 규칙과 다름: 다듬기 기록 없음 (규칙 2)"]}
+
+
+def test_an_internal_error_run_is_excluded_even_with_a_passing_build(tmp_path):
+    """도구가 버그로 멈춘 실행(internal_error, 종료 2)은 통과한 빌드가 있어도 뺀다 -
+    다듬기나 승격 도중에 멈췄을 수 있다 (11-6)."""
+    runs = runs_dir(tmp_path)
+    make_run(str(runs), "20261007-100000-ok")
+    make_run(str(runs), "20261007-100001-bug", stopped_reason="internal_error")
+    _code, result, _md = select(tmp_path)
+    assert order(result) == ["20261007-100000-ok"]
+    assert reasons(result) == {
+        "20261007-100001-bug": ["도구 내부 오류로 끝남 (internal_error, 종료 2) - 통과한 "
+                                "빌드가 있어도 뺀다"]}
+
+
+def test_the_commit_basis_is_the_most_common_commit(tmp_path):
+    runs = runs_dir(tmp_path)
+    for i in range(3):
+        make_run(str(runs), "20261007-10000%d-a" % i, commit="aaaaaaa111")
+    make_run(str(runs), "20261007-100010-b", commit="bbbbbbb222")
+    make_run(str(runs), "20261007-100011-none", commit=None)
+    _code, result, md = select(tmp_path)
+    assert sorted(order(result)) == ["20261007-100000-a", "20261007-100001-a",
+                                     "20261007-100002-a"]
+    assert reasons(result) == {
+        "20261007-100010-b": ["커밋이 기준(aaaaaaa, 후보 4개 중 가장 많은 3개)과 다름 "
+                              "(bbbbbbb)"],
+        "20261007-100011-none": ["커밋 기록 없음 (git.commit)"]}
+    assert result["commit_basis"] == {"commit": "aaaaaaa111", "source": "majority",
+                                      "counts": {"aaaaaaa111": 3, "bbbbbbb222": 1}}
+    assert "커밋 기준: `aaaaaaa`" in md
+
+
+def test_the_commit_basis_can_be_pinned_in_the_rule(tmp_path):
+    runs = runs_dir(tmp_path)
+    for i in range(3):
+        make_run(str(runs), "20261007-10000%d-a" % i, commit="aaaaaaa111")
+    make_run(str(runs), "20261007-100010-b", commit="bbbbbbb222")
+    rule = write_rule(tmp_path, gates=dict(DEFAULT_RULE["gates"], commit="bbbbbbb"))
+    _code, result, _md = select(tmp_path, "--rule", rule)
+    assert order(result) == ["20261007-100010-b"]
+    assert set(reasons(result)) == {"20261007-10000%d-a" % i for i in range(3)}
+    assert reasons(result)["20261007-100000-a"] == ["커밋이 규칙의 bbbbbbb 아님 (aaaaaaa)"]
+    assert result["commit_basis"]["source"] == "rule"
+
+
+def test_a_tie_between_commits_takes_the_newest(tmp_path):
+    """같은 수면 가장 나중에 돈 실행의 커밋을 기준으로 한다 (실행 이름이 시각이다)."""
+    runs = runs_dir(tmp_path)
+    make_run(str(runs), "20261007-100000-a", commit="aaaaaaa111")
+    make_run(str(runs), "20261007-110000-b", commit="bbbbbbb222")
+    _code, result, _md = select(tmp_path)
+    assert order(result) == ["20261007-110000-b"]
+    assert result["commit_basis"]["commit"] == "bbbbbbb222"
+
+
+REVERTED = {"round": 1, "to_attempt": 1, "reason": "다듬기가 검사에서 떨어짐"}
+
+
+@pytest.mark.parametrize("switch,want_order,want_out", [
+    # 기본값: 후보로 인정하고 순위표에 "되돌림" 열로 보인다
+    ("allow", ["20261007-100000-rev", "20261007-110000-ok"], {}),
+    # 되돌리지 않은 실행 뒤로 미룬다
+    ("last", ["20261007-110000-ok", "20261007-100000-rev"], {}),
+    ("exclude", ["20261007-110000-ok"],
+     {"20261007-100000-rev": ["되돌린 실행 (다듬기 1회차가 떨어져 시도 1 이 최종)"]}),
+])
+def test_reverted_runs_follow_the_rule_switch(tmp_path, switch, want_order, want_out):
+    runs = runs_dir(tmp_path)
+    make_run(str(runs), "20261007-100000-rev", reverted=REVERTED)
+    make_run(str(runs), "20261007-110000-ok")
+    rule = write_rule(tmp_path, gates=dict(DEFAULT_RULE["gates"], reverted=switch))
+    _code, result, md = select(tmp_path, "--rule", rule)
+    assert order(result) == want_order
+    assert reasons(result) == want_out
+    rows = {r["name"]: r for r in result["ranking"]}
+    assert rows["20261007-100000-rev"]["reverted"] == 1
+    assert rows["20261007-110000-ok"]["reverted"] is None
+    header = [l for l in md.splitlines() if l.startswith("| 순위 |")][0]
+    assert "되돌림" in header
+
+
+@pytest.mark.parametrize("gates,needle", [
+    ({"stage": ""}, "gates.stage"),
+    ({"budget": {"format": "5"}}, "gates.budget"),
+    ({"budget": {"retry": 5}}, "gates.budget"),
+    ({"commit": "xyz"}, "gates.commit"),
+    ({"reverted": "keep"}, "gates.reverted"),
+    ({"no_internal_error": "yes"}, "true/false"),
+])
+def test_a_malformed_condition_gate_stops_the_command(five, capsys, gates, needle):
+    rule = write_rule(five, gates=dict(DEFAULT_RULE["gates"], **gates))
+    code = _api.select_main(["--task", "transfer", "--runs", str(five / "runs" / "*"),
+                             "--rule", rule, "--out", str(five / "sel")])
+    assert code == 2 and needle in capsys.readouterr().err
 
 
 def test_unknown_dirty_state_is_not_clean(tmp_path):
@@ -483,9 +637,10 @@ def test_select_runs_to_the_end_on_a_mock_run(tmp_path, task, args, mode):
     assert code == 1 and result["rank1"] is None
     assert "mock 실행 (%s)" % mode in result["ranking"][0]["excluded_because"]
 
-    # mock · 작업 트리 · 모델 문지기를 끈 규칙 - 그 실행이 1등이고 값이 모두 읽힌다
+    # mock · 작업 트리 · 모델 · 예산 문지기를 끈 규칙 - 그 실행이 1등이고 값이 모두
+    # 읽힌다 (mock 은 --attempts 1 이라 예산이 규칙의 5/6 과 다르다)
     rule = write_rule(tmp_path, gates=dict(DEFAULT_RULE["gates"], not_mock=False,
-                                           clean_tree=False, model=None))
+                                           clean_tree=False, model=None, budget=None))
     code, result = go("--rule", rule)
     assert code == 0 and result["rank1"] == name
     row = result["ranking"][0]
@@ -497,5 +652,9 @@ def test_select_runs_to_the_end_on_a_mock_run(tmp_path, task, args, mode):
         g["kept"] == g["selectable"] for g in row["choice_groups"].values())
     assert row["brief"] and os.path.exists(os.path.join(_api.ROOT_DIR, row["brief"]))
     assert row["commit"] == summary["git"]["commit"]
+    # 실행 조건도 실제 summary 에서 읽힌다 (gates.stage · budget · reverted)
+    assert row["stage"] == "wireframe"
+    assert row["budget"] == {"format": 1, "audit": 1, "refine": 2}
+    assert row["internal_error"] is False
     if task == "transfer":
         assert all(p["ok"] for p in row["error_paths"].values())

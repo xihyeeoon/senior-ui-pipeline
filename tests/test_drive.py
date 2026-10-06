@@ -13,9 +13,6 @@ import copy
 import io
 import json
 import os
-import subprocess
-import time
-import urllib.request
 
 import pytest
 
@@ -40,48 +37,8 @@ def jround(obj):
     return json.loads(json.dumps(obj, ensure_ascii=False))
 
 
-# --------------------------------------------------------------------- #
-# 서버
-# --------------------------------------------------------------------- #
-def serves_project_root():
-    """이미 떠 있는 서버가 이 프로젝트 루트를 서빙하는지 확인한다. 다른 폴더를
-    서빙하는 서버를 모르고 쓰면, 비교는 통과하거나 실패하되 그 결과가 무엇을
-    뜻하는지 알 수 없게 된다."""
-    url = "%s/%s" % (C.BASE_URL, C.ORIGINAL_REL)
-    try:
-        with urllib.request.urlopen(url, timeout=3) as r:
-            served = r.read()
-    except Exception:
-        return False
-    want = io.open(os.path.join(ROOT, C.ORIGINAL_REL), "rb").read()
-    return served == want
-
-
-@pytest.fixture(scope="module")
-def server():
-    if C.listening(C.PORT):
-        if not serves_project_root():
-            pytest.fail(
-                ":%d 포트에 이미 서버가 있지만 이 프로젝트 루트를 서빙하지 "
-                "않습니다. 그 서버를 끄고 다시 실행하세요." % C.PORT)
-        # run_restructure.ensure_server 와 같은 판단: 떠 있으면 그대로 쓰고
-        # 끝에서도 건드리지 않는다.
-        yield None
-        return
-    proc = subprocess.Popen(C.server_cmd(C.PORT),
-                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    for _ in range(50):
-        if C.listening(C.PORT):
-            break
-        time.sleep(0.1)
-    else:
-        proc.kill()
-        pytest.fail(":%d 에 http.server 를 띄우지 못했습니다." % C.PORT)
-    try:
-        yield proc
-    finally:
-        proc.terminate()
-        proc.wait()
+# 서버는 tests/conftest.py 의 `server` 하나를 모든 브라우저 테스트가 함께 쓴다
+# (devserver.ensure_server 와 같은 판단 - 이 작업 트리를 서빙하는지 확인 파일로 본다).
 
 
 @pytest.fixture(scope="module")

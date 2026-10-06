@@ -250,8 +250,8 @@ def run(ctx):
         sample = ", ".join(d["missing"][:5]) + (" …" if len(d["missing"]) > 5 else "")
         F("I", None,
           "원본의 %s 선택지 %d개 중 %d개가 생성물에 없다 (예: %s). 화면에 모두 "
-          "보일 필요는 없지만 값 자체는 모두 접근 가능해야 한다. 검색이나 단계적 "
-          "선택으로 찾을 수 있게 포함하라.%s"
+          "보일 필요는 없지만 값 자체는 모두 접근 가능해야 한다. 모든 값을 고를 수 "
+          "있게 포함하라.%s"
           % (action, d["total"], len(d["missing"]), sample,
              "".join(" 흐름 명세의 reveal.%s 조작이 실패했다 (%s)." % (a, why)
                      for a, why in sorted(failed.items()))),

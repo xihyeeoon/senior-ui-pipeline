@@ -536,6 +536,64 @@ def test_the_summary_records_it_once_for_the_run(fake_run_env, out_root):
     assert summary["repro"]["response_model"] is None    # 실행 자체는 모델이 없다
 
 
+def sending_reply(dropped=()):
+    """실제 call_model 처럼, 그 모델의 부르는 방식(profile_for)으로 **실제로 보낸**
+    temperature · seed 를 돌려주는 대역. `dropped` 는 모델이 거절해 빼고 보낸 인자."""
+    def call(model_name, prompt, max_tokens, log=None, temperature=None, seed=None,
+             reasoning_effort=None, api=None, **kw):
+        sent = model.request_kwargs(model_name, prompt, max_tokens,
+                                    model.profile_for(model_name, api), temperature,
+                                    seed, reasoning_effort)
+        for k in dropped:
+            sent.pop(k, None)
+        return {"text": GOOD_REPLY, "finish_reason": "stop", "seconds": 0.0,
+                "usage": None, "model": model_name, "system_fingerprint": None,
+                "temperature": sent.get("temperature"), "seed": sent.get("seed"),
+                "dropped": list(dropped)}
+    return call
+
+
+@pytest.mark.parametrize("name,api,temperature,seed", [
+    # 추론형은 temperature 를 보내지 않는다 - 그런데 summary.repro 에는 0.0 이
+    # 적혀 model_call.temperature=false · 시도별 None 과 모순됐다 (감사 B-18).
+    ("gpt-6.1-sol", None, None, 20260101),
+    # Responses API 에는 seed 인자가 없다.
+    ("gpt-6.1-sol", "responses", None, None),
+    # gpt-4o 는 둘 다 보낸다.
+    ("gpt-4o", None, 0.0, 20260101),
+])
+def test_repro_records_only_what_was_sent(fake_run_env, out_root, name, api,
+                                          temperature, seed):
+    _code, summary = run_loop(fake_run_env, out_root, sending_reply(), attempts=1,
+                              model=name, api=api)
+    for where, rec in (("summary", summary["repro"]),
+                       ("attempt", summary["attempts"][0]["repro"])):
+        assert (where, rec["temperature"], rec["seed"]) == (where, temperature, seed)
+    assert summary["model_call"]["temperature"] is (temperature is not None)
+
+
+def test_repro_drops_what_the_model_refused(fake_run_env, out_root):
+    """표에 없는 모델은 gpt-4o 처럼 보내고, 거절된 인자는 빼고 다시 보낸다
+    (model.DROPPABLE). 그러면 그 인자는 보내지 않은 것이다."""
+    _code, summary = run_loop(fake_run_env, out_root, sending_reply(["temperature"]),
+                              attempts=1, model="test-model")
+    assert summary["attempts"][0]["repro"]["temperature"] is None
+    assert summary["repro"]["temperature"] is None
+    assert summary["repro"]["seed"] == 20260101
+
+
+def test_a_mock_attempt_records_what_the_default_model_would_be_sent(fake_run_env,
+                                                                     out_root):
+    """mock 의 답은 모델 없이 만든 것이지만, 기록은 그 실행의 부르는 방식을 따른다 -
+    기본 모델(추론형)이면 temperature 는 보내지 않는 값이다."""
+    _code, summary = run_loop(fake_run_env, out_root, None, attempts=1, model=None,
+                              mock="pass")
+    assert summary["model_call"]["temperature"] is False
+    assert summary["repro"]["temperature"] is None
+    assert summary["attempts"][0]["repro"]["temperature"] is None
+    assert summary["attempts"][0]["repro"]["seed"] == summary["repro"]["seed"]
+
+
 def test_the_prompt_template_is_fingerprinted(fake_run_env, out_root):
     """템플릿이 바뀌면 같은 입력도 다른 답을 낸다. 어느 템플릿이었는지 남긴다."""
     import hashlib
@@ -684,6 +742,58 @@ def test_a_server_that_does_not_have_the_file_at_all_stops_the_run(tmp_path):
             devserver.ensure_server(lambda m: None, port=port)
 
 
+def test_another_worktree_with_the_same_original_is_not_reused(tmp_path):
+    """다른 worktree(같은 저장소의 다른 체크아웃)는 원본 HTML 이 바이트까지 같다.
+    원본 해시로만 보면 그 서버를 "이 저장소" 로 재사용하고, 검사기는 이 작업 트리가
+    아니라 그쪽의 빌드 · 산출물을 연다 (감사 E-7 · B-25)."""
+    import shutil
+    (tmp_path / "inputs").mkdir()
+    for rel in ("inputs/original_transfer.html", "inputs/original_bill.html"):
+        shutil.copy2(os.path.join(ROOT, rel), str(tmp_path / rel))
+    port = free_port()
+    with server_on(tmp_path, port):
+        with pytest.raises(RuntimeError) as e:
+            devserver.ensure_server(lambda m: None, port=port)
+    assert "작업 트리" in str(e.value)
+
+
+def test_the_dashboard_server_is_not_reused():
+    """대시보드 서버(시작.bat)는 허용 목록만 서빙한다 - 원본 HTML 은 나가지만
+    .mock-outputs/ · SENIOR_UI_OUTPUTS 의 빌드는 404 다. 원본 해시로만 보면 그것을
+    재사용하고, 검사기는 빌드를 못 열어 설계 실패처럼 기록한다 (감사 B-13)."""
+    import threading
+    srv = _api.srv_make_server(0, _api.srv_make_handler(sessions_dir=None, tasks=[],
+                                                        allow_session=False))
+    t = threading.Thread(target=srv.serve_forever, daemon=True)
+    t.start()
+    try:
+        port = srv.server_address[1]
+        with pytest.raises(RuntimeError):
+            devserver.ensure_server(lambda m: None, port=port)
+    finally:
+        srv.shutdown()
+        srv.server_close()
+        t.join(timeout=5)
+
+
+def test_each_worktree_has_its_own_check_file(tmp_path):
+    """재사용 판정의 기준은 작업 트리마다 다른 확인 파일이다. 없으면 만든다 -
+    두 번째로 부르면 같은 값이다."""
+    a, b = tmp_path / "a", tmp_path / "b"
+    a.mkdir()
+    b.mkdir()
+    one = devserver.tree_id(str(a))
+    assert one == devserver.tree_id(str(a))
+    assert one != devserver.tree_id(str(b))
+    assert (a / devserver.TREE_ID_REL).exists()
+
+
+def test_the_check_file_is_not_tracked():
+    """작업 트리마다 달라야 하므로 저장소에 들어가면 안 된다."""
+    gi = io.open(os.path.join(ROOT, ".gitignore"), encoding="utf-8").read()
+    assert "/" + devserver.TREE_ID_REL in gi.split()
+
+
 def test_the_loop_stops_cleanly_when_the_port_is_someone_elses(fake_run_env,
                                                                monkeypatch, out_root):
     """남의 서버를 만나면 역추적이 아니라 이유와 종료 코드 2 로 끝나야 한다."""
@@ -780,7 +890,35 @@ def test_a_build_that_simply_failed_still_exits_1(fake_run_env, out_root):
 CLI_FILES = ["senior_ui/audit/__main__.py", "senior_ui/audit/report.py",
              "senior_ui/restructure/__main__.py", "senior_ui/collect_results.py",
              "senior_ui/experiment/report.py", "senior_ui/experiment/server.py",
-             "senior_ui/viewer/build_index.py", "senior_ui/select/__main__.py"]
+             "senior_ui/viewer/build_index.py", "senior_ui/select/__main__.py",
+             "senior_ui/devserver.py"]
+
+
+def test_every_outside_package_that_is_imported_is_in_requirements():
+    """새 가상환경에서 `pip install -r requirements.txt` 만 하고 pytest 를 돌리면
+    import 단계에서 죽지 않아야 한다. tests/fake_openai.py 가 httpx 를 import 하는데
+    목록에 없었다 - openai 가 끌어오니 우연히 돌았을 뿐이다."""
+    import ast
+    import glob
+    import re
+    names = set()
+    files = glob.glob(os.path.join(ROOT, "senior_ui", "**", "*.py"), recursive=True) \
+        + glob.glob(os.path.join(ROOT, "tests", "*.py"))
+    local = {"senior_ui"} | {os.path.splitext(os.path.basename(f))[0]
+                             for f in glob.glob(os.path.join(ROOT, "tests", "*.py"))}
+    for path in files:
+        tree = ast.parse(io.open(path, encoding="utf-8").read())
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                names |= {a.name.split(".")[0] for a in node.names}
+            elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                names.add(node.module.split(".")[0])
+    outside = sorted(n for n in names
+                     if n not in sys.stdlib_module_names and n not in local)
+    listed = {re.split(r"[=<>!~ ]", l.strip())[0].lower()
+              for l in io.open(os.path.join(ROOT, "requirements.txt"), encoding="utf-8")
+              if l.strip() and not l.strip().startswith("#")}
+    assert [n for n in outside if n.lower() not in listed] == []
 
 
 def test_the_list_of_clis_is_complete():

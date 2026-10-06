@@ -13,7 +13,7 @@
     "encoding": "o200k_base(대체)",
     "reasoning_effort": "medium"
   },
-  "mock": "errors-unhandled",
+  "mock": "entrances-none",
   "task": "transfer",
   "stage": "wireframe",
   "stage_source": "config.DEFAULT_STAGE",
@@ -127,7 +127,7 @@
       "model_html": "<run>/attempt_1.model.html",
       "stage": "audit",
       "passed": false,
-      "fatal": 2,
+      "fatal": 1,
       "warning": 0
     }
   ],
@@ -170,8 +170,8 @@
   "trend": [
     {
       "attempt": 1,
-      "fatal_total": 2,
-      "fatal_root": 2,
+      "fatal_total": 1,
+      "fatal_root": 1,
       "fatal_derived": 0,
       "screens": "9/9",
       "stopped_at": null

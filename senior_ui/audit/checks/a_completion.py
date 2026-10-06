@@ -78,7 +78,7 @@ def _screens_reached(ctx):
             # 어디를 고쳐야 할지 알 수 없으므로 무엇이 깨졌는지 적는다.
             F("A", name, "화면 전환 후 window.__screen() 이 null 을 반환했다. "
                          "기록 훅 __screen() 은 현재 화면의 id 를 반환해야 한다. "
-                         "원본 HTML 의 __screen() · __startTask() · __dump() 를 유지하라.")
+                         "전역 window.__screen() 이 지금 화면 이름을 돌려주게 하라.")
         elif row["landed_on"] != ctx.screen(name):
             # 예외는 나지 않았지만 과제는 여기서 더 나아가지 못했다. 뒤의 화면
             # 들은 그 결과이므로, 멈춘 곳으로 적어 파생으로 묶이게 한다.

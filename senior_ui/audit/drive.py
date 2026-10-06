@@ -240,6 +240,15 @@ async def drain_dialogs(tasks, grace_ms=DIALOG_GRACE_MS):
         await asyncio.gather(*pending, return_exceptions=True)
 
 
+def merge_entrances(have, got):
+    """걸음마다 모은 입구 상태를 합친다. 한 번이라도 보였으면 보인 것이고, 기록용
+    글자는 처음 보인 때의 것이다."""
+    for action, row in (got or {}).items():
+        old = have.get(action)
+        if old is None or (row.get("visible") and not old.get("visible")):
+            have[action] = row
+
+
 async def collect_screen(page, flow, visit, reached=None):
     """한 화면에 도착한 뒤의 상태를 전부 긁어 하나의 row 로 돌려준다.
 
@@ -296,6 +305,9 @@ async def drive(url, flow, want_shots=None, errors=True, see=False):
     data = {"screens": {}, "dialogs": [], "js_errors": [], "reached": [],
             "missing_ids": [], "state_pairs": [], "load_failed": None,
             "notes": [], "js_error_details": [], "flow": flow["name"],
+            # 과제 밖 입구(oos-*)마다 걷는 동안 누를 수 있게 보였는가 + 기록용 글자.
+            # 걸음마다 합친다 (merge_entrances) - 검사 K 가 본다.
+            "entrances_seen": {},
             # 이 걸음에 눌러 넣은 정답. 검사 B 가 원본 화면에 있던 받는 사람
             # 이름을 찾을 때 원본의 정답을 써야 한다 - 빌드의 정답과 다를 수 있다.
             "truth": truth_of(flow)}
@@ -368,6 +380,7 @@ async def walk(page, flow, data, want_shots, url, see=False):
 
         data["screens"][visit] = await collect_screen(
             page, flow, visit, data["reached"])
+        merge_entrances(data["entrances_seen"], await page.evaluate(P.ENTRANCES))
         if want_shots:
             await page.screenshot(path=os.path.join(
                 want_shots, "audit_%s.png" % SHOT_SAFE.sub("_", visit)))
@@ -500,7 +513,8 @@ async def walk_reveal(browser, url, flow, spec):
     정답 경로의 걷기와 따로 걷는다 - 펼친 상태가 A~H 가 보는 화면을 바꾸지
     않게. 돌려주는 것은 `{"at", "choices": {action: [값]}, "error"}`."""
     truth = truth_of(flow)
-    row = {"at": spec.get("at"), "choices": {}, "error": None, "violations": []}
+    row = {"at": spec.get("at"), "choices": {}, "error": None, "violations": [],
+           "entrances_seen": {}}
     page = await browser.new_page(viewport={"width": 390, "height": 844})
     ed = {"js_errors": [], "js_error_details": [], "dialogs": [], "reached": []}
     tasks = attach_listeners(page, ed)
@@ -514,6 +528,10 @@ async def walk_reveal(browser, url, flow, spec):
         for action, vals in (groups or {}).items():
             have = row["choices"].setdefault(action, [])
             have += [v for v in vals if v not in have]
+
+    async def merge_texts():
+        # 펼친 뒤 누를 수 있게 보인 과제 밖 입구 - 검사 K 가 정답 경로의 것과 함께 센다
+        merge_entrances(row["entrances_seen"], await page.evaluate(P.ENTRANCES))
 
     try:
         try:
@@ -541,6 +559,7 @@ async def walk_reveal(browser, url, flow, spec):
             if visit == spec.get("at"):
                 break
         merge(await page.evaluate(P.CHOICE_GROUPS))
+        await merge_texts()
         actions = spec.get("do") or []
         for i, act in enumerate(actions if isinstance(actions, list) else [actions]):
             sel = act.get("click") if isinstance(act, dict) and set(act) == {"click"} \
@@ -567,6 +586,7 @@ async def walk_reveal(browser, url, flow, spec):
                        after.get("dom_screen") or after.get("landed_on")))
                 return row
             merge(await page.evaluate(P.CHOICE_GROUPS))
+            await merge_texts()
         return row
     finally:
         await drain_dialogs(tasks)

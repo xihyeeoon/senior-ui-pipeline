@@ -43,6 +43,8 @@ def build(task, rule, source, ranked, rows_source, created=None):
         "rank1": cands[0]["name"] if cands else None,
         "counts": {"runs": len(cands) + len(ranked["excluded"]),
                    "candidates": len(cands), "excluded": len(ranked["excluded"])},
+        # 후보들이 맞춘 커밋 (규칙의 gates.commit, 비었으면 가장 많은 커밋)
+        "commit_basis": ranked.get("commit_basis"),
         "representative": ranked["representative"],
         "ranking": [_row_out(r) for r in cands + ranked["excluded"]],
         "researcher_decision": dict(DECISION),
@@ -109,6 +111,13 @@ def _short(commit):
     return commit[:7] if commit else "-"
 
 
+def _conditions(r):
+    """순위표의 실행 조건 칸 - `wireframe · 5/6/2`. 기록이 없는 칸은 -."""
+    b = r.get("budget") or {}
+    return "%s · %s/%s/%s" % (_f(r.get("stage")), _f(b.get("format")), _f(b.get("audit")),
+                              _f(b.get("refine")))
+
+
 def _cell(text):
     return str(text).replace("|", "\\|").replace("\n", " ")
 
@@ -168,6 +177,13 @@ def render(result, md_path):
                   else "--runs %s" % " ".join(src.get("patterns") or [])))
     if src.get("skipped_other_task"):
         out.append("- 다른 과제의 실행 %d개는 넣지 않았다" % len(src["skipped_other_task"]))
+    basis = result.get("commit_basis")
+    if basis:
+        out.append("- 커밋 기준: `%s` (%s) - 이 커밋이 아닌 실행은 뺐다"
+                   % (_short(basis["commit"]),
+                      "규칙의 gates.commit" if basis["source"] == "rule" else
+                      "문지기를 지난 실행 %d개 중 가장 많은 %d개"
+                      % (sum(basis["counts"].values()), basis["counts"][basis["commit"]])))
     if top:
         link = _link(top.get("brief"), md_dir)
         out.append("- **1등: `%s`** - 설명서: %s" % (
@@ -179,15 +195,16 @@ def render(result, md_path):
     out += ["## 순위표", "",
             "| 순위 | 실행 | 통과 | 시도 (형식 실패/검사 실패) | fatal / warning | 화면 "
             "| data-action | 진단 / 변경 (진단 없는 변경) | 대표성 거리 | 도구가 고침 "
-            "| 잘림 (마지막) | 중간 잘림 | dirty | 모델 · effort | 커밋 | 제외 이유 |",
-            "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+            "| 잘림 (마지막) | 중간 잘림 | dirty | 모델 · effort | 조건 (단계 · 형식/검사/다듬기) "
+            "| 되돌림 | 커밋 | 제외 이유 |",
+            "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
         if r.get("error"):
-            out.append("| - | `%s` |%s %s |" % (r["name"], " |" * 13, _cell(r["error"])))
+            out.append("| - | `%s` |%s %s |" % (r["name"], " |" * 15, _cell(r["error"])))
             continue
         rep = (r.get("representative") or {}).get("distance")
         out.append("| %s | `%s` | %s | %s (%s/%s) | %s / %s | %s | %s | %s / %s (%s) | %s "
-                   "| %s | %s | %s | %s | %s · %s | `%s` | %s |" % (
+                   "| %s | %s | %s | %s | %s · %s | %s | %s | `%s` | %s |" % (
                        r["rank"] or "-", r["name"], _f(r["passed"]), _f(r["attempts"]),
                        _f(r["format_failures"]), _f(r["audit_failures"]), _f(r["fatal"]),
                        _f(r["warning"]), _f(r["screens"]), _f(r["data_actions"]),
@@ -196,7 +213,9 @@ def render(result, md_path):
                        else ("-" if r["redeclared"] is None else "없음"),
                        _f(r["truncated"]), _f(r.get("truncated_middle")), _f(r["dirty"]),
                        _f(r["model"]),
-                       _f(r["reasoning_effort"]), _short(r["commit"]),
+                       _f(r["reasoning_effort"]), _conditions(r),
+                       "%s회차" % r["reverted"] if r.get("reverted") else "-",
+                       _short(r["commit"]),
                        _cell("; ".join(r["excluded_because"])) or "-"))
     out.append("")
 

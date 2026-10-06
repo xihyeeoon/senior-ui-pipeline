@@ -51,19 +51,69 @@ def args_with(model_name=None):
 
 
 def test_the_default_model_lives_in_config(no_model_env):
-    assert config.DEFAULT_MODEL == "gpt-4o"
-    assert loop.pick_model(args_with()) == "gpt-4o"
+    """기본 모델은 12번 본 실행의 모델이다 (감사 D-1 (가)). 인자 없이 돌린 실행이
+    고르기 문지기(model: gpt-6.1-sol)에서 빠지지 않는다."""
+    assert config.DEFAULT_MODEL == "gpt-6.1-sol"
+    assert loop.pick_model(args_with()) == "gpt-6.1-sol"
     no_model_env.setattr(config, "DEFAULT_MODEL", "gpt-other")
     assert loop.pick_model(args_with()) == "gpt-other"
 
 
+def test_the_default_model_is_what_the_selection_rule_keeps():
+    """기본값과 고르기 규칙의 모델이 갈라지면 인자 없이 돈 실행은 전부 빠진다."""
+    rule = json.load(io.open(_api.DEFAULT_SELECTION_RULE, encoding="utf-8"))
+    assert rule["gates"]["model"] == config.DEFAULT_MODEL
+
+
 def test_where_the_model_came_from_is_known(no_model_env):
-    assert loop.model_choice(args_with()) == ("gpt-4o", "config.DEFAULT_MODEL")
+    assert loop.model_choice(args_with()) == ("gpt-6.1-sol", "config.DEFAULT_MODEL")
     assert loop.model_choice(args_with("gpt-x")) == ("gpt-x", "--model")
     no_model_env.setenv("RESTRUCTURE_MODEL", "gpt-env")
     assert loop.model_choice(args_with()) == ("gpt-env", "RESTRUCTURE_MODEL")
     # --model 이 환경 변수를 이긴다
     assert loop.model_choice(args_with("gpt-x")) == ("gpt-x", "--model")
+
+
+def test_the_designrepair_variable_is_no_longer_read(no_model_env):
+    """DesignRepair 갈래(연구에서 뺌)의 이름이 기본 모델을 이기고 있었다 (감사 B-34)."""
+    no_model_env.setenv("DESIGNREPAIR_MODEL", "gpt-old-branch")
+    assert loop.model_choice(args_with()) == (config.DEFAULT_MODEL, "config.DEFAULT_MODEL")
+    assert config.MODEL_ENV_VARS == ("RESTRUCTURE_MODEL",)
+
+
+def test_restructure_model_is_read_and_its_source_is_on_the_first_line(
+        fake_run_env, out_root, no_model_env):
+    no_model_env.setenv("RESTRUCTURE_MODEL", "gpt-env-model")
+    _code, summary = run_loop(fake_run_env, out_root, replying(), attempts=1, model=None)
+    first = run_log(summary)[0]
+    assert "model=gpt-env-model (출처 RESTRUCTURE_MODEL)" in first
+    assert (summary["model"], summary["model_source"]) == ("gpt-env-model",
+                                                           "RESTRUCTURE_MODEL")
+
+
+def test_a_mock_run_does_not_listen_to_the_model_variable(fake_run_env, out_root,
+                                                          no_model_env):
+    """mock 기준값이 PC 의 셸 변수를 따라 바뀌면 안 된다 (감사 B-26)."""
+    no_model_env.setenv("RESTRUCTURE_MODEL", "gpt-env-model")
+    _code, summary = run_loop(fake_run_env, out_root, None, attempts=1, model=None,
+                              mock="pass")
+    assert (summary["model"], summary["model_source"]) == (config.DEFAULT_MODEL,
+                                                           "config.DEFAULT_MODEL")
+    assert any("mock" in l and "RESTRUCTURE_MODEL" in l and ".envs" in l
+               for l in run_log(summary)[:3])
+
+
+def test_a_mock_run_does_not_read_envs(fake_run_env, out_root, no_model_env, tmp_path):
+    """.envs 에 적힌 모델도 mock 을 바꾸지 못한다. mock 은 키도 필요 없다."""
+    no_model_env.delenv("OPENAI_API_KEY", raising=False)
+    no_model_env.setattr(model, "ROOT", str(tmp_path))
+    (tmp_path / ".envs").write_text("OPENAI_API_KEY=sk-x\nRESTRUCTURE_MODEL=gpt-envs\n",
+                                    encoding="utf-8")
+    _code, summary = run_loop(fake_run_env, out_root, None, attempts=1, model=None,
+                              mock="pass")
+    assert summary["model"] == config.DEFAULT_MODEL
+    assert "RESTRUCTURE_MODEL" not in os.environ
+    assert "OPENAI_API_KEY" not in os.environ
 
 
 def test_the_cli_model_flag_defaults_to_nothing_so_config_decides():
@@ -84,9 +134,14 @@ def test_run_log_first_line_says_when_it_is_the_default(fake_run_env, out_root,
     _code, summary = run_loop(fake_run_env, out_root, replying(), attempts=1,
                               model=None)
     first = run_log(summary)[0]
-    assert "model=gpt-4o" in first and "config.DEFAULT_MODEL" in first
-    assert summary["model"] == "gpt-4o"
+    assert "model=gpt-6.1-sol" in first and "config.DEFAULT_MODEL" in first
+    assert summary["model"] == "gpt-6.1-sol"
     assert summary["model_source"] == "config.DEFAULT_MODEL"
+    # 기본 모델이 추론형이므로 부르는 방식도 그것을 따른다 - temperature 를 보내지
+    # 않고, reasoning_effort 는 config 의 기본값을 보낸다.
+    assert summary["model_call"]["reasoning"] is True
+    assert summary["model_call"]["temperature"] is False
+    assert summary["model_call"]["reasoning_effort"] == config.DEFAULT_REASONING_EFFORT
 
 
 def test_the_summary_keeps_what_the_api_said_it_was(fake_run_env, out_root):

@@ -90,11 +90,48 @@ BLOCK_COMMENT_LINE = re.compile(r"^[ \t]*/\*(?:(?!\*/).)*\*/[ \t]*\r?\n", re.S |
 BLOCK_COMMENT = re.compile(r"[ \t]*/\*(?:(?!\*/).)*\*/", re.S)
 STYLE_SCRIPT = re.compile(r"(<(style|script)\b[^>]*>)(.*?)(</\2>)", re.S | re.I)
 
+# 원본의 실험 장치 코드도 모델에 보내지 않는다 (11-7b, 연구자 결정 11번 (나)). 화면으로
+# 알 수 없고 검사기도 쓰지 않는다 - 옛 HTML 실험 장치(web/session.html)가 원본을 직접
+# 열어 읽던 기록이다. 원본 파일과 검사기가 보는 원본에는 그대로 있다.
+#
+#   탭 기록 장치  #phone 에 capture 로 붙인 click 처리기 (log('tap', …))
+#   .tempnote     마크업에서 쓰지 않는 CSS 규칙
+#   기록 배열     LOG · log() · window.__log · __startTask · __dump 와 log(…) 호출
+#
+# 검사기가 쓰는 window.__screen() 과 그것이 읽는 window.__task 는 남긴다. 기술 계약도
+# 이제 __screen() 만 요구한다.
+TAP_LOGGER = re.compile(
+    r"[^\n]*addEventListener\('click', function\(e\)\{(?:(?!\}, true\);).)*?"
+    r"log\('tap'(?:(?!\}, true\);).)*\}, true\);[ \t]*\n", re.S)
+UNUSED_CSS = re.compile(r"[ \t]*\.tempnote\{[^}]*\}[ \t]*\n")
+LOG_HOOKS = [re.compile(p, re.S) for p in (
+    r"const LOG = \[\];[ \t]*\n", r"window\.__log = LOG;[ \t]*\n",
+    r"function log\(type, data\)\{\n.*?\n\}\n",
+    r"window\.__startTask = function\(\)\{.*?\};[ \t]*\n",
+    r"window\.__dump = function\(\)\{.*?\};[ \t]*\n")]
+# 한 문장인 log(…) 호출. 줄 전체면 줄째, 다른 문장 앞이면 그 자리만.
+LOG_CALL_LINE = re.compile(r"^[ \t]*log\('[a-z_]+'(?:, ?\{[^;]*?\})?\);[ \t]*\n", re.M)
+LOG_CALL = re.compile(r"log\('[a-z_]+'(?:, ?\{[^;]*?\})?\); ?")
+BLANK_RUN = re.compile(r"\n{3,}")
+
+
+def strip_experiment_code(tag, body):
+    """<style> · <script> 본문 하나에서 실험 장치 코드를 뺀다."""
+    if tag.lower() == "style":
+        return UNUSED_CSS.sub("", body)
+    body = TAP_LOGGER.sub("", body)
+    for pat in LOG_HOOKS:
+        body = pat.sub("", body)
+    body = LOG_CALL.sub("", LOG_CALL_LINE.sub("", body))
+    # 지운 자리에 남은 빈 줄은 하나로
+    return BLANK_RUN.sub("\n\n", body)
+
 
 def model_input_html(html):
-    """모델에 보내는 원본 - 주석을 뺀 것. 검사기는 원본 그대로를 본다."""
+    """모델에 보내는 원본 - 주석과 실험 장치 코드를 뺀 것. 검사기는 원본 그대로를 본다."""
     def code(m):
         body = BLOCK_COMMENT.sub("", BLOCK_COMMENT_LINE.sub("", m.group(3)))
+        body = strip_experiment_code(m.group(2), body)
         return m.group(1) + body + m.group(4)
     html = STYLE_SCRIPT.sub(code, html or "")
     return HTML_COMMENT.sub("", HTML_COMMENT_LINE.sub("", html))
@@ -187,11 +224,7 @@ def errors_block(paths):
             out.append("  검사기가 넣는 잘못된 값: %s"
                        % ", ".join("`{%s}`" % k for k in e["uses"]))
     out += ["",
-            "보여 주는 방식은 자유다. 팝업이 아니어도 되고, 넣는 즉시 같은 화면에서 "
-            "알려도 되고,",
-            "[다음] 을 끄고 이유를 보여도 되고, 오류 코드는 쉬운 말로 바꿔도 되고, "
-            "여러 오류를 한",
-            "화면으로 보여도 된다. 지킬 것은 셋이다.", "",
+            "보여 주는 방식은 자유다. 지킬 것은 셋이다.", "",
             "1. 그 잘못된 입력에서 오류 상태가 나타난다 — 틀린 값으로 다음 단계에 "
             "넘어가지 않는다.",
             "2. 무엇이 틀렸는지 알아챌 수 있는 글이 새로 보인다.",
@@ -265,22 +298,19 @@ def choices_block(orig_snapshot, original_html):
         keys = " · ".join("window.%s.%s (%d개)" % (GLOBAL_NAME, n, len(v))
                           for n, v in data.items())
         out += ["이 데이터는 도구가 다음 이름으로 넣어 준다:", "  " + keys, "",
-                "목록을 직접 쓰지 마라. 이것을 참조해 그려라. 몇 개를 어떻게 "
-                "보일지는 네가",
-                "정한다 (검색, 자주 쓰는 것 먼저, 탭, 가나다 묶음 등). 다만 모든 "
-                "값을 고를",
-                "수 있어야 한다. 위 이름을 하나도 빠뜨리지 말고 참조하라 - 읽지 "
-                "않은 이름이",
+                "목록을 직접 쓰지 마라. 이것을 참조해 그려라. 선택지를 몇 개, 어떤 "
+                "순서, 어떤",
+                "묶음으로 보일지는 네가 정한다. 다만 모든 값을 고를 수 있어야 한다.",
+                "위 이름을 하나도 빠뜨리지 말고 참조하라 - 읽지 않은 이름이",
                 "있으면 형식 오류로 돌아온다. 읽는 모양은 "
                 + read_forms(next(iter(data))) + ".", "",
                 "검사가 보는 것은 렌더링된 화면이다. 선택 화면이 열렸을 때 모든 "
                 "값이 DOM",
                 "안에 있어야 한다 (숨김·접힘은 괜찮다). 검색창을 두더라도 검색어가 "
                 "비었을",
-                "때는 전체 목록이 DOM 에 있어야 한다. 처음에는 일부만 보이고 "
-                "[전체 보기] 같은",
-                "조작으로 나머지가 만들어지는 설계도 된다 - 그 조작을 흐름 명세의 "
-                "`reveal` 에 적어라.",
+                "때는 전체 목록이 DOM 에 있어야 한다. 눌러야 목록이 만들어지는 "
+                "설계라면",
+                "그 조작을 흐름 명세의 `reveal` 에 적어라.",
                 "도구가 넣어 준 데이터 블록은 증거로 세지 않는다 - 그 데이터를 "
                 "읽어 **그린** 것만 센다.", ""]
     if inline:
@@ -382,7 +412,7 @@ def truncated_part(n):
             "  답의 끝이 사라진 것이지 내용이 틀린 것이 아니다. 같은 분량으로 다시 "
             "쓰면 같은 자리에서 또 잘린다.",
             "  설명·주석·빈 줄을 모두 빼고, 코드 블록 두 개만 출력하라. 그래도 "
-            "길면 화면 수를 줄여서라도 문서를 끝까지 닫아라.", ""]
+            "길면 답을 줄여서라도 문서를 끝까지 닫아라.", ""]
 
 
 def error_part(error, has_build):

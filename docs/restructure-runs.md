@@ -91,7 +91,7 @@ Run 2 가 2탭 짧은 대신 확인 두 개를 잃었다. 원본 `account` 화�
 
 ```powershell
 cd C:\Users\xihye\senior-ui-pipeline
-.\.venv\Scripts\python.exe -m http.server 3003 --directory .   # 다른 터미널
+.\.venv\Scripts\python.exe -m senior_ui.devserver   # 다른 터미널 (루프백 전용)
 foreach ($r in "run2","run3") {
   .\.venv\Scripts\python.exe -m senior_ui.audit --flow flows\$r.json `
      --build http://localhost:3003/outputs/restructured_$r.html `

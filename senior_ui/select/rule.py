@@ -8,10 +8,12 @@ r"""규칙 파일 읽기 · 문지기(gates) · 줄 세우기(ordering).
 모르는 칸은 멈춘다. 오타 난 문지기 이름을 조용히 넘기면 그 문지기는 없는 것과
 같고, 그 규칙으로 고른 결과는 적힌 규칙과 다르다.
 """
+import collections
 import hashlib
 import io
 import json
 import os
+import re
 import statistics
 import subprocess
 
@@ -20,7 +22,17 @@ from senior_ui.config import FLOWS_DIR, ROOT
 DEFAULT_RULE = os.path.join(FLOWS_DIR, "selection_rule.json")
 
 GATES = ("passed", "no_redeclared", "no_truncated", "clean_tree", "not_mock", "model",
-         "no_warning_checks")
+         "no_warning_checks", "stage", "budget", "commit", "reverted", "no_internal_error")
+
+# 실행 조건 문지기 (감사 B-04 · D-4 (가)). 값이 null 이거나 칸이 없으면 보지 않는다 -
+# 칸이 생기기 전의 규칙(지난 결과 JSON)을 다시 쓸 때 그 규칙 그대로 돈다.
+#   budget   {"format", "audit", "refine"} 중 적은 것만 본다 (summary.budget 의
+#            format_budget · audit_budget, summary.refine.budget)
+#   commit   null 이면 후보들 중 가장 많은 커밋을 기준으로 한다 (commit_basis)
+#   reverted 다듬기가 떨어져 직전 통과 빌드로 되돌린 실행을 어떻게 하나
+BUDGET_KEYS = (("format", "형식"), ("audit", "검사"), ("refine", "다듬기"))
+REVERTED = ("allow", "last", "exclude")
+COMMIT = re.compile(r"^[0-9a-f]{7,40}$")
 
 # 줄 세우기와 대표성에 쓸 수 있는 값 (collect.collect 의 칸).
 NUMERIC = ("warning", "fatal", "attempts", "format_failures", "audit_failures",
@@ -61,6 +73,24 @@ def validate(rule):
             if not (isinstance(v, list) and all(isinstance(x, str) and x for x in v)):
                 raise RuleError("gates.no_warning_checks 는 검사 이름(\"J\" 등)의 목록이어야 "
                                 "한다")
+        elif k == "stage":
+            if v is not None and not (isinstance(v, str) and v):
+                raise RuleError("gates.stage 는 null 이거나 검사 단계 이름이어야 한다")
+        elif k == "budget":
+            names = [b for b, _ in BUDGET_KEYS]
+            if v is not None and not (
+                    isinstance(v, dict) and set(v) <= set(names)
+                    and all(isinstance(x, int) and not isinstance(x, bool) and x >= 0
+                            for x in v.values())):
+                raise RuleError("gates.budget 는 null 이거나 {%s} 중 몇 칸의 0 이상 정수여야 "
+                                "한다" % ", ".join(names))
+        elif k == "commit":
+            if v is not None and not (isinstance(v, str) and COMMIT.match(v)):
+                raise RuleError("gates.commit 은 null 이거나 커밋 해시(16진수 7~40자)여야 한다")
+        elif k == "reverted":
+            if v not in REVERTED:
+                raise RuleError("gates.reverted 는 %s 중 하나여야 한다"
+                                % " | ".join('"%s"' % x for x in REVERTED))
         elif not isinstance(v, bool):
             raise RuleError("gates.%s 는 true/false 여야 한다" % k)
     ordering = rule.get("ordering")
@@ -172,7 +202,74 @@ def gate_reasons(row, gates):
     want = gates.get("model")
     if want and row.get("model") != want:
         out.append("모델이 %s 아님 (%s)" % (want, row.get("model")))
+    # 실행 조건. 같은 조건의 반복이어야 고른 것이 "전형적인 시안" 이다 - 조건이 다른
+    # 실행(예: 말없이 styled · 예산 3/3 으로 돈 20261006-124055)이 섞이면 안 된다.
+    stage = gates.get("stage")
+    if stage and row.get("stage") != stage:
+        out.append("검사 단계가 %s 아님 (%s)" % (stage, row.get("stage") or "기록 없음"))
+    off = budget_mismatch(row, gates.get("budget"))
+    if off:
+        out.append("예산이 규칙과 다름: " + " · ".join(off))
+    if gates.get("no_internal_error") and row.get("internal_error"):
+        out.append("도구 내부 오류로 끝남 (internal_error, 종료 2) - 통과한 빌드가 있어도 "
+                   "뺀다")
+    if gates.get("reverted") == "exclude" and row.get("reverted"):
+        out.append("되돌린 실행 (다듬기 %s회차가 떨어져 시도 %s 이 최종)"
+                   % (row["reverted"], row.get("reverted_to")))
     return out
+
+
+def budget_mismatch(row, want):
+    """규칙의 예산과 다른 칸마다 한 마디. 규칙에 적힌 칸만 본다."""
+    have = row.get("budget") or {}
+    out = []
+    for key, label in BUDGET_KEYS:
+        if not want or key not in want:
+            continue
+        got = have.get(key)
+        if got != want[key]:
+            out.append("%s %s (규칙 %d)" % (label, "기록 없음" if got is None else got,
+                                          want[key]))
+    return out
+
+
+def _short(commit):
+    return (commit or "")[:7]
+
+
+def commit_basis(rows, pinned):
+    """후보들이 기준으로 삼을 커밋. `{"commit", "source", "counts"}` 또는 None.
+
+    규칙에 적었으면(pinned) 그것이다. 비워 두면 후보들 중 가장 많은 커밋이고,
+    같은 수면 가장 나중에 돈 실행(이름이 시각이다)의 커밋이다. 커밋이 다른 실행은
+    같은 코드로 돈 것이 아니므로 "같은 조건의 반복" 에서 뺀다."""
+    counts = collections.Counter(r["commit"] for r in rows if r.get("commit"))
+    if pinned:
+        return {"commit": pinned, "source": "rule", "counts": dict(counts)}
+    if not counts:
+        return None
+    top = max(counts.values())
+    tied = {c for c, n in counts.items() if n == top}
+    newest = max((r for r in rows if r.get("commit") in tied), key=lambda r: r["name"])
+    return {"commit": newest["commit"], "source": "majority", "counts": dict(counts)}
+
+
+def commit_reason(row, basis):
+    """이 후보가 커밋 기준에서 벗어나는 이유. 맞으면 None."""
+    if basis is None:
+        return None
+    mine = row.get("commit")
+    if not mine:
+        return "커밋 기록 없음 (git.commit)"
+    if basis["source"] == "rule":
+        if not mine.startswith(basis["commit"]):
+            return "커밋이 규칙의 %s 아님 (%s)" % (_short(basis["commit"]), _short(mine))
+        return None
+    if mine != basis["commit"]:
+        return ("커밋이 기준(%s, 후보 %d개 중 가장 많은 %d개)과 다름 (%s)"
+                % (_short(basis["commit"]), sum(basis["counts"].values()),
+                   basis["counts"][basis["commit"]], _short(mine)))
+    return None
 
 
 # --------------------------------------------------------------------------- #
@@ -234,6 +331,19 @@ def rank(rows, rule):
         row = dict(row, excluded_because=reasons, rank=None)
         (excluded if reasons else candidates).append(row)
 
+    # 커밋은 다른 문지기를 다 지난 후보들 사이에서 맞춘다 - mock · dirty 같은 실행이
+    # "가장 많은 커밋" 을 끌어가지 않게. 칸이 없는 옛 규칙은 보지 않는다.
+    basis = commit_basis(candidates, gates.get("commit")) if "commit" in gates else None
+    kept = []
+    for row in candidates:
+        why = commit_reason(row, basis)
+        if why:
+            row["excluded_because"] = [why]
+            excluded.append(row)
+        else:
+            kept.append(row)
+    candidates = kept
+
     rep_rule = next((o for o in rule["ordering"] if o["by"] == REPRESENTATIVE), None)
     rep, stats = {}, {}
     if rep_rule:
@@ -241,11 +351,15 @@ def rank(rows, rule):
         for row in candidates:
             row["representative"] = rep[row["name"]]
 
-    candidates.sort(key=lambda r: tuple(_key_part(r, o, rep) for o in rule["ordering"])
-                    + (r["name"],))
+    # reverted: "last" 면 되돌린 실행을 되돌리지 않은 실행 뒤로 미룬다 (그 안에서는
+    # 규칙의 순서 그대로).
+    last = gates.get("reverted") == "last"
+    candidates.sort(key=lambda r: (1 if last and r.get("reverted") else 0,)
+                    + tuple(_key_part(r, o, rep) for o in rule["ordering"]) + (r["name"],))
     for i, row in enumerate(candidates, 1):
         row["rank"] = i
     excluded.sort(key=lambda r: r["name"])
     return {"candidates": candidates, "excluded": excluded,
+            "commit_basis": basis,
             "representative": None if not rep_rule else
             {"metrics": rep_rule["metrics"], "stats": stats}}

@@ -5,8 +5,8 @@ r"""검사기 CLI. 원본과 생성물을 같은 과제로 한 번씩 걷고 비
 했다. 이제 단계는 이 CLI 의 인자 하나다.
 
   wireframe   A 과제 완주 · B 표시 정확성 · C 죽은 컨트롤 · F 언어 · I 선택지 ·
-              J 오류 경로
-  styled      A~J 전부
+              J 오류 경로 · K 과제 밖 입구
+  styled      A~K 전부
 
 흐름 파일은 누가 썼는지에 따라 두 가지로 읽는다 (inputs.researcher_flow).
 

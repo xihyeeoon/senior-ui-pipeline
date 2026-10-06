@@ -13,7 +13,7 @@
     "encoding": "o200k_base(대체)",
     "reasoning_effort": "medium"
   },
-  "mock": "errors-unhandled",
+  "mock": "entrances-folded",
   "task": "transfer",
   "stage": "wireframe",
   "stage_source": "config.DEFAULT_STAGE",
@@ -126,12 +126,12 @@
       "flow": "<run>/attempt_1.flow.json",
       "model_html": "<run>/attempt_1.model.html",
       "stage": "audit",
-      "passed": false,
-      "fatal": 2,
+      "passed": true,
+      "fatal": 0,
       "warning": 0
     }
   ],
-  "passed": false,
+  "passed": true,
   "final": {
     "attempt": 1,
     "html": "<run>/attempt_1.html",
@@ -156,22 +156,25 @@
         "QUICK"
       ]
     },
-    "model_html": "<run>/attempt_1.model.html"
+    "model_html": "<run>/attempt_1.model.html",
+    "model_html_promoted": "<root>/.mock-outputs/restructured_auto.model.html",
+    "brief": "<run>/designer_brief.md",
+    "brief_promoted": "<root>/.mock-outputs/restructured_auto.designer_brief.md"
   },
   "budget": {
     "format_used": 0,
     "format_budget": 1,
-    "audit_used": 1,
+    "audit_used": 0,
     "audit_budget": 1,
     "infra_used": 0,
     "infra_budget": 3
   },
-  "stopped_reason": "budget_exhausted",
+  "stopped_reason": null,
   "trend": [
     {
       "attempt": 1,
-      "fatal_total": 2,
-      "fatal_root": 2,
+      "fatal_total": 0,
+      "fatal_root": 0,
       "fatal_derived": 0,
       "screens": "9/9",
       "stopped_at": null
@@ -205,14 +208,24 @@
         "prompt": null,
         "completion": null,
         "reasoning": null
+      },
+      "refine": {
+        "calls": 1,
+        "estimated_prompt": 19885,
+        "images": 11,
+        "estimated_images": 4642,
+        "max_tokens": 32000,
+        "prompt": null,
+        "completion": null,
+        "reasoning": null
       }
     },
     "total": {
-      "calls": 2,
-      "estimated_prompt": 33951,
-      "images": 14,
-      "estimated_images": 5908,
-      "max_tokens": 57000,
+      "calls": 3,
+      "estimated_prompt": 53836,
+      "images": 25,
+      "estimated_images": 10550,
+      "max_tokens": 89000,
       "prompt": null,
       "completion": null,
       "reasoning": null
@@ -240,6 +253,10 @@
       {
         "attempt": 1,
         "usd": null
+      },
+      {
+        "attempt": 2,
+        "usd": null
       }
     ],
     "total_usd": null,
@@ -253,9 +270,40 @@
   "refine": {
     "budget": 2,
     "source": "config.DEFAULT_REFINE",
-    "rounds": [],
-    "final_from": null,
-    "final_label": null,
+    "rounds": [
+      {
+        "round": 1,
+        "attempt": 2,
+        "from_attempt": 1,
+        "images": 11,
+        "before_shots": "<run>/shots/attempt_1/see",
+        "after_shots": null,
+        "critique": "<run>/attempt_2.critique.json",
+        "issues": 0,
+        "keep": 1,
+        "done": true,
+        "passed": null,
+        "fix_attempt": null,
+        "fix_passed": null,
+        "became_final": false,
+        "stopped": "done",
+        "format_failures": 0,
+        "audit_failures": 0,
+        "tokens": {
+          "calls": 1,
+          "estimated_prompt": 19885,
+          "images": 11,
+          "estimated_images": 4642,
+          "max_tokens": 32000,
+          "prompt": null,
+          "completion": null,
+          "reasoning": null
+        },
+        "usd": null
+      }
+    ],
+    "final_from": "generate",
+    "final_label": "생성",
     "reverted": null,
     "format_failures": 0,
     "audit_failures": 0

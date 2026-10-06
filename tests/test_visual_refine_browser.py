@@ -17,7 +17,6 @@ from playwright.async_api import async_playwright
 
 import _api
 import capture_baseline as C
-from test_drive import server  # noqa: F401  (같은 서버 fixture 를 쓴다)
 
 pytestmark = pytest.mark.browser
 

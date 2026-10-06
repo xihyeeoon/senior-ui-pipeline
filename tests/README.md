@@ -13,8 +13,8 @@
 ## 쓰는 법
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest                # 빠름, 브라우저 없음 (333건, 53초)
-.\.venv\Scripts\python.exe -m pytest -m browser     # 실제로 다시 걷는다 (97건, 4분 16초)
+.\.venv\Scripts\python.exe -m pytest                # 빠름, 브라우저 없음 (1분 남짓)
+.\.venv\Scripts\python.exe -m pytest -m browser     # 실제로 다시 걷는다 (10분 남짓)
 ```
 
 기준값을 다시 뽑을 일이 생기면 (= 동작을 의도적으로 바꿨을 때만):
@@ -23,9 +23,17 @@
 .\.venv\Scripts\python.exe tests/capture_baseline.py
 ```
 
-`:3003` 을 이미 누가 쓰고 있으면 캡처는 멈춘다. 기준값은 그 포트가 서빙하는
-내용에 전적으로 달려 있어서, 남이 띄운 서버를 그대로 쓰면 기준값이 무엇을 기준으로
-한 것인지 알 수 없어진다.
+건수는 적지 않는다 — 늘 바뀐다 (`pytest --co -q` 로 본다).
+
+`:3003` 에 이미 서버가 있으면 그것이 **이 작업 트리를** 서빙할 때만 그대로 쓰고
+(`senior_ui/devserver.py` 의 확인 파일 `/.devserver-id`), 아니면 캡처는 멈춘다. 기준값은
+그 포트가 서빙하는 내용에 전적으로 달려 있어서, 다른 worktree · 다른 폴더의 서버를
+그대로 쓰면 기준값이 무엇을 기준으로 한 것인지 알 수 없어진다. 브라우저 테스트도
+같은 판단을 쓰는 `conftest.py` 의 `server` fixture 하나를 함께 쓴다.
+
+기준값을 다시 뽑을 때는 차이를 전부 보고 설명되는 파일만 바꾼다. 전체를 다시 뽑으면
+원본의 비밀번호 숫자판이 다시 섞여 스냅샷이 바이트 단위로 달라진다 — 그 차이뿐인
+스냅샷은 되돌린다 (`--out <다른 폴더>` 로 뽑아 견준다).
 
 ## 파일
 
@@ -42,9 +50,10 @@
 | `test_select.py` | C 후보 고르기 (`python -m senior_ui.select`) - 가짜 실행 폴더 다섯(통과 셋 · 실패 하나 · 도구가 고친 것 하나)으로 순위와 제외 이유, 규칙 파일의 문지기 · 순서 · 가중치, 결과에 남는 규칙과 커밋, 지난 결과와 나란히. `-m browser` 에서는 mock 실행(preserved-all · bill-identity)을 실제로 돌리고 그 폴더로 끝까지 돈다 |
 | `test_preflight_loop.py` | 최신 모델(gpt-6.1-sol · gpt-6-astra) 첫 실행의 형식 검사 거짓 실패 - 실제 답을 `fixtures/real_runs/` 에 복사해 두고 다시 넣는다. 모델도 브라우저도 부르지 않는다 |
 | `test_judge_inputs.py` | 판정 입력(`audit/inputs.judged_flow`) - 모델이 쓴 truth · 완료 화면 값 · done_amount · derived_from_original · task · stage 가 판정을 바꾸지 못하는지, 같은 빌드를 루프와 검사기 CLI 가 같게 판정하는지, 오류 경로에서 뜬 대화상자를 판정하는지. 걷기만 가짜다 |
+| `test_entrances.py` | 과제 밖 입구 (검사 K) - 과제 파일의 확정 목록(이름은 탭 대상마다 하나), 원본의 data-action · aria-label · 무동작 분기, 판정(이름 + 누를 수 있게 보임 · 지운 빌드 fatal · 숨긴 것은 안 셈 · reveal 뒤 통과 · 글자는 기록만 · 겹침 사례 일곱), 프롬프트의 한 문장과 기술 계약 한 줄. `-m browser` 에서는 mock 넷(entrances-none · -reveal · -folded · pass)과, 실제 원본에서 입구 하나만 지운 빌드 일곱(같은 낱말은 남김)을 실제로 걷는다 |
 | `test_format_rules.py` | 형식 검사(`reply.py`)가 검사기의 규칙 함수(back_to · 화면 목록 · 방문 이름 · 조작부 이름)를 그대로 쓰는지 |
 | `test_tool_failures.py` | 도구 버그(종료 2 · internal_error) · 바깥 문제(인프라 예산) · 시작 실패(cannot_start) · CLI 의 `--out` · 인프라 예산의 출처 |
-| `test_real_runs_browser.py` | `fixtures/real_runs/` 의 첫 답을 루프의 길과 CLI 로 실제로 판정한다 (sol 통과 · astra J fatal 1). `-m browser` |
+| `test_real_runs_browser.py` | `fixtures/real_runs/` 의 첫 답을 루프의 길과 CLI 로 실제로 판정한다 (sol 은 K fatal 1 - 입구 31개 중 2개만 남았다 · astra 는 J 1 · K 1). `-m browser` |
 | `fixtures/real_runs/` | 실제 실행의 답 그대로 (`sol` = `outputs/restructure_auto/20261006-124055`, `astra` = `20261006-124838`). `attempt_N.response.txt` · 첫 계획(`plan.json`) · 도구가 넣은 선택지 데이터(`preserved.json`, `attempt_1.html` 의 블록) |
 | `fake_openai.py` | `openai.OpenAI` 의 대역 (with_raw_response 의 헤더 · Responses · models.list · 429 · 400) |
 | `baseline/` | 기준값. 마지막 캡처 실행의 결과다 |
@@ -97,7 +106,10 @@
   `mock_preserved_some` 은 검사 I 에서, `mock_preserved_none` 은 형식 검사에서
   떨어진다. `mock_errors_undeclared` 는 오류 경로를 적지 않아 형식 검사에서,
   `mock_errors_unhandled` 는 오류 경로는 적었지만 오류 처리가 없어 검사 J 에서
-  떨어진다. mock 실행은 `.mock-outputs/` 를 쓴다 — 통과한 빌드가
+  떨어진다. `mock_entrances_none` 은 과제 밖 입구를 넣지 않아 검사 K 에서 떨어지고,
+  `mock_entrances_reveal` 은 입구를 [다른 메뉴] 를 눌러야 그리고, `mock_entrances_folded`
+  는 접힌 `<details>` 에 넣었지만, 둘 다 흐름 명세의 reveal 로 펼쳐 보아 통과한다.
+  나머지 이체 모드는 첫 화면에 입구를 보이게 넣는다 (`model.ENTRANCE_MODES`). mock 실행은 `.mock-outputs/` 를 쓴다 — 통과한 빌드가
   `outputs/restructured_auto.*` 를 덮지 않게 떼어 놓았다 (이제 `--mock` 의
   기본값이기도 하다. 캡처는 같은 폴더를 환경 변수로 한 번 더 못박는다)
 - `session_report.md` / `.csv`
@@ -115,22 +127,27 @@
 
 ### 지금 기준값이 담고 있는 동작 (참고)
 
+`audit.json` (검사 전부) 기준. 괄호는 `audit.wireframe.json` (재구성 루프의 단계).
+
 | 경우 | passed | fatal | warning | 화면 |
 |---|---|---|---|---|
-| `original_vs_original` | ○ | 0 | 0 | 8/8 |
-| `bill/original_vs_original` | ○ | 0 | 2 | 8/8 |
-| `run1` | ✕ | 1 | 0 | 9/9 |
-| `run2` | ✕ | 1 | 0 | 7/7 |
-| `run3` | ✕ | 1 | 0 | 8/8 |
+| `original_vs_original` | ○ | 0 | 3 (D 2 · J 1) (wireframe 1) | 8/8 |
+| `bill/original_vs_original` | ○ | 0 | 2 (D 2) (wireframe 0) | 8/8 |
+| `run1` | ✕ | 4 (I 3 · K 1) | 4 (D 3 · I 1) (wireframe 1) | 9/9 |
+| `run2` | ✕ | 4 (I 3 · K 1) | 4 (D 3 · I 1) (wireframe 1) | 7/7 |
+| `run3` | ✕ | 4 (I 3 · K 1) | 4 (D 3 · I 1) (wireframe 1) | 8/8 |
 
-`run1~3` 의 fatal 1건은 모두 검사 I(선택지 보존)다 — 원본의 `pick-bank` 67개 중
-58개가 생성물에 없다. mock 실행은 둘 다 `passed=false` 로 끝난다.
+`run1~3` 의 fatal 중 셋은 검사 I(선택지 보존)다 — 원본의 `pick-bank` 67개 중 58개,
+`quick` 의 `all`, `num` 의 `00` 이 생성물에 없다. 나머지 하나는 검사 K(과제 밖 입구)다 —
+원본의 입구 31개가 하나도 없다. 원본 대 원본은 입구 31/31 (공과금 32/32). mock 실행:
+`mock_pass` · `mock_preserved_all` · `mock_entrances_reveal` · `mock_entrances_folded` ·
+`bill/mock_bill_identity` 는 통과하고, `mock_fail` 은 검사에서 (2회), `mock_preserved_some` 은 검사 I 에서,
+`mock_preserved_none` · `mock_errors_undeclared` 는 형식 검사에서,
+`mock_errors_unhandled` 는 검사 J 에서, `mock_entrances_none` 은 검사 K 에서 떨어진다.
 
-**주의할 점이 하나 있다.** `audit.json` 의 `metrics.fatal_total` 은 0 인데
-`fatal` 목록에는 1건이 있다. `audit.py` 가 `fatal_total` 을 세는 자리가 검사 I 가
-findings 를 넣는 자리보다 앞이라서 그렇다. 이것은 정리 전부터 그런 동작이고, 이번
-단계는 동작을 바꾸지 않으므로 그대로 기준값에 담았다. 고칠지 말지는 나중 판단이다
-— 다만 정리 중에 **우연히** 고쳐지면 `pytest` 가 실패하므로 바로 드러난다.
+정리 단계에서는 `metrics.fatal_total` 이 0 인데 `fatal` 목록에는 1건이 있는 버그가
+기준값에 담겨 있었다 (집계가 검사 I 보다 앞에 있었다). `fix/audit-counting` 에서
+고쳤고, 지금은 `test_audit_bugs.py` 가 반대 — 목록과 숫자가 같다 — 를 단언한다.
 
 ### `report/` 에 담긴 동작
 

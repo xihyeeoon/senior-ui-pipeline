@@ -216,7 +216,7 @@
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="homehead">
     <div class="name"><span class="dot">C</span>홍길동님</div>
-    <div class="icons"><span>☺</span><span>▤</span><span>♤</span><span>⌕</span></div>
+    <div class="icons"><span data-action="oos-message" aria-label="메시지">☺</span><span data-action="oos-wallet" aria-label="지갑">▤</span><span data-action="oos-alarm" aria-label="알림">♤</span><span data-action="oos-menu" aria-label="전체메뉴">⌕</span></div>
   </div>
   <div class="body">
     <div class="card">
@@ -229,7 +229,7 @@
         </div>
         <button class="btn-sm" data-action="go-recipient">이체</button>
       </div>
-      <div class="membership">절세혜택과 안정적인 노후, IRP로 준비하세요</div>
+      <div class="membership" data-action="oos-irp" aria-label="IRP 안내">절세혜택과 안정적인 노후, IRP로 준비하세요</div>
     </div>
 
     <div class="card">
@@ -240,24 +240,24 @@
           <div class="acctamt">금액 숨김</div>
         </div>
       </div>
-      <button class="btn-wide">앱카드 가입</button>
+      <button class="btn-wide" data-action="oos-appcard" aria-label="앱카드 가입">앱카드 가입</button>
     </div>
 
     <div class="card">
       <h3>땡겨요 <span class="arr">›</span></h3>
       <div class="svc"><div class="sq">🍔</div>
         <div style="flex:1"><div class="t2">할인쿠폰 드려요</div><div class="t1">bhc치킨 최대 9,000원</div></div>
-        <button class="btn-sm">바로받기</button></div>
-      <div class="rowlist"><span>이벤트</span><span>쿠폰</span><span>포인트</span></div>
+        <button class="btn-sm" data-action="oos-get-coupon" aria-label="바로받기">바로받기</button></div>
+      <div class="rowlist"><span data-action="oos-event" aria-label="이벤트">이벤트</span><span data-action="oos-coupon" aria-label="쿠폰">쿠폰</span><span data-action="oos-point" aria-label="포인트">포인트</span></div>
     </div>
 
     <div class="card">
-      <h3>7월 소비 ↻ <span class="arr">›</span></h3>
+      <h3>7월 소비 ↻ <span class="arr" data-action="oos-spend-detail" aria-label="소비 상세">›</span></h3>
       <div style="font-size:13px;color:#6B7280">📅 오늘 쓴 돈</div>
       <div style="font-size:19px;font-weight:700">0원</div>
     </div>
 
-    <div class="pointbar">
+    <div class="pointbar" data-action="oos-my-point" aria-label="마이신한포인트">
       <div><div class="p1">카드 쓸때마다 쌓이고, 현금처럼 쓰는</div><div class="p2">마이신한포인트</div></div>
       <button>시작하기</button>
     </div>
@@ -269,7 +269,7 @@
       <div class="svc"><div class="sq">💳</div><div><div class="t1">내 카드 승인내역</div><div class="t2">모든 카드 실시간 승인내역</div></div></div>
     </div>
 
-    <div class="card">
+    <div class="card" data-action="oos-connect-event" aria-label="자산 연결 이벤트">
       <div style="font-size:17px;font-weight:700">더 많은 금융자산 모두<br>연결하면 커피쿠폰 즉시지급!</div>
       <div style="font-size:14px;color:var(--blue);margin-top:6px">이벤트 바로가기 ›</div>
     </div>
@@ -281,14 +281,14 @@
       <div class="svc"><div class="sq">🛡</div><div><div class="t1">신한라이프</div><div class="t2">내게 필요한 보험, 보장분석으로 확인하기</div></div></div>
     </div>
 
-    <div class="footlinks"><span>쉬운홈</span><span>홈화면 설정</span><span>금액 숨기기</span></div>
+    <div class="footlinks"><span data-action="oos-easy-home" aria-label="쉬운홈">쉬운홈</span><span data-action="oos-home-setting" aria-label="홈화면 설정">홈화면 설정</span><span data-action="oos-hide-amount" aria-label="금액 숨기기">금액 숨기기</span></div>
   </div>
   <div class="tabbar">
-    <div class="act"><span class="ti">⌂</span>홈</div>
-    <div><span class="ti">Ⓦ</span>금융</div>
-    <div><span class="ti">⌂</span>상품</div>
-    <div><span class="ti">🎁</span>혜택</div>
-    <div><span class="ti">📈</span>주식</div>
+    <div class="act" data-action="oos-tab-home" aria-label="홈"><span class="ti">⌂</span>홈</div>
+    <div data-action="oos-tab-finance" aria-label="금융"><span class="ti">Ⓦ</span>금융</div>
+    <div data-action="oos-tab-goods" aria-label="상품"><span class="ti">⌂</span>상품</div>
+    <div data-action="oos-tab-benefit" aria-label="혜택"><span class="ti">🎁</span>혜택</div>
+    <div data-action="oos-tab-stock" aria-label="주식"><span class="ti">📈</span>주식</div>
   </div>
 </section>
 
@@ -297,17 +297,17 @@
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="navbar">
     <span class="ico" data-action="back-home">‹</span>
-    <span class="mid">다건이체</span>
-    <span style="display:flex;gap:14px"><span class="ico">👤</span><span class="ico" data-action="back-home">✕</span></span>
+    <span class="mid" data-action="oos-multi-transfer" aria-label="다건이체">다건이체</span>
+    <span style="display:flex;gap:14px"><span class="ico" data-action="oos-payee-manage" aria-label="받는 사람 관리">👤</span><span class="ico" data-action="back-home">✕</span></span>
   </div>
   <div class="body">
-    <div class="h1row"><div class="h1">누구에게 보낼까요?</div><span class="srch">⌕</span></div>
+    <div class="h1row"><div class="h1">누구에게 보낼까요?</div><span class="srch" data-action="oos-search" aria-label="검색">⌕</span></div>
     <div class="inputline" data-action="go-account">
       <span class="ph">계좌번호 직접 입력</span><span style="font-size:19px">▣</span>
     </div>
-    <div class="filterrow"><span class="lbl">자주쓰는 계좌 <span class="tag">편집</span></span><span class="pill">0개 ⌄</span></div>
-    <div class="filterrow"><span class="lbl">내 계좌</span><span class="pill">0개 ⌄</span></div>
-    <div class="filterrow"><span class="lbl">최근</span><span class="pill">0개 ⌄</span></div>
+    <div class="filterrow" data-action="oos-frequent" aria-label="자주쓰는 계좌"><span class="lbl">자주쓰는 계좌 <span class="tag">편집</span></span><span class="pill">0개 ⌄</span></div>
+    <div class="filterrow" data-action="oos-my-accounts" aria-label="내 계좌"><span class="lbl">내 계좌</span><span class="pill">0개 ⌄</span></div>
+    <div class="filterrow" data-action="oos-recent" aria-label="최근"><span class="lbl">최근</span><span class="pill">0개 ⌄</span></div>
     <div style="height:30px"></div>
   </div>
 </section>
@@ -356,7 +356,7 @@
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="navbar"><span class="ico" data-action="back-account">‹</span><span></span><span class="ico" data-action="back-home">✕</span></div>
   <div class="amthead">
-    [금융거래한도계좌2]신한 주거래 우대통장 계좌에서 ⌄<br>
+    <span data-action="oos-from-account" aria-label="출금계좌 변경">[금융거래한도계좌2]신한 주거래 우대통장 계좌에서 ⌄</span><br>
     <b>아래 계좌로</b><br>
     <span style="font-size:14px"><span id="amt-bank"></span> <span id="amt-acc"></span></span>
   </div>
@@ -405,10 +405,10 @@
     <div class="okwrap">
       <div class="okc">✓</div>
       <div class="q2">아래 계좌로<br><span id="dn-amt">1</span>원 보냈어요.</div>
-      <div class="okbtns"><button>추가이체</button><button>상세보기</button></div>
+      <div class="okbtns"><button data-action="oos-more-transfer" aria-label="추가이체">추가이체</button><button data-action="oos-detail" aria-label="상세보기">상세보기</button></div>
     </div>
   </div>
-  <div class="bottom2"><button class="ghost">공유</button><button class="fill" data-action="finish">확인</button></div>
+  <div class="bottom2"><button class="ghost" data-action="oos-share" aria-label="공유">공유</button><button class="fill" data-action="finish">확인</button></div>
 </section>
 
 <!-- ================= 9. 오류 팝업 - 계좌번호 (ELB00016) ================= -->
@@ -657,6 +657,37 @@ document.getElementById('phone').addEventListener('click', function(e){
   }
   else if(a==='pw-del'){ S.pw = S.pw.slice(0,-1); renderDots(); }
   else if(a==='pw-shuffle'){ buildPwPad(); renderDots(); }
+  else if(a==='oos-alarm' ||
+          a==='oos-appcard' ||
+          a==='oos-connect-event' ||
+          a==='oos-coupon' ||
+          a==='oos-detail' ||
+          a==='oos-easy-home' ||
+          a==='oos-event' ||
+          a==='oos-frequent' ||
+          a==='oos-from-account' ||
+          a==='oos-get-coupon' ||
+          a==='oos-hide-amount' ||
+          a==='oos-home-setting' ||
+          a==='oos-irp' ||
+          a==='oos-menu' ||
+          a==='oos-message' ||
+          a==='oos-more-transfer' ||
+          a==='oos-multi-transfer' ||
+          a==='oos-my-accounts' ||
+          a==='oos-my-point' ||
+          a==='oos-payee-manage' ||
+          a==='oos-point' ||
+          a==='oos-recent' ||
+          a==='oos-search' ||
+          a==='oos-share' ||
+          a==='oos-spend-detail' ||
+          a==='oos-tab-benefit' ||
+          a==='oos-tab-finance' ||
+          a==='oos-tab-goods' ||
+          a==='oos-tab-home' ||
+          a==='oos-tab-stock' ||
+          a==='oos-wallet'){ /* 과제 밖 입구 - 더미앱 A1 처럼 눌러도 아무 일도 하지 않는다 */ }
   else if(a==='finish'){ log('task_end'); show('home'); }
 });
 

@@ -17,6 +17,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 - `evidence_kind` 에 근거의 종류를 적는다: 그림만 보고 `"screen"`, 코드만 보고 `"code"`,
   둘 다 `"both"`.
 - 화면을 몇 개로 나눌지, 어떤 순서로 둘지는 자유다. 원본 구조를 지킬 필요 없다.
+- 원본의 다른 메뉴와 버튼도 사용자가 쓸 수 있는 기능이다. 배치 · 묶음 · 크기는 바꿔도 되지만 없애지 마라.
 - 변경마다 어느 진단에 대응하는지(`addresses`)를 적어라.
 - 원본의 화면은 다음과 같다: home, recipient, bank, account, amount, confirm, password, done, err-account, err-bank
 
@@ -32,15 +33,15 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 이 데이터는 도구가 다음 이름으로 넣어 준다:
   window.PRESERVED.BANKS (38개) · window.PRESERVED.SECS (29개) · window.PRESERVED.AMT_KEYS (11개) · window.PRESERVED.ACC_KEYS (10개) · window.PRESERVED.PW_KEYS (10개) · window.PRESERVED.QUICK (4개)
 
-목록을 직접 쓰지 마라. 이것을 참조해 그려라. 몇 개를 어떻게 보일지는 네가
-정한다 (검색, 자주 쓰는 것 먼저, 탭, 가나다 묶음 등). 다만 모든 값을 고를
-수 있어야 한다. 위 이름을 하나도 빠뜨리지 말고 참조하라 - 읽지 않은 이름이
+목록을 직접 쓰지 마라. 이것을 참조해 그려라. 선택지를 몇 개, 어떤 순서, 어떤
+묶음으로 보일지는 네가 정한다. 다만 모든 값을 고를 수 있어야 한다.
+위 이름을 하나도 빠뜨리지 말고 참조하라 - 읽지 않은 이름이
 있으면 형식 오류로 돌아온다. 읽는 모양은 `window.PRESERVED.BANKS` · `const P = window.PRESERVED; P.BANKS` · `const {BANKS} = window.PRESERVED` 모두 된다.
 
 검사가 보는 것은 렌더링된 화면이다. 선택 화면이 열렸을 때 모든 값이 DOM
 안에 있어야 한다 (숨김·접힘은 괜찮다). 검색창을 두더라도 검색어가 비었을
-때는 전체 목록이 DOM 에 있어야 한다. 처음에는 일부만 보이고 [전체 보기] 같은
-조작으로 나머지가 만들어지는 설계도 된다 - 그 조작을 흐름 명세의 `reveal` 에 적어라.
+때는 전체 목록이 DOM 에 있어야 한다. 눌러야 목록이 만들어지는 설계라면
+그 조작을 흐름 명세의 `reveal` 에 적어라.
 도구가 넣어 준 데이터 블록은 증거로 세지 않는다 - 그 데이터를 읽어 **그린** 것만 센다.
 
 
@@ -56,9 +57,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   계좌번호는 맞지만 받는 사람의 은행이 아닌 은행을 고른 채 금액까지 넣고 확인 화면에서 [보내기]를 눌렀다. 원본은 오류 팝업을 띄우고, [확인]을 누르면 확인 화면으로 돌아간다.
   검사기가 넣는 잘못된 값: `{BANK_WRONG}`
 
-보여 주는 방식은 자유다. 팝업이 아니어도 되고, 넣는 즉시 같은 화면에서 알려도 되고,
-[다음] 을 끄고 이유를 보여도 되고, 오류 코드는 쉬운 말로 바꿔도 되고, 여러 오류를 한
-화면으로 보여도 된다. 지킬 것은 셋이다.
+보여 주는 방식은 자유다. 지킬 것은 셋이다.
 
 1. 그 잘못된 입력에서 오류 상태가 나타난다 — 틀린 값으로 다음 단계에 넘어가지 않는다.
 2. 무엇이 틀렸는지 알아챌 수 있는 글이 새로 보인다.
@@ -227,8 +226,6 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   .bk .bi{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;
     font-size:12px;color:#fff;font-weight:800;}
 
-  .tempnote{margin:0 20px 14px; background:#FFF6E5; border:1px solid #FFE0A3; border-radius:10px;
-    padding:10px 12px; font-size:12px; color:#8A6100; line-height:1.5;}
   .accfield{margin:0 20px 14px; border:2px solid var(--blue); border-radius:12px; padding:11px 15px;}
   .accfield .lab{font-size:13px; color:var(--blue); margin-bottom:3px;}
   .accfield .val{font-size:21px; font-weight:600; min-height:28px; color:var(--ink);}
@@ -322,7 +319,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="homehead">
     <div class="name"><span class="dot">C</span>홍길동님</div>
-    <div class="icons"><span>☺</span><span>▤</span><span>♤</span><span>⌕</span></div>
+    <div class="icons"><span data-action="oos-message" aria-label="메시지">☺</span><span data-action="oos-wallet" aria-label="지갑">▤</span><span data-action="oos-alarm" aria-label="알림">♤</span><span data-action="oos-menu" aria-label="전체메뉴">⌕</span></div>
   </div>
   <div class="body">
     <div class="card">
@@ -335,7 +332,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
         </div>
         <button class="btn-sm" data-action="go-recipient">이체</button>
       </div>
-      <div class="membership">절세혜택과 안정적인 노후, IRP로 준비하세요</div>
+      <div class="membership" data-action="oos-irp" aria-label="IRP 안내">절세혜택과 안정적인 노후, IRP로 준비하세요</div>
     </div>
 
     <div class="card">
@@ -346,24 +343,24 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
           <div class="acctamt">금액 숨김</div>
         </div>
       </div>
-      <button class="btn-wide">앱카드 가입</button>
+      <button class="btn-wide" data-action="oos-appcard" aria-label="앱카드 가입">앱카드 가입</button>
     </div>
 
     <div class="card">
       <h3>땡겨요 <span class="arr">›</span></h3>
       <div class="svc"><div class="sq">🍔</div>
         <div style="flex:1"><div class="t2">할인쿠폰 드려요</div><div class="t1">bhc치킨 최대 9,000원</div></div>
-        <button class="btn-sm">바로받기</button></div>
-      <div class="rowlist"><span>이벤트</span><span>쿠폰</span><span>포인트</span></div>
+        <button class="btn-sm" data-action="oos-get-coupon" aria-label="바로받기">바로받기</button></div>
+      <div class="rowlist"><span data-action="oos-event" aria-label="이벤트">이벤트</span><span data-action="oos-coupon" aria-label="쿠폰">쿠폰</span><span data-action="oos-point" aria-label="포인트">포인트</span></div>
     </div>
 
     <div class="card">
-      <h3>7월 소비 ↻ <span class="arr">›</span></h3>
+      <h3>7월 소비 ↻ <span class="arr" data-action="oos-spend-detail" aria-label="소비 상세">›</span></h3>
       <div style="font-size:13px;color:#6B7280">📅 오늘 쓴 돈</div>
       <div style="font-size:19px;font-weight:700">0원</div>
     </div>
 
-    <div class="pointbar">
+    <div class="pointbar" data-action="oos-my-point" aria-label="마이신한포인트">
       <div><div class="p1">카드 쓸때마다 쌓이고, 현금처럼 쓰는</div><div class="p2">마이신한포인트</div></div>
       <button>시작하기</button>
     </div>
@@ -375,7 +372,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
       <div class="svc"><div class="sq">💳</div><div><div class="t1">내 카드 승인내역</div><div class="t2">모든 카드 실시간 승인내역</div></div></div>
     </div>
 
-    <div class="card">
+    <div class="card" data-action="oos-connect-event" aria-label="자산 연결 이벤트">
       <div style="font-size:17px;font-weight:700">더 많은 금융자산 모두<br>연결하면 커피쿠폰 즉시지급!</div>
       <div style="font-size:14px;color:var(--blue);margin-top:6px">이벤트 바로가기 ›</div>
     </div>
@@ -387,14 +384,14 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
       <div class="svc"><div class="sq">🛡</div><div><div class="t1">신한라이프</div><div class="t2">내게 필요한 보험, 보장분석으로 확인하기</div></div></div>
     </div>
 
-    <div class="footlinks"><span>쉬운홈</span><span>홈화면 설정</span><span>금액 숨기기</span></div>
+    <div class="footlinks"><span data-action="oos-easy-home" aria-label="쉬운홈">쉬운홈</span><span data-action="oos-home-setting" aria-label="홈화면 설정">홈화면 설정</span><span data-action="oos-hide-amount" aria-label="금액 숨기기">금액 숨기기</span></div>
   </div>
   <div class="tabbar">
-    <div class="act"><span class="ti">⌂</span>홈</div>
-    <div><span class="ti">Ⓦ</span>금융</div>
-    <div><span class="ti">⌂</span>상품</div>
-    <div><span class="ti">🎁</span>혜택</div>
-    <div><span class="ti">📈</span>주식</div>
+    <div class="act" data-action="oos-tab-home" aria-label="홈"><span class="ti">⌂</span>홈</div>
+    <div data-action="oos-tab-finance" aria-label="금융"><span class="ti">Ⓦ</span>금융</div>
+    <div data-action="oos-tab-goods" aria-label="상품"><span class="ti">⌂</span>상품</div>
+    <div data-action="oos-tab-benefit" aria-label="혜택"><span class="ti">🎁</span>혜택</div>
+    <div data-action="oos-tab-stock" aria-label="주식"><span class="ti">📈</span>주식</div>
   </div>
 </section>
 
@@ -402,17 +399,17 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="navbar">
     <span class="ico" data-action="back-home">‹</span>
-    <span class="mid">다건이체</span>
-    <span style="display:flex;gap:14px"><span class="ico">👤</span><span class="ico" data-action="back-home">✕</span></span>
+    <span class="mid" data-action="oos-multi-transfer" aria-label="다건이체">다건이체</span>
+    <span style="display:flex;gap:14px"><span class="ico" data-action="oos-payee-manage" aria-label="받는 사람 관리">👤</span><span class="ico" data-action="back-home">✕</span></span>
   </div>
   <div class="body">
-    <div class="h1row"><div class="h1">누구에게 보낼까요?</div><span class="srch">⌕</span></div>
+    <div class="h1row"><div class="h1">누구에게 보낼까요?</div><span class="srch" data-action="oos-search" aria-label="검색">⌕</span></div>
     <div class="inputline" data-action="go-account">
       <span class="ph">계좌번호 직접 입력</span><span style="font-size:19px">▣</span>
     </div>
-    <div class="filterrow"><span class="lbl">자주쓰는 계좌 <span class="tag">편집</span></span><span class="pill">0개 ⌄</span></div>
-    <div class="filterrow"><span class="lbl">내 계좌</span><span class="pill">0개 ⌄</span></div>
-    <div class="filterrow"><span class="lbl">최근</span><span class="pill">0개 ⌄</span></div>
+    <div class="filterrow" data-action="oos-frequent" aria-label="자주쓰는 계좌"><span class="lbl">자주쓰는 계좌 <span class="tag">편집</span></span><span class="pill">0개 ⌄</span></div>
+    <div class="filterrow" data-action="oos-my-accounts" aria-label="내 계좌"><span class="lbl">내 계좌</span><span class="pill">0개 ⌄</span></div>
+    <div class="filterrow" data-action="oos-recent" aria-label="최근"><span class="lbl">최근</span><span class="pill">0개 ⌄</span></div>
     <div style="height:30px"></div>
   </div>
 </section>
@@ -458,7 +455,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="navbar"><span class="ico" data-action="back-account">‹</span><span></span><span class="ico" data-action="back-home">✕</span></div>
   <div class="amthead">
-    [금융거래한도계좌2]신한 주거래 우대통장 계좌에서 ⌄<br>
+    <span data-action="oos-from-account" aria-label="출금계좌 변경">[금융거래한도계좌2]신한 주거래 우대통장 계좌에서 ⌄</span><br>
     <b>아래 계좌로</b><br>
     <span style="font-size:14px"><span id="amt-bank"></span> <span id="amt-acc"></span></span>
   </div>
@@ -504,10 +501,10 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
     <div class="okwrap">
       <div class="okc">✓</div>
       <div class="q2">아래 계좌로<br><span id="dn-amt">1</span>원 보냈어요.</div>
-      <div class="okbtns"><button>추가이체</button><button>상세보기</button></div>
+      <div class="okbtns"><button data-action="oos-more-transfer" aria-label="추가이체">추가이체</button><button data-action="oos-detail" aria-label="상세보기">상세보기</button></div>
     </div>
   </div>
-  <div class="bottom2"><button class="ghost">공유</button><button class="fill" data-action="finish">확인</button></div>
+  <div class="bottom2"><button class="ghost" data-action="oos-share" aria-label="공유">공유</button><button class="fill" data-action="finish">확인</button></div>
 </section>
 
 <section class="screen" data-screen="err-account">
@@ -533,33 +530,11 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 </div>
 
 <script>
-const LOG = [];
-window.__log = LOG;
 window.__task = { startedAt: null, screen: 'home' };
-
-function log(type, data){
-  LOG.push(Object.assign({ t: Date.now(), screen: window.__task.screen, type }, data||{}));
-}
-window.__startTask = function(){ LOG.length = 0; window.__task.startedAt = Date.now(); log('task_start'); };
-window.__dump = function(){ return JSON.parse(JSON.stringify(LOG)); };
-
-document.getElementById('phone').addEventListener('click', function(e){
-  const hit = e.target.closest('[data-action]');
-  const r = hit ? hit.getBoundingClientRect() : null;
-  log('tap', {
-    x: Math.round(e.clientX), y: Math.round(e.clientY),
-    valid: !!hit,
-    action: hit ? hit.dataset.action : null,
-    text: (e.target.textContent||'').trim().slice(0,24),
-    tw: r ? Math.round(r.width) : null,
-    th: r ? Math.round(r.height) : null
-  });
-}, true);
 
 function show(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.dataset.screen===name));
   window.__task.screen = name;
-  log('screen_enter', { to: name });
   window.scrollTo(0,0);
   const b = document.querySelector('.screen.on .body'); if(b) b.scrollTop = 0;
 }
@@ -657,7 +632,6 @@ document.getElementById('amt-balance').textContent = BALANCE.toLocaleString();
 function showError(name, from){
   S.errFrom = from;
   document.getElementById('err-acc-no').textContent = S.account;
-  log('error_popup', { code: name==='err-account' ? 'ELB00016' : 'ETA00325' });
   show(name);
 }
 
@@ -676,7 +650,6 @@ document.getElementById('phone').addEventListener('click', function(e){
   else if(a==='tab-sec') bankTab(true);
   else if(a==='pick-bank'){
     S.bank = el.dataset.bank;
-    log('pick_bank', { bank: S.bank });
     renderAccount();
     show('account');
   }
@@ -694,7 +667,6 @@ document.getElementById('phone').addEventListener('click', function(e){
     document.getElementById('cf-mark').textContent = S.bank[0];
     document.getElementById('cf-bank').textContent = S.bank;
     document.getElementById('cf-acc').textContent = S.account;
-    log('account_entered', { account: S.account, bank: S.bank });
     S.amount = 0; renderAmount();
     show('amount');
   }
@@ -725,19 +697,48 @@ document.getElementById('phone').addEventListener('click', function(e){
   else if(a==='pw'){
     if(S.pw.length<4){ S.pw += el.dataset.v; renderDots(); }
     if(S.pw.length===4){
-      log('submit', { bank:S.bank, account:S.account, amount:S.amount });
       setTimeout(()=>show('done'), 260);
     }
   }
   else if(a==='pw-del'){ S.pw = S.pw.slice(0,-1); renderDots(); }
   else if(a==='pw-shuffle'){ buildPwPad(); renderDots(); }
-  else if(a==='finish'){ log('task_end'); show('home'); }
+  else if(a==='oos-alarm' ||
+          a==='oos-appcard' ||
+          a==='oos-connect-event' ||
+          a==='oos-coupon' ||
+          a==='oos-detail' ||
+          a==='oos-easy-home' ||
+          a==='oos-event' ||
+          a==='oos-frequent' ||
+          a==='oos-from-account' ||
+          a==='oos-get-coupon' ||
+          a==='oos-hide-amount' ||
+          a==='oos-home-setting' ||
+          a==='oos-irp' ||
+          a==='oos-menu' ||
+          a==='oos-message' ||
+          a==='oos-more-transfer' ||
+          a==='oos-multi-transfer' ||
+          a==='oos-my-accounts' ||
+          a==='oos-my-point' ||
+          a==='oos-payee-manage' ||
+          a==='oos-point' ||
+          a==='oos-recent' ||
+          a==='oos-search' ||
+          a==='oos-share' ||
+          a==='oos-spend-detail' ||
+          a==='oos-tab-benefit' ||
+          a==='oos-tab-finance' ||
+          a==='oos-tab-goods' ||
+          a==='oos-tab-home' ||
+          a==='oos-tab-stock' ||
+          a==='oos-wallet'){ }
+  else if(a==='finish'){ show('home'); }
 });
 
 renderAccount();
 renderAmount();
 buildPwPad();
-log('screen_enter', { to:'home' });
 </script>
 </body>
 </html>

@@ -1,3 +1,5 @@
+> **보관용 문서다 (2026-10-02 기준).** 현재 상태 · 실행 방법은 [`docs/README.md`](README.md) 한 곳이 기준이다 (감사 D-11, 2026-10-07). 아래는 그때의 기록이고 고치지 않는다 — 'HTML 두 조건 실험' · '재구성본 스타일 통일' · `PYTHONUTF8=1` 같은 할 일과 설명은 지금 계획이 아니다. 본실험은 Flutter 더미앱의 A1 · A2 · C 조건이고, 과제는 이체 · 공과금 둘이다. (서버 명령만 11-7 에서 루프백 전용으로 바꿨다 — 보안 때문이다.)
+
 # 이어서 작업하기
 
 2026-10-02 기준. 새 세션이 첫 턴부터 이어갈 수 있도록 현재 상태와 남은 일을 적어둔다.
@@ -126,8 +128,8 @@ warning 3 은 검사 D 가 기준에 못 미치는 글자를 하나씩 적은 �
   새 세션은 `senior-ui-pipeline` 에서 시작해야 맞다. 명령은 절대경로로 쓰는 편이
   안전하다.
 - **서버는 프로젝트 루트를 3003 으로 서빙한다.** 모든 도구의 기본 URL 이 여기를
-  가정한다. 안 떠 있으면:
-  `.\.venv\Scripts\python.exe -m http.server 3003 --directory .`
+  가정한다. 안 떠 있으면 (루프백 전용):
+  `.\.venv\Scripts\python.exe -m senior_ui.devserver`
 - **`.venv` 에는 pip 이 없다.** 패키지는 `uv pip install -r requirements.txt` 로
   넣는다.
 
@@ -162,7 +164,7 @@ cd C:\Users\xihye\senior-ui-pipeline
 ```powershell
 cd C:\Users\xihye\senior-ui-pipeline
 git log --oneline -3
-.\.venv\Scripts\python.exe -m http.server 3003 --directory .   # 다른 터미널에서
+.\.venv\Scripts\python.exe -m senior_ui.devserver   # 다른 터미널에서 (루프백 전용)
 .\.venv\Scripts\python.exe -m senior_ui.audit --flow flows\restructured.json `
    --build http://localhost:3003/results/restructured_transfer.html `
    --build-file results\restructured_transfer.html

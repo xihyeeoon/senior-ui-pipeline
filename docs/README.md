@@ -1,10 +1,12 @@
 # senior-ui-pipeline
 
-고령 사용자가 은행 이체 과업을 혼자 끝낼 수 있도록 화면 구조를 LLM 으로 다시
-짜고, 그 산출물을 자동으로 검사하고, 실제 고령 피험자에게 돌려 보는 파이프라인.
+고령 사용자가 은행 앱의 과업 — 이체와 공과금 납부 (`tasks/transfer.json` ·
+`tasks/bill.json`) — 을 혼자 끝낼 수 있도록 화면 구조를 LLM 으로 다시 짜고, 그
+산출물을 자동으로 검사하고, 고른 시안을 실제 고령 피험자에게 돌려 보는 파이프라인.
 
 ```
-캡처 → LLM 재구성 → 검사기 → (스타일 이식) → 실험
+캡처 → 원본 HTML → LLM 재구성 (와이어프레임) → 검사기 → C 후보 고르기
+     → 설명서 (designer_brief.md) → Flutter 더미앱의 C 조건 → 실험 (A1 · A2 · C)
 ```
 
 산출물은 **와이어프레임 수준의 구조 시안**이고 시각 디테일은 디자이너가 채운다.
@@ -25,8 +27,9 @@ uv pip install -r requirements.txt
 ```
 
 `requirements.txt` 는 실제로 import 하는 것만 적는다 — playwright(검사기),
-openai(재구성 루프), pytest(테스트). 서버·세션 저장·색인은 전부 표준
-라이브러리로 돈다.
+openai(재구성 루프), tiktoken(보내기 전 토큰 어림, 없으면 글자 수로 어림),
+pytest(테스트), httpx(테스트의 가짜 OpenAI 응답). 서버·세션 저장·색인은 전부 표준
+라이브러리로 돈다. 빠진 것이 없는지는 테스트가 본다 (import 를 모아 대조).
 
 LLM 을 부르는 것은 재구성 루프 하나뿐이고, 키는 `.envs` 의 `OPENAI_API_KEY=…`
 또는 환경변수에서 읽는다. 검사기·뷰어·실험 서버는 키가 없어도 돈다.
@@ -38,7 +41,8 @@ LLM 을 부르는 것은 재구성 루프 하나뿐이고, 키는 `.envs` 의 `O
 | `senior_ui/` | 이 프로젝트에서 쓴 코드 전부 — 재구성 루프, 검사기, 뷰어 색인, 실험 서버. 모두 `python -m senior_ui.…` 로 실행한다. | yes |
 | `web/` | 브라우저에서 열리는 것 — `dashboard.html`(내부 확인용 4화면), `session.html`(HTML 실험 장치 - 본실험에 쓰지 않는다. `--session` 을 줄 때만 서빙된다). | yes |
 | `flows/` | 흐름 파일. 검사기가 화면을 어떤 순서로 어떻게 몰고 다니는지의 명세. `original.json` 과 재구성본별 `restructured`·`run2`·`run3`·`run4`. `allowed_removals.json` 은 그것들과 다르다 — 과제별로 "빼도 되는 선택지" 를 적는 곳이고, **연구자만** 손으로 고친다 (아래 참고). `selection_rule.json` 은 C 후보를 고르는 규칙이다 (아래 'C 후보 고르기'). | yes |
-| `inputs/` | 파이프라인이 읽는 것. `original_transfer.html` 이 8화면 이체 시제품이고 모든 갈래가 여기서 출발한다. `*.png` 는 실제 SOL 캡처라 추적하지 않는다 (실명이 보인다). | html 만 |
+| `tasks/` | 과제 정의 — `transfer.json`(이체) · `bill.json`(공과금). 프롬프트의 과제 문단, 원본 HTML · 원본 흐름, 완료 화면 값, 필수 오류 경로, 과제 밖 입구(`entrances`, 검사 K)가 과제마다 여기 있다 (`senior_ui/tasks.py`). | yes |
+| `inputs/` | 파이프라인이 읽는 것. `original_transfer.html`(8화면 이체) · `original_bill.html`(8화면 공과금)이 원본 시제품이고 그 과제의 모든 갈래가 여기서 출발한다. `*.png` 는 실제 SOL 캡처라 추적하지 않는다 (실명이 보인다). | html 만 |
 | `kb/` | 재구성본 사후 대조용 규칙 46개. 생성에는 쓰지 않는다. | yes |
 | `results/` | 남겨야 할 증거. 재구성본 html, 그 검사 JSON, 스크린샷, 자동 실행 폴더 사본. `python -m senior_ui.collect_results` 가 `outputs/` 에서 복사해 온다. | **yes** |
 | `tests/` | 회귀 테스트와 기준값. 구조를 정리해도 동작이 그대로인지 파일 비교로 확인한다. 자세한 것은 `tests/README.md`. | yes |
@@ -54,17 +58,25 @@ LLM 이 쓴 것이라 다시 만들려면 API 비용이 들고 바이트까지 �
 
 ## 실행
 
-서버를 한 번 띄워 두고 그대로 둔다. 모든 도구가 이 포트의 같은 루트를 본다.
+재구성 루프는 서버를 스스로 띄우고 끈다 (`senior_ui.devserver.ensure_server`). 검사기
+CLI 를 여러 번 돌리거나 빌드를 브라우저로 열어 볼 때만 따로 띄워 둔다 — 이 작업 트리를
+**루프백(127.0.0.1)에만** 서빙한다.
 
 ```powershell
-.\.venv\Scripts\python.exe -m http.server 3003 --directory .
+.\.venv\Scripts\python.exe -m senior_ui.devserver    # 127.0.0.1:3003, Ctrl+C 로 끈다
 ```
+
+표준 라이브러리의 `http.server` 를 `--bind` 없이 띄우지 않는다 — 그러면 0.0.0.0 에
+열려 같은 Wi-Fi 의 누구나 `.envs`(API 키) · `sessions/` 까지 받아 간다.
+떠 있는 서버는 그것이 이 작업 트리를 서빙할 때만 재사용한다 — 작업 트리마다 다른 확인
+파일 `/.devserver-id`(추적하지 않음)의 값을 대조한다. 다른 worktree 의 서버나 허용
+목록만 서빙하는 대시보드 서버(`시작.bat`)가 떠 있으면 루프는 이유와 함께 멈춘다 (종료 2).
 
 재구성 루프 — 프롬프트 조립 → 모델 호출 → 검사 → fatal 을 다음 프롬프트에
 되먹임, 통과하거나 예산이 끝날 때까지:
 
 ```powershell
-.\.venv\Scripts\python.exe -m senior_ui.restructure    # 기본 --stage wireframe · 예산 형식 5 · 검사 6
+.\.venv\Scripts\python.exe -m senior_ui.restructure --model gpt-6.1-sol    # 기본 --stage wireframe · 예산 형식 5 · 검사 6
 .\.venv\Scripts\python.exe -m senior_ui.restructure --mock pass    # API 없이 확인
 ```
 
@@ -156,12 +168,16 @@ API 없이: `--mock pass --mock-refine improve` (1회차에 다듬은 빌드가 
 
 ### 모델 바꾸기
 
-기본 모델은 `senior_ui/config.py` 의 `DEFAULT_MODEL` 한 곳에 있다 (지금 `gpt-4o`).
-한 번만 바꿔 돌리려면 `--model` 을 준다. 정하는 순서는 `--model` → 환경 변수
-`RESTRUCTURE_MODEL` → `DESIGNREPAIR_MODEL` → `config.DEFAULT_MODEL` 이다
-(`loop.model_choice`). `.envs` 에 남은 환경 변수가 기본값을 이길 수 있으므로,
-어디서 왔는지가 run.log 첫 줄(`model=… (출처 …)`)과 `summary.json` 의
-`model_source` 에 남는다. API 가 실제로 답한 판 이름(`gpt-4o` 는 날짜가 붙은
+기본 모델은 `senior_ui/config.py` 의 `DEFAULT_MODEL` 한 곳에 있다 (지금 `gpt-6.1-sol`,
+12번 본 실행의 모델 — 고르기 규칙의 `gates.model` 과 같다). 그래도 실행 명령에는
+`--model gpt-6.1-sol` 을 적는다 — 명령만 보고 조건을 알 수 있게. 한 번만 바꿔 돌리려면
+`--model` 을 준다. 정하는 순서는 `--model` → 환경 변수
+`RESTRUCTURE_MODEL` → `config.DEFAULT_MODEL` 이다 (`loop.model_choice`).
+`DESIGNREPAIR_MODEL` 은 더 읽지 않는다 (연구에서 뺀 갈래의 이름). `.envs` 에 남은
+환경 변수가 기본값을 이길 수 있으므로, 어디서 왔는지가 run.log 첫 줄(`model=… (출처 …)`)과
+`summary.json` 의 `model_source` 에 남는다. `--mock` 실행은 `.envs` 도
+`RESTRUCTURE_MODEL` 도 읽지 않는다 (`--model` 은 듣는다) — mock 기준값이 PC 마다
+달라지지 않게. run.log 둘째 줄에 그 사실이 남는다. API 가 실제로 답한 판 이름(`gpt-4o` 는 날짜가 붙은
 판으로 풀린다)은 호출마다 `model: 응답 모델 …` 줄과 `summary.response_models` 에
 남는다.
 
@@ -424,7 +440,9 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
   data-action 수 · 진단 수/변경 수 (진단에 대응되지 않은 변경 수) · 대표성 거리 ·
   도구가 고친 것(`final.preserved.redeclared`) · 마지막 시도의 잘림 · 중간 시도의
   잘림 횟수 · 작업 트리 dirty · 모델 ·
-  reasoning_effort · 커밋
+  reasoning_effort · 실행 조건(검사 단계 · 예산 형식/검사/다듬기) · 되돌림(다듬기가
+  떨어져 직전 통과 빌드가 최종이면 그 회차) · 커밋
+- **커밋 기준** — 후보들이 맞춘 커밋과 그것이 어디서 왔는지 (규칙 / 가장 많은 커밋)
 - **구조** — 선택지 그룹마다 `kept/selectable/원본`, 오류 경로마다 검사 J 결과
 - **비용** — 입력 · 출력(생각 포함) · 생각 토큰, 예상 금액 (`summary.cost`)
 - **대표성 계산** — 값마다 중앙값 · 최솟값 · 최댓값
@@ -459,7 +477,13 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
     "no_truncated": true,
     "clean_tree": true,
     "not_mock": true,
-    "model": "gpt-6.1-sol"
+    "model": "gpt-6.1-sol",
+    "no_warning_checks": ["J"],
+    "stage": "wireframe",
+    "budget": {"format": 5, "audit": 6, "refine": 2},
+    "commit": null,
+    "reverted": "allow",
+    "no_internal_error": true
   },
   "ordering": [
     {"by": "representative", "metrics": {"screens": 1, "data_actions": 1, "changes": 1}},
@@ -478,7 +502,17 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
 | `no_truncated` | **마지막 시도** 의 답이 길이 제한에서 잘리지 않았다. 중간 시도의 잘림은 최종 시안과 상관없으므로 빼지 않고, 순위표의 '중간 잘림' 열에 횟수로만 보인다 |
 | `clean_tree` | `git.dirty == false`. 기록이 없는 옛 실행은 어긴 것으로 본다 |
 | `not_mock` | mock 실행이 아니다 |
-| `model` | `null` 이면 보지 않는다. 이름을 적으면 `summary.model` 이 그것과 같아야 한다. 지금은 12번 본 실행의 모델 `gpt-6.1-sol` |
+| `model` | `null` 이면 보지 않는다. 이름을 적으면 `summary.model` 이 그것과 같아야 한다. 지금은 12번 본 실행의 모델 `gpt-6.1-sol` (= `config.DEFAULT_MODEL`) |
+| `no_warning_checks` | 최종 검사에 그 검사들의 경고가 하나도 없다. 기본 `["J"]` (오류 알림 글에 과제 단어가 없음) |
+| `stage` | `summary.stage` 가 그 단계다 (기본 `wireframe`). 기록이 없으면 어긴 것 |
+| `budget` | 적은 칸(`format` · `audit` · `refine`)이 `summary.budget.format_budget` · `audit_budget` · `summary.refine.budget` 과 같다. 기본은 `config` 의 기본값 5 · 6 · 2 |
+| `commit` | `null` 이면 다른 문지기를 지난 실행들 중 **가장 많은 커밋** 이 기준이다 (같은 수면 가장 나중 실행의 커밋). 해시를 적으면 그 커밋(앞자리 일치)만. 기준과 다른 커밋의 실행은 이유와 함께 빠진다 |
+| `reverted` | 다듬기가 떨어져 직전 통과 빌드가 최종인 실행: `"allow"` (기본) 후보로 인정하고 순위표 '되돌림' 열로 보인다 · `"last"` 되돌리지 않은 실행 뒤로 미룬다 · `"exclude"` 뺀다. 예비 실행을 본 뒤 12번 전에 확정한다 |
+| `no_internal_error` | 도구 내부 오류로 끝난 실행(`stopped_reason: internal_error`, 종료 2)은 통과한 빌드가 있어도 뺀다 |
+
+조건 문지기(`stage` · `budget` · `commit` · `reverted` · `no_internal_error`)는 칸이
+없으면 보지 않는다 — 칸이 생기기 전의 지난 결과 JSON 을 `--rule` 로 다시 쓰면 그때
+규칙 그대로 돈다.
 
 **ordering** — 위에서부터 차례로 비교한다. 앞이 같을 때만 다음을 본다. 끝까지
 같으면 실행 이름순 (정해진 순서를 내기 위해서일 뿐 뜻은 없다). 순서를 바꾸려면
@@ -558,7 +592,7 @@ in `metrics.flow_notes`. It does not silently accept the mismatch.
 
 | | Check | Severity |
 |---|---|---|
-| A | 8 screens reached, amount round-trips, `data-action`/`id`/`data-screen` preserved | fatal |
+| A | every screen of the flow reached, the task's done values shown (`done_expect`), `data-action`/`id`/`data-screen` preserved | fatal |
 | B | displayed values match what was entered; no injected `alert()`/`onclick`; no hardcoded numbers | fatal |
 | C | `data-action` with no branch in the handler; `data-action` that disappeared | fatal |
 | D | low-contrast count must not grow; new text must not rely on inherited colour; an already-low-contrast element must not gain readable text | warning |
@@ -567,6 +601,8 @@ in `metrics.flow_notes`. It does not silently accept the mismatch.
 | G | `.x` and `.x.on` must still render differently | warning |
 | H | classes the markup uses that no stylesheet defines | warning |
 | I | values the original offered as choices must still exist somewhere in the build | fatal |
+| J | each required wrong input (the task's `required_error_paths`) brings up an error state with new text and `recover` leads back to a screen where it can be fixed; warns when the text has none of the task's words | fatal |
+| K | 과제 밖 입구 — 과제 파일 `entrances` 의 메뉴 · 버튼 (더미앱 A1 의 OutOfScope 탭 대상, 연구자 확정)이 빌드 어딘가에 남아 있다. 원본의 `data-action` 이름(`oos-*`)을 그대로 가진 요소가 걷는 동안(reveal 포함) 누를 수 있게 보이면 있다 (그려져 있고 disabled 가 아니다, 같은 화면이 아니어도 된다). 원본을 걷는 동안 보인 입구만 센다. 글자 · `aria-label` 은 기록만 한다 (`entrances_shown_as`) | fatal |
 
 H is not in the original brief. It was added because it is the shared root cause
 of two rendering failures: example1's `bg-primary`/`text-primary` and the
@@ -580,7 +616,7 @@ the JS that runs inside the page lives in `probes.py`; `flow.py` loads and
 validates a flow file; `drive.py` walks the page with Playwright.
 
 The JSON is for machines. `python -m senior_ui.audit.report` turns any number of
-those files into one side-by-side Markdown table (overview, per-check A–I, the
+those files into one side-by-side Markdown table (overview, per-check A–K, the
 metrics behind each check, what was stood down, and with `--details` every
 finding):
 
@@ -655,7 +691,8 @@ convention.
 
 The "다시 읽기" button asks the server to rebuild the index first, so editing a
 file and pressing it is enough. `builds[].attempts` is reserved for the
-generate-audit-regenerate loop and is empty until that lands.
+generate-audit-regenerate loop and is still empty — the viewer does not read the
+loop's run folders yet (감사 B-20 · D-9, 열린 문제).
 
 Two numbers the viewer deliberately keeps apart: the changelog's tables cite
 **26** of the 46 rules, while the document claims **33** are met. The extra 7 are
@@ -668,13 +705,15 @@ flags as optimistic.
 `tests/baseline/` 에 있고, 입력은 `results/` 의 고정된 파일이다.
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest                # 브라우저 없음 (32건, 몇 초)
-.\.venv\Scripts\python.exe -m pytest -m browser     # 실제로 다시 걷는다 (18건, 2분 15초)
+.\.venv\Scripts\python.exe -m pytest                # 브라우저 없음 (1분 남짓)
+.\.venv\Scripts\python.exe -m pytest -m browser     # 실제로 다시 걷는다 (10분 남짓)
 ```
 
 `pytest.ini` 의 `addopts` 가 `-m "not browser"` 라서 기본 실행은 브라우저를
 띄우지 않는다. `-m browser` 는 Playwright 로 원본과 재구성본을 실제로 다시 몰고
-다니며 저장된 스냅샷과 비교한다. 서버는 테스트가 직접 띄운다.
+다니며 저장된 스냅샷과 비교한다. 서버는 테스트가 직접 띄운다 (`tests/conftest.py`
+의 `server` 하나를 모든 브라우저 테스트가 함께 쓴다). 건수는 적지 않는다 — 늘
+바뀐다. `pytest --co -q` 로 본다.
 
 **기준값을 다시 뽑는 것은 동작을 의도적으로 바꿨을 때만이다.**
 
@@ -682,8 +721,9 @@ flags as optimistic.
 .\.venv\Scripts\python.exe tests\capture_baseline.py
 ```
 
-`:3003` 을 이미 누가 쓰고 있으면 캡처는 멈춘다 — 기준값은 그 포트가 서빙하는
-내용에 전적으로 달려 있어서, 남이 띄운 서버를 그대로 쓰면 기준값이 무엇을
+`:3003` 에 이미 서버가 있으면 그것이 **이 작업 트리를** 서빙할 때만 그대로 쓰고
+(확인 파일 `/.devserver-id`), 아니면 캡처는 멈춘다 — 기준값은 그 포트가 서빙하는
+내용에 전적으로 달려 있어서, 다른 worktree · 다른 폴더의 서버를 쓰면 기준값이 무엇을
 기준으로 한 것인지 알 수 없어진다. 실행마다 흔들리는 값(원본 시제품의 비밀번호
 숫자판 셔플)을 어떻게 빼는지, 지금 기준값에 어떤 동작이 담겨 있는지는
 `tests/README.md` 에 적혀 있다.
@@ -693,7 +733,7 @@ flags as optimistic.
 | | |
 |---|---|
 | **파이프라인** | 위의 사슬. `senior_kb.csv` 는 여기 들어가지 않는다. |
-| **실험 조건** | 원본 vs 재구성본, 두 조건, 실제 고령 피험자. |
+| **실험 조건** | Flutter 더미앱(`senior-ui-dummy-app`)의 A1 (원본 재현) · A2 (배포된 고령자 모드) · C (이 도구의 재설계를 옮긴 것), 실제 고령 피험자. HTML 실험 장치(`web/session.html`)는 보관용이다. |
 | **보관 자료** | `kb/senior_kb.csv`. 남겨 두지만 생성에는 쓰지 않는다. |
 
 `kb/senior_kb.csv` 는 **사후 대조** 용이다 — 만들어진 설계가 결과적으로 어떤
@@ -702,13 +742,26 @@ flags as optimistic.
 
 ## 알려진 문제
 
-- 오류 팝업 화면과 '모든 화면을 흐름이 지나가야 한다' 규칙의 충돌 — 9-2 단계에서 해결
+외부 감사(2026-10-06)에서 남은 것 중 결과에 닿을 수 있는 것. 번호는 감사 보고서의 것이다.
+
+- **B-08 · B-09** 결함 하나가 fatal 여럿으로 셀 수 있다 — 원본에서 파생된 흐름에서
+  data-action 하나가 사라지면 A 두 건 + C 한 건, `__screen()` 훅이 없으면 방문마다 한 건.
+  루프 빌드(새 설계)에는 앞의 것이 해당하지 않는다.
+- **B-14** 산출물 폴더를 상수(`OUTPUTS_DIR`)로 정하는 곳과 함수(`outputs_dir()`)로 정하는
+  곳이 섞여 있다 — `SENIOR_UI_OUTPUTS` 를 주면 검사기 CLI 의 기본 `--out` · 색인은
+  여전히 `outputs/` 를 본다.
+- **B-19** 설명서의 "모델이 쓴 HTML" 링크가 실행 이름 없는 승격 파일을 가리킨다.
+- **B-20 · B-40 · B-48** 대시보드 · 색인이 루프 실행 · 공과금 · Flutter C 조건을 반쪽만
+  보인다 (D-9 결정 대기).
+- **B-21** 정답 값이 과제 파일의 프롬프트 글(`flow_values`)에 두 번째로 적혀 있다.
+- **B-22** `test_a_mock_run_survives_a_cp949_console` 가 기본 묶음에서 실제 mock 실행
+  (서버 · Chromium)을 돌린다 (D-10 결정 대기).
 
 ## 다른 문서
 
 | | |
 |---|---|
-| `CONTINUE.md` | 지금 어디까지 왔고 무엇이 남았나. 새 세션이 먼저 읽는 한 장. |
+| `CONTINUE.md` | **보관용** (2026-10-02 기준). 현재 상태는 이 README 한 곳이다 (감사 D-11). |
 | `experiment-guide.md` | 실험 당일 절차. 준비·진행·집계. |
 | `restructure-prompt.md` | 재구성 프롬프트 템플릿. 루프가 이 파일을 읽는다. |
 | `restructure-runs.md` | 손수 제작 Run 1·2·3 비교. |
