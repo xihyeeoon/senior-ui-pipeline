@@ -19,7 +19,8 @@ from senior_ui.config import FLOWS_DIR, ROOT
 
 DEFAULT_RULE = os.path.join(FLOWS_DIR, "selection_rule.json")
 
-GATES = ("passed", "no_redeclared", "no_truncated", "clean_tree", "not_mock", "model")
+GATES = ("passed", "no_redeclared", "no_truncated", "clean_tree", "not_mock", "model",
+         "no_error_notice_warning")
 
 # 줄 세우기와 대표성에 쓸 수 있는 값 (collect.collect 의 칸).
 NUMERIC = ("warning", "fatal", "attempts", "format_failures", "audit_failures",
@@ -154,6 +155,12 @@ def gate_reasons(row, gates):
                    else "작업 트리 기록 없음 (git.dirty)")
     if gates.get("not_mock") and row.get("mock"):
         out.append("mock 실행 (%s)" % row["mock"])
+    # 오류를 알리긴 했지만 무엇이 틀렸는지 말하지 않는 글. 예비 실행(20261006-124838,
+    # gpt-6-astra)은 은행 오류에 "계좌번호가 맞지 않습니다" 를 띄운 채 통과했다 -
+    # 원본의 같은 문제를 스스로 진단해 놓고 똑같이 틀렸다.
+    if gates.get("no_error_notice_warning") and row.get("error_notice_warnings"):
+        out.append("검사 J 경고: 오류 알림 글에 과제 단어가 없음 (%s)"
+                   % ", ".join(row["error_notice_warnings"]))
     want = gates.get("model")
     if want and row.get("model") != want:
         out.append("모델이 %s 아님 (%s)" % (want, row.get("model")))

@@ -784,3 +784,65 @@ def test_the_refine_section_links_before_and_after_and_marks_changes(tmp_path):
     assert "| `bank` | [전](a1/see/bank.1.png) | [후](a2/see/bank.1.png) | 바뀜 |" in md
     assert "| 화면 | 어디서 왜 막히나 | 그림에서 본 것 | 고친 것 |" in md
     assert "그대로 둔 것:" in md
+
+
+# --------------------------------------------------------------------------- #
+# 6. 고르기 규칙 - 검사 J 의 알림 글 경고
+# --------------------------------------------------------------------------- #
+import test_select as TS  # noqa: E402
+
+
+def add_j_warning(run_dir, n=1, error_path="wrong-bank"):
+    path = os.path.join(run_dir, "attempt_%d.audit.json" % n)
+    report = json.load(open(path, encoding="utf-8"))
+    report["warning"].append({"check": "J", "screen": "accno", "error_path": error_path,
+                              "detail": "오류 경로 %s: 새로 나타난 글에 은행 중 어느 단어도 "
+                                        "없다" % error_path})
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(report, f, ensure_ascii=False)
+
+
+def test_the_default_rule_drops_runs_with_a_j_notice_warning(tmp_path):
+    runs = tmp_path / "runs"
+    runs.mkdir()
+    TS.make_run(str(runs), "20261007-100000-ok")
+    bad = TS.make_run(str(runs), "20261007-100001-astra-like")
+    add_j_warning(bad)
+    assert TS.DEFAULT_RULE["gates"]["no_error_notice_warning"] is True
+    code, result, _md = TS.select(tmp_path)
+    assert code == 0 and TS.order(result) == ["20261007-100000-ok"]
+    assert TS.reasons(result) == {
+        "20261007-100001-astra-like": ["검사 J 경고: 오류 알림 글에 과제 단어가 없음 "
+                                       "(wrong-bank)"]}
+
+
+def test_the_j_gate_can_be_turned_off(tmp_path):
+    runs = tmp_path / "runs"
+    runs.mkdir()
+    add_j_warning(TS.make_run(str(runs), "20261007-100001-astra-like"))
+    rule = TS.write_rule(tmp_path, gates=dict(TS.DEFAULT_RULE["gates"],
+                                              no_error_notice_warning=False))
+    code, result, _md = TS.select(tmp_path, "--rule", rule)
+    assert TS.order(result) == ["20261007-100001-astra-like"]
+
+
+def test_other_warnings_do_not_trip_the_j_gate(tmp_path):
+    runs = tmp_path / "runs"
+    runs.mkdir()
+    TS.make_run(str(runs), "20261007-100000-ok", warning=3)
+    code, result, _md = TS.select(tmp_path)
+    assert TS.order(result) == ["20261007-100000-ok"]
+
+
+def test_refine_attempts_are_not_counted_as_design_attempts(tmp_path):
+    runs = tmp_path / "runs"
+    runs.mkdir()
+    d = TS.make_run(str(runs), "20261007-100000-ok", attempts=1)
+    path = os.path.join(d, "summary.json")
+    s = json.load(open(path, encoding="utf-8"))
+    s["attempts"].append({"n": 2, "stage": "audit", "phase": "refine", "passed": True})
+    s["refine"] = {"final_label": "다듬기 1회차"}
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(s, f, ensure_ascii=False)
+    row = _api.select_collect(d)
+    assert row["attempts"] == 1 and row["final_from"] == "다듬기 1회차"

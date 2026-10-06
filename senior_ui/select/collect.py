@@ -123,6 +123,21 @@ def task_from_name(name):
     return DEFAULT_TASK
 
 
+def _notice_warnings(report):
+    """검사 J 의 "오류 알림 글에 과제 단어가 없음" 경고가 붙은 오류 경로들.
+
+    J 의 경고는 이것 하나다 (j_errors 의 알아챔). 오류 경로 id 를 가진 J 경고만
+    센다. 리포트가 없으면 None - 모른다."""
+    if report is None:
+        return None
+    return [w.get("error_path") for w in report.get("warning") or []
+            if w.get("check") == "J" and w.get("error_path")]
+
+
+# 다듬기(보고 다듬기)의 시도는 설계를 처음 통과시키기까지의 시도 수에 넣지 않는다.
+REFINE_PHASES = ("refine", "refine_fix")
+
+
 def empty_row(name, run_dir, error):
     return {"name": name, "dir": run_dir, "error": error, "task": task_from_name(name)}
 
@@ -181,12 +196,17 @@ def collect(run_dir):
         # 결과
         "passed": s.get("passed") is True,
         "stopped_reason": s.get("stopped_reason"),
-        "attempts": sum(1 for a in attempts if a.get("stage") in DESIGN_STAGES),
+        "attempts": sum(1 for a in attempts if a.get("stage") in DESIGN_STAGES
+                        and a.get("phase") not in REFINE_PHASES),
         "format_failures": _failures(s, "format", ("plan", "parse", "flow", "truncated")),
         "audit_failures": _failures(s, "audit", ("audit",)),
         "final_attempt": final.get("attempt"),
         "fatal": _count(entry, report, "fatal"),
         "warning": _count(entry, report, "warning"),
+        # 검사 J 의 알림 글 경고가 붙은 오류 경로 (고르기 규칙의 문지기)
+        "error_notice_warnings": _notice_warnings(report),
+        # 최종 빌드가 어디서 왔나 (보고 다듬기)
+        "final_from": (s.get("refine") or {}).get("final_label"),
         # 도구가 고친 흔적 · 재현 조건
         "redeclared": None if preserved is None else list(preserved.get("redeclared") or []),
         "truncated": truncated,
