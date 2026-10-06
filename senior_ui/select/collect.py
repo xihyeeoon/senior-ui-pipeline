@@ -207,6 +207,9 @@ def collect(run_dir):
     screens = metrics.get("data-screen_repaired")
     if screens is None and plan is not None:
         screens = len(plan.get("screens") or [])
+    budget = s.get("budget") or {}
+    refine = s.get("refine") if isinstance(s.get("refine"), dict) else {}
+    reverted = refine.get("reverted") if isinstance(refine.get("reverted"), dict) else None
 
     return {
         "name": name,
@@ -231,6 +234,17 @@ def collect(run_dir):
         "warning_by_check": _warnings_by_check(report),
         # 최종 빌드가 어디서 왔나 (보고 다듬기)
         "final_from": (s.get("refine") or {}).get("final_label"),
+        # 실행 조건 - 고르기 규칙의 stage · budget 문지기가 본다 (감사 B-04). 기록이
+        # 없으면 None 이다 (그 문지기는 "기록 없음" 으로 뺀다).
+        "stage": s.get("stage"),
+        "budget": {"format": budget.get("format_budget"),
+                   "audit": budget.get("audit_budget"),
+                   "refine": refine.get("budget")},
+        # 다듬기가 떨어져 직전 통과 빌드로 되돌렸으면 그 회차 (gates.reverted)
+        "reverted": reverted.get("round") if reverted else None,
+        "reverted_to": reverted.get("to_attempt") if reverted else None,
+        # 도구가 버그로 멈췄다 (종료 2). 통과한 빌드가 있어도 뺀다 (gates.no_internal_error)
+        "internal_error": s.get("stopped_reason") == "internal_error",
         # 도구가 고친 흔적 · 재현 조건
         "redeclared": None if preserved is None else list(preserved.get("redeclared") or []),
         "truncated": truncated,

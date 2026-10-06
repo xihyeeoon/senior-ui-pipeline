@@ -428,7 +428,9 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
   data-action 수 · 진단 수/변경 수 (진단에 대응되지 않은 변경 수) · 대표성 거리 ·
   도구가 고친 것(`final.preserved.redeclared`) · 마지막 시도의 잘림 · 중간 시도의
   잘림 횟수 · 작업 트리 dirty · 모델 ·
-  reasoning_effort · 커밋
+  reasoning_effort · 실행 조건(검사 단계 · 예산 형식/검사/다듬기) · 되돌림(다듬기가
+  떨어져 직전 통과 빌드가 최종이면 그 회차) · 커밋
+- **커밋 기준** — 후보들이 맞춘 커밋과 그것이 어디서 왔는지 (규칙 / 가장 많은 커밋)
 - **구조** — 선택지 그룹마다 `kept/selectable/원본`, 오류 경로마다 검사 J 결과
 - **비용** — 입력 · 출력(생각 포함) · 생각 토큰, 예상 금액 (`summary.cost`)
 - **대표성 계산** — 값마다 중앙값 · 최솟값 · 최댓값
@@ -463,7 +465,13 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
     "no_truncated": true,
     "clean_tree": true,
     "not_mock": true,
-    "model": "gpt-6.1-sol"
+    "model": "gpt-6.1-sol",
+    "no_warning_checks": ["J"],
+    "stage": "wireframe",
+    "budget": {"format": 5, "audit": 6, "refine": 2},
+    "commit": null,
+    "reverted": "allow",
+    "no_internal_error": true
   },
   "ordering": [
     {"by": "representative", "metrics": {"screens": 1, "data_actions": 1, "changes": 1}},
@@ -482,7 +490,17 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
 | `no_truncated` | **마지막 시도** 의 답이 길이 제한에서 잘리지 않았다. 중간 시도의 잘림은 최종 시안과 상관없으므로 빼지 않고, 순위표의 '중간 잘림' 열에 횟수로만 보인다 |
 | `clean_tree` | `git.dirty == false`. 기록이 없는 옛 실행은 어긴 것으로 본다 |
 | `not_mock` | mock 실행이 아니다 |
-| `model` | `null` 이면 보지 않는다. 이름을 적으면 `summary.model` 이 그것과 같아야 한다. 지금은 12번 본 실행의 모델 `gpt-6.1-sol` |
+| `model` | `null` 이면 보지 않는다. 이름을 적으면 `summary.model` 이 그것과 같아야 한다. 지금은 12번 본 실행의 모델 `gpt-6.1-sol` (= `config.DEFAULT_MODEL`) |
+| `no_warning_checks` | 최종 검사에 그 검사들의 경고가 하나도 없다. 기본 `["J"]` (오류 알림 글에 과제 단어가 없음) |
+| `stage` | `summary.stage` 가 그 단계다 (기본 `wireframe`). 기록이 없으면 어긴 것 |
+| `budget` | 적은 칸(`format` · `audit` · `refine`)이 `summary.budget.format_budget` · `audit_budget` · `summary.refine.budget` 과 같다. 기본은 `config` 의 기본값 5 · 6 · 2 |
+| `commit` | `null` 이면 다른 문지기를 지난 실행들 중 **가장 많은 커밋** 이 기준이다 (같은 수면 가장 나중 실행의 커밋). 해시를 적으면 그 커밋(앞자리 일치)만. 기준과 다른 커밋의 실행은 이유와 함께 빠진다 |
+| `reverted` | 다듬기가 떨어져 직전 통과 빌드가 최종인 실행: `"allow"` (기본) 후보로 인정하고 순위표 '되돌림' 열로 보인다 · `"last"` 되돌리지 않은 실행 뒤로 미룬다 · `"exclude"` 뺀다. 예비 실행을 본 뒤 12번 전에 확정한다 |
+| `no_internal_error` | 도구 내부 오류로 끝난 실행(`stopped_reason: internal_error`, 종료 2)은 통과한 빌드가 있어도 뺀다 |
+
+조건 문지기(`stage` · `budget` · `commit` · `reverted` · `no_internal_error`)는 칸이
+없으면 보지 않는다 — 칸이 생기기 전의 지난 결과 JSON 을 `--rule` 로 다시 쓰면 그때
+규칙 그대로 돈다.
 
 **ordering** — 위에서부터 차례로 비교한다. 앞이 같을 때만 다음을 본다. 끝까지
 같으면 실행 이름순 (정해진 순서를 내기 위해서일 뿐 뜻은 없다). 순서를 바꾸려면
