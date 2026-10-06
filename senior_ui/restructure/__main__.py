@@ -96,7 +96,7 @@ from senior_ui import config
 from senior_ui.audit.stage import STAGES
 from senior_ui.tasks import DEFAULT_TASK, task_names
 
-from .loop import PLAN_MAX_TOKENS, run
+from .loop import run
 from .model import ALL_MODES, APIS, REASONING_EFFORTS, SEED, TEMPERATURE
 from .probe import list_models, probe
 
@@ -134,12 +134,17 @@ def build_parser():
     ap.add_argument("--api", choices=APIS, default="auto",
                     help="auto 는 모델 이름으로 정한다 (model.profile_for). chat · "
                          "responses 로 덮을 수 있다")
-    ap.add_argument("--max-tokens", type=int, default=14000,
-                    help="생성 호출의 completion cap. 분당 한도는 입력에 이것을 더해 "
-                         "센다 - 생성 프롬프트(~15,000)에 16,000 을 붙이면 요청 하나가 "
-                         "30,000 을 넘는다")
-    ap.add_argument("--plan-max-tokens", type=int, default=PLAN_MAX_TOKENS,
-                    help="진단·계획 호출의 completion cap (JSON 하나)")
+    ap.add_argument("--max-tokens", type=int, default=None,
+                    help="생성 호출의 completion cap (생각 토큰 포함). 주지 않으면 "
+                         "모델에 맞춘 기본값 - gpt-4o %(g4)d, 추론형 %(rs)d "
+                         "(config.OUTPUT_CAPS). 분당 한도는 입력에 이것을 더해 센다"
+                         % {"g4": config.OUTPUT_CAPS["gpt-4o"]["generate"],
+                            "rs": config.OUTPUT_CAPS["reasoning"]["generate"]})
+    ap.add_argument("--plan-max-tokens", type=int, default=None,
+                    help="진단·계획 호출의 completion cap (JSON 하나, 생각 토큰 포함). "
+                         "주지 않으면 gpt-4o %(g4)d, 추론형 %(rs)d"
+                         % {"g4": config.OUTPUT_CAPS["gpt-4o"]["plan"],
+                            "rs": config.OUTPUT_CAPS["reasoning"]["plan"]})
     ap.add_argument("--mock", choices=ALL_MODES, default=None,
                     help="API 없이 Run 1 을 되읽는다. 모드마다 은행 목록 "
                          "한 줄이 다르다 - model.MOCKS 참고. %s" % MOCK_PASS_NOTE)

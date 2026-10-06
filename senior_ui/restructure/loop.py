@@ -54,10 +54,24 @@ def runs_dir(mock=False):
     """실행 폴더들이 쌓이는 곳. 산출물 폴더와 같이 움직인다 (config.outputs_dir)."""
     return os.path.join(outputs_dir(mock), "restructure_auto")
 
-# 진단·계획 호출의 길이 제한. 생성 호출(--max-tokens)과 따로 둔다 - 분당
-# 한도는 max_tokens 를 미리 잡아 두고 세므로, 계획 JSON 에 생성과 같은 한도를
-# 주면 쓰지도 않을 토큰이 한도를 먹는다.
-PLAN_MAX_TOKENS = 6000
+def output_caps(profile, args=None):
+    """`{"generate", "plan"}` - 이 실행의 두 호출의 길이 제한.
+
+    진단·계획 호출은 생성 호출과 따로 둔다 - 분당 한도는 max_tokens 를 미리
+    잡아 두고 세므로, 계획 JSON 에 생성과 같은 한도를 주면 쓰지도 않을 토큰이
+    한도를 먹는다. 주지 않은 쪽은 config.OUTPUT_CAPS 에서 추론형이냐로 고른다 -
+    추론형은 생각 토큰도 이 안에서 쓴다."""
+    caps = dict(config.OUTPUT_CAPS["reasoning" if profile["reasoning"] else "gpt-4o"])
+    given = {"generate": getattr(args, "max_tokens", None),
+             "plan": getattr(args, "plan_max_tokens", None)}
+    caps.update({k: v for k, v in given.items() if v})
+    return caps
+
+
+def cap_source(profile):
+    """run.log 에 적는, 기본값이 어디서 왔는지."""
+    return "기본값 config.OUTPUT_CAPS[%r]" % ("reasoning" if profile["reasoning"]
+                                            else "gpt-4o")
 
 # 한 번의 시도가 끝나는 방식
 STOP = "stop"            # 루프를 끝낸다
@@ -151,6 +165,8 @@ class Run:
         self.api = getattr(args, "api", None)
         self.reasoning_effort = getattr(args, "reasoning_effort", None)
         self.profile = profile_for(model, self.api)
+        # 두 호출의 길이 제한 (output_caps). 주지 않았으면 모델에 맞춘 기본값.
+        self.caps = output_caps(self.profile, args)
         self.choices = ""
         # 입력이 가진 선택지 데이터. 실행마다 한 번 뽑아 시도마다 넣는다.
         # {배열 이름: [원소들]} (preserve.preserved_data).
@@ -393,9 +409,7 @@ def request_plan(r, n, p):
     io.open(p + ".plan_prompt.txt", "w", encoding="utf-8", newline="\n").write(prompt)
     r.log("plan prompt: %d chars%s" % (len(prompt),
                                        " (with retry block)" if r.plan_error else ""))
-    reply, outcome = ask_model(r, n, p, prompt,
-                               getattr(r.args, "plan_max_tokens", PLAN_MAX_TOKENS),
-                               mock_plan_reply, "plan")
+    reply, outcome = ask_model(r, n, p, prompt, r.caps["plan"], mock_plan_reply, "plan")
     if reply is None:
         return None, outcome
     io.open(p + ".plan_response.txt", "w", encoding="utf-8",
@@ -573,7 +587,7 @@ def request_reply(r, n, p):
     r.log("prompt: %d chars%s" % (len(prompt), " (with retry block)" if block else ""))
 
     reflect = r.asked_reflection
-    reply, outcome = ask_model(r, n, p, prompt, r.args.max_tokens,
+    reply, outcome = ask_model(r, n, p, prompt, r.caps["generate"],
                                lambda mode: mock_reply(mode, reflect=reflect),
                                "retry" if reflect else "generate")
     if reply is None:
@@ -1096,6 +1110,12 @@ def run(args):
     log("model: 부르는 방식 %s · 토큰 어림 %s · reasoning_effort %s"
         % (describe(profile), profile["encoding"],
            (effort or "보내지 않음(모델 기본값)") if profile["reasoning"] else "해당 없음"))
+    caps = output_caps(profile, args)
+    log("model: max_tokens 생성 %d (%s) · 진단·계획 %d (%s)"
+        % (caps["generate"], "--max-tokens" if getattr(args, "max_tokens", None)
+           else cap_source(profile),
+           caps["plan"], "--plan-max-tokens" if getattr(args, "plan_max_tokens", None)
+           else cap_source(profile)))
     if not args.mock and not os.environ.get("OPENAI_API_KEY"):
         print("no OPENAI_API_KEY in the environment or .envs", file=sys.stderr)
         return 2

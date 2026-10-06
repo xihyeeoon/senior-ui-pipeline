@@ -105,6 +105,24 @@ MODEL_PRICES = {
     "gpt-6-luna": None,
 }
 
+# 출력 길이 기본값 (completion 상한, 생각 토큰 포함). --max-tokens ·
+# --plan-max-tokens 를 주지 않으면 부르는 방식(restructure.model.profile_for)의
+# "추론형인가" 로 고른다 (restructure.loop.output_caps).
+#
+#   gpt-4o    gpt-4o 의 답(HTML + 흐름 명세)은 3,300~3,500 토큰이었다. 분당 한도
+#             30,000 이 입력에 이 값을 더해 세므로 낮춰 둔 값이다. 이체 기준값이
+#             이 값으로 뽑혀 있어 바꾸지 않는다. 표에 없는 모델도 이것을 쓴다.
+#   reasoning 추론형은 생각 토큰도 같은 상한 안에서 쓰고, 생각이 다 쓰면 보이는
+#             답이 빈 채로 잘려 온다. OpenAI 는 "처음 실험할 때는 생각과 출력에
+#             적어도 25,000 을 남겨 두라" 고 한다 (Reasoning models 안내,
+#             2026-10-06 확인). 생성은 그보다 넉넉히 32,000 (답 3,500 에 생각 몫),
+#             진단·계획은 답이 짧아도 생각은 같이 하므로 그 최소인 25,000 이다.
+#             상한은 쓴 만큼만 요금이 매겨지고, 분당 500,000 에서는 입력 3만 +
+#             32,000 도 한 요청에 넉넉하다. gpt-6.1-sol · gpt-6-astra 의 최대 출력은
+#             128K 다.
+OUTPUT_CAPS = {"gpt-4o": {"generate": 14000, "plan": 6000},
+               "reasoning": {"generate": 32000, "plan": 25000}}
+
 # The two builds under comparison. `url` is what the phone loads in the frame.
 CONDITIONS = [
     {"key": "original",
