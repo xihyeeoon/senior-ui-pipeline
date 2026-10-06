@@ -13,7 +13,9 @@
 <body>
 <!-- 검사 J 의 브라우저 테스트용 작은 설계. 계좌번호를 넣는 즉시 맞는지 보고,
      틀리면 같은 화면에 이유를 보이고 [다음] 을 끈다 (오류를 미리 막는 설계).
-     ?none 을 붙이면 확인하지 않고 그대로 넘어간다 (오류 처리가 없는 설계). -->
+     ?none 을 붙이면 확인하지 않고 그대로 넘어간다 (오류 처리가 없는 설계).
+     ?alert 를 붙이면 화면에는 아무것도 쓰지 않고 alert(변수) 로만 알린다 -
+     따옴표 문자열이 아니라서 검사 B 의 정적 비교로는 보이지 않는다. -->
 <div id="phone">
   <section class="screen on" data-screen="start">
     <p class="hint">보내기를 시작합니다</p>
@@ -40,6 +42,8 @@
 </div>
 <script>
 const CHECK = location.search.indexOf('none') < 0;
+const ALERT = location.search.indexOf('alert') >= 0;
+const WHY = '없는 계좌번호예요. 계좌번호를 다시 확인해 주세요';
 const RIGHT = '110234567890';
 const S = { acc: '' };
 window.__log = [];
@@ -57,8 +61,8 @@ function render() {
   document.getElementById('acc').textContent = S.acc;
   const full = S.acc.length >= 12;
   const wrong = CHECK && full && S.acc !== RIGHT;
-  document.getElementById('why').textContent =
-    wrong ? '없는 계좌번호예요. 계좌번호를 다시 확인해 주세요' : '';
+  document.getElementById('why').textContent = wrong && !ALERT ? WHY : '';
+  if (wrong && ALERT) alert(WHY);
   document.getElementById('next').disabled = !full || wrong;
 }
 document.getElementById('phone').addEventListener('click', e => {

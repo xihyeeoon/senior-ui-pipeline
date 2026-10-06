@@ -130,3 +130,16 @@ def run(ctx):
                      % (", ".join(nums), truth.get("AMOUNT_SHOWN", "?")))
         F("B", d["screen"], "blocking %s during the task: %r%s"
           % (d["type"], d["message"], wrong), numbers=nums)
+
+    # 오류 경로를 걷다 뜬 대화상자 (감사 B-12). 정답 경로와 같은 규칙이다 - 막는
+    # 대화상자 하나가 결함 하나다. alert(변수) 처럼 위의 정적 비교가 못 잡는 것도
+    # 여기서 잡힌다. 잘못된 입력 앞(정답 걸음을 다시 밟는 동안)에 뜬 것은 정답
+    # 경로에서 이미 셌으므로 뺀다. 잘못된 입력까지 가지 못한 걸음은 그 앞의 것뿐이다.
+    for eid, row in sorted((rep.get("error_paths") or {}).items()):
+        start = row.get("dialogs_at_trigger")
+        if start is None:
+            continue
+        for d in (row.get("dialogs") or [])[start:]:
+            nums = [n for n in re.findall(r"\d[\d,]*", d["message"]) if n not in ok]
+            F("B", row.get("expect_screen"), "blocking %s on error path %s: %r"
+              % (d["type"], eid, d["message"]), numbers=nums, error_path=eid)

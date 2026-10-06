@@ -107,6 +107,20 @@ def _happy_text(ctx, screen):
     return ""
 
 
+def _after_text(row):
+    """오류 상태에서 사용자가 본 글 - 화면의 글과, 잘못된 입력 뒤 오류 상태가
+    나타날 때까지 뜬 대화상자의 글. 대화상자로만 알린 설계도 사용자는 그 글을
+    읽었으므로 "나타남" 으로 인정한다. 막는 대화상자라는 결함은 검사 B 가 센다
+    (결함 하나 = fatal 하나)."""
+    dialogs = row.get("dialogs") or []
+    start, end = row.get("dialogs_at_trigger"), row.get("dialogs_at_after")
+    if start is None or end is None:
+        said = []
+    else:
+        said = [d.get("message") or "" for d in dialogs[start:end]]
+    return "\n".join([row.get("after_text") or ""] + said)
+
+
 def _brief(detail):
     return re.sub(r"\s*\n\s*", " / ", str(detail or "")).strip()[:300]
 
@@ -136,7 +150,7 @@ def _judge(ctx, ep, row, defs, result):
     landed = after.get("dom_screen")
     hook = after.get("landed_on")
     trigger = (row.get("trigger") or {}).get("dom_screen")
-    notice = new_lines(row.get("after_text"), row.get("before_text"),
+    notice = new_lines(_after_text(row), row.get("before_text"),
                        _happy_text(ctx, exp), truth_of(ctx.flow))
     result.update(trigger_screen=trigger, landed_on=landed, notice=notice)
     if landed != exp or (hook is not None and hook != exp):

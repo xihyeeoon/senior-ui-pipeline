@@ -399,3 +399,90 @@ def test_the_cli_still_trusts_a_researcher_flow(monkeypatch, tmp_path):
     assert "model_claims_dropped" not in built
     report = json.load(io.open(str(out), encoding="utf-8"))
     assert report["inputs"]["stage"] == "styled"
+
+
+# --------------------------------------------------------------------- #
+# 7. 오류 경로에서 뜬 대화상자도 판정한다 (B-12)
+# --------------------------------------------------------------------- #
+NOTICE = "없는 계좌번호예요. 다시 확인해 주세요"
+STEPS3 = [{"screen": "start"},
+          {"screen": "account", "click": "[data-action='go']"},
+          {"screen": "done", "click": "#next"}]
+WRONG_ACCOUNT = {"id": "wrong-account", "from_step": "account",
+                 "inputs": [{"type": "{ACCOUNT_WRONG}", "key": "#acc"},
+                            {"click": "#next"}],
+                 "expect_screen": "account", "recover": [{"click": "#clear"}],
+                 "back_to": "account"}
+
+
+def error_row(after_text="", dialogs=(), at_trigger=0, at_after=None):
+    """오류 경로 하나를 걸은 결과 (drive.walk_error_path 의 모양). `dialogs` 는 그
+    페이지에서 뜬 대화상자 전부이고, 잘못된 입력 직전까지 뜬 수가 `at_trigger`,
+    오류 상태를 긁을 때까지 뜬 수가 `at_after` 다."""
+    dialogs = [{"screen": "?", "type": "alert", "message": m} for m in dialogs]
+    return {"from_step": "account", "expect_screen": "account", "back_to": "account",
+            "error": None, "trigger": {"landed_on": "account", "dom_screen": "account"},
+            "before_text": "계좌번호를 넣어 주세요", "settled": True,
+            "after": {"landed_on": "account", "dom_screen": "account"},
+            "after_text": "계좌번호를 넣어 주세요\n" + after_text,
+            "recovered": True, "recover": {"landed_on": "account", "dom_screen": "account"},
+            "js_errors": [], "dialogs": dialogs, "dialogs_at_trigger": at_trigger,
+            "dialogs_at_after": len(dialogs) if at_after is None else at_after}
+
+
+def judge_error_path(row_, happy_dialogs=()):
+    flow = _api.judged_flow({"name": "auto", "required_ids": ["phone", "dn-amt"],
+                             "steps": STEPS3, "expect": {},
+                             "error_paths": [WRONG_ACCOUNT]}, task="bill")
+    rep = snap({"start": row("start"),
+                "account": row("account", text="계좌번호를 넣어 주세요"),
+                "done": row("done", shown=[["#dn-paid", "2,160"], ["#dn-eno", "1700000000"]])},
+               dialogs=[{"screen": "account", "type": "alert", "message": m}
+                        for m in happy_dialogs],
+               error_paths={"wrong-account": row_})
+    return _api.audit(snap({"home": row("home")}), rep, "", "<html></html>", flow)
+
+
+def test_a_dialog_on_an_error_path_is_a_display_fatal():
+    """고치기 전: 오류 경로를 걷다 뜬 대화상자는 기록만 되고 아무도 판정하지
+    않았다. alert(변수) 로 띄우면 검사 B 의 정적 검사(따옴표 문자열만)에도 걸리지
+    않는다 (감사 B-12)."""
+    report = judge_error_path(error_row(NOTICE, ["계좌 110234567891 은 없습니다"]))
+    b = [f for f in report["fatal"] if f["check"] == "B"]
+    assert len(b) == 1, report["fatal"]
+    assert b[0]["error_path"] == "wrong-account"
+    assert b[0]["screen"] == "account"
+    assert "110234567891" in b[0]["detail"]
+    assert [f for f in report["fatal"] if f["check"] == "J"] == []
+
+
+def test_an_alert_only_notice_is_one_defect_not_two():
+    """오류를 alert 로만 알린 설계. 사용자는 그 글을 본다 - J 의 "나타남" 은 그
+    글로 인정하고, 막는 대화상자라는 결함은 B 하나로 센다 (결함 하나 = fatal 하나)."""
+    report = judge_error_path(error_row("", [NOTICE]))
+    assert [f["check"] for f in report["fatal"]] == ["B"], report["fatal"]
+    res = report["metrics"]["error_paths"]["wrong-account"]
+    assert res["appeared"] and res["recovered"]
+    assert res["notice"] == [NOTICE]
+
+
+def test_dialogs_before_the_wrong_input_are_counted_once():
+    """잘못된 입력 앞에서 정답 걸음을 다시 밟다 뜬 대화상자는 정답 경로에서 이미
+    셌다. 되돌아가는 조작 중에 뜬 것은 셈에는 들고 알림 글로는 치지 않는다."""
+    report = judge_error_path(error_row(NOTICE, ["확인하세요", "다시 넣으세요"],
+                                        at_trigger=1, at_after=1),
+                              happy_dialogs=["확인하세요"])
+    b = [f for f in report["fatal"] if f["check"] == "B"]
+    assert [(f.get("error_path"), "다시 넣으세요" in f["detail"]) for f in b] == \
+        [(None, False), ("wrong-account", True)], b
+    res = report["metrics"]["error_paths"]["wrong-account"]
+    assert res["notice"] == [NOTICE]
+
+
+def test_a_walk_that_never_reached_the_wrong_input_adds_nothing():
+    """잘못된 입력까지 가지 못한 걸음(at_trigger 없음)의 대화상자는 정답 걸음의
+    것뿐이다."""
+    r = error_row(NOTICE, ["확인하세요"])
+    del r["dialogs_at_trigger"]
+    report = judge_error_path(r, happy_dialogs=["확인하세요"])
+    assert len([f for f in report["fatal"] if f["check"] == "B"]) == 1

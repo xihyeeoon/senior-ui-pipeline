@@ -144,7 +144,8 @@ def model_claims(flow, task=DEFAULT_TASK):
         want = dict(load_task(task)["done_expect"])
         mine = [p for p in expect.get(last) or []
                 if isinstance(p, list) and p and p[0] in want]
-        if any(len(p) != 2 or p[1] != want[p[0]] for p in mine)                 or len(mine) != len({p[0] for p in mine}):
+        if any(len(p) != 2 or p[1] != want[p[0]] for p in mine) \
+                or len(mine) != len({p[0] for p in mine}):
             out.append("expect.%s" % last)
     return out
 
