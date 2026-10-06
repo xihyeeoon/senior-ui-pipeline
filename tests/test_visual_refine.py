@@ -988,3 +988,43 @@ def test_a_rejected_refine_request_keeps_the_passed_build(audit_by_marker, out_r
     r1 = s["refine"]["rounds"][0]
     assert r1["stopped"] == "call_failed" and len(s["refine"]["rounds"]) == 1
     assert "중단: 그림 2장을 넣은 refine 요청이었다" in read(os.path.join(d, "run.log"))
+
+
+# --------------------------------------------------------------------------- #
+# 감사 3. reveal 의 do 는 click 만 · 보이는 data-action · 같은 화면
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize("act", [
+    {"type": "신한", "key": "#search"}, {"wait": 1}, {"repeat": 2, "click": "#x"},
+    {"click": "#x", "wait": 0.5}, "click"])
+def test_reveal_allows_only_plain_clicks(act):
+    flow = reveal_flow({"pick-bank": {"at": "bank", "do": [{"click": "#show-all"}, act]}})
+    problems = reply_mod.validate_flow(flow, REVEAL_HTML, [], [])
+    assert any("reveal.pick-bank.do[1] 는 click 만 쓸 수 있다" in p for p in problems), \
+        problems
+
+
+def test_a_reveal_violation_is_a_check_i_fatal():
+    ctx = i_ctx({"pick-bank": {"at": "bank", "error": None, "choices": {},
+                               "violations": ["do[0] #go: 누른 뒤 화면이 바뀌었다 "
+                                              "(bank → done)"]}})
+    i_choices.run(ctx)
+    v = [f for f in ctx.fatal if f.get("reveal_violation")]
+    assert len(v) == 1
+    assert "reveal.pick-bank 가 펼치기 규칙을 어겼다: do[0] #go: 누른 뒤 화면이 바뀌었다" \
+        in v[0]["detail"]
+
+
+def test_the_loop_counts_a_reveal_violation_as_a_format_failure(fake_run_env, out_root):
+    violated = {"passed": False, "warning": [], "metrics": {},
+                "fatal": [{"check": "I", "screen": None, "reveal_violation": True,
+                           "detail": "흐름 명세의 reveal.pick-bank 가 펼치기 규칙을 "
+                                     "어겼다: do[0] #x: 화면에 보이지 않는다"},
+                          {"check": "I", "screen": None, "detail": "선택지 없음"}]}
+    fake_run_env.setattr(loop, "run_audit", lambda *a, **kw: violated)
+    code, s, sent, d = run_with(fake_run_env, out_root, PLAN_THEN_GOOD, attempts=1)
+    a = s["attempts"][0]
+    assert a["stage"] == "flow" and a["fatal"] == 1
+    assert s["budget"]["format_used"] == 1 and s["budget"]["audit_used"] == 0
+    report = json.load(open(os.path.join(d, "attempt_1.audit.json"), encoding="utf-8"))
+    assert [f["check"] for f in report["fatal"]] == ["FLOW"]
+    assert "화면에 보이지 않는다" in report["fatal"][0]["detail"]

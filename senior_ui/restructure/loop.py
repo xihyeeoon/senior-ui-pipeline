@@ -1002,6 +1002,14 @@ def audit_build(r, n, entry, build):
         return problems_report(problems)
 
     report = _drive_audit(r, n, build)
+    # 펼치기(reveal) 규칙 위반은 흐름 명세의 형식 문제다 - 검사기가 걸어 봐야 알 수
+    # 있어 검사 I 의 fatal 로 오지만, 형식 예산을 쓴다.
+    violated = [f["detail"] for f in report.get("fatal") or [] if f.get("reveal_violation")]
+    if violated:
+        r.log("flow: reveal 규칙 위반 %d건: %s" % (len(violated), " | ".join(violated)[:300]))
+        entry.update(stage="flow", passed=False, fatal=len(violated))
+        r.budget.spend("format")
+        return problems_report(violated)
     entry.update(stage="audit", passed=bool(report.get("passed")),
                  fatal=len(report.get("fatal", [])),
                  warning=len(report.get("warning", [])))

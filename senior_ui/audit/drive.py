@@ -470,6 +470,21 @@ def write_see_index(folder, items):
         json.dump(items, f, ensure_ascii=False, indent=1)
 
 
+# 펼치기 조작이 누를 대상. 그 화면에 보이는 data-action 요소여야 한다.
+REVEAL_TARGET = r"""sel => {
+  let el = null;
+  try { el = document.querySelector(sel); } catch (e) { return {ok: false, why: '선택자가 틀렸다'}; }
+  if (!el) return {ok: false, why: '선택자에 맞는 요소가 없다'};
+  if (!el.hasAttribute('data-action')) return {ok: false, why: 'data-action 요소가 아니다'};
+  const lit = document.querySelector('.screen.on');
+  if (lit && !lit.contains(el)) return {ok: false, why: '켜진 화면 밖의 요소다'};
+  const r = el.getBoundingClientRect(), cs = getComputedStyle(el);
+  if (!r.width || !r.height || cs.visibility === 'hidden')
+    return {ok: false, why: '화면에 보이지 않는다'};
+  return {ok: true, action: el.getAttribute('data-action')};
+}"""
+
+
 async def walk_reveal(browser, url, flow, spec):
     """펼치기 조작 하나를 새 페이지에서 걷는다. 판정은 하지 않는다 (검사 I).
 
@@ -477,10 +492,15 @@ async def walk_reveal(browser, url, flow, spec):
       2. `do` 의 동작을 하나씩 실행하고, 하나 끝날 때마다 선택지(CHOICE_GROUPS)를
          모아 합친다. 탭처럼 누를 때마다 다시 그려지는 목록도 그래서 다 센다.
 
+    동작은 click 만이고 (모양은 reply._check_reveal 이 먼저 본다), 누르기 전에
+    대상이 켜진 화면 안의 보이는 data-action 요소인지, 누른 뒤에도 같은 화면인지
+    본다. 어기면 거기서 멈추고 `violations` 에 적는다 - 재구성 루프는 그것을 형식
+    문제로 센다 (loop.audit_build).
+
     정답 경로의 걷기와 따로 걷는다 - 펼친 상태가 A~H 가 보는 화면을 바꾸지
     않게. 돌려주는 것은 `{"at", "choices": {action: [값]}, "error"}`."""
     truth = truth_of(flow)
-    row = {"at": spec.get("at"), "choices": {}, "error": None}
+    row = {"at": spec.get("at"), "choices": {}, "error": None, "violations": []}
     page = await browser.new_page(viewport={"width": 390, "height": 844})
     ed = {"js_errors": [], "js_error_details": [], "dialogs": [], "reached": []}
     tasks = attach_listeners(page, ed)
@@ -522,13 +542,30 @@ async def walk_reveal(browser, url, flow, spec):
                 break
         merge(await page.evaluate(P.CHOICE_GROUPS))
         actions = spec.get("do") or []
-        for act in (actions if isinstance(actions, list) else [actions]):
+        for i, act in enumerate(actions if isinstance(actions, list) else [actions]):
+            sel = act.get("click") if isinstance(act, dict) and set(act) == {"click"} \
+                else None
+            if not isinstance(sel, str):
+                row["violations"].append("do[%d] 는 click 이 아니다" % i)
+                return row
+            target = await page.evaluate(REVEAL_TARGET, sel)
+            if not target.get("ok"):
+                row["violations"].append("do[%d] %s: %s" % (i, sel, target.get("why")))
+                return row
+            before = await _where(page)
             try:
                 await run_actions(page, [act], None, truth)
             except Exception as e:
                 await failed("do", e)
                 return row
             await page.wait_for_timeout(100)
+            after = await _where(page)
+            if after != before:
+                row["violations"].append(
+                    "do[%d] %s: 누른 뒤 화면이 바뀌었다 (%s → %s)"
+                    % (i, sel, before.get("dom_screen") or before.get("landed_on"),
+                       after.get("dom_screen") or after.get("landed_on")))
+                return row
             merge(await page.evaluate(P.CHOICE_GROUPS))
         return row
     finally:

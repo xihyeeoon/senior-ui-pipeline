@@ -138,6 +138,13 @@ def dom_values(rep):
     return "\n".join(sorted(seen))
 
 
+def reveal_violations(rep):
+    """펼치기 조작이 규칙(그 화면에 보이는 data-action 요소를 click, 같은 화면에
+    머문다)을 어긴 것. `[(action, 내용)]`."""
+    return [(action, v) for action, res in sorted((rep.get("revealed") or {}).items())
+            for v in (res or {}).get("violations") or []]
+
+
 def reveal_failures(rep):
     """펼치기 조작이 실패한 것. `{action: "단계: 내용"}`."""
     out = {}
@@ -219,6 +226,12 @@ def run(ctx):
                                  "error": ((r or {}).get("error") or {}).get("phase")}
                              for a, r in revealed.items()}
     failed = reveal_failures(ctx.rep)
+    # 펼치기 규칙을 어긴 조작. 그 조작으로 모은 값은 이미 버려졌다 (drive 가 거기서
+    # 멈춘다). fatal 로 남기고, 재구성 루프는 이 fatal 을 형식 문제로 센다.
+    for action, why in reveal_violations(ctx.rep):
+        F("I", None, "흐름 명세의 reveal.%s 가 펼치기 규칙을 어겼다: %s. 펼치기는 그 화면에 "
+          "보이는 data-action 버튼을 click 하는 것만이고, 누른 뒤에도 같은 화면이어야 "
+          "한다." % (action, why), action=action, reveal_violation=True)
     # 차이는 경고다. fatal 로 하면 "전체 보기" 뒤나 검색 결과로만 목록을 내놓는
     # 설계가 떨어진다 - 검사기가 그 버튼을 누르지 않으면 DOM 에 나타나지 않고,
     # 그것은 설계의 결함이 아니라 흐름 명세가 그 길을 걷지 않은 것이다. 그래서

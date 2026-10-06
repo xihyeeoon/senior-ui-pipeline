@@ -455,7 +455,12 @@ def _check_reveal(flow, html, steps, screens):
     선택지 목록의 일부만 먼저 보이고 눌러야 나머지가 만들어지는 설계("자주 쓰는
     은행 먼저 + 전체 보기")는 그 누르는 조작을 여기에 적는다. 검사기는 `at` 까지
     정답 걸음을 밟은 뒤 `do` 의 동작을 하나씩 실행하며 선택지를 모은다
-    (drive.walk_reveal). 키는 선택지의 data-action 이다."""
+    (drive.walk_reveal). 키는 선택지의 data-action 이다.
+
+    `do` 는 click 만 된다. 펼치기는 사용자가 그 화면에서 버튼을 누르는 일이다 -
+    타이핑 · 기다리기 · 되풀이를 허락하면 "검사기만 하는 조작" 으로 목록을 만들어
+    검사 I 를 지날 수 있다. 누를 대상이 그 화면에 보이는 data-action 요소인지,
+    누른 뒤에도 같은 화면인지는 걸어 봐야 알므로 drive.walk_reveal 이 본다."""
     problems = []
     visits = _visits(steps)
     for action, spec in (flow.get("reveal") or {}).items():
@@ -468,6 +473,14 @@ def _check_reveal(flow, html, steps, screens):
                             % (where, spec.get("at"), ", ".join(visits)))
         if not spec.get("do"):
             problems.append("%s.do 가 비어 있다. 목록을 펼치는 조작을 적어라" % where)
+        do = spec.get("do")
+        for i, act in enumerate(do if isinstance(do, list) else [do]):
+            if not (isinstance(act, dict) and set(act) == {"click"}
+                    and isinstance(act["click"], str)):
+                problems.append("%s.do[%d] 는 click 만 쓸 수 있다 (지금은 %s). 그 화면에 "
+                                "보이는 data-action 버튼을 누르는 것만 적는다 - 예: "
+                                '{"click": "#show-all"}'
+                                % (where, i, json.dumps(act, ensure_ascii=False)[:80]))
     return problems
 
 

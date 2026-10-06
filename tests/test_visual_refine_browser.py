@@ -116,3 +116,28 @@ def test_the_same_list_without_reveal_fails_check_i(server):
     assert code == 1 and not summary["passed"]
     i = [f for f in report["fatal"] if f["check"] == "I"]
     assert i and "reveal" not in report["metrics"]
+
+
+# --------------------------------------------------------------------------- #
+# 감사 3. 펼치기 규칙 - 보이는 data-action · 켜진 화면 안 · 같은 화면
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize("sel,why", [
+    ("#inner-body", "data-action 요소가 아니다"),
+    ("[data-action='go-end']", "켜진 화면 밖의 요소다"),
+    ("#nothing", "선택자에 맞는 요소가 없다"),
+    ("#to-page", "누른 뒤 화면이 바뀌었다 (inner → page)"),
+])
+def test_walk_reveal_stops_at_a_rule_violation(server, sel, why):
+    flow = _api.load_flow(FLOW)
+
+    async def go():
+        async with async_playwright() as pw:
+            b = await pw.chromium.launch()
+            try:
+                return await _api.walk_reveal(b, "%s/%s" % (C.BASE_URL, PAGE), flow,
+                                              {"at": "inner", "do": [{"click": sel}]})
+            finally:
+                await b.close()
+    row = asyncio.run(go())
+    assert len(row["violations"]) == 1, row
+    assert why in row["violations"][0]
