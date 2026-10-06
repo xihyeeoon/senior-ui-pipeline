@@ -1028,3 +1028,84 @@ def test_the_loop_counts_a_reveal_violation_as_a_format_failure(fake_run_env, ou
     report = json.load(open(os.path.join(d, "attempt_1.audit.json"), encoding="utf-8"))
     assert [f["check"] for f in report["fatal"]] == ["FLOW"]
     assert "화면에 보이지 않는다" in report["fatal"][0]["detail"]
+
+
+# --------------------------------------------------------------------------- #
+# 감사 4. 되돌린 뒤 final.attempt · 다듬기 실패는 따로 센다
+# --------------------------------------------------------------------------- #
+def test_after_a_revert_select_reads_the_real_final_build(audit_by_marker, out_root,
+                                                           tmp_path):
+    code, s, sent, d = run_refine(audit_by_marker, out_root, tmp_path, [BREAK],
+                                  fix=(FIX_BROKEN,))
+    assert s["final"]["attempt"] == 1
+    row = _api.select_collect(d)
+    assert row["final_attempt"] == 1
+    assert row["passed"] and row["fatal"] == 0          # 시도 1 의 기록이다
+    assert row["truncated"] is False
+    # 생성 단계는 실패가 없고, 다듬기의 검사 실패 둘(다듬은 빌드 · 고친 빌드)은 따로
+    assert (row["format_failures"], row["audit_failures"]) == (0, 0)
+    assert (row["refine_format_failures"], row["refine_audit_failures"]) == (0, 2)
+    assert row["attempts"] == 1
+    assert s["refine"]["audit_failures"] == 2
+    assert s["refine"]["rounds"][0]["audit_failures"] == 2
+
+
+def test_a_truncated_refine_answer_is_not_the_final_truncation(tmp_path):
+    runs = tmp_path / "runs"
+    runs.mkdir()
+    d = TS.make_run(str(runs), "20261007-100000-ok", attempts=1)
+    path = os.path.join(d, "summary.json")
+    s = json.load(open(path, encoding="utf-8"))
+    s["attempts"].append({"n": 2, "phase": "refine", "stage": "truncated",
+                          "truncated": True, "passed": False})
+    s["refine"] = {"final_label": "생성 (다듬기 1회차가 실패해 되돌림)",
+                   "format_failures": 1, "audit_failures": 0}
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(s, f, ensure_ascii=False)
+    row = _api.select_collect(d)
+    assert row["truncated"] is False and row["truncated_middle"] == 0
+    assert row["refine_format_failures"] == 1 and row["format_failures"] == 0
+
+
+def test_a_run_from_before_refine_has_no_refine_counts(tmp_path):
+    runs = tmp_path / "runs"
+    runs.mkdir()
+    row = _api.select_collect(TS.make_run(str(runs), "20261007-100000-old"))
+    assert row["refine_format_failures"] is None and row["refine_audit_failures"] is None
+
+
+# --------------------------------------------------------------------------- #
+# 감사 6. 다듬기의 고치기는 계획을 바꾸지 않는다
+# --------------------------------------------------------------------------- #
+PLAN_CHANGE_FIX = critique_block(
+    {"cause": "다듬다 깨뜨렸다", "keep": [],
+     "plan_changes": [{"op": "add", "target": "screen", "after": "start",
+                       "new": {"name": "extra", "purpose": "더", "from": []},
+                       "why": "화면을 하나 더"}]}) + reply_text(IMPROVED_HTML, GOOD_FLOW)
+
+
+def test_the_refine_fix_does_not_apply_plan_changes(audit_by_marker, out_root, tmp_path):
+    code, s, sent, d = run_refine(audit_by_marker, out_root, tmp_path, [BREAK, DONE],
+                                  fix=(PLAN_CHANGE_FIX,))
+    fix = [a for a in s["attempts"] if a.get("phase") == "refine_fix"][0]
+    assert fix["plan_changes"] == 0 and fix["plan_changes_ignored"] == 1
+    assert fix["passed"] and s["final"]["attempt"] == 3
+    plan = json.load(open(os.path.join(d, "attempt_3.plan.json"), encoding="utf-8"))
+    assert [sc["name"] for sc in plan["screens"]] == ["start", "done"]
+    assert s["plan"]["screens"] == ["start", "done"]
+    assert "계획 변경 1건을 적용하지 않았다 (화면 구성 고정)" in read(
+        os.path.join(d, "run.log"))
+
+
+def test_the_refine_fix_prompt_says_the_screens_stay(audit_by_marker, out_root, tmp_path):
+    code, s, sent, d = run_refine(audit_by_marker, out_root, tmp_path, [BREAK, DONE])
+    fix_prompt = [c["prompt"] for c in sent if is_fix(c["prompt"])][0]
+    assert _api.prompt_module.REFINE_FIX_NOTE in fix_prompt
+    # 생성 루프의 재시도에는 붙지 않는다
+    normal = [c["prompt"] for c in sent if not is_fix(c["prompt"])]
+    assert not any(_api.prompt_module.REFINE_FIX_NOTE in p for p in normal)
+
+
+def test_the_refine_answer_has_no_plan_changes_slot():
+    text = _api.prompt_module.load_refine_template()
+    assert "plan_changes" not in text

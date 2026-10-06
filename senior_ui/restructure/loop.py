@@ -51,7 +51,7 @@ from .preserve import inject, names_read, preserved_data
 from .prompt import (BUILD_SHOTS_INTRO, build_plan_prompt, build_prompt,
                      build_refine_prompt, choices_block, errors_block,
                      load_plan_template, load_refine_template, load_template,
-                     model_input_html, one_line,
+                     model_input_html, one_line, REFINE_FIX_NOTE,
                      plan_retry_block, retry_block, shots_section, with_reflection)
 from .reply import (FlowShape, accept_done_alias, failure_report, parse_reply,
                     preserved_problems, problems_report, validate_flow)
@@ -341,7 +341,8 @@ class Run:
                                 "original_images": 0},
                         "refine": {"budget": self.refine, "source": refine_source,
                                    "rounds": [], "final_from": None,
-                                   "final_label": None, "reverted": None}}
+                                   "final_label": None, "reverted": None,
+                                   "format_failures": 0, "audit_failures": 0}}
 
 
 # --------------------------------------------------------------------------- #
@@ -785,6 +786,8 @@ def request_reply(r, n, p, stage=None, mock=None):
     # 재시도에서는 코드보다 반성을 먼저 쓰게 한다. 그래서 실패 목록보다 앞이다.
     r.asked_reflection = bool(block)
     block = with_reflection(block)
+    if block and stage == "refine_fix":
+        block = REFINE_FIX_NOTE + "\n\n" + block
     prompt = build_prompt(r.template, r.model_original, block, r.choices, plan_text(r),
                           errors=errors_block(r.errors))
     io.open(p + ".prompt.txt", "w", encoding="utf-8", newline="\n").write(prompt)
@@ -854,6 +857,14 @@ def revise_plan(r, n, p, entry, refl, problems):
     if problems:
         return list(problems)
     changes = refl.get("plan_changes") or []
+    if changes and entry.get("phase") == "refine_fix":
+        # 다듬기 중에는 화면 구성을 바꾸지 않는다. 적용하지 않고 남긴다 - 바뀐
+        # 화면으로 답했으면 아래 일치 검사가 형식 문제로 잡는다.
+        entry["plan_changes"] = 0
+        entry["plan_changes_ignored"] = len(changes)
+        r.log("reflection: 다듬기의 고치기라 계획 변경 %d건을 적용하지 않았다 (화면 "
+              "구성 고정)" % len(changes))
+        return []
     if not changes:
         entry["plan_changes"] = 0
         return []
@@ -1358,6 +1369,11 @@ def refine_round(r, k, n):
 
     def finish(stopped, go_on):
         row["stopped"] = stopped
+        # 이 회차의 형식 · 검사 실패. 생성 예산(summary.budget)과 섞지 않는다.
+        row["format_failures"] = r.budget.format_used
+        row["audit_failures"] = r.budget.audit_used
+        rf["format_failures"] = rf.get("format_failures", 0) + r.budget.format_used
+        rf["audit_failures"] = rf.get("audit_failures", 0) + r.budget.audit_used
         row.update(_round_cost(r, [x for x in (n, row.get("fix_attempt")) if x]))
         return (row.get("fix_attempt") or n), go_on
 
@@ -1422,7 +1438,9 @@ def refine_round(r, k, n):
         row["after_shots"] = os.path.join(r.run_dir, "shots", "attempt_%d" % fix_n, "see")
         return _refine_passed(r, k, fix_n, row, critique, finish)
 
-    # 고치기도 떨어졌다. 직전에 통과한 빌드를 최종으로 되돌린다.
+    # 고치기도 떨어졌다. 직전에 통과한 빌드를 최종으로 되돌린다. final 은 그 빌드의
+    # 기록 그대로다 - final.attempt 가 실제 최종 빌드를 가리켜야 고르기(잘림 판정 ·
+    # 마지막 시도의 값)가 맞는 시도를 본다.
     r.summary["final"] = best
     r.summary["passed"] = True
     rf["reverted"] = {"round": k, "to_attempt": best_n,

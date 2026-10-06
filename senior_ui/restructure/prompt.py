@@ -203,6 +203,12 @@ def errors_block(paths):
     return "\n".join(out)
 
 
+# 다듬기의 고치기 시도에 붙는 말. 다듬기 중에는 화면 구성을 바꾸지 않는다 -
+# 반성의 plan_changes 는 받지 않는다 (loop.revise_plan).
+REFINE_FIX_NOTE = ("이번 고치기는 다듬은 빌드를 고치는 것이다. 화면 구성(화면 이름 · 순서 · "
+                   "과업 경로)은 계획 그대로 둔다 - 반성의 `plan_changes` 는 `[]` 로 둔다.")
+
+
 def reflection_request():
     """재시도 프롬프트의 맨 앞에 붙는 반성 요청 (REFLECT 블록)."""
     return load_block("REFLECT")
