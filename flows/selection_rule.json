@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "note": [
+    "C 후보 고르기 규칙 (python -m senior_ui.select). 코드가 아니라 이 파일이 규칙이다.",
+    "gates: 하나라도 어기면 후보에서 뺀다. true = 본다, false = 보지 않는다.",
+    "  passed         summary.passed 가 true",
+    "  no_redeclared  final.preserved.redeclared 가 비어 있음 (도구가 모델의 선언을 고치지 않았음)",
+    "  no_truncated   어느 시도의 답도 길이 제한에서 잘리지 않았음",
+    "  clean_tree     git.dirty 가 false (기록이 없으면 어긴 것으로 본다)",
+    "  not_mock       mock 실행이 아님",
+    "  model          null 이면 보지 않는다. 이름을 적으면 summary.model 이 그것과 같아야 한다",
+    "ordering: 위에서부터 차례로 비교한다 (앞이 같을 때만 다음을 본다). 끝까지 같으면 실행 이름순.",
+    "  {by: <값>, order: asc|desc}  모은 값 하나로 줄 세운다. 값이 없는 실행은 맨 뒤",
+    "  {by: representative, metrics: {<값>: 가중치}}  후보들의 중앙값에 가까운 순.",
+    "      거리 = 합(가중치 x |값 - 중앙값| / (최댓값 - 최솟값)). 범위가 0 이면 그 값은 0",
+    "쓸 수 있는 값: warning, fatal, attempts, format_failures, audit_failures, screens, data_actions,",
+    "  changes, unmatched_changes, diagnoses, input_tokens, output_tokens, reasoning_tokens, cost_usd"
+  ],
+  "gates": {
+    "passed": true,
+    "no_redeclared": true,
+    "no_truncated": true,
+    "clean_tree": true,
+    "not_mock": true,
+    "model": null
+  },
+  "ordering": [
+    {"by": "warning", "order": "asc"},
+    {"by": "representative", "metrics": {"screens": 1, "data_actions": 1, "changes": 1}},
+    {"by": "attempts", "order": "asc"}
+  ]
+}
