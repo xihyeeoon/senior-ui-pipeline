@@ -421,8 +421,8 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
     "model": null
   },
   "ordering": [
-    {"by": "warning", "order": "asc"},
     {"by": "representative", "metrics": {"screens": 1, "data_actions": 1, "changes": 1}},
+    {"by": "warning", "order": "asc"},
     {"by": "attempts", "order": "asc"}
   ]
 }
@@ -443,6 +443,10 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
 같으면 실행 이름순 (정해진 순서를 내기 위해서일 뿐 뜻은 없다). 순서를 바꾸려면
 목록의 순서를, 방향을 바꾸려면 `order` 를, 대표성의 무게를 바꾸려면 `metrics` 의
 가중치를 고친다.
+
+기본은 대표성 → warning → 시도 수다. 이 규칙은 여러 실행 중 **전형적인 시안** 을
+고르는 것이므로 대표성이 먼저다 — warning 이 하나 적다고 가장 튀는 시안이 1등이
+되면 안 된다. warning 과 시도 수는 대표성이 같을 때만 가른다.
 
 - `{"by": <값>, "order": "asc" | "desc"}` — 모은 값 하나로 줄 세운다. 값이 없는
   실행은 맨 뒤. 값: `warning` `fatal` `attempts` `format_failures`

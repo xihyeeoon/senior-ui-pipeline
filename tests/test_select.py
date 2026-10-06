@@ -9,10 +9,11 @@ audit · plan 을 루프가 쓰는 모양 그대로 만들어 두고, 순위와 
             warning  화면  data-action  변경  시도
     pass-a     2      9       30         7     1     대표성 0
     pass-b     2      8       25         5     2     대표성 1/4 + 5/15 + 2/5
-    pass-c     1     12       40        10     3
+    pass-c     1     12       40        10     3     대표성 3/4 + 10/15 + 3/5
 
-    warning 적은 순 -> pass-c 가 1등. pass-a · pass-b 는 warning 이 같으므로
-    대표성 (후보 셋의 중앙값 9 · 30 · 7 에 가까운 순) -> pass-a, pass-b.
+    대표성 (후보 셋의 중앙값 9 · 30 · 7 에 가까운 순) 이 먼저다 -> pass-a,
+    pass-b, pass-c. pass-c 는 warning 이 하나 적지만 가장 튀는 시안이다 - 이
+    규칙은 여러 실행 중 전형적인 시안을 고르는 것이므로 warning 은 그다음이다.
 """
 import io
 import json
@@ -151,9 +152,9 @@ def write_rule(tmp_path, **change):
 def test_five_runs_rank_and_exclusion_reasons(five):
     code, result, _md = select(five)
     assert code == 0
-    assert order(result) == ["20261007-120000-pass-c", "20261007-100000-pass-a",
-                             "20261007-110000-pass-b"]
-    assert result["rank1"] == "20261007-120000-pass-c"
+    assert order(result) == ["20261007-100000-pass-a", "20261007-110000-pass-b",
+                             "20261007-120000-pass-c"]
+    assert result["rank1"] == "20261007-100000-pass-a"
     why = reasons(result)
     assert why == {"20261007-130000-fail": ["통과하지 못함 (budget_exhausted)"],
                    "20261007-140000-redeclared": ["도구가 고침: redeclared BANKS"]}
@@ -257,12 +258,13 @@ def test_runs_of_another_task_are_left_out(five):
 # 3. 규칙은 파일에 있다 - 순서 · 가중치를 파일에서 바꾼다
 # ===================================================================== #
 def test_ordering_comes_from_the_rule_file(five):
-    rep = DEFAULT_RULE["ordering"][1]
-    rule = write_rule(five, ordering=[rep, {"by": "warning", "order": "asc"}])
+    rep = DEFAULT_RULE["ordering"][0]
+    assert rep["by"] == "representative"
+    rule = write_rule(five, ordering=[{"by": "warning", "order": "asc"}, rep])
     _code, result, _md = select(five, "--rule", rule)
-    # 대표성이 먼저면 pass-a(0) < pass-b(0.98) < pass-c(2.02)
-    assert order(result) == ["20261007-100000-pass-a", "20261007-110000-pass-b",
-                             "20261007-120000-pass-c"]
+    # warning 이 먼저면 pass-c(1) 가 1등, 그다음 대표성 pass-a(0) < pass-b(0.98)
+    assert order(result) == ["20261007-120000-pass-c", "20261007-100000-pass-a",
+                             "20261007-110000-pass-b"]
 
 
 def test_weights_come_from_the_rule_file(five):
@@ -320,11 +322,11 @@ def test_researcher_decision_is_left_blank(five):
 def test_md_ranks_every_run_and_links_rank1_brief(five):
     _code, _result, md = select(five)
     table = [l for l in md.splitlines() if l.startswith("| ") and "`2026" in l]
-    first = [l for l in table if "pass-c" in l][0]
-    assert first.startswith("| 1 | `20261007-120000-pass-c`")
+    first = [l for l in table if "pass-a" in l][0]
+    assert first.startswith("| 1 | `20261007-100000-pass-a`")
     assert any("redeclared" in l and "도구가 고침: redeclared BANKS" in l for l in table)
-    assert "**1등: `20261007-120000-pass-c`**" in md
-    assert "(../runs/20261007-120000-pass-c/designer_brief.md)" in md
+    assert "**1등: `20261007-100000-pass-a`**" in md
+    assert "(../runs/20261007-100000-pass-a/designer_brief.md)" in md
 
 
 def test_output_file_names(five):
@@ -340,15 +342,15 @@ def test_output_file_names(five):
 def test_compare_with_an_earlier_selection(five):
     _code, before, _md = select(five)
     before_path = str(five / "sel" / sorted(os.listdir(str(five / "sel")))[0])
-    rule = write_rule(five, ordering=[DEFAULT_RULE["ordering"][1]])
+    rule = write_rule(five, ordering=[{"by": "warning", "order": "asc"}])
     _code, after, md = select(five, "--rule", rule, "--compare", before_path)
     c = after["compare"]
     assert c["rule_changed"] is True and c["ordering"]["changed"] is True
-    assert c["rank1"] == {"before": "20261007-120000-pass-c",
-                          "after": "20261007-100000-pass-a"}
+    assert c["rank1"] == {"before": "20261007-100000-pass-a",
+                          "after": "20261007-120000-pass-c"}
     runs = {r["name"]: r for r in c["runs"]}
-    assert runs["20261007-120000-pass-c"]["before"][0] == 1
-    assert runs["20261007-120000-pass-c"]["after"][0] == 3
+    assert runs["20261007-120000-pass-c"]["before"][0] == 3
+    assert runs["20261007-120000-pass-c"]["after"][0] == 1
     assert runs["20261007-130000-fail"]["after"][0] is None
     assert "## 지난 고르기와 비교" in md
 

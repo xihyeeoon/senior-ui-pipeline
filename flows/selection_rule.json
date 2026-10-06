@@ -10,6 +10,7 @@
     "  not_mock       mock 실행이 아님",
     "  model          null 이면 보지 않는다. 이름을 적으면 summary.model 이 그것과 같아야 한다",
     "ordering: 위에서부터 차례로 비교한다 (앞이 같을 때만 다음을 본다). 끝까지 같으면 실행 이름순.",
+    "  대표성이 먼저다 - 여러 실행 중 전형적인 시안을 고르는 규칙이다. warning 이 적어도 가장 튀는 시안이 1등이 되면 안 된다.",
     "  {by: <값>, order: asc|desc}  모은 값 하나로 줄 세운다. 값이 없는 실행은 맨 뒤",
     "  {by: representative, metrics: {<값>: 가중치}}  후보들의 중앙값에 가까운 순.",
     "      거리 = 합(가중치 x |값 - 중앙값| / (최댓값 - 최솟값)). 범위가 0 이면 그 값은 0",
@@ -25,8 +26,8 @@
     "model": null
   },
   "ordering": [
-    {"by": "warning", "order": "asc"},
     {"by": "representative", "metrics": {"screens": 1, "data_actions": 1, "changes": 1}},
+    {"by": "warning", "order": "asc"},
     {"by": "attempts", "order": "asc"}
   ]
 }
