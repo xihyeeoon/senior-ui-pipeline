@@ -1,14 +1,14 @@
 ## 원본이 가진 선택지
 
 원본의 반복 선택지 (스크립트가 런타임에 그린다):
-  menu-item — 73개 (MENU_BANK 79 + MENU_CARD 5)
+  menu-item — 289개 (MENU_BANK 79 + MENU_CARD 77 + MENU_STOCK 72 + MENU_INSURE 55 + MENU_BENEFIT 41 + MENU_GOODS 18 + MENU_HELP 12)
+  menu-chip — 60개
   pick-bill — 18개 (BILL_ITEMS 23)
-  menu-chip — 10개
   pw — 10개 (PW_KEYS 10)
   menu-tab — 7개 (MENU_TABS 7)
 
 이 데이터는 도구가 다음 이름으로 넣어 준다:
-  window.PRESERVED.MENU_BANK (79개) · window.PRESERVED.MENU_CARD (5개) · window.PRESERVED.BILL_ITEMS (23개) · window.PRESERVED.PW_KEYS (10개) · window.PRESERVED.MENU_TABS (7개)
+  window.PRESERVED.MENU_BANK (79개) · window.PRESERVED.MENU_CARD (77개) · window.PRESERVED.MENU_STOCK (72개) · window.PRESERVED.MENU_INSURE (55개) · window.PRESERVED.MENU_BENEFIT (41개) · window.PRESERVED.MENU_GOODS (18개) · window.PRESERVED.MENU_HELP (12개) · window.PRESERVED.BILL_ITEMS (23개) · window.PRESERVED.PW_KEYS (10개) · window.PRESERVED.MENU_TABS (7개)
 
 목록을 직접 쓰지 마라. 이것을 참조해 그려라. 몇 개를 어떻게 보일지는 네가
 정한다 (검색, 자주 쓰는 것 먼저, 탭, 가나다 묶음 등). 다만 모든 값을 고를

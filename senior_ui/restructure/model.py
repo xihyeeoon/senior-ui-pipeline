@@ -795,7 +795,10 @@ BILL_ORIGINAL = os.path.join(ROOT, "inputs", "original_bill.html")
 BILL_FLOW = os.path.join(FLOWS_DIR, "original_bill.json")
 
 # 공과금 원본에서 도구가 꺼내 넣어 주는 배열 (docs/input-contract.md 의 공과금 그룹 표).
-BILL_ARRAYS = ["MENU_TABS", "MENU_BANK", "MENU_CARD", "BILL_ITEMS", "PW_KEYS"]
+# 범위 A (2026-10-06) 부터 메뉴 일곱 탭이 모두 차 있다 - B 판에서는 뒤의 다섯이 빈
+# 배열이라 뽑히지 않았다.
+BILL_ARRAYS = ["MENU_TABS", "MENU_BANK", "MENU_CARD", "MENU_STOCK", "MENU_INSURE",
+               "MENU_BENEFIT", "MENU_GOODS", "MENU_HELP", "BILL_ITEMS", "PW_KEYS"]
 
 # mock 모드 -> 그 모드가 되읽는 빌드의 과제. 다른 과제로 돌리면 루프가 시작하지 않는다.
 BILL_MODES = ["bill-identity"]
