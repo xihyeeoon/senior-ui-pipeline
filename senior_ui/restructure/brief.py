@@ -10,6 +10,11 @@ r"""통과한 실행마다 디자이너에게 넘길 변경 설명서(designer_b
                                                             걸어 본 결과)
     5. 사람이 따로 봐야 할 것                               (warning · 도구가 고친 것 ·
                                                             일부러 뺀 선택지)
+    6. 스크린샷을 보고 무엇을 다듬었나                      (다듬기 회차마다 비평 ·
+                                                            바꾼 것 · 전후 스크린샷)
+
+맨 위 한 줄은 최종 빌드가 어디서 왔는지다 - 생성인지 다듬기 몇 회차인지, 다듬기가
+실패해 되돌렸는지 (summary 의 refine.final_from · reverted).
 
 전부 실행 폴더에 이미 있는 파일에서 옮긴다. 새로 판단하는 것은 없다.
 
@@ -32,6 +37,118 @@ def _cell(s):
 
 def _link(path, base):
     return os.path.relpath(path, base).replace(os.sep, "/")
+
+
+# 진단의 근거가 무엇이었나 (plan.EVIDENCE_KINDS). 빠지거나 틀린 값은 "미표시".
+EVIDENCE_LABEL = {"screen": "화면", "code": "코드", "both": "화면+코드"}
+
+
+def evidence_label(d):
+    return EVIDENCE_LABEL.get(d.get("evidence_kind"), "미표시")
+
+
+def final_line(refine, attempt):
+    """설명서 맨 위 한 줄. 예: "최종: 다듬기 1회차 (시도 3)" · "최종: 생성 (다듬기
+    2회차가 실패해 되돌림) · 시도 1". 다듬기 기록이 없는 실행(다듬기 전의 실행)은
+    "최종: 생성 (시도 N)"."""
+    label = (refine or {}).get("final_label") or "생성"
+    if "(" in label:
+        return "최종: %s · 시도 %d" % (label, attempt)
+    return "최종: %s (시도 %d)" % (label, attempt)
+
+
+def _see_items(folder):
+    """see/index.json 의 방문별 그림 파일들. `{방문: [경로…]}` (순서대로)."""
+    out = {}
+    index = os.path.join(folder or "", "index.json")
+    if not folder or not os.path.exists(index):
+        return out
+    for it in json.load(io.open(index, encoding="utf-8")):
+        out.setdefault(it["visit"], []).append(os.path.join(folder, it["file"]))
+    return out
+
+
+def _same_pictures(a, b):
+    """두 그림 목록이 바이트로 같은가. 같은 브라우저 · 같은 크기로 찍으므로 화면이
+    그대로면 PNG 도 같다."""
+    if len(a) != len(b):
+        return False
+    for x, y in zip(a, b):
+        with open(x, "rb") as f, open(y, "rb") as g:
+            if f.read() != g.read():
+                return False
+    return True
+
+
+def shot_pairs(before, after):
+    """`[(방문, 전 그림, 후 그림, 바뀜?)]`. 첫 장끼리 잇고, 바뀜은 모든 장으로 본다."""
+    b, a = _see_items(before), _see_items(after)
+    rows = []
+    for visit in list(a) + [v for v in b if v not in a]:
+        bb, aa = b.get(visit) or [], a.get(visit) or []
+        changed = None if not (bb and aa) else not _same_pictures(bb, aa)
+        rows.append((visit, bb[0] if bb else None, aa[0] if aa else None, changed))
+    return rows
+
+
+def refine_section(refine, brief_dir):
+    """보고 다듬기 절. 다듬기 기록이 없으면 빈 목록."""
+    rounds = (refine or {}).get("rounds") or []
+    if not rounds:
+        return []
+    out = ["## 보고 다듬기", "",
+           "검사를 통과한 빌드의 스크린샷을 모델에게 보여 주고, 60대 이상 사용자가 처음 "
+           "볼 때 어디서 멈추고 무엇을 못 읽고 무엇을 잘못 누를지 화면을 보고 판단하게 "
+           "했다. 다듬은 빌드는 검사를 다시 통과해야 최종이 된다.", ""]
+    if refine.get("reverted"):
+        out += ["**되돌림**: %s — 최종은 직전에 통과한 시도 %s 다." % (
+            refine["reverted"]["reason"], refine["reverted"]["to_attempt"]), ""]
+    for x in rounds:
+        crit = None
+        if x.get("critique") and os.path.exists(x["critique"]):
+            crit = json.load(io.open(x["critique"], encoding="utf-8"))
+        if x.get("stopped") == "done":
+            result = "고칠 것이 없다고 답했다 — 다듬기를 멈췄다"
+        elif x.get("became_final"):
+            result = "통과 — 새 최종 (시도 %s)" % (x.get("fix_attempt") or x["attempt"])
+            if x.get("fix_attempt"):
+                result += " · 처음 다듬은 빌드는 떨어져 한 번 고쳤다"
+        elif x.get("stopped") == "reverted":
+            result = "다듬은 빌드와 고친 빌드가 모두 떨어졌다 — 되돌림"
+        elif x.get("stopped") == "call_failed":
+            result = "모델 호출이 실패했다 — 최종은 그대로"
+        else:
+            result = "통과하지 못함"
+        out += ["### %d회차 — 시도 %s 의 빌드를 다듬음 (시도 %s)" % (
+            x["round"], x.get("from_attempt"), x["attempt"]), "",
+            "결과: %s. 비평 %s건 · keep %s건 · done=%s · 그림 %s장." % (
+                result, x.get("issues") if x.get("issues") is not None else "?",
+                x.get("keep") if x.get("keep") is not None else "?",
+                {True: "true", False: "false"}.get(x.get("done"), "?"), x.get("images")),
+            ""]
+        issues = [i for i in (crit or {}).get("issues") or [] if isinstance(i, dict)]
+        if issues:
+            out += ["| 화면 | 어디서 왜 막히나 | 그림에서 본 것 | 고친 것 |",
+                    "|---|---|---|---|"]
+            out += ["| %s | %s | %s | %s |" % tuple(
+                _cell(i.get(k)) for k in ("screen", "problem", "seen", "fix"))
+                for i in issues]
+            out.append("")
+        keep = (crit or {}).get("keep") if isinstance((crit or {}).get("keep"), list) else []
+        if keep:
+            out += ["그대로 둔 것:", ""] + ["- %s" % _cell(k) for k in keep] + [""]
+        pairs = shot_pairs(x.get("before_shots"), x.get("after_shots"))             if x.get("after_shots") else []
+        if pairs:
+            out += ["전후 스크린샷 (첫 장끼리, 바뀜은 모든 장을 견준 것):", "",
+                    "| 화면 | 전 | 후 | |", "|---|---|---|---|"]
+            for visit, b, a, changed in pairs:
+                out.append("| `%s` | %s | %s | %s |" % (
+                    visit,
+                    "[전](%s)" % _link(b, brief_dir) if b else "-",
+                    "[후](%s)" % _link(a, brief_dir) if a else "-",
+                    {True: "바뀜", False: "그대로", None: "-"}[changed]))
+            out.append("")
+    return out
 
 
 def mapping_rows(plan, original_screens):
@@ -90,11 +207,12 @@ def error_rows(errors, plan, metrics, warnings):
 
 def render_brief(run_name, attempt, plan, diagnosis, report, original_screens,
                  shots_dir, brief_dir, preserved=None, redeclared=None,
-                 model_html=None, git=None, reflections=None, errors=None):
+                 model_html=None, git=None, reflections=None, errors=None,
+                 refine=None):
     report = report or {}
     metrics = report.get("metrics") or {}
     diag = {d["id"]: d for d in diagnosis or []}
-    out = ["# 디자이너용 변경 설명서", ""]
+    out = ["# 디자이너용 변경 설명서", "", final_line(refine, attempt), ""]
 
     head = "실행 `%s` · 시도 %d 에서 검사를 통과한 빌드" % (run_name, attempt)
     if git and git.get("commit"):
@@ -124,9 +242,11 @@ def render_brief(run_name, attempt, plan, diagnosis, report, original_screens,
             _cell(answered), _cell(where)))
     out.append("")
     if diagnosis:
-        out += ["진단 (원본에서 고령 사용자가 막힐 곳과 그 근거):", ""]
-        out += ["- **%s** `%s` %s — %s (근거: %s)" % (
-            d["id"], d.get("screen"), d.get("element"), d.get("problem"), d.get("evidence"))
+        out += ["진단 (원본에서 고령 사용자가 막힐 곳과 그 근거 — 근거가 화면 그림에서 "
+                "왔는지 코드에서 왔는지를 [ ] 에 적는다):", ""]
+        out += ["- **%s** `%s` %s — %s (근거[%s]: %s)" % (
+            d["id"], d.get("screen"), d.get("element"), d.get("problem"),
+            evidence_label(d), d.get("evidence"))
             for d in diagnosis]
         out.append("")
     if reflections:
@@ -154,6 +274,8 @@ def render_brief(run_name, attempt, plan, diagnosis, report, original_screens,
                 out.append("- `%s` 오류 상태 — [%s](%s)" % (
                     r["id"], os.path.basename(shot), _link(shot, brief_dir)))
         out.append("")
+
+    out += refine_section(refine, brief_dir)
 
     out += ["## 화면별 스크린샷", "", "검사기가 과제를 걸으며 찍은 것이다.", ""]
     for sc in plan["screens"]:
@@ -248,6 +370,7 @@ def write_brief(summary, original_screens, brief_path, errors=None):
         redeclared=(final.get("preserved") or {}).get("redeclared"),
         model_html=final.get("model_html_promoted") or final.get("model_html"),
         git=summary.get("git"), reflections=reflections,
-        errors=original_error_paths() if errors is None else errors)
+        errors=original_error_paths() if errors is None else errors,
+        refine=summary.get("refine"))
     io.open(brief_path, "w", encoding="utf-8", newline="\n").write(text)
     return brief_path

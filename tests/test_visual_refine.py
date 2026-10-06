@@ -701,3 +701,86 @@ def test_the_mock_critiques_have_the_answer_shape(rmode, round_no, blocks):
     assert text.count("```") == blocks * 2
     c, problems = _api.plan_module.parse_critique(text)
     assert problems == [] and isinstance(c["done"], bool)
+
+
+# --------------------------------------------------------------------------- #
+# 5. 설명서
+# --------------------------------------------------------------------------- #
+brief = _api.brief_module
+
+
+@pytest.mark.parametrize("refine,attempt,want", [
+    ({"final_label": "다듬기 1회차"}, 3, "최종: 다듬기 1회차 (시도 3)"),
+    ({"final_label": "생성 (다듬기 2회차가 실패해 되돌림)"}, 1,
+     "최종: 생성 (다듬기 2회차가 실패해 되돌림) · 시도 1"),
+    ({"final_label": "생성"}, 2, "최종: 생성 (시도 2)"),
+    (None, 2, "최종: 생성 (시도 2)"),
+])
+def test_the_brief_starts_with_where_the_final_build_came_from(refine, attempt, want):
+    assert brief.final_line(refine, attempt) == want
+
+
+def test_a_refined_run_writes_its_final_line_and_refine_section(audit_by_marker, out_root,
+                                                                tmp_path):
+    code, s, sent, d = run_refine(audit_by_marker, out_root, tmp_path, [IMPROVE, DONE])
+    md = read(os.path.join(d, "designer_brief.md"))
+    assert md.splitlines()[2] == "최종: 다듬기 1회차 (시도 2)"
+    assert "## 보고 다듬기" in md
+    assert "### 1회차 — 시도 1 의 빌드를 다듬음 (시도 2)" in md
+    assert "결과: 통과 — 새 최종 (시도 2). 비평 2건 · keep 1건 · done=false" in md
+    assert "### 2회차 — 시도 2 의 빌드를 다듬음 (시도 3)" in md
+    assert "고칠 것이 없다고 답했다" in md
+    assert model.MOCK_CRITIQUE["issues"][0]["seen"].split(" ")[0] in md
+    # 승격된 사본도 같은 첫 줄
+    promoted = read(os.path.join(out_root, "restructured_auto.designer_brief.md"))
+    assert "최종: 다듬기 1회차 (시도 2)" in promoted
+
+
+def test_a_reverted_run_says_so_at_the_top(audit_by_marker, out_root, tmp_path):
+    code, s, sent, d = run_refine(audit_by_marker, out_root, tmp_path, [BREAK],
+                                  fix=(FIX_BROKEN,))
+    md = read(os.path.join(d, "designer_brief.md"))
+    assert "최종: 생성 (다듬기 1회차가 실패해 되돌림) · 시도 1" in md
+    assert "**되돌림**: 다듬기 1회차의 빌드(시도 2)와 고친 빌드(시도 3)가 모두" in md
+
+
+def test_the_diagnosis_list_shows_the_evidence_kind(tmp_path):
+    diag = [{"id": "D1", "screen": "home", "element": "e", "problem": "p",
+             "evidence": "ev", "evidence_kind": "screen"},
+            {"id": "D2", "screen": "home", "element": "e", "problem": "p",
+             "evidence": "ev", "evidence_kind": "both"},
+            {"id": "D3", "screen": "home", "element": "e", "problem": "p",
+             "evidence": "ev"}]
+    plan = {"screens": [{"name": "start", "purpose": "시작", "from": ["home"]}],
+            "changes": []}
+    md = brief.render_brief("r", 1, plan, diag, {}, ["home"], str(tmp_path),
+                            str(tmp_path))
+    assert "(근거[화면]: ev)" in md and "(근거[화면+코드]: ev)" in md
+    assert "(근거[미표시]: ev)" in md
+
+
+def test_the_refine_section_links_before_and_after_and_marks_changes(tmp_path):
+    def shots(name, files):
+        folder = os.path.join(str(tmp_path), name, "see")
+        index = []
+        for visit, size in files:
+            make_png(os.path.join(folder, "%s.1.png" % visit), 390, size)
+            index.append({"visit": visit, "file": "%s.1.png" % visit, "part": 1,
+                          "parts": 1, "offset": 0, "more_px": 0})
+        with open(os.path.join(folder, "index.json"), "w", encoding="utf-8") as f:
+            json.dump(index, f)
+        return folder
+    before = shots("a1", [("home", 844), ("bank", 844)])
+    after = shots("a2", [("home", 844), ("bank", 800)])
+    crit = os.path.join(str(tmp_path), "c.json")
+    with open(crit, "w", encoding="utf-8") as f:
+        json.dump(model.MOCK_CRITIQUE, f, ensure_ascii=False)
+    refine = {"rounds": [{"round": 1, "attempt": 2, "from_attempt": 1, "images": 2,
+                          "before_shots": before, "after_shots": after,
+                          "critique": crit, "issues": 2, "keep": 1, "done": False,
+                          "passed": True, "became_final": True, "stopped": None}]}
+    md = "\n".join(brief.refine_section(refine, str(tmp_path)))
+    assert "| `home` | [전](a1/see/home.1.png) | [후](a2/see/home.1.png) | 그대로 |" in md
+    assert "| `bank` | [전](a1/see/bank.1.png) | [후](a2/see/bank.1.png) | 바뀜 |" in md
+    assert "| 화면 | 어디서 왜 막히나 | 그림에서 본 것 | 고친 것 |" in md
+    assert "그대로 둔 것:" in md
