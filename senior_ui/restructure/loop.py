@@ -50,7 +50,8 @@ from .plan import (PlanProblems, apply_changes, critique_issues, evidence_kinds,
 from .preserve import inject, names_read, preserved_data
 from .prompt import (BUILD_SHOTS_INTRO, build_plan_prompt, build_prompt,
                      build_refine_prompt, choices_block, errors_block,
-                     load_plan_template, load_refine_template, load_template, one_line,
+                     load_plan_template, load_refine_template, load_template,
+                     model_input_html, one_line,
                      plan_retry_block, retry_block, shots_section, with_reflection)
 from .reply import (FlowShape, accept_done_alias, failure_report, parse_reply,
                     preserved_problems, problems_report, validate_flow)
@@ -254,6 +255,9 @@ class Run:
         self.template = template
         self.plan_template = plan_template
         self.original_html = original_html
+        # 모델에 보내는 원본 - 주석을 뺀 것 (prompt.model_input_html). 검사기의
+        # 비교 기준은 위의 원본 그대로다.
+        self.model_original = model_input_html(original_html)
         # 원본의 화면 이름. 계획의 from 이 가리킬 수 있는 이름들이다.
         self.original_screens = screens_in(original_html)
         # 이 실행의 과제 (tasks/<과제>.json). 과제가 정한 오류 경로는 계획 ·
@@ -539,7 +543,7 @@ def request_plan(r, n, p):
     여기서 끝났고 outcome 이 다음에 할 일이다. 쓸 수 없는 답은 형식 실패다 -
     모델이 고칠 수 있는 것이므로 형식 예산을 쓴다."""
     images = r.original_images
-    prompt = build_plan_prompt(r.plan_template, r.original_html, r.choices,
+    prompt = build_plan_prompt(r.plan_template, r.model_original, r.choices,
                                r.original_screens, plan_retry_block(r.plan_error),
                                errors=errors_block(r.errors),
                                shots=shots_section(images))
@@ -774,7 +778,7 @@ def request_reply(r, n, p, stage=None, mock=None):
     # 재시도에서는 코드보다 반성을 먼저 쓰게 한다. 그래서 실패 목록보다 앞이다.
     r.asked_reflection = bool(block)
     block = with_reflection(block)
-    prompt = build_prompt(r.template, r.original_html, block, r.choices, plan_text(r),
+    prompt = build_prompt(r.template, r.model_original, block, r.choices, plan_text(r),
                           errors=errors_block(r.errors))
     io.open(p + ".prompt.txt", "w", encoding="utf-8", newline="\n").write(prompt)
     r.log("prompt: %d chars%s" % (len(prompt), " (with retry block)" if block else ""))

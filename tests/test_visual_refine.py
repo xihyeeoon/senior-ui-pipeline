@@ -893,3 +893,55 @@ def test_probe_without_image_sends_one_request(probe_env, out_root, capsys):
     client = F.install(probe_env, ["ok"])
     assert run_cli(probe_env, "--probe", "gpt-6.1-sol") == 0
     assert len(client.sent) == 1
+
+
+# --------------------------------------------------------------------------- #
+# 감사 1. 원본의 주석은 모델 입력에서 뺀다
+# --------------------------------------------------------------------------- #
+strip = _api.prompt_module.model_input_html
+
+
+def test_markup_comments_are_removed_with_their_lines():
+    html = ("<body>\n  <!-- 탭 기록 장치 -->\n<p>남는다</p><!-- 줄 끝 주석 -->\n"
+            "<!-- 여러\n줄 -->\n<p>둘</p>\n</body>")
+    assert strip(html) == "<body>\n<p>남는다</p>\n<p>둘</p>\n</body>"
+
+
+def test_block_comments_are_removed_only_inside_style_and_script():
+    html = ("<style>\n  /* 제목 */\n  a{color:#000;} /* 끝 */\n</style>\n"
+            "<p>/* 화면의 글 */</p>\n"
+            "<script>\n/* ==== 상태 ==== */\nconst x = 1; /* 메모 */\n</script>")
+    assert strip(html) == ("<style>\n  a{color:#000;}\n</style>\n"
+                           "<p>/* 화면의 글 */</p>\n"
+                           "<script>\nconst x = 1;\n</script>")
+
+
+def test_one_comment_never_swallows_the_code_up_to_the_next():
+    html = "<!-- a --> <p>x</p> <!-- b -->\n<script>/* a */ go(); /* b */</script>"
+    assert strip(html) == " <p>x</p> \n<script> go();</script>"
+
+
+@pytest.mark.parametrize("path", ["inputs/original_transfer.html",
+                                  "inputs/original_bill.html"])
+def test_the_originals_lose_only_their_comments(path):
+    html = open(os.path.join(config.ROOT, path), encoding="utf-8").read()
+    out = strip(html)
+    assert "<!--" not in out and "/*" not in out
+    assert _api.plan_module.screens_in(out) == _api.plan_module.screens_in(html)
+    assert "기록 장치" in html and "기록 장치" not in out
+
+
+def test_the_prompts_carry_the_stripped_original_and_the_audit_the_full_one(
+        fake_run_env, out_root):
+    got = {}
+
+    def fake_audit(orig, orig_html, *a, **kw):
+        got["orig_html"] = orig_html
+        return passing_report()
+    fake_run_env.setattr(loop, "run_audit", fake_audit)
+    _c, _s, sent, d = run_with(fake_run_env, out_root, PLAN_THEN_GOOD)
+    for c in sent:
+        assert "<!--" not in c["prompt"] and "기록 장치" not in c["prompt"]
+    for name in ("attempt_1.plan_prompt.txt", "attempt_1.prompt.txt"):
+        assert "<!--" not in read(os.path.join(d, name))
+    assert "<!--" in got["orig_html"]

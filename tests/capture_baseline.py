@@ -302,9 +302,10 @@ def capture_prompt(out):
     dump_text(os.path.join(d, "choices_block.txt"), choices)
     dump_text(os.path.join(d, "plan.txt"), plan_prompt(orig_html, choices))
     dump_text(os.path.join(d, "attempt_1.txt"),
-              _api.build_prompt(template, orig_html, "", choices, plan))
+              _api.build_prompt(template, model_html(orig_html), "", choices, plan))
     dump_text(os.path.join(d, "retry_%s.txt" % PROMPT_RETRY_CASE),
-              _api.build_prompt(template, orig_html, _api.prompt_module.with_reflection(retry),
+              _api.build_prompt(template, model_html(orig_html),
+                                _api.prompt_module.with_reflection(retry),
                                 choices, plan))
     say("  prompt: choices_block, 진단·계획, 첫 시도, 재시도(%s)" % PROMPT_RETRY_CASE)
 
@@ -315,9 +316,15 @@ def prompt_plan():
     return json.dumps(_api.model_module.MOCK_PLAN, ensure_ascii=False, indent=2)
 
 
+def model_html(orig_html):
+    """루프가 모델에 보내는 원본 - 주석을 뺀 것 (prompt.model_input_html). 선택지
+    요약은 원본 그대로로 만든다 (루프와 같다)."""
+    return _api.prompt_module.model_input_html(orig_html)
+
+
 def plan_prompt(orig_html, choices):
     """진단·계획 프롬프트 전문 (첫 호출, 재시도 블록 없음)."""
-    return _api.build_plan_prompt(_api.load_plan_template(), orig_html, choices,
+    return _api.build_plan_prompt(_api.load_plan_template(), model_html(orig_html), choices,
                                   _api.plan_module.screens_in(orig_html))
 
 
@@ -729,10 +736,10 @@ def bill_errors():
 def bill_prompts(orig_html, orig_snapshot):
     """(선택지 요약, 진단·계획 프롬프트, 첫 생성 프롬프트) 전문."""
     choices = _api.choices_block(orig_snapshot, orig_html)
-    plan = _api.build_plan_prompt(_api.load_plan_template(BILL_TASK), orig_html,
+    plan = _api.build_plan_prompt(_api.load_plan_template(BILL_TASK), model_html(orig_html),
                                   choices, _api.plan_module.screens_in(orig_html),
                                   errors=bill_errors())
-    first = _api.build_prompt(_api.load_template(BILL_TASK), orig_html, "", choices,
+    first = _api.build_prompt(_api.load_template(BILL_TASK), model_html(orig_html), "", choices,
                               bill_prompt_plan(), errors=bill_errors())
     return choices, plan, first
 

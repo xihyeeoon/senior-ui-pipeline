@@ -398,7 +398,7 @@
     display:flex; justify-content:center;
   }
   #phone{
-    width:min(390px, 100vw); height:844px; /* 폰에서는 아래 규칙이 덮는다 */
+    width:min(390px, 100vw); height:844px;
     background:#fff; position:relative; overflow:hidden;
     box-shadow:0 0 0 1px #cfd4dd;
   }
@@ -415,7 +415,6 @@
 
   .body{flex:1 1 auto; overflow-y:auto; -webkit-overflow-scrolling:touch;}
 
-  /* ---------- 1. 메인 ---------- */
   .home{background:var(--bg);}
   .homehead{display:flex; align-items:center; justify-content:space-between; padding:8px 18px 14px; background:var(--bg);}
   .homehead .name{font-size:19px; font-weight:700; display:flex; align-items:center; gap:7px;}
@@ -455,7 +454,6 @@
   .tabbar .ti{font-size:18px;}
   .footlinks{display:flex; justify-content:space-around; padding:16px 0 22px; font-size:13px; color:#5A6069;}
 
-  /* ---------- 2. 받는 사람 ---------- */
   .h1{font-size:25px; font-weight:700; padding:6px 20px 18px;}
   .inputline{margin:0 20px; border-bottom:1px solid #DDE1E7; padding-bottom:11px;
     display:flex; align-items:center; justify-content:space-between;}
@@ -472,7 +470,6 @@
   .person .st{margin-left:auto; font-size:17px; color:#D3D7DD;}
   .person .st.on{color:var(--blue);}
 
-  /* ---------- 3. 은행 선택 ---------- */
   .sheetwrap{position:absolute; inset:0; background:rgba(0,0,0,.45); display:none; z-index:5;}
   .sheetwrap.on{display:block;}
   .sheet{position:absolute; left:0; right:0; bottom:0; top:96px; background:#fff;
@@ -488,10 +485,8 @@
   .bk .bi{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;
     font-size:12px;color:#fff;font-weight:800;}
 
-  /* ---------- 4. 계좌번호 (임시) ---------- */
   .tempnote{margin:0 20px 14px; background:#FFF6E5; border:1px solid #FFE0A3; border-radius:10px;
     padding:10px 12px; font-size:12px; color:#8A6100; line-height:1.5;}
-  /* ---------- 4. 계좌번호 입력 ---------- */
   .accfield{margin:0 20px 14px; border:2px solid var(--blue); border-radius:12px; padding:11px 15px;}
   .accfield .lab{font-size:13px; color:var(--blue); margin-bottom:3px;}
   .accfield .val{font-size:21px; font-weight:600; min-height:28px; color:var(--ink);}
@@ -507,7 +502,6 @@
     letter-spacing:.5px;}
   .field input::placeholder{color:#C7CBD2; font-weight:400;}
 
-  /* ---------- 5. 금액 ---------- */
   .amthead{padding:6px 20px 0; font-size:16px; line-height:1.5; color:#4B5158;}
   .amthead b{color:#111; font-weight:700;}
   .amtq{text-align:center; font-size:27px; font-weight:700; color:#C7CBD2; margin-top:38px;}
@@ -523,7 +517,6 @@
     padding:17px; font-size:17px; font-weight:700; font-family:inherit;}
   .btn-next.on{background:var(--blue-deep); color:#fff;}
 
-  /* ---------- 6. 확인 ---------- */
   .center{text-align:center; padding-top:44px;}
   .bigav{width:62px;height:62px;border-radius:50%;background:#FEE500;margin:0 auto 22px;
     display:flex;align-items:center;justify-content:center;font-size:27px;font-weight:900;color:#111;}
@@ -535,7 +528,6 @@
   .btn-primary{margin:auto 16px 22px; background:var(--blue-deep); color:#fff; border:0; border-radius:13px;
     padding:18px; font-size:17px; font-weight:700; font-family:inherit;}
 
-  /* ---------- 7. 비밀번호 ---------- */
   .pwtitle{text-align:center; font-size:20px; font-weight:700; margin-top:88px;}
   .dots{display:flex; justify-content:center; gap:19px; margin-top:26px;}
   .dots i{width:17px;height:17px;border-radius:50%;border:2px solid #D3D7DD; display:block;}
@@ -545,7 +537,6 @@
   .pwpad button{background:transparent; border:0; height:96px; color:#fff; font-size:26px; font-family:inherit;}
   .pwpad button.sm{font-size:16px;}
 
-  /* ---------- 8. 완료 ---------- */
   .okwrap{text-align:center; padding-top:76px;}
   .okc{width:64px;height:64px;border-radius:50%;background:var(--blue-deep);margin:0 auto 24px;
     display:flex;align-items:center;justify-content:center;color:#fff;font-size:31px;}
@@ -556,7 +547,6 @@
   .bottom2 button{flex:1; border:0; border-radius:13px; padding:18px; font-size:17px; font-weight:700; font-family:inherit;}
   .bottom2 .ghost{background:#EAF0FE; color:var(--blue); flex:0 0 108px;}
   .bottom2 .fill{background:var(--blue-deep); color:#fff;}
-  /* ---------- Flutter A1 에 맞춘 것 (2026-10-05) ---------- */
   .h1row{display:flex; align-items:center; justify-content:space-between; padding-right:20px;}
   .h1row .h1{padding-right:0;}
   .srch{width:40px; height:40px; border-radius:12px; background:#EDEFF3; color:#4A4A4F; font-size:19px;
@@ -577,12 +567,6 @@
   .dialog .ebtn{width:100%; margin-top:22px; background:var(--blue-deep); color:#fff; border:0; border-radius:12px;
     padding:16px; font-size:17px; font-weight:700; font-family:inherit;}
 
-/* ---- 실기기 대응 (2026-09-29) ----------------------------------------
-   폰 브라우저는 주소창이 높이를 먹어 가용 높이가 700px 안팎이다. 프레임을
-   844px 로 고정하면 숫자판의 0/지우기와 하단 [다음] 이 화면 밖으로 나가
-   피험자가 누를 수 없다. 좁은 화면에서만 뷰포트에 맞춘다 - 데스크톱과
-   tools/audit.py(390x844)는 위 규칙 그대로 쓴다.
-   dvh 는 주소창이 접히고 펴지는 것까지 따라간다. */
 @media (max-width: 480px) {
   html, body { height: 100%; overflow: hidden; }
   #phone { width: 100vw; height: 100vh; height: 100dvh; box-shadow: none; }
@@ -592,7 +576,6 @@
 <body>
 <div id="phone">
 
-<!-- ================= 1. 메인 ================= -->
 <section class="screen on home" data-screen="home">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="homehead">
@@ -673,7 +656,6 @@
   </div>
 </section>
 
-<!-- ================= 2. 받는 사람 ================= -->
 <section class="screen" data-screen="recipient">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="navbar">
@@ -693,7 +675,6 @@
   </div>
 </section>
 
-<!-- ================= 3. 은행 선택 (바텀시트) ================= -->
 <section class="screen" data-screen="bank">
   <div class="statusbar" style="background:#8A8F98;color:#fff"><span>4:31</span><span class="right">67</span></div>
   <div class="body" style="background:#8A8F98"></div>
@@ -710,7 +691,6 @@
   </div>
 </section>
 
-<!-- ================= 4. 계좌번호 입력 ================= -->
 <section class="screen" data-screen="account">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="navbar"><span class="ico" data-action="back-recipient">‹</span><span></span><span class="ico" data-action="close-account">✕</span></div>
@@ -732,7 +712,6 @@
   <button class="btn-next" id="acc-next" data-action="account-next">다음</button>
 </section>
 
-<!-- ================= 5. 금액 입력 ================= -->
 <section class="screen" data-screen="amount">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="navbar"><span class="ico" data-action="back-account">‹</span><span></span><span class="ico" data-action="back-home">✕</span></div>
@@ -750,7 +729,6 @@
   <button class="btn-next" id="amt-next" data-action="amount-next">다음</button>
 </section>
 
-<!-- ================= 6. 최종 확인 ================= -->
 <section class="screen" data-screen="confirm">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="navbar"><span class="ico" data-action="back-amount">‹</span><span></span><span class="ico" data-action="back-home">✕</span></div>
@@ -770,7 +748,6 @@
   <button class="btn-primary" data-action="send">보내기</button>
 </section>
 
-<!-- ================= 7. 비밀번호 ================= -->
 <section class="screen" data-screen="password">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="navbar"><span></span><span></span><span class="ico" data-action="back-home">✕</span></div>
@@ -779,7 +756,6 @@
   <div class="pwpad" id="pwpad"></div>
 </section>
 
-<!-- ================= 8. 완료 ================= -->
 <section class="screen" data-screen="done">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="body">
@@ -792,7 +768,6 @@
   <div class="bottom2"><button class="ghost">공유</button><button class="fill" data-action="finish">확인</button></div>
 </section>
 
-<!-- ================= 9. 오류 팝업 - 계좌번호 (ELB00016) ================= -->
 <section class="screen" data-screen="err-account">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="dimmer" data-action="close-error"></div>
@@ -803,7 +778,6 @@
   </div>
 </section>
 
-<!-- ================= 10. 오류 팝업 - 은행 (ETA00325) ================= -->
 <section class="screen" data-screen="err-bank">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="dimmer" data-action="close-error"></div>
@@ -817,7 +791,6 @@
 </div>
 
 <script>
-/* ============ 기록 장치 ============ */
 const LOG = [];
 window.__log = LOG;
 window.__task = { startedAt: null, screen: 'home' };
@@ -828,11 +801,6 @@ function log(type, data){
 window.__startTask = function(){ LOG.length = 0; window.__task.startedAt = Date.now(); log('task_start'); };
 window.__dump = function(){ return JSON.parse(JSON.stringify(LOG)); };
 
-/* ---- 탭 기록 (실험 측정 장치, 2026-09-29) ---------------------------
-   조작 대상이 아닌 곳을 누른 것(valid:false)은 "어디를 눌러야 할지 몰랐다"는
-   뜻이라 고령 사용자 연구의 핵심 지표다. 타깃 크기(tw/th)는 손떨림으로 빗나간
-   경우를 크기 탓과 구분하는 데 쓴다. capture 단계에서 잡아야 화면이 바뀌기
-   전의 좌표가 남는다. */
 document.getElementById('phone').addEventListener('click', function(e){
   const hit = e.target.closest('[data-action]');
   const r = hit ? hit.getBoundingClientRect() : null;
@@ -846,7 +814,6 @@ document.getElementById('phone').addEventListener('click', function(e){
   });
 }, true);
 
-/* ============ 화면 전환 ============ */
 function show(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.dataset.screen===name));
   window.__task.screen = name;
@@ -856,20 +823,13 @@ function show(name){
 }
 window.__screen = ()=>window.__task.screen;
 
-/* ============ 과제 값 (Flutter 더미앱 A1 과 같다) ============
-   정답은 신한 110234567890. 판정은 계좌 화면 [다음] 과 확인 화면 [보내기] 에서
-   한다. 받는 분 이름은 입력이 아니라 정해진 값이다. */
 const ANSWER_BANK = '신한';
 const ANSWER_ACCOUNT = '110234567890';
 const BALANCE = 1000000;
 const ACC_MAX = 14;
 
-/* ============ 상태 ============ */
 const S = { bank:null, account:'', amount:0, pw:'', errFrom:null };
 
-/* ============ 고르는 버튼 묶음 ============
-   숫자판·빠른 금액은 마크업에 쓰지 않고 이 배열로 그린다. 그리는 줄에 배열
-   이름과 data-action 이름을 함께 적는다 (docs/input-contract.md). */
 const ACC_KEYS = ['1','2','3','4','5','6','7','8','9','0'];
 const AMT_KEYS = ['1','2','3','4','5','6','7','8','9','00','0'];
 const QUICK = ['10000','50000','100000','all'];
@@ -881,13 +841,11 @@ function keyButtons(keys, action){
 }
 function shuffled(list){ return list.slice().sort(()=>Math.random()-0.5); }
 
-/* 계좌 숫자판: 1~9 / 빈칸 · 0 · 지우기 */
 const accCells = keyButtons(ACC_KEYS, 'acc-num');
 accCells.splice(9, 0, '<button class="blank" disabled></button>');
 accCells.push('<button data-action="acc-del">⌫</button>');
 document.getElementById('acc-pad').innerHTML = accCells.join('');
 
-/* 금액 숫자판: 1~9 / 00 · 0 · 지우기 */
 const amtCells = keyButtons(AMT_KEYS, 'num');
 amtCells.push('<button data-action="del">⌫</button>');
 document.getElementById('amt-pad').innerHTML = amtCells.join('');
@@ -895,7 +853,6 @@ document.getElementById('amt-pad').innerHTML = amtCells.join('');
 document.getElementById('amt-quick').innerHTML =
   QUICK.map(v=>`<button data-action="quick" data-v="${v}">${QUICK_LABEL[v]}</button>`).join('');
 
-/* ============ 은행 목록 ============ */
 const BANKS = ['신한','제주','국민','기업','농협','산업','수협','신협','우리','하나','한국씨티','카카오뱅크',
   '케이뱅크','토스뱅크','경남','광주','아이엠뱅크(대구)','부산','전북','회원수협','새마을','우체국','저축은행',
   '지역농.축협','도이치','중국','중국건설','중국공상','BNP파리바','BOA','HSBC','JP모간','SC','산림조합',
@@ -922,7 +879,6 @@ function bankTab(sec){
   document.getElementById('grid-sec').style.display = sec ? 'grid' : 'none';
 }
 
-/* ============ 계좌번호 표시 ============ */
 function renderAccount(){
   const atMax = S.account.length >= ACC_MAX;
   document.getElementById('acc-input').textContent = S.account;
@@ -936,7 +892,6 @@ function renderAccount(){
     .classList.toggle('on', S.account.length>0 && !!S.bank);
 }
 
-/* ============ 비밀번호 키패드 (배열 섞임) ============ */
 function buildPwPad(){
   const cells = keyButtons(shuffled(PW_KEYS), 'pw');
   cells.splice(9, 0, '<button class="sm" data-action="pw-shuffle">재배열</button>');
@@ -949,7 +904,6 @@ function renderDots(){
   });
 }
 
-/* ============ 금액 표시 ============ */
 function renderAmount(){
   const d = document.getElementById('amt-display');
   const n = document.getElementById('amt-next');
@@ -958,7 +912,6 @@ function renderAmount(){
 }
 document.getElementById('amt-balance').textContent = BALANCE.toLocaleString();
 
-/* ============ 오류 팝업 ============ */
 function showError(name, from){
   S.errFrom = from;
   document.getElementById('err-acc-no').textContent = S.account;
@@ -966,7 +919,6 @@ function showError(name, from){
   show(name);
 }
 
-/* ============ 동작 ============ */
 document.getElementById('phone').addEventListener('click', function(e){
   const el = e.target.closest('[data-action]'); if(!el) return;
   const a = el.dataset.action;
@@ -975,7 +927,6 @@ document.getElementById('phone').addEventListener('click', function(e){
   else if(a==='back-home') show('home');
   else if(a==='go-account'){ S.account=''; S.bank=null; renderAccount(); show('account'); }
   else if(a==='back-recipient') show('recipient');
-  /* Flutter A1 의 계좌 화면 ✕ 는 홈이 아니라 받는 사람으로 돌아간다 (maybePop) */
   else if(a==='close-account') show('recipient');
   else if(a==='open-bank'){ bankTab(false); show('bank'); }
   else if(a==='close-bank') show('account');

@@ -78,6 +78,28 @@ def load_plan_template(task=None):
     return _with_task("PLAN_PROMPT", task)
 
 
+# 원본 HTML 의 주석은 모델에 보내지 않는다. 화면으로 알 수 없는 정보다 - 원본에는
+# 탭 기록 장치 설명, Flutter 더미앱 언급, "(임시)" 같은 제작 메모가 주석으로 있고,
+# 모델은 그것을 원본의 사정으로 읽는다. 마크업 주석(<!-- -->)은 어디서든,
+# 블록 주석(/* */)은 <style> · <script> 안에서만 지운다. 주석 하나가 한 줄을 다
+# 차지하면 그 줄도 지운다. 주석 끝(-->, */)을 넘어 다음 주석까지 삼키지 않도록
+# 몸통에 끝 표시가 들어가지 못하게 한다.
+HTML_COMMENT_LINE = re.compile(r"^[ \t]*<!--(?:(?!-->).)*-->[ \t]*\r?\n", re.S | re.M)
+HTML_COMMENT = re.compile(r"<!--(?:(?!-->).)*-->", re.S)
+BLOCK_COMMENT_LINE = re.compile(r"^[ \t]*/\*(?:(?!\*/).)*\*/[ \t]*\r?\n", re.S | re.M)
+BLOCK_COMMENT = re.compile(r"[ \t]*/\*(?:(?!\*/).)*\*/", re.S)
+STYLE_SCRIPT = re.compile(r"(<(style|script)\b[^>]*>)(.*?)(</\2>)", re.S | re.I)
+
+
+def model_input_html(html):
+    """모델에 보내는 원본 - 주석을 뺀 것. 검사기는 원본 그대로를 본다."""
+    def code(m):
+        body = BLOCK_COMMENT.sub("", BLOCK_COMMENT_LINE.sub("", m.group(3)))
+        return m.group(1) + body + m.group(4)
+    html = STYLE_SCRIPT.sub(code, html or "")
+    return HTML_COMMENT.sub("", HTML_COMMENT_LINE.sub("", html))
+
+
 def load_refine_template(task=None):
     """보고 다듬기 프롬프트 (REFINE_PROMPT). 기술 계약은 생성과 같은 블록이다."""
     return _with_task("REFINE_PROMPT", task)
