@@ -470,7 +470,8 @@ def test_a_failed_reveal_is_named_in_the_missing_choices_fatal():
 
 def test_the_prompts_tell_the_model_about_reveal():
     gen = _api.load_template()
-    assert '"reveal": {"<선택지의 data-action>": {"at": "<steps 의 화면 이름>"' in gen
+    assert '"do": [{"click": "<선택자>"}]' in gen
+    assert "`do` 의 항목은 `{\"click\": 선택자}` 하나뿐이다" in gen
     assert "그 누르는 조작을 흐름 명세의 `reveal` 에 적는다" in gen
 
 

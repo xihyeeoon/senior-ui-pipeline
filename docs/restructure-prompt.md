@@ -181,9 +181,10 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 {{TASK_FLOW_VALUES}}{{TASK_FLOW_ERRORS}}
 {{TASK_FLOW_DONE}}
 - 선택지 목록의 일부만 먼저 보이고 눌러야 나머지가 만들어지는 설계라면, 그 조작을 `reveal` 에
-  적는다: `"reveal": {"<선택지의 data-action>": {"at": "<steps 의 화면 이름>", "do": [<동작>]}}`.
-  `do` 는 `steps` 의 `do` 와 같은 형식이다. 검사기는 `at` 까지 간 뒤 `do` 의 동작을 하나씩
-  실행하며 선택지를 모은다. 펼친 뒤에는 모든 값이 `data-action` 요소로 있어야 한다.
+  적는다: `"reveal": {"<선택지의 data-action>": {"at": "<steps 의 화면 이름>", "do": [{"click": "<선택자>"}]}}`.
+  `do` 의 항목은 `{"click": 선택자}` 하나뿐이다. 누를 것은 `at` 화면에 보이는 `data-action`
+  버튼이고, 누른 뒤에도 같은 화면이어야 한다. 검사기는 `at` 까지 간 뒤 `do` 를 하나씩 누르며
+  선택지를 모은다. 펼친 뒤에는 모든 값이 `data-action` 요소로 있어야 한다.
 - `derived_from_original` 은 `false`.
 - 선택자는 네 HTML 에 있는 것만 쓴다. 검사기는 없는 선택자에서 멈춘다.
 
