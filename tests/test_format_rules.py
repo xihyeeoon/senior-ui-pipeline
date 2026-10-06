@@ -15,6 +15,7 @@ import _api
 reply = _api.reply_module
 J = _api.j_errors
 F = _api.flow_module
+H = _api.handlers_module
 
 
 # --------------------------------------------------------------------- #
@@ -61,3 +62,40 @@ def test_visit_keys_reads_a_step_without_a_screen():
     assert F.visit_keys([{"screen": "a"}, {"click": "#x"}, "odd", {"screen": "a"}]) == \
         ["a", None, "None#2", "a#2"]
 
+
+# --------------------------------------------------------------------- #
+# 2. 템플릿 data-action="${…}" - 검사 C 와 같이 렌더된 값으로 본다 (B-11)
+# --------------------------------------------------------------------- #
+KEYPAD = """<html><body><div data-screen="start" id="phone">
+<div id="pad"></div><span id="dn-amt"></span></div>
+<script>
+document.getElementById('pad').innerHTML = [1,2,3].map(v =>
+  `<button data-action="${'num'}" data-v="${v}">${v}</button>`).join('');
+document.getElementById('pad').innerHTML += `<button data-action="key-${'x'}">x</button>`;
+function onClick(el){ const a = el.dataset.action; if (a === 'num') {} }
+</script></body></html>"""
+
+
+def test_a_template_data_action_is_not_a_control_name():
+    """원본(original_transfer.html 의 keyButtons)이 이 관용구를 쓴다.
+
+    고치기 전: 형식 검사가 `${'num'}` 을 조작부 이름으로 뽑아 "data-action 이
+    있지만 분기가 없는 것: ${'num'}" 형식 실패를 냈다 - 재시도 하나. 검사 C 는
+    렌더된 DOM 의 data-action(num)을 보므로 두 판단이 갈렸다."""
+    probs = reply._check_handlers({}, KEYPAD, [], set())
+    assert probs == [], probs
+
+
+def test_a_literal_data_action_without_a_branch_is_still_caught():
+    html = KEYPAD.replace("</script>", "</script><button data-action=\"gone\">g</button>")
+    probs = reply._check_handlers({}, html, [], set())
+    assert probs == ["data-action 이 있지만 분기가 없는 것: gone"]
+
+
+def test_the_literal_names_live_next_to_the_branch_reader():
+    """조작부 이름을 읽는 규칙도 처리기 분기를 읽는 규칙과 같은 곳(audit/handlers.py)에
+    둔다. 검사 C 는 렌더된 DOM 으로 판정하고, 형식 검사는 이 함수로 미리 본다."""
+    assert H.literal_actions(KEYPAD) == set()
+    assert H.literal_actions('<b data-action="go"></b><b data-action="a-${x}"></b>') == \
+        {"go"}
+    assert reply.literal_actions is H.literal_actions

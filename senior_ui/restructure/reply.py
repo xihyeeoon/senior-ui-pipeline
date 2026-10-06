@@ -16,7 +16,7 @@ from ..audit.checks.i_choices import present
 # 고쳐지는 순간 형식 검사와 검사 J 가 갈라진다 (감사 B-10).
 from ..audit.checks.j_errors import back_to_ok, done_screen, step_screens
 from ..audit.flow import visit_keys
-from ..audit.handlers import handled_actions
+from ..audit.handlers import handled_actions, literal_actions
 from ..preserved import GLOBAL_NAME
 from ..tasks import load_task
 from .preserve import names_read
@@ -173,7 +173,7 @@ def _check_handlers(flow, html, steps, screens):
     것이 갈라진다."""
     problems = []
     handled = handled_actions(html)
-    actions = set(re.findall(r'data-action="([^"]+)"', html))
+    actions = literal_actions(html)
     if not handled:
         problems.append("클릭 처리기에 data-action 분기가 하나도 없다. 검사기가 읽는 모양은 "
                         "`a === '이름'` 과 `switch(a){ case '이름': }` 두 가지다 (따옴표는 "
