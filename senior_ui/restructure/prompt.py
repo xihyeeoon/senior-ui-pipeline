@@ -78,6 +78,29 @@ def load_plan_template(task=None):
     return _with_task("PLAN_PROMPT", task)
 
 
+def load_refine_template(task=None):
+    """보고 다듬기 프롬프트 (REFINE_PROMPT). 기술 계약은 생성과 같은 블록이다."""
+    return _with_task("REFINE_PROMPT", task)
+
+
+BUILD_SHOTS_INTRO = (
+    "아래 그림들은 지금 HTML 을 휴대폰(폭 390px, 높이 844px)에서 연 모습이다. 그림마다 앞에 "
+    "화면 이름이 있다.\n스크롤되는 화면은 맨 위부터 창 높이씩 잘라 여러 장으로 찍었다. "
+    "오류 상태는 잘못된 값을 넣은 직후의 모습이다.")
+
+
+def build_refine_prompt(template, html, flow_text, plan, choices="", errors="",
+                        shots=""):
+    """`html` 은 모델이 쓴 것(데이터 블록을 넣기 전)이다 - 재시도 블록과 같은
+    이유다. `shots` 는 shots_section 이 만든 "지금 화면" 절."""
+    return (template.replace("{{CURRENT_HTML}}", (html or "").strip())
+                    .replace("{{CURRENT_FLOW}}", (flow_text or "").strip())
+                    .replace("{{PLAN}}", plan)
+                    .replace("{{CHOICES}}", choices)
+                    .replace("{{ERRORS}}", errors)
+                    .replace("{{BUILD_SHOTS}}", shots))
+
+
 def build_prompt(template, original_html, retry_block, choices="", plan="",
                  errors=None):
     """`errors` 를 주지 않으면 원본 흐름의 오류 조건으로 채운다 (errors_block)."""

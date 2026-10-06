@@ -97,7 +97,7 @@ from senior_ui.audit.stage import STAGES
 from senior_ui.tasks import DEFAULT_TASK, task_names
 
 from .loop import run
-from .model import ALL_MODES, APIS, REASONING_EFFORTS, SEED, TEMPERATURE
+from .model import ALL_MODES, APIS, REASONING_EFFORTS, REFINE_MODES, SEED, TEMPERATURE
 from .probe import list_models, probe
 
 
@@ -168,6 +168,10 @@ def build_parser():
                     help="보고 다듬기 횟수. 검사를 통과한 빌드의 스크린샷을 보여 주고 "
                          "다듬게 한다. 0 이면 끈다. 형식 · 검사 예산과 따로 센다. 주지 "
                          "않으면 config.DEFAULT_REFINE (%d)" % config.DEFAULT_REFINE)
+    ap.add_argument("--mock-refine", choices=REFINE_MODES, default=None,
+                    help="--mock 실행에서 다듬기 호출의 답 (model.REFINE_MODES). 주지 "
+                         "않으면 done - 1회차에 고칠 것이 없다고 답해 최종 빌드가 "
+                         "그대로다")
     ap.add_argument("--list-models", action="store_true",
                     help="이 키로 쓸 수 있는 gpt- 모델을 보이고 끝난다 (models.list, 요금 "
                          "없음). 실행 폴더를 만들지 않는다 - outputs/model-probe.log")

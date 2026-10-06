@@ -1050,13 +1050,8 @@ MOCK_REFLECTION = {
 }
 
 
-def mock_reply(mode, reflect=False):
-    """No API: Run 1 을 되읽는다. 모드마다 은행 목록 한 줄이 다르다 (MOCKS).
-
-    'fail' 은 둘째 걸음이 없는 선택자를 클릭하는 흐름을 함께 내놓아, 모든 시도가
-    화면 2에서 죽게 한다 - 재시도 루프가 검사 실패를 물고 도는 것을 확인하는
-    모드다.
-    """
+def mock_base(mode):
+    """그 모드가 생성 답으로 내놓을 `(HTML, 흐름 명세)`."""
     if mode in BILL_MODES:
         html, flow = bill_build(), bill_flow()
     else:
@@ -1070,8 +1065,29 @@ def mock_reply(mode, reflect=False):
             flow["error_paths"] = json.loads(json.dumps(MOCK_ERROR_PATHS))
         if REVEAL_MODES.get(mode):
             flow["reveal"] = json.loads(json.dumps(MOCK_REVEAL))
-    text = "```html\n%s\n```\n\n```json\n%s\n```\n" % (
+    return html, flow
+
+
+def _blocks(html, flow):
+    return "```html\n%s\n```\n\n```json\n%s\n```\n" % (
         html, json.dumps(flow, ensure_ascii=False, indent=2))
+
+
+def _reply(text):
+    return {"text": text, "finish_reason": "stop", "seconds": 0.0, "usage": None,
+            "temperature": TEMPERATURE, "seed": SEED,
+            "model": None, "system_fingerprint": None}
+
+
+def mock_reply(mode, reflect=False):
+    """No API: Run 1 을 되읽는다. 모드마다 은행 목록 한 줄이 다르다 (MOCKS).
+
+    'fail' 은 둘째 걸음이 없는 선택자를 클릭하는 흐름을 함께 내놓아, 모든 시도가
+    화면 2에서 죽게 한다 - 재시도 루프가 검사 실패를 물고 도는 것을 확인하는
+    모드다.
+    """
+    html, flow = mock_base(mode)
+    text = _blocks(html, flow)
     if reflect:
         # 재시도 답은 반성이 코드 블록보다 앞이다 (docs/restructure-prompt.md
         # 의 REFLECT 블록).
@@ -1079,6 +1095,88 @@ def mock_reply(mode, reflect=False):
             dict(MOCK_REFLECTION, keep=[c["id"] for c in (
                 BILL_PLAN if mode in BILL_MODES else MOCK_PLAN)["changes"]]),
             ensure_ascii=False, indent=2) + text
-    return {"text": text, "finish_reason": "stop", "seconds": 0.0, "usage": None,
-            "temperature": TEMPERATURE, "seed": SEED,
-            "model": None, "system_fingerprint": None}
+    return _reply(text)
+
+
+# --------------------------------------------------------------------------- #
+# mock 의 보고 다듬기 (--mock-refine)
+# --------------------------------------------------------------------------- #
+# 다듬기 호출의 답. 생성 답(--mock)은 그대로 두고, 다듬기와 그 고치기 호출의 답만
+# 이것으로 정한다. 모드마다 회차별로 다르다.
+#
+#   done            1회차에 "고칠 것 없음" (비평 하나). 최종 빌드는 그대로다.
+#                   --mock 실행의 기본값 - 기존 mock 의 최종 빌드가 바뀌지 않는다.
+#   improve         1회차: 비평 둘 + 눈에 보이게 고친 빌드 (통과). 2회차: 고칠 것 없음.
+#   break           1회차: 비평 하나 + 흐름이 깨진 빌드 (검사 실패). 고치기 답도 깨져
+#                   있다 - 직전에 통과한 빌드로 되돌아간다.
+#   break-then-fix  1회차는 break 와 같고, 고치기 답은 고친 빌드 (통과).
+REFINE_MODES = ["done", "improve", "break", "break-then-fix"]
+
+MOCK_CRITIQUE_DONE = {
+    "issues": [],
+    "keep": ["화면마다 할 일 하나와 다음 버튼 하나 - 어디를 누를지 그림에서 바로 보인다"],
+    "done": True}
+
+MOCK_CRITIQUE = {
+    "issues": [
+        {"screen": "bank",
+         "problem": "은행 이름 줄이 모두 같은 모양이라 어디까지가 목록인지, 아래에 더 있는지 "
+                    "몰라 첫 화면에서 멈춘다",
+         "seen": "화면 bank — 스크롤 1/2 그림에서 은행 줄 여섯 개가 같은 높이의 회색 상자로 "
+                 "이어지고, 아래 끝이 잘린 줄이 없다",
+         "fix": "목록 위에 '은행 67곳 — 아래로 내려 더 보기' 안내를 두고 목록 칸에 테두리를 준다"},
+        {"screen": "amount",
+         "problem": "다음 버튼이 숫자판과 같은 회색이라 무엇을 눌러야 끝나는지 못 찾는다",
+         "seen": "화면 amount 그림에서 [다음] 이 숫자 버튼과 같은 색 · 같은 크기로 숫자판 "
+                 "맨 아래 줄에 붙어 있다",
+         "fix": "[다음] 을 숫자판과 떨어뜨리고 진한 바탕 · 큰 글자로 바꾼다"}],
+    "keep": ["확인 화면의 받는 사람 · 금액 두 줄 배치는 그대로 둔다 - 그림에서 가장 크게 읽힌다"],
+    "done": False}
+
+MOCK_CRITIQUE_BREAK = {
+    "issues": [
+        {"screen": "who",
+         "problem": "받는 사람 버튼 이름이 길어 두 줄로 꺾여 눌러야 할 곳이 흐려진다",
+         "seen": "화면 who 그림에서 첫 버튼의 글이 두 줄로 꺾여 있다",
+         "fix": "버튼 이름을 짧게 바꾼다"}],
+    "keep": [],
+    "done": False}
+
+# improve 가 바꾸는 눈에 보이는 한 자리. 클래스 규칙만 더하므로 흐름과 선택자는 같다.
+REFINE_STYLE = ("</style>", "#phone .primary{min-height:64px;font-size:22px}\n</style>")
+
+
+def _json_block(obj):
+    return "```json\n%s\n```\n\n" % json.dumps(obj, ensure_ascii=False, indent=2)
+
+
+def _improved(mode):
+    html, flow = mock_base(mode)
+    return swap(html, *REFINE_STYLE), flow
+
+
+def _broken(mode):
+    html, flow = mock_base(mode)
+    flow["steps"][1]["click"] = "[data-action='does-not-exist']"
+    flow["steps"][1].pop("do", None)
+    return html, flow
+
+
+def mock_refine_reply(refine_mode, mode, round_no):
+    """다듬기 호출의 답. `mode` 는 생성 답의 mock 모드 (그 빌드를 다듬는다)."""
+    if refine_mode not in REFINE_MODES:
+        raise ValueError("다듬기 mock 모드가 아니다: %s" % refine_mode)
+    if refine_mode == "done" or (refine_mode == "improve" and round_no > 1):
+        return _reply(_json_block(MOCK_CRITIQUE_DONE))
+    if refine_mode == "improve":
+        return _reply(_json_block(MOCK_CRITIQUE) + _blocks(*_improved(mode)))
+    return _reply(_json_block(MOCK_CRITIQUE_BREAK) + _blocks(*_broken(mode)))
+
+
+def mock_refine_fix_reply(refine_mode, mode):
+    """다듬은 빌드가 떨어진 뒤의 고치기 답 (보통 재시도 - 반성이 먼저)."""
+    keep = [c["id"] for c in (BILL_PLAN if mode in BILL_MODES else MOCK_PLAN)["changes"]]
+    refl = dict(MOCK_REFLECTION, cause="다듬으며 바꾼 버튼의 선택자를 흐름 명세에 "
+                                        "맞추지 않았다", keep=keep)
+    blocks = _blocks(*(_broken(mode) if refine_mode == "break" else _improved(mode)))
+    return _reply(_json_block(refl) + blocks)

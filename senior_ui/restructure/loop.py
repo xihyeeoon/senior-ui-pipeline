@@ -42,13 +42,16 @@ from .model import (MOCK_TASK, TEMPERATURE, SEED, ApiRejected, InfraFailed,
                     RateLimited, call_model, cost_usd, describe, describe_ratelimit,
                     estimate_tokens, load_env, mock_plan_reply, mock_reply, price_for,
                     profile_for, sdk_version, wait_for_tokens, describe_images,
-                    model_text, prompt_record)
-from .plan import (PlanProblems, apply_changes, evidence_kinds, match_problems,
-                   parse_plan, parse_reflection, plan_report, screens_in, unaddressed)
+                    model_text, prompt_record, mock_refine_reply,
+                    mock_refine_fix_reply)
+from .plan import (PlanProblems, apply_changes, critique_issues, evidence_kinds,
+                   match_problems, parse_critique, parse_plan, parse_reflection,
+                   plan_report, screens_in, unaddressed)
 from .preserve import inject, names_read, preserved_data
-from .prompt import (build_plan_prompt, build_prompt, choices_block, errors_block,
-                     load_plan_template, load_template, one_line, plan_retry_block,
-                     retry_block, shots_section, with_reflection)
+from .prompt import (BUILD_SHOTS_INTRO, build_plan_prompt, build_prompt,
+                     build_refine_prompt, choices_block, errors_block,
+                     load_plan_template, load_refine_template, load_template, one_line,
+                     plan_retry_block, retry_block, shots_section, with_reflection)
 from .reply import (FlowShape, accept_done_alias, failure_report, parse_reply,
                     preserved_problems, problems_report, validate_flow)
 
@@ -239,8 +242,10 @@ class Run:
     """한 실행이 공유하는 것들. 단계 함수들은 이것만 주고받는다."""
 
     def __init__(self, args, log, run_dir, model, template, original_html,
-                 original_url=None, plan_template="", task=None, model_source=None):
+                 original_url=None, plan_template="", task=None, model_source=None,
+                 refine_template=""):
         self.args = args
+        self.refine_template = refine_template
         # 프롬프트에 넣는 원본과 브라우저가 걷는 원본은 같은 문서다.
         self.original_url = original_url
         self.log = log
@@ -755,8 +760,11 @@ def note_truncated(r, entry, phase):
           "실패로 세고 다시 묻는다" % (phase, cap, thinking))
 
 
-def request_reply(r, n, p):
+def request_reply(r, n, p, stage=None, mock=None):
     """계획을 넣은 프롬프트를 보내고 답을 받아 적는다.
+
+    `stage` · `mock` 은 다듬기의 고치기 호출이 준다 - 토큰을 refine_fix 로 세고,
+    mock 실행이면 다듬기 mock 의 고치기 답을 쓴다.
 
     돌려주는 것은 (reply, outcome). reply 가 None 이면 이 시도가 모델 호출에서
     끝난 것이고 outcome 이 다음에 할 일이다."""
@@ -773,8 +781,8 @@ def request_reply(r, n, p):
 
     reflect = r.asked_reflection
     reply, outcome = ask_model(r, n, p, prompt, r.caps["generate"],
-                               lambda mode: mock_reply(mode, reflect=reflect),
-                               "retry" if reflect else "generate")
+                               mock or (lambda mode: mock_reply(mode, reflect=reflect)),
+                               stage or ("retry" if reflect else "generate"))
     if reply is None:
         return None, outcome
     io.open(p + ".response.txt", "w", encoding="utf-8", newline="\n").write(reply["text"])
@@ -1003,7 +1011,8 @@ def _drive_audit(r, n, build):
                          build["flow_path"], url_for(rel), shots, r.args.stage,
                          original_url=r.original_url,
                          allowed_removals=r.allowed_removals,
-                         task=r.task["id"])
+                         task=r.task["id"],
+                         **({"see": True} if r.refine > 0 else {}))
     except Exception as e:                           # a flow the audit cannot drive
         r.log("audit: crashed: %s: %s" % (type(e).__name__, e))
         return failure_report("AUDIT", "검사기가 흐름 명세를 실행하지 못했다: %s: %s"
@@ -1065,8 +1074,10 @@ def _budget_stop(r, entry):
     return GO_ON
 
 
-def attempt(r, n):
-    """한 번의 시도. 돌려주는 것은 STOP 또는 GO_ON."""
+def attempt(r, n, stage=None, mock=None):
+    """한 번의 시도. 돌려주는 것은 STOP 또는 GO_ON.
+
+    `stage` · `mock` 은 다듬기의 고치기 시도가 준다 (refine_round)."""
     b = r.budget
     r.log("---- attempt %d (형식 %d/%d · 검사 %d/%d)"
           % (n, b.format_used, b.budget["format"], b.audit_used, b.budget["audit"]))
@@ -1086,7 +1097,7 @@ def attempt(r, n):
     # 이 시도가 따른 계획. 재시도에서 계획이 바뀌면 시도마다 다른 파일이 된다.
     _dump(r.plan, p + ".plan.json")
 
-    reply, outcome = request_reply(r, n, p)
+    reply, outcome = request_reply(r, n, p, stage=stage, mock=mock)
     if reply is None:
         return outcome
     entry = {"n": n, "finish_reason": reply["finish_reason"], "usage": reply["usage"],
@@ -1094,6 +1105,8 @@ def attempt(r, n):
              "plan": p + ".plan.json", "calls": r.calls}
     if plan_call:
         entry["plan_call"] = plan_call
+    if stage:
+        entry["phase"] = stage
     build, outcome = check_reply(r, p, entry, reply, n)
     if build is None:
         return outcome
@@ -1234,6 +1247,187 @@ def write_briefs(r, out, name):
 
 
 # --------------------------------------------------------------------------- #
+# 보고 다듬기
+# --------------------------------------------------------------------------- #
+def refine(r, n):
+    """통과한 빌드를 그림으로 보여 주고 다듬게 한다. 최대 r.refine 회.
+
+    한 회차는 다듬기 호출 하나와, 다듬은 빌드가 떨어졌을 때 고치기 호출 하나다.
+    통과하면 그것이 새 최종이고 다음 회차는 그 빌드를 다듬는다. 고치기까지
+    떨어지면 직전에 통과한 빌드를 최종으로 되돌리고 다듬기를 끝낸다 - 통과한
+    결과를 잃지 않는다.
+
+    예산은 형식 · 검사 예산과 따로다. 회차 안에서는 루프의 단계 함수를 그대로
+    쓰되, 그 함수들이 쓰는 예산을 이 회차의 것으로 잠시 바꿔 끼운다 - 다듬기의
+    실패가 생성 예산을 깎지도, 생성 예산이 다듬기를 막지도 않는다."""
+    rf = r.summary["refine"]
+    rf["final_from"] = "generate"
+    rf["final_label"] = final_label(rf)
+    if r.refine <= 0:
+        r.log("다듬기: 꺼짐 (--refine 0)")
+        return n
+    main_budget = r.budget
+    try:
+        for k in range(1, r.refine + 1):
+            if r.delay and not r.args.mock:
+                time.sleep(r.delay)
+            n, go_on = refine_round(r, k, n)
+            if not go_on:
+                break
+    finally:
+        r.budget = main_budget
+    final = r.summary["final"] or {}
+    rf["final_label"] = final_label(rf)
+    r.log("다듬기: 끝 — 최종은 %s (시도 %s)%s"
+          % (final_label(rf), final.get("attempt"),
+             " · 되돌림: %s" % rf["reverted"]["reason"] if rf.get("reverted") else ""))
+    return n
+
+
+def final_label(rf):
+    """설명서 맨 위 한 줄과 run.log 가 쓰는 "최종이 어디서 왔나"."""
+    rounds = rf.get("rounds") or []
+    if rf.get("final_from") == "refine":
+        last = max((x for x in rounds if x.get("became_final")),
+                   key=lambda x: x["round"], default=None)
+        label = "다듬기 %s회차" % (last["round"] if last else "?")
+    else:
+        label = "생성"
+    if rf.get("reverted"):
+        label += " (다듬기 %s회차가 실패해 되돌림)" % rf["reverted"]["round"]
+    return label
+
+
+def _round_cost(r, attempts):
+    calls = [c for m, c in r.all_calls if m in attempts]
+    return {"tokens": _tally(calls) if calls else None,
+            "usd": _add(cost_usd(c.get("usage"), price_for(r.model)) for c in calls)}
+
+
+def refine_round(r, k, n):
+    """다듬기 한 회차. `(마지막 시도 번호, 다음 회차로 가는가)`."""
+    rf = r.summary["refine"]
+    best = dict(r.summary["final"])
+    best_n = best["attempt"]
+    n += 1
+    p = os.path.join(r.run_dir, "attempt_%d" % n)
+    r.calls = []
+    r.budget = Budget(1, 1, r.budget.budget["infra"])
+    shots = os.path.join(r.run_dir, "shots", "attempt_%d" % best_n)
+    images = see_images(shots, BUILD_LABELS, [e["id"] for e in r.errors])
+    row = {"round": k, "attempt": n, "from_attempt": best_n, "images": len(images),
+           "before_shots": os.path.join(shots, "see"), "after_shots": None,
+           "critique": None, "issues": None, "keep": None, "done": None,
+           "passed": None, "fix_attempt": None, "fix_passed": None,
+           "became_final": False, "stopped": None}
+    rf["rounds"].append(row)
+    r.log("---- 다듬기 %d/%d (시도 %d — 시도 %d 의 빌드, 그림 %d장)"
+          % (k, r.refine, n, best_n, len(images)))
+
+    model_html = io.open(best.get("model_html") or best["html"], encoding="utf-8").read()
+    flow_text = io.open(best["flow"], encoding="utf-8").read()
+    prompt = build_refine_prompt(
+        r.refine_template, model_html, flow_text, plan_text(r), r.choices,
+        errors_block(r.errors),
+        shots=shots_section(images, "지금 화면", BUILD_SHOTS_INTRO))
+    io.open(p + ".refine_prompt.txt", "w", encoding="utf-8", newline="\n").write(
+        prompt_record(prompt, images, r.model, base=r.run_dir))
+    refine_mode = getattr(r.args, "mock_refine", None) or "done"
+    reply, outcome = ask_model(
+        r, n, p, prompt, r.caps["generate"],
+        lambda mode: mock_refine_reply(refine_mode, mode, k), "refine", images=images)
+
+    def finish(stopped, go_on):
+        row["stopped"] = stopped
+        row.update(_round_cost(r, [x for x in (n, row.get("fix_attempt")) if x]))
+        return (row.get("fix_attempt") or n), go_on
+
+    if reply is None:
+        r.log("다듬기 %d: 모델 호출에서 끝났다 — 최종은 그대로 (시도 %d)" % (k, best_n))
+        return finish("call_failed", False)
+    io.open(p + ".response.txt", "w", encoding="utf-8", newline="\n").write(reply["text"])
+    critique, problems = parse_critique(reply["text"])
+    if critique is not None:
+        row["critique"] = p + ".critique.json"
+        _dump(critique, row["critique"])
+        row["issues"] = len(critique_issues(critique))
+        row["keep"] = len(critique.get("keep") or []) \
+            if isinstance(critique.get("keep"), list) else None
+        row["done"] = critique.get("done") if isinstance(critique.get("done"), bool) \
+            else None
+        if problems:
+            row["critique_problems"] = problems
+        r.log("다듬기 %d: 비평 %s건 · keep %s · done=%s%s"
+              % (k, row["issues"], row["keep"], row["done"],
+                 (" (비평 모양 문제: %s)" % " | ".join(problems)[:200]) if problems else ""))
+    else:
+        r.log("다듬기 %d: 비평 블록이 없다" % k)
+    if row["done"] is True and row["issues"] == 0:
+        # 빌드가 없는 회차는 시도 목록(attempts)에 넣지 않는다 - 그 호출의 토큰은
+        # 이 회차 기록과 tokens.by_stage.refine 에 남는다.
+        r.log("다듬기 %d: 모델이 더 고칠 것이 없다고 했다 — 멈춘다" % k)
+        return finish("done", False)
+
+    # 다듬은 빌드. 생성 시도와 같은 단계 함수로 모양을 보고 검사한다.
+    r.last = {"report": None, "html": model_html, "flow_text": flow_text}
+    r.last_error, r.truncated, r.asked_reflection = None, 0, False
+    entry = {"n": n, "phase": "refine", "finish_reason": reply["finish_reason"],
+             "usage": reply["usage"], "seconds": reply["seconds"],
+             "repro": repro(r.refine_template, reply), "plan": p + ".plan.json",
+             "calls": r.calls, "critique": row["critique"]}
+    _dump(r.plan, p + ".plan.json")
+    build, _outcome = check_reply(r, p, entry, reply, n)
+    passed = False
+    if build is not None:
+        report = audit_build(r, n, entry, build)
+        record(r, n, p, entry, report, build)
+        passed = bool(report.get("passed"))
+        row["after_shots"] = os.path.join(r.run_dir, "shots", "attempt_%d" % n, "see")
+    row["passed"] = passed
+    if passed:
+        return _refine_passed(r, k, n, row, critique, finish)
+
+    # 떨어졌다. 보통 재시도 블록(반성 + 실패 목록)으로 한 번 고치게 한다.
+    r.log("다듬기 %d: 다듬은 빌드가 떨어졌다 — 한 번 고치게 한다" % k)
+    if r.delay and not r.args.mock:
+        time.sleep(r.delay)
+    fix_n = n + 1
+    row["fix_attempt"] = fix_n
+    r.calls = []
+    attempt(r, fix_n, stage="refine_fix",
+            mock=lambda mode: mock_refine_fix_reply(refine_mode, mode))
+    fixed = (r.summary["final"] or {}).get("attempt") == fix_n and \
+        bool(r.summary["attempts"] and r.summary["attempts"][-1].get("passed"))
+    row["fix_passed"] = fixed
+    if fixed:
+        row["after_shots"] = os.path.join(r.run_dir, "shots", "attempt_%d" % fix_n, "see")
+        return _refine_passed(r, k, fix_n, row, critique, finish)
+
+    # 고치기도 떨어졌다. 직전에 통과한 빌드를 최종으로 되돌린다.
+    r.summary["final"] = best
+    r.summary["passed"] = True
+    rf["reverted"] = {"round": k, "to_attempt": best_n,
+                      "failed_attempts": [n, fix_n],
+                      "reason": "다듬기 %d회차의 빌드(시도 %d)와 고친 빌드(시도 %d)가 "
+                                "모두 검사를 통과하지 못했다" % (k, n, fix_n)}
+    r.log("다듬기 %d: 고친 빌드도 떨어졌다 — 직전에 통과한 시도 %d 를 최종으로 되돌린다"
+          % (k, best_n))
+    return finish("reverted", False)
+
+
+def _refine_passed(r, k, n, row, critique, finish):
+    rf = r.summary["refine"]
+    rf["final_from"] = "refine"
+    rf["reverted"] = None
+    row["became_final"] = True
+    r.log("다듬기 %d: 통과 — 시도 %d 가 새 최종이다" % (k, n))
+    if row["done"] is True:
+        r.log("다듬기 %d: 모델이 이번 수정으로 끝났다고 했다 (done=true) — 멈춘다" % k)
+        return finish("done_after_fix", False)
+    return finish(None, True)
+
+
+# --------------------------------------------------------------------------- #
 # 종료 코드
 # --------------------------------------------------------------------------- #
 # 이 이유로 멈춘 실행은 "빌드가 떨어졌다" 가 아니라 "돌지 못했다" 다. 부르는
@@ -1335,6 +1529,7 @@ def run(args):
                                % (args.mock, MOCK_TASK.get(args.mock), task["id"]))
         template = load_template(task["id"])
         plan_template = load_plan_template(task["id"])
+        refine_template = load_refine_template(task["id"])
         original_html = io.open(args.original, encoding="utf-8").read()
         orig_url = original_url(args.original)
         allowed = load_allowed_removals(task["id"])
@@ -1353,7 +1548,8 @@ def run(args):
            args.mock, orig_url)
         + ("" if task["id"] == DEFAULT_TASK else " | task=%s" % task["id"]))
     r = Run(args, log, run_dir, model, template, original_html, orig_url,
-            plan_template=plan_template, task=task, model_source=source)
+            plan_template=plan_template, task=task, model_source=source,
+            refine_template=refine_template)
     r.summary["git"] = git
     r.allowed_removals = allowed
     if allowed:
@@ -1411,6 +1607,8 @@ def run(args):
                 time.sleep(r.delay)
             if attempt(r, n) is STOP:
                 break
+        if r.summary["passed"]:
+            refine(r, n)
 
         if not r.summary["passed"]:
             log("통과 없음 — 형식 재시도 %d회 / 검사 재시도 %d회"

@@ -482,3 +482,222 @@ def test_the_reveal_mocks_differ_only_in_the_flow():
     assert h1 == h2 and "show-all-banks" in h1
     assert f1["reveal"] == model.MOCK_REVEAL and "reveal" not in f2
     assert reply_mod.validate_flow(f1, h1, _api.flow_module.required_errors("transfer")) == []
+
+
+# --------------------------------------------------------------------------- #
+# (나) 보고 다듬기
+# --------------------------------------------------------------------------- #
+from test_restructure_bugs import GOOD_FLOW, GOOD_HTML, passing_report, reply_text  # noqa
+
+IMPROVED_HTML = GOOD_HTML.replace("<body>", "<body><style>#phone{font-size:22px}</style>")
+BROKEN_HTML = GOOD_HTML.replace("<body>", "<body><!-- BROKEN -->")
+
+
+def critique_block(c):
+    return "```json\n%s\n```\n\n" % json.dumps(c, ensure_ascii=False)
+
+
+DONE = critique_block(model.MOCK_CRITIQUE_DONE)
+IMPROVE = critique_block(model.MOCK_CRITIQUE) + reply_text(IMPROVED_HTML, GOOD_FLOW)
+BREAK = critique_block(model.MOCK_CRITIQUE_BREAK) + reply_text(BROKEN_HTML, GOOD_FLOW)
+REFLECTION = critique_block({"cause": "다듬다 깨뜨렸다", "plan_changes": [], "keep": []})
+FIX_GOOD = REFLECTION + reply_text(IMPROVED_HTML, GOOD_FLOW)
+FIX_BROKEN = REFLECTION + reply_text(BROKEN_HTML, GOOD_FLOW)
+
+
+def is_refine(p):
+    return "## 지금 HTML" in p
+
+
+def is_fix(p):
+    return "## 반성 먼저" in p
+
+
+def refine_answers(refine, fix=(FIX_GOOD,)):
+    return [(is_plan_prompt, plan_reply()), (is_refine, list(refine)),
+            (is_fix, list(fix)), (lambda p: True, GOOD_REPLY)]
+
+
+def failing_report():
+    return {"passed": False, "warning": [],
+            "fatal": [{"check": "A", "screen": "done", "detail": "never reached"}],
+            "metrics": {"fatal_total": 1, "fatal_root": 1, "fatal_derived": 0}}
+
+
+@pytest.fixture
+def audit_by_marker(fake_run_env):
+    """BROKEN 표시가 있는 빌드는 검사에서 떨어진다."""
+    def fake(orig, orig_html, html_path, *a, **kw):
+        html = open(html_path, encoding="utf-8").read()
+        return failing_report() if "BROKEN" in html else passing_report()
+    fake_run_env.setattr(loop, "run_audit", fake)
+    return fake_run_env
+
+
+def run_refine(env, out_root, tmp_path, refine_replies, fix=(FIX_GOOD,), n=2, **kw):
+    return run_with(env, out_root, refine_answers(refine_replies, fix),
+                    original_images=images(tmp_path, 1),
+                    build_images=images(os.path.join(str(tmp_path), "b"), 2),
+                    refine=n, **kw)
+
+
+def read(path):
+    return open(path, encoding="utf-8").read()
+
+
+def test_a_done_critique_stops_refining_and_keeps_the_build(audit_by_marker, out_root,
+                                                            tmp_path):
+    code, s, sent, d = run_refine(audit_by_marker, out_root, tmp_path, [DONE])
+    assert code == 0 and s["passed"]
+    rf = s["refine"]
+    assert rf["budget"] == 2 and rf["source"] == "--refine"
+    assert len(rf["rounds"]) == 1
+    r1 = rf["rounds"][0]
+    assert r1["stopped"] == "done" and r1["issues"] == 0 and r1["done"] is True
+    assert s["final"]["attempt"] == 1
+    assert rf["final_from"] == "generate" and rf["final_label"] == "생성"
+    assert os.path.exists(os.path.join(d, "attempt_2.critique.json"))
+    # 빌드가 없는 회차는 시도 목록에 없다
+    assert [a["n"] for a in s["attempts"]] == [1]
+    assert s["tokens"]["by_stage"]["refine"]["calls"] == 1
+
+
+def test_an_improvement_that_passes_becomes_the_final_build(audit_by_marker, out_root,
+                                                            tmp_path):
+    code, s, sent, d = run_refine(audit_by_marker, out_root, tmp_path, [IMPROVE, DONE])
+    rf = s["refine"]
+    assert [x["round"] for x in rf["rounds"]] == [1, 2]
+    r1, r2 = rf["rounds"]
+    assert r1["passed"] and r1["became_final"] and r1["issues"] == 2 and r1["done"] is False
+    assert r2["stopped"] == "done" and r2["from_attempt"] == 2
+    assert s["final"]["attempt"] == 2
+    assert rf["final_from"] == "refine" and rf["final_label"] == "다듬기 1회차"
+    assert "#phone{font-size:22px}" in read(s["final"]["html"])
+    # 승격된 산출물도 다듬은 빌드다
+    assert "#phone{font-size:22px}" in read(os.path.join(out_root, "restructured_auto.html"))
+    critique = json.load(open(r1["critique"], encoding="utf-8"))
+    assert critique == model.MOCK_CRITIQUE
+    # 회차마다 토큰 · 금액 칸이 있다 (mock 이라 금액은 모른다)
+    assert r1["tokens"]["calls"] == 1 and "usd" in r1
+
+
+def test_the_refine_call_sees_the_build_not_the_original(audit_by_marker, out_root,
+                                                         tmp_path):
+    code, s, sent, d = run_refine(audit_by_marker, out_root, tmp_path, [DONE])
+    plan_call, gen_call, refine_call = sent
+    assert len(plan_call["images"]) == 1          # 원본
+    assert len(gen_call["images"]) == 0
+    assert len(refine_call["images"]) == 2        # 빌드
+    prompt = refine_call["prompt"]
+    assert GOOD_HTML.strip() in prompt
+    assert "## 원본\n" not in prompt
+    assert '"name": "auto"' in prompt              # 지금 흐름 명세
+    assert '"screens"' in prompt                   # 계획
+    saved = read(os.path.join(d, "attempt_2.refine_prompt.txt"))
+    assert "## 지금 화면" in saved and "[그림 1/2] 화면 s1  <그림: " in saved
+    assert s["refine"]["rounds"][0]["images"] == 2
+
+
+def test_a_broken_refinement_gets_one_ordinary_retry(audit_by_marker, out_root, tmp_path):
+    code, s, sent, d = run_refine(audit_by_marker, out_root, tmp_path, [BREAK, DONE],
+                                  fix=(FIX_GOOD,))
+    r1 = s["refine"]["rounds"][0]
+    assert r1["passed"] is False and r1["fix_attempt"] == 3 and r1["fix_passed"] is True
+    assert r1["became_final"] and s["final"]["attempt"] == 3
+    assert s["refine"]["reverted"] is None
+    # 고치기는 보통 재시도 블록이다 - 반성 요청과 실패 목록
+    fix_prompt = [c["prompt"] for c in sent if is_fix(c["prompt"])][0]
+    assert "## 이전 시도의 실패" in fix_prompt and "never reached" in fix_prompt
+    stages = [c["stage"] for a in s["attempts"] for c in a["calls"]]
+    assert "refine_fix" in stages
+    assert s["refine"]["final_label"] == "다듬기 1회차"
+
+
+def test_when_the_fix_also_fails_the_last_passing_build_is_kept(audit_by_marker, out_root,
+                                                                tmp_path):
+    code, s, sent, d = run_refine(audit_by_marker, out_root, tmp_path, [BREAK],
+                                  fix=(FIX_BROKEN,))
+    assert code == 0 and s["passed"]
+    rf = s["refine"]
+    assert len(rf["rounds"]) == 1 and rf["rounds"][0]["stopped"] == "reverted"
+    assert rf["reverted"]["to_attempt"] == 1 and rf["reverted"]["failed_attempts"] == [2, 3]
+    assert s["final"]["attempt"] == 1
+    assert rf["final_label"] == "생성 (다듬기 1회차가 실패해 되돌림)"
+    assert "BROKEN" not in read(s["final"]["html"])
+    assert "BROKEN" not in read(os.path.join(out_root, "restructured_auto.html"))
+    log = read(os.path.join(d, "run.log"))
+    assert "직전에 통과한 시도 1 를 최종으로 되돌린다" in log
+
+
+def test_a_revert_after_an_earlier_round_passed_keeps_that_round(audit_by_marker,
+                                                                  out_root, tmp_path):
+    code, s, sent, d = run_refine(audit_by_marker, out_root, tmp_path, [IMPROVE, BREAK],
+                                  fix=(FIX_BROKEN,))
+    rf = s["refine"]
+    assert s["final"]["attempt"] == 2
+    assert rf["final_from"] == "refine"
+    assert rf["final_label"] == "다듬기 1회차 (다듬기 2회차가 실패해 되돌림)"
+
+
+def test_refine_failures_do_not_spend_the_generation_budget(audit_by_marker, out_root,
+                                                             tmp_path):
+    code, s, sent, d = run_refine(audit_by_marker, out_root, tmp_path, [BREAK],
+                                  fix=(FIX_BROKEN,))
+    assert s["budget"]["audit_used"] == 0 and s["budget"]["format_used"] == 0
+
+
+def test_refine_zero_turns_it_off(audit_by_marker, out_root, tmp_path):
+    code, s, sent, d = run_refine(audit_by_marker, out_root, tmp_path, [IMPROVE], n=0)
+    assert len(sent) == 2
+    assert s["refine"]["rounds"] == [] and s["refine"]["final_label"] == "생성"
+
+
+def test_the_default_refine_count_is_two():
+    assert config.DEFAULT_REFINE == 2
+    assert loop.refine_choice(make_args("x", refine=None)) == (2, "config.DEFAULT_REFINE")
+    assert loop.refine_choice(make_args("x", refine=1)) == (1, "--refine")
+
+
+def test_a_failed_run_is_not_refined(fake_run_env, out_root, tmp_path):
+    fake_run_env.setattr(loop, "run_audit", lambda *a, **kw: failing_report())
+    code, s, sent, d = run_with(fake_run_env, out_root, refine_answers([IMPROVE]),
+                                refine=2, attempts=1)
+    assert not s["passed"]
+    assert not any(is_refine(c["prompt"]) for c in sent)
+
+
+def test_the_refine_prompt_asks_an_open_question_not_a_checklist():
+    text = _api.prompt_module.load_refine_template()
+    assert "60대 이상 사용자가 이 화면들을 처음 본다고 하자" in text
+    assert "어디서 멈추는가. 무엇을 못 읽는가. 무엇을 잘못 누르는가." in text
+    assert "코드에서 짐작한 것이 아니라 그림에서 본 것으로 판단하라" in text
+    # 비평 칸은 빈칸 틀이다
+    assert '"problem": "<고령 사용자가 어디서 왜 막히는가>"' in text
+    assert '"seen": "<어느 그림의 어디에서 무엇을 보고>"' in text
+    # 체크리스트 말이 없다 (글자 크기 · 터치 크기 같은 규칙) - 기술 계약(3절) 앞까지
+    head = text.split("## 3.")[0]
+    for word in ("18px", "44px", "글자 크기를", "터치 영역", "대비를"):
+        assert word not in head, word
+    assert "{{" not in text.replace("{{CURRENT_HTML}}", "").replace(
+        "{{CURRENT_FLOW}}", "").replace("{{PLAN}}", "").replace("{{CHOICES}}", "").replace(
+        "{{ERRORS}}", "").replace("{{BUILD_SHOTS}}", "")
+
+
+def test_parse_critique_reads_the_first_json_block():
+    c, problems = _api.plan_module.parse_critique(IMPROVE)
+    assert c == model.MOCK_CRITIQUE and problems == []
+    c, problems = _api.plan_module.parse_critique(GOOD_REPLY)
+    assert c is None
+    c, problems = _api.plan_module.parse_critique(
+        critique_block({"issues": [{"screen": "x"}], "done": "yes"}))
+    assert any("issues[0] 에 problem, seen, fix 가 없다" in p for p in problems)
+    assert any("done 이 true/false 가 아니다" in p for p in problems)
+
+
+@pytest.mark.parametrize("rmode,round_no,blocks", [
+    ("done", 1, 1), ("improve", 1, 3), ("improve", 2, 1), ("break", 1, 3)])
+def test_the_mock_critiques_have_the_answer_shape(rmode, round_no, blocks):
+    text = model.mock_refine_reply(rmode, "pass", round_no)["text"]
+    assert text.count("```") == blocks * 2
+    c, problems = _api.plan_module.parse_critique(text)
+    assert problems == [] and isinstance(c["done"], bool)

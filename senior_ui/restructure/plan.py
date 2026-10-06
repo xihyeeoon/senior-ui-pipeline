@@ -281,6 +281,54 @@ def reflection_problems(refl):
     return problems
 
 
+# 보고 다듬기 답의 비평. ```json(비평) → ```html → ```json(흐름 명세) 의 첫 블록이다.
+ISSUE_KEYS = ("screen", "problem", "seen", "fix")
+
+
+def parse_critique(text):
+    """`(비평, 문제들)`. 비평 블록이 없으면 `(None, [])`.
+
+    비평은 `issues` 나 `done` 을 가진 첫 json 블록이다. 문제는 기록만 한다 -
+    비평의 모양 하나 때문에 다듬은 빌드를 버리지 않는다 (반성과 같은 이유)."""
+    for kind, body in FENCE.findall(text or ""):
+        if kind != "json":
+            continue
+        try:
+            data = json.loads(body)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(data, dict) and ("issues" in data or "done" in data):
+            return data, critique_problems(data)
+    return None, []
+
+
+def critique_problems(c):
+    problems = []
+    issues = c.get("issues", [])
+    if not isinstance(issues, list):
+        problems.append("비평의 issues 가 목록이 아니다 (지금은 %s)" % type_of(issues))
+        issues = []
+    for i, it in enumerate(issues):
+        if not isinstance(it, dict):
+            problems.append("issues[%d] 가 객체가 아니다" % i)
+            continue
+        missing = [k for k in ISSUE_KEYS if not it.get(k)]
+        if missing:
+            problems.append("issues[%d] 에 %s 가 없다" % (i, ", ".join(missing)))
+    if not isinstance(c.get("keep", []), list):
+        problems.append("비평의 keep 이 목록이 아니다 (지금은 %s)" % type_of(c.get("keep")))
+    if not isinstance(c.get("done"), bool):
+        problems.append("비평의 done 이 true/false 가 아니다 (지금은 %s)"
+                        % type_of(c.get("done")))
+    return problems
+
+
+def critique_issues(c):
+    """비평의 issues 를 목록으로 (모양이 틀리면 빈 목록)."""
+    issues = (c or {}).get("issues")
+    return [i for i in issues if isinstance(i, dict)] if isinstance(issues, list) else []
+
+
 def _find(items, key, value):
     for i, it in enumerate(items):
         if it.get(key) == value:
