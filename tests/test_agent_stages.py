@@ -170,6 +170,59 @@ def test_the_plan_example_is_a_blank_form_not_a_design_idea():
     assert all(v.startswith("<") and v.endswith(">") for v in values), values
 
 
+# 연구 원칙: 고령자 UX 규칙 목록을 주지 않고, 모델이 화면을 보고 스스로 판단한다
+# (감사 D-5 (가), 연구자 결정 2026-10-06). 생성 · 재시도 · 다듬기 프롬프트가 설계
+# 방법을 알려 주면 그 원칙이 깨진다 - 모델은 받은 예시를 베낀다.
+DESIGN_HINTS = ["검색, 자주 쓰는 것 먼저", "가나다 묶음", "자주 쓰는 항목 먼저",
+                "(검색, 자주 쓰는 것", "[전체 보기] 같은", "4.5:1",
+                "오류 코드는 쉬운 말로"]
+
+
+def _snapshot(task):
+    path = {"transfer": "tests/baseline/original_vs_original/snapshots.json",
+            "bill": "tests/baseline/bill/original_vs_original/snapshots.json"}[task]
+    return json.load(io.open(os.path.join(_api.ROOT_DIR, path), encoding="utf-8"))["orig"]
+
+
+def _all_prompt_text(task):
+    """그 과제의 프롬프트에 들어가는 글 전부 - 템플릿 넷 · 선택지 요약 · 오류 조건."""
+    html = io.open(_api.tasks_module.abs_path(_api.tasks_module.load_task(task)["original"]),
+                   encoding="utf-8").read()
+    p = _api.prompt_module
+    return "\n".join([p.load_plan_template(task), p.load_template(task),
+                      p.load_refine_template(task), p.reflection_request(),
+                      _api.choices_block(_snapshot(task), html),
+                      p.errors_block(_api.flow_module.required_errors(task))])
+
+
+@pytest.mark.parametrize("task", ["transfer", "bill"])
+def test_the_prompts_give_no_design_method(task):
+    text = _all_prompt_text(task)
+    found = [h for h in DESIGN_HINTS if h in text]
+    assert found == [], "프롬프트가 설계 방법을 알려 준다: %s" % found
+
+
+@pytest.mark.parametrize("task", ["transfer", "bill"])
+def test_the_prompts_leave_how_to_show_choices_to_the_model(task):
+    text = _all_prompt_text(task)
+    assert "선택지를 몇 개, 어떤 순서, 어떤 묶음으로 보일지는 네가 정한다" in text
+    # 펼치기(reveal)는 방법만 알린다 - 특정 설계를 권하지 않는다
+    assert "눌러야 목록이 만들어지는 설계라면" in text
+    assert "일부만 먼저 보이고" not in text and "처음에는 일부만 보이고" not in text
+
+
+def test_the_error_conditions_allow_rewording_without_a_direction():
+    text = _api.prompt_module.errors_block(_api.flow_module.required_errors("transfer"))
+    assert "오류 안내 문구는 바꿔도 되고" in text
+
+
+def test_the_preserve_note_does_not_name_designs_either():
+    """사람용 주석이지만 다음 수정이 이것을 프롬프트로 옮겨 적는다."""
+    src = io.open(os.path.join(_api.ROOT_DIR, "senior_ui", "restructure", "preserve.py"),
+                  encoding="utf-8").read()
+    assert "자주 쓰는 항목 먼저" not in src and "검색·탭" not in src
+
+
 def test_the_plan_prompt_has_every_slot_filled():
     t = _api.load_plan_template()
     for slot in ("{{ORIGINAL_HTML}}", "{{RETRY_BLOCK}}", "{{CHOICES}}",

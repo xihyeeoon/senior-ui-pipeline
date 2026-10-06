@@ -86,9 +86,6 @@ def make_run(root, name, passed=True, warning=0, fatal=0, screens=9, actions=30,
                    "audit_used": n - (1 if passed else 0) - (1 if truncated else 0),
                    "format_budget": fmt_budget, "audit_budget": audit_budget},
         "stage": stage,
-        "refine": {"budget": refine_budget, "reverted": reverted,
-                   "final_label": "생성" if not reverted else
-                   "생성 (다듬기 %s회차가 실패해 되돌림)" % reverted["round"]},
         "stopped_reason": stopped_reason or (None if passed else "budget_exhausted"),
         "git": {"commit": commit, "branch": "main", "dirty": dirty,
                 "dirty_files": ["x.py"] if dirty else []},
@@ -96,6 +93,11 @@ def make_run(root, name, passed=True, warning=0, fatal=0, screens=9, actions=30,
                              "reasoning": 15000 * n}},
         "cost": {"total_usd": round(0.1 * n, 4)},
     }
+    # 다듬기 기록은 다듬기가 생긴 뒤(11-5)의 실행에만 있다. refine_budget=None 이면 옛 실행.
+    if refine_budget is not None:
+        summary["refine"] = {"budget": refine_budget, "reverted": reverted,
+                             "final_label": "생성" if not reverted else
+                             "생성 (다듬기 %s회차가 실패해 되돌림)" % reverted["round"]}
     dump = lambda obj, f: json.dump(obj, io.open(os.path.join(d, f), "w", encoding="utf-8"))
     dump(summary, "summary.json")
     dump(report, "attempt_%d.audit.json" % n)

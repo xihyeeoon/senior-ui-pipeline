@@ -472,7 +472,8 @@ def test_the_prompts_tell_the_model_about_reveal():
     gen = _api.load_template()
     assert '"do": [{"click": "<선택자>"}]' in gen
     assert "`do` 의 항목은 `{\"click\": 선택자}` 하나뿐이다" in gen
-    assert "그 누르는 조작을 흐름 명세의 `reveal` 에 적는다" in gen
+    flat = " ".join(gen.split())
+    assert "눌러야 목록이 만들어지는 설계라면 그 조작을 흐름 명세의 `reveal` 에 적는다" in flat
 
 
 def test_the_reveal_mocks_differ_only_in_the_flow():
@@ -1071,7 +1072,8 @@ def test_a_truncated_refine_answer_is_not_the_final_truncation(tmp_path):
 def test_a_run_from_before_refine_has_no_refine_counts(tmp_path):
     runs = tmp_path / "runs"
     runs.mkdir()
-    row = _api.select_collect(TS.make_run(str(runs), "20261007-100000-old"))
+    row = _api.select_collect(TS.make_run(str(runs), "20261007-100000-old",
+                                          refine_budget=None))
     assert row["refine_format_failures"] is None and row["refine_audit_failures"] is None
 
 
