@@ -458,9 +458,16 @@ def preserved_problems(html, data):
         return []
     return ["재설계 HTML 의 스크립트가 도구가 넣어 주는 선택지 데이터를 읽지 "
             "않는다: %s. 이 데이터는 window.%s.<이름> 으로 들어간다 - 목록을 "
-            "직접 쓰지 말고 그 이름을 참조해 그려라. 몇 개를 어떻게 보일지는 "
-            "네가 정하되 모든 값을 고를 수 있어야 한다."
-            % (", ".join(missed), GLOBAL_NAME)]
+            "직접 쓰지 말고 그 이름을 참조해 그려라 (%s). 몇 개를 어떻게 "
+            "보일지는 네가 정하되 모든 값을 고를 수 있어야 한다."
+            % (", ".join(missed), GLOBAL_NAME, read_forms(missed[0]))]
+
+
+def read_forms(name):
+    """검사기가 읽기로 세는 모양의 예. 프롬프트와 형식 오류가 같은 글을 쓴다
+    (preserve.names_read 가 세는 모양 중 흔한 셋)."""
+    return ("`window.{g}.{n}` · `const P = window.{g}; P.{n}` · "
+            "`const {{{n}}} = window.{g}` 모두 된다".format(g=GLOBAL_NAME, n=name))
 
 
 def problems_report(problems):

@@ -27,6 +27,7 @@ from senior_ui.preserved import GLOBAL_NAME
 from senior_ui.tasks import load_task
 
 from .preserve import preserved_data, split_groups
+from .reply import read_forms
 
 PROMPT_FILE = os.path.join(ROOT, "docs", "restructure-prompt.md")
 
@@ -197,7 +198,8 @@ def choices_block(orig_snapshot, original_html):
                 "값을 고를",
                 "수 있어야 한다. 위 이름을 하나도 빠뜨리지 말고 참조하라 - 읽지 "
                 "않은 이름이",
-                "있으면 형식 오류로 돌아온다.", "",
+                "있으면 형식 오류로 돌아온다. 읽는 모양은 "
+                + read_forms(next(iter(data))) + ".", "",
                 "검사가 보는 것은 렌더링된 화면이다. 선택 화면이 열렸을 때 모든 "
                 "값이 DOM",
                 "안에 있어야 한다 (숨김·접힘은 괜찮다). 검색창을 두더라도 검색어가 "

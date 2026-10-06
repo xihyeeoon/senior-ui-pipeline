@@ -39,11 +39,25 @@ SCRIPT = re.compile(r"<script[^>]*>(.*?)</script>", re.S | re.I)
 # 처럼 참조로 쓴 것은 걸리지 않는다 - `=` 바로 뒤가 `[` 여야 한다.
 DECL_LITERAL = r"\b(const|let|var)(\s+%s\s*=\s*)\[[^\]]*\]"
 
-# 데이터를 **읽는** 자리. `window.` 는 있어도 없어도 되고, 점 표기와 대괄호
-# 표기를 둘 다 본다. 도구가 넣은 블록(`window.PRESERVED = {...}`)은 이름 뒤가
-# `=` 이므로 걸리지 않는다 - 그것을 "읽었다" 로 세면 검사가 늘 통과한다.
-READ = (r"(?:window\s*\.\s*)?%s\s*(?:\.\s*%s\b|\[\s*[\"']%s[\"']\s*\])"
-        % (GLOBAL_NAME, "%s", "%s"))
+# 전역 자신을 가리키는 식 - `window.PRESERVED` · `window["PRESERVED"]` ·
+# 그냥 `PRESERVED`.
+SOURCE = (r"(?:window\s*\.\s*{g}\b|window\s*\[\s*[\"']{g}[\"']\s*\]|\b{g}\b)"
+          .format(g=GLOBAL_NAME))
+
+# 어떤 식 뒤에서 이름 하나를 꺼내는 자리. 점 · 대괄호 · `?.` 를 모두 본다.
+MEMBER = r"\s*(?:\?\.\s*|\.\s*)%s\b|\s*(?:\?\.\s*)?\[\s*[\"'`]%s[\"'`]\s*\]"
+
+# 뒤에 이름 꺼내기가 붙지 않은 자리. 전역을 통째로 받는 별칭이다.
+WHOLE = r"(?!\s*(?:\?\.|\.|\[))"
+
+# 별칭 - `const P = window.PRESERVED;` 뒤의 `P.BANKS`. 두 실제 실행
+# (gpt-6.1-sol · gpt-6-astra)의 첫 시도가 둘 다 이 모양이었고, 전에는 직접
+# 쓴 `window.PRESERVED.BANKS` 만 읽기로 세서 형식 실패 한 번을 헛되게 썼다.
+ALIAS = re.compile(r"\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*%s%s"
+                   % (SOURCE, WHOLE))
+
+# 구조 분해 - `const {BANKS, SECS: s, QUICK = []} = window.PRESERVED;`
+DESTRUCTURE = r"\b(?:const|let|var)\s*\{([^{}]*)\}\s*=\s*(?:%s)" + WHOLE
 
 FIRST_SCRIPT = re.compile(r"<script\b", re.I)
 
@@ -246,11 +260,50 @@ def inject(html, data):
     return place(html, data_block(data)), changed
 
 
+def _destructured(body, bases):
+    """구조 분해로 꺼낸 이름들. `{X, Y: y, Z = []}` 의 X · Y · Z.
+
+    `...rest` 로 남은 것을 받으면 rest 도 별칭이다 - `rest.X` 가 X 를 읽는다.
+    돌려주는 것은 `(꺼낸 이름들, 새 별칭들)`."""
+    keys, rest = set(), []
+    for m in re.finditer(DESTRUCTURE % "|".join(bases), body):
+        for part in m.group(1).split(","):
+            part = part.strip()
+            if part.startswith("..."):
+                rest.append(part[3:].strip())
+                continue
+            key = re.split(r"[:=]", part, 1)[0].strip().strip("\"'")
+            if key:
+                keys.add(key)
+    return keys, [r for r in rest if r]
+
+
+def _name(ident):
+    """변수 이름 하나에만 걸리는 식. `obj.P` 의 P 나 `XP` 는 아니다."""
+    return r"(?<![\w$.])%s(?![\w$])" % re.escape(ident)
+
+
 def names_read(html, names):
     """재설계 HTML 의 스크립트가 실제로 읽는 이름. `names` 의 순서로.
 
+    읽는 모양으로 세는 것은 넷이다 - 전역을 바로 읽기(`window.PRESERVED.X` ·
+    `PRESERVED["X"]` · `?.`), 별칭을 거쳐 읽기(`const P = window.PRESERVED;`
+    뒤의 `P.X`), 구조 분해(`const {X} = window.PRESERVED`), 그리고 그 별칭의
+    구조 분해. 목록을 직접 쓰고 전역을 읽지 않은 답은 어느 모양에도 걸리지
+    않는다.
+
+    도구가 넣은 블록(`window.PRESERVED = {...}`)은 전역 뒤가 `=` 이므로 어느
+    모양에도 걸리지 않는다 - 그것을 "읽었다" 로 세면 검사가 늘 통과한다.
     마크업에 글자로 적어 둔 것은 읽는 것이 아니므로 스크립트 안에서만 본다.
     """
     body = scripts(html)
-    return [n for n in names
-            if re.search(READ % (re.escape(n), re.escape(n)), body)]
+    bases = [SOURCE] + [_name(a) for a in ALIAS.findall(body)]
+    keys, rest = _destructured(body, bases)
+    bases += [_name(r) for r in rest]
+    out = []
+    for n in names:
+        member = MEMBER % (re.escape(n), re.escape(n))
+        if n in keys or any(re.search(r"(?:%s)(?:%s)" % (b, member), body)
+                            for b in bases):
+            out.append(n)
+    return out

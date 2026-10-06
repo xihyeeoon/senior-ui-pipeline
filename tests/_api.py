@@ -81,6 +81,7 @@ validate_flow_handlers = _reply.handled_actions
 preserve_module = _preserve
 # 참조 검사의 집은 형식 검사 쪽이다 (reply.py) - 브라우저 없이 규칙으로 본다.
 preserved_problems = _reply.preserved_problems
+reply_module = _reply
 
 # ---- senior_ui/restructure/prompt.py ----------------------------------- #
 # 프롬프트 조립 - 템플릿 읽기 / 선택지 블록 / 슬롯 채우기 / 재시도 블록
