@@ -180,6 +180,10 @@ def build_parser():
                          "보내고, 분당 한도 · 실제 모델 이름 · 지원하지 않는 인자 오류를 "
                          "보이고 끝난다. --api · --reasoning-effort · --temperature · "
                          "--seed 를 따른다. 실행 폴더를 만들지 않는다")
+    ap.add_argument("--image", action="store_true",
+                    help="--probe 와 함께: 같은 글에 화면 그림 한 장을 더해 한 번 더 보내 "
+                         "그 모델이 그림을 받는지, 그림 한 장이 입력 토큰 몇 개인지 잰다 "
+                         "(config.IMAGE_TOKENS 를 고칠 값). 요금이 드는 요청이 둘이다")
     ap.add_argument("--delay", type=float, default=None,
                     help="모델 호출 사이 대기(초) - 진단·계획과 생성 사이, 시도와 "
                          "시도 사이. 주지 않으면 gpt-4o %(g4)g, 추론형 %(rs)g "
@@ -198,7 +202,8 @@ def main():
         return list_models()
     if args.probe:
         return probe(args.probe, temperature=args.temperature, seed=args.seed,
-                     reasoning_effort=args.reasoning_effort, api=args.api)
+                     reasoning_effort=args.reasoning_effort, api=args.api,
+                     image=args.image)
     return run(args)
 
 

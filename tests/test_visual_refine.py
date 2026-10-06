@@ -846,3 +846,50 @@ def test_refine_attempts_are_not_counted_as_design_attempts(tmp_path):
         json.dump(s, f, ensure_ascii=False)
     row = _api.select_collect(d)
     assert row["attempts"] == 1 and row["final_from"] == "다듬기 1회차"
+
+
+# --------------------------------------------------------------------------- #
+# --probe <모델> --image
+# --------------------------------------------------------------------------- #
+from test_model_upgrade import probe_env, probe_log, run_cli  # noqa: E402,F401
+
+
+def test_probe_image_measures_one_image(probe_env, out_root, capsys):
+    """글만 보낸 요청과 그림 한 장을 더한 요청의 입력 차이가 그림 한 장이다.
+    가짜 답: 100 → 522 (= 351 패치 x 1.2 ≈ 422)."""
+    client = F.install(probe_env, [F.Reply(prompt=100), F.Reply(prompt=522)])
+    assert run_cli(probe_env, "--probe", "gpt-6.1-sol", "--image") == 0
+    out = capsys.readouterr().out
+    assert len(client.sent) == 2
+    assert F.images_in(client.sent[0][1]) == []
+    imgs = F.images_in(client.sent[1][1])
+    assert len(imgs) == 1 and imgs[0]["image_url"]["detail"] == "high"
+    assert "그림 한 장의 실측: 입력 522 − 글만 보낸 입력 100 = 422 토큰 (390x844, 패치 351개)" \
+        in out
+    assert "배수 = 422 / 351 = 1.202" in out
+    assert '"gpt-6.1-sol": {"method": "patch", "multiplier": 1.2, "budget": 2500},' in out
+    assert "estimated 표시만 지우면 된다" in out
+    assert "그림 한 장의 실측" in probe_log(out_root)
+
+
+def test_probe_image_suggests_a_new_multiplier_when_the_estimate_is_off(
+        probe_env, out_root, capsys):
+    F.install(probe_env, [F.Reply(prompt=100), F.Reply(prompt=100 + 702)])
+    assert run_cli(probe_env, "--probe", "gpt-6.1-sol", "--image") == 0
+    out = capsys.readouterr().out
+    assert "배수 = 702 / 351 = 2.000" in out
+    assert '"multiplier": 2.0' in out
+    assert "estimated 표시만" not in out
+
+
+def test_probe_image_on_a_model_without_images_exits_2(probe_env, out_root, capsys):
+    F.install(probe_env, ["ok", F.no_images()])
+    assert run_cli(probe_env, "--probe", "gpt-4o", "--image") == 2
+    out = capsys.readouterr().out
+    assert "그림을 넣은 요청이 실패했다" in out and "--see off" in out
+
+
+def test_probe_without_image_sends_one_request(probe_env, out_root, capsys):
+    client = F.install(probe_env, ["ok"])
+    assert run_cli(probe_env, "--probe", "gpt-6.1-sol") == 0
+    assert len(client.sent) == 1
