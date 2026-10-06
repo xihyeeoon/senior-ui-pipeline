@@ -51,7 +51,10 @@ def _with_task(name, task=None):
     그 칸(줄 목록)으로 채운다. 칸이 없는 슬롯이 남으면 멈춘다 - 빈 문자열로
     두면 과제의 규칙 한 덩이가 말없이 프롬프트에서 사라진다."""
     t = load_task(task)
-    text = load_block(name).replace("{{TASK}}", t["description"])
+    # 기술 계약은 생성 · 다듬기가 같은 블록을 쓴다 (CONTRACT). 계약 안에도 과제
+    # 칸({{TASK_RULES}})이 있으므로 칸을 채우기 전에 넣는다.
+    text = load_block(name).replace("{{CONTRACT}}", load_block("CONTRACT").rstrip("\n"))
+    text = text.replace("{{TASK}}", t["description"])
     parts = t.get("prompt") or {}
 
     def fill(m):

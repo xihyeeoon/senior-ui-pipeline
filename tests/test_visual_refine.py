@@ -343,3 +343,36 @@ def test_the_plan_prompt_asks_for_screen_evidence_first():
     assert '"evidence_kind": "<screen | code | both>"' in text
     assert "화면에서 보이는 것을 먼저 적는다" in text
     assert "코드는 화면으로 알 수 없는 동작" in text
+
+
+# --------------------------------------------------------------------------- #
+# 3. 프롬프트 정리
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize("task", ["transfer", "bill"])
+def test_the_task_no_longer_calls_itself_a_prototype(task):
+    """예비 실행에서 두 모델 모두 "연습용 본인 확인입니다" · "모의 이체 완료" 를
+    화면에 넣었다. 과제 설명이 "시제품이다" 로 시작하고 규칙마다 "시제품이므로"
+    가 붙어 있었다."""
+    t = _api.tasks_module.load_task(task)
+    text = " ".join(t["description"]) + json.dumps(t["prompt"], ensure_ascii=False)
+    assert "시제품" not in text
+
+
+@pytest.mark.parametrize("task", ["transfer", "bill"])
+def test_the_contract_says_to_write_like_a_real_app(task):
+    text = _api.load_template(task)
+    assert "화면의 글은 실제 앱처럼 쓴다" in text
+    assert "{{CONTRACT}}" not in text
+
+
+def test_the_contract_is_one_block_shared_by_generation_and_refinement():
+    contract = _api.prompt_module.load_block("CONTRACT")
+    assert contract.startswith("- 파일 하나.")
+    before, _slot, after = contract.partition("{{TASK_RULES}}")
+    text = _api.load_template()
+    assert before in text and after.rstrip("\n") in text
+
+
+def test_the_recover_button_may_appear_only_in_the_error_state():
+    text = _api.load_template("transfer")
+    assert "되돌아가는 버튼은 오류 상태에서만 보여도 된다" in text
