@@ -13,7 +13,9 @@ import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# 개발용 http.server · 실험 서버 · 검사기가 모두 이 포트의 같은 루트를 본다.
+# 개발용 서버(devserver: 작업 트리 전체)와 대시보드 서버(experiment.server: 허용 목록만)
+# 가 이 포트를 쓴다. 검사기 · 재구성 루프는 devserver 만 재사용한다 - 대시보드
+# 서버는 .mock-outputs/ 등의 빌드를 404 로 막으므로 (devserver.serves_this_tree).
 PORT = 3003
 BASE_URL = "http://localhost:%d" % PORT
 

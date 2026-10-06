@@ -26,7 +26,6 @@ from playwright.sync_api import sync_playwright
 
 import _api
 import capture_baseline as C
-from test_drive import server  # noqa: F401  (같은 서버 fixture 를 쓴다)
 
 pytestmark = pytest.mark.browser
 
@@ -48,7 +47,7 @@ def fill(s, truth):
 
 
 @pytest.fixture(scope="module")
-def browser(server):  # noqa: F811
+def browser(server):
     with sync_playwright() as pw:
         b = pw.chromium.launch()
         try:

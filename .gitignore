@@ -36,5 +36,9 @@ desktop.ini
 #  아래 주석 참고.)
 /inputs/*.png
 
+# 개발용 서버의 재사용 확인 파일. 작업 트리마다 달라야 하므로 추적하지 않는다
+# (senior_ui/devserver.py 의 TREE_ID_REL).
+/.devserver-id
+
 # mock 실행이 쓰는 산출물 폴더 (tests/capture_baseline.py 의 MOCK_OUTPUTS)
 .mock-outputs/

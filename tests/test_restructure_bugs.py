@@ -742,6 +742,58 @@ def test_a_server_that_does_not_have_the_file_at_all_stops_the_run(tmp_path):
             devserver.ensure_server(lambda m: None, port=port)
 
 
+def test_another_worktree_with_the_same_original_is_not_reused(tmp_path):
+    """다른 worktree(같은 저장소의 다른 체크아웃)는 원본 HTML 이 바이트까지 같다.
+    원본 해시로만 보면 그 서버를 "이 저장소" 로 재사용하고, 검사기는 이 작업 트리가
+    아니라 그쪽의 빌드 · 산출물을 연다 (감사 E-7 · B-25)."""
+    import shutil
+    (tmp_path / "inputs").mkdir()
+    for rel in ("inputs/original_transfer.html", "inputs/original_bill.html"):
+        shutil.copy2(os.path.join(ROOT, rel), str(tmp_path / rel))
+    port = free_port()
+    with server_on(tmp_path, port):
+        with pytest.raises(RuntimeError) as e:
+            devserver.ensure_server(lambda m: None, port=port)
+    assert "작업 트리" in str(e.value)
+
+
+def test_the_dashboard_server_is_not_reused():
+    """대시보드 서버(시작.bat)는 허용 목록만 서빙한다 - 원본 HTML 은 나가지만
+    .mock-outputs/ · SENIOR_UI_OUTPUTS 의 빌드는 404 다. 원본 해시로만 보면 그것을
+    재사용하고, 검사기는 빌드를 못 열어 설계 실패처럼 기록한다 (감사 B-13)."""
+    import threading
+    srv = _api.srv_make_server(0, _api.srv_make_handler(sessions_dir=None, tasks=[],
+                                                        allow_session=False))
+    t = threading.Thread(target=srv.serve_forever, daemon=True)
+    t.start()
+    try:
+        port = srv.server_address[1]
+        with pytest.raises(RuntimeError):
+            devserver.ensure_server(lambda m: None, port=port)
+    finally:
+        srv.shutdown()
+        srv.server_close()
+        t.join(timeout=5)
+
+
+def test_each_worktree_has_its_own_check_file(tmp_path):
+    """재사용 판정의 기준은 작업 트리마다 다른 확인 파일이다. 없으면 만든다 -
+    두 번째로 부르면 같은 값이다."""
+    a, b = tmp_path / "a", tmp_path / "b"
+    a.mkdir()
+    b.mkdir()
+    one = devserver.tree_id(str(a))
+    assert one == devserver.tree_id(str(a))
+    assert one != devserver.tree_id(str(b))
+    assert (a / devserver.TREE_ID_REL).exists()
+
+
+def test_the_check_file_is_not_tracked():
+    """작업 트리마다 달라야 하므로 저장소에 들어가면 안 된다."""
+    gi = io.open(os.path.join(ROOT, ".gitignore"), encoding="utf-8").read()
+    assert "/" + devserver.TREE_ID_REL in gi.split()
+
+
 def test_the_loop_stops_cleanly_when_the_port_is_someone_elses(fake_run_env,
                                                                monkeypatch, out_root):
     """남의 서버를 만나면 역추적이 아니라 이유와 종료 코드 2 로 끝나야 한다."""

@@ -24,7 +24,6 @@ import pytest
 
 import _api
 import capture_baseline as C
-from test_drive import server  # noqa: F401  (같은 서버 fixture 를 쓴다)
 
 pytestmark = pytest.mark.browser
 
@@ -61,7 +60,7 @@ def build_like_the_loop(model):
 
 
 @pytest.fixture(scope="module")
-def verdicts(server):  # noqa: F811
+def verdicts(server):
     """두 모델의 첫 답을 루프의 길과 CLI 로 한 번씩 판정한다."""
     orig_html = io.open(os.path.join(ROOT, C.ORIGINAL_REL), encoding="utf-8").read()
     orig_url = "%s/%s" % (C.BASE_URL, C.ORIGINAL_REL)

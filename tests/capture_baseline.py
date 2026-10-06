@@ -36,10 +36,8 @@ import io
 import json
 import os
 import shutil
-import socket
 import subprocess
 import sys
-import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -83,42 +81,36 @@ def say(msg):
 
 
 # --------------------------------------------------------------------- #
-# 서버
+# 서버 - senior_ui/devserver.py 하나를 쓴다 (테스트의 server fixture 도 같다)
 # --------------------------------------------------------------------- #
-def listening(port):
-    with socket.socket() as s:
-        s.settimeout(0.3)
-        return s.connect_ex(("127.0.0.1", port)) == 0
+listening = _api.listening
+# 루프백에만 묶는 http.server 명령 (devserver.server_cmd). 아무것도 주지 않으면
+# 0.0.0.0 에 열려, 같은 망의 누구나 .envs 를 포함한 프로젝트 루트를 받아 간다.
+server_cmd = _api.devserver_module.server_cmd
 
 
-def server_cmd(port):
-    """테스트가 띄우는 http.server 의 명령. 루프백에만 묶는다 - 아무것도 주지
-    않으면 0.0.0.0 에 열려, 같은 망의 누구나 .envs 를 포함한 프로젝트 루트를
-    받아 갈 수 있다 (senior_ui/devserver.py 와 같은 약속). 기준값 캡처와 브라우저
-    테스트가 모두 이것을 쓴다."""
-    return [sys.executable, "-m", "http.server", str(port), "--bind", "127.0.0.1",
-            "--directory", ROOT]
+class _Reused(object):
+    """이미 떠 있던 서버. 끝에서 건드리지 않는다."""
+    pid = None
+
+    def terminate(self):
+        pass
+
+    def wait(self):
+        pass
 
 
 def start_server():
-    """프로젝트 루트를 :3003 에 띄운다. 이미 떠 있으면 멈춘다 - 남이 띄운 서버가
-    무엇을 서빙하는지 알 수 없고, 기준값은 서빙 내용에 전적으로 달려 있다."""
-    if listening(PORT):
-        raise SystemExit(
-            "멈췄습니다: :%d 포트를 이미 누가 쓰고 있습니다.\n"
-            "  기준값은 이 포트가 서빙하는 내용에 달려 있습니다. 남이 띄운 서버를\n"
-            "  그대로 쓰면 기준값이 무엇을 기준으로 한 것인지 알 수 없게 됩니다.\n"
-            "  그 서버를 끄고 다시 실행하세요 (확인: netstat -ano | findstr :%d)."
-            % (PORT, PORT))
-    proc = subprocess.Popen(server_cmd(PORT),
-                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    for _ in range(50):
-        if listening(PORT):
-            say("서버: http.server :%d 시작 (pid %d)" % (PORT, proc.pid))
-            return proc
-        time.sleep(0.1)
-    proc.kill()
-    raise SystemExit("멈췄습니다: :%d 에 http.server 를 띄우지 못했습니다." % PORT)
+    """이 작업 트리를 :3003 에 띄운다 (devserver.ensure_server).
+
+    이미 떠 있으면 그것이 **이 작업 트리를** 서빙하는지 확인 파일로 보고 재사용한다 -
+    기준값은 서빙 내용에 전적으로 달려 있으므로, 다른 worktree · 다른 폴더 · 대시보드
+    서버면 멈춘다. 전에는 무엇이 떠 있든 멈췄다 (무엇을 서빙하는지 알 수 없었으므로)."""
+    try:
+        proc = _api.ensure_server(say)
+    except RuntimeError as e:
+        raise SystemExit("멈췄습니다: %s" % e)
+    return proc or _Reused()
 
 
 # --------------------------------------------------------------------- #
@@ -804,7 +796,7 @@ def main():
         finally:
             server.terminate()
             server.wait()
-            say("서버: 종료 (pid %d)" % server.pid)
+            say("서버: 종료 (pid %s)" % (server.pid or "재사용 - 끄지 않음"))
         say("")
         say("끝. 기준값: %s" % d)
         return 0
@@ -831,7 +823,7 @@ def main():
     finally:
         server.terminate()
         server.wait()
-        say("서버: 종료 (pid %d)" % server.pid)
+        say("서버: 종료 (pid %s)" % (server.pid or "재사용 - 끄지 않음"))
 
     say("[6/7] session_report")
     write_fixtures(os.path.abspath(args.fixtures))
