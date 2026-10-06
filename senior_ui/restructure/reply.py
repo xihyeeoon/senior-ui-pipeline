@@ -12,7 +12,10 @@ import json
 import re
 
 from ..audit.checks.i_choices import present
-from ..audit.checks.j_errors import done_screen
+# 오류 경로 · 방문 이름의 규칙은 검사기의 것을 그대로 쓴다. 따로 쓰면 한쪽만
+# 고쳐지는 순간 형식 검사와 검사 J 가 갈라진다 (감사 B-10).
+from ..audit.checks.j_errors import back_to_ok, done_screen, step_screens
+from ..audit.flow import visit_keys
 from ..audit.handlers import handled_actions
 from ..preserved import GLOBAL_NAME
 from ..tasks import load_task
@@ -290,7 +293,7 @@ def _check_expect(flow, html, steps, screens, done=None):
     if not isinstance(expect, dict):
         problems.append("expect 가 객체가 아니다")
         return problems
-    visits = _visits(steps)
+    visits = visit_keys(steps)
     last = visits[-1] if visits else "done"
     pairs = expect.get(last) or []
     for sel, val in _done_of(done):
@@ -330,7 +333,7 @@ def accept_done_alias(flow):
     named = {st.get("screen") for st in steps if isinstance(st, dict)}
     for e in _error_paths_of(flow):
         named |= {e.get("expect_screen"), e.get("back_to")}
-    visits = _visits(steps)
+    visits = visit_keys(steps)
     if not visits or DONE_ALIAS in named:
         return None
     last = visits[-1]
@@ -364,16 +367,6 @@ def _check_coverage(flow, html, steps, screens):
     return []
 
 
-def _visits(steps):
-    """steps 의 방문 이름 (audit.flow.visit_keys 와 같은 규칙)."""
-    seen, out = {}, []
-    for st in steps:
-        name = st.get("screen") if isinstance(st, dict) else None
-        seen[name] = seen.get(name, 0) + 1
-        out.append(name if seen[name] == 1 else "%s#%d" % (name, seen[name]))
-    return out
-
-
 def _check_error_paths(flow, html, steps, screens, required=None):
     """오류 경로의 칸이 걸을 수 있는 모양인지. 무엇이 오류인지는 과제가 정한다
     (`required` - 원본 흐름의 error_paths). 그 정의의 id 가 빠졌거나, 정의가
@@ -398,11 +391,8 @@ def _check_error_paths(flow, html, steps, screens, required=None):
                 "어디로 되돌아가는지 적어라. 잘못된 입력은 %s 로 넣는다."
                 % (rid, d.get("about") or "?",
                    ", ".join("{%s}" % k for k in d.get("uses") or []) or "?"))
-    order = []
-    for st in steps:
-        if isinstance(st, dict) and st.get("screen") not in order:
-            order.append(st.get("screen"))
-    visits = _visits(steps)
+    order = step_screens(steps)
+    visits = visit_keys(steps)
     done = done_screen(steps)
     for i, e in enumerate(paths):
         eid = e.get("id")
@@ -419,13 +409,15 @@ def _check_error_paths(flow, html, steps, screens, required=None):
         if exp not in screens:
             problems.append("%s.expect_screen=%r 은 HTML 의 data-screen 에 없다"
                             % (where, exp))
-        if back != exp and back not in order:
-            problems.append("%s.back_to=%r 은 steps 의 화면도 오류가 나타난 화면도 "
-                            "아니다" % (where, back))
+        if back_to_ok(order, back, exp, done):
+            pass
         elif back == done:
             problems.append("%s.back_to=%r 은 완료 화면이다. 고칠 수 있는 곳 - "
                             "steps 에 있는 화면 중 완료 화면이 아닌 곳 - 으로 돌아가야 "
                             "한다." % (where, back))
+        else:
+            problems.append("%s.back_to=%r 은 steps 의 화면도 오류가 나타난 화면도 "
+                            "아니다" % (where, back))
         if not e.get("inputs"):
             problems.append("%s.inputs 가 비어 있다. 잘못된 입력을 넣는 동작을 적어라"
                             % where)
@@ -455,7 +447,7 @@ def _check_reveal(flow, html, steps, screens):
     검사 I 를 지날 수 있다. 누를 대상이 그 화면에 보이는 data-action 요소인지,
     누른 뒤에도 같은 화면인지는 걸어 봐야 알므로 drive.walk_reveal 이 본다."""
     problems = []
-    visits = _visits(steps)
+    visits = visit_keys(steps)
     for action, spec in (flow.get("reveal") or {}).items():
         where = "reveal.%s" % action
         if action not in html:

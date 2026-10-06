@@ -184,6 +184,8 @@ from senior_ui.audit.context import AuditContext             # noqa: E402
 from senior_ui.audit.checks import b_display                 # noqa: E402
 # 검사 A (과제 완수). 완료 화면의 값을 과제에서 읽는지 손으로 만든 스냅샷으로 본다.
 from senior_ui.audit.checks import a_completion                # noqa: E402
+# 처리기 분기 · 조작부 이름을 읽는 규칙. 검사 C 와 형식 검사가 함께 쓴다.
+from senior_ui.audit import handlers as handlers_module      # noqa: E402
 
 # ---- senior_ui/select (C 후보 고르기) ----------------------------------- #
 select_main = _select_cli.main
