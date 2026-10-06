@@ -100,13 +100,16 @@ def test_both_first_replies_pass_the_format_check(verdicts):
 def test_sol_first_attempt_now_fails_only_on_the_entrances(verdicts):
     """sol 의 첫 답은 A~J 를 모두 지난다 - 그런데 이체 홈 · 받는 사람 · 완료 화면의
     다른 메뉴를 거의 다 지웠다. 11-7 에서 검사 K (과제 밖 입구 보존, 연구자 결정 (나))
-    가 생긴 뒤로 그것 하나로 떨어진다. 전에는 통과했다."""
+    가 생긴 뒤로 그것 하나로 떨어진다. 전에는 통과했다.
+
+    남은 입구는 0 이다 - 이 답은 원본에 oos-* 이름이 붙기 전에 만들어졌다. 글자로 맞추던
+    판정에서는 다른 요소의 글자로 2개가 맞았다 (11-7b 에서 이름으로 바꿨다)."""
     v = verdicts["sol"]
     fatal = v["loop"]["fatal"]
     assert [f["check"] for f in fatal] == ["K"], fatal
     m = v["loop"]["metrics"]
     assert m["stage"] == "wireframe"
-    assert (m["entrances_original"], m["entrances_kept"]) == (31, 2)
+    assert (m["entrances_original"], m["entrances_kept"]) == (31, 0)
     assert v["code"] == 1
 
 
