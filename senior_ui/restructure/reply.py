@@ -77,6 +77,23 @@ def shape_problems(flow):
         if "do" in st and not isinstance(st["do"], (list, dict)):
             problems.append("steps[%d].do 가 목록도 객체도 아니다 (지금은 %s)"
                             % (i, type_of(st["do"])))
+    reveal = flow.get("reveal")
+    if reveal is not None and not isinstance(reveal, dict):
+        problems.append("reveal 이 객체가 아니다 (지금은 %s). 선택지의 data-action "
+                        "마다 {\"at\": 화면, \"do\": [동작]} 하나다." % type_of(reveal))
+        reveal = None
+    for action, spec in (reveal or {}).items():
+        if not isinstance(spec, dict):
+            problems.append("reveal.%s 가 객체가 아니다 (지금은 %s). {\"at\": steps 의 "
+                            "화면 이름, \"do\": [동작]} 이다." % (action, type_of(spec)))
+            continue
+        if not isinstance(spec.get("at"), str):
+            problems.append("reveal.%s.at 이 문자열이 아니다 (지금은 %s). 펼치기 조작을 "
+                            "할 화면 - steps 의 화면 이름 하나 - 를 적는다."
+                            % (action, type_of(spec.get("at"))))
+        if not isinstance(spec.get("do"), (list, dict)):
+            problems.append("reveal.%s.do 가 목록도 객체도 아니다 (지금은 %s)"
+                            % (action, type_of(spec.get("do"))))
     paths = flow.get("error_paths")
     if paths is not None and not isinstance(paths, list):
         problems.append("error_paths 가 목록이 아니다 (지금은 %s). 오류 경로 "
@@ -431,6 +448,42 @@ def _check_error_paths(flow, html, steps, screens, required=None):
     return problems
 
 
+def _check_reveal(flow, html, steps, screens):
+    """펼치기 조작(reveal)이 걸을 수 있는 모양인지. 모양(타입)은 shape_problems
+    가 먼저 본다.
+
+    선택지 목록의 일부만 먼저 보이고 눌러야 나머지가 만들어지는 설계("자주 쓰는
+    은행 먼저 + 전체 보기")는 그 누르는 조작을 여기에 적는다. 검사기는 `at` 까지
+    정답 걸음을 밟은 뒤 `do` 의 동작을 하나씩 실행하며 선택지를 모은다
+    (drive.walk_reveal). 키는 선택지의 data-action 이다.
+
+    `do` 는 click 만 된다. 펼치기는 사용자가 그 화면에서 버튼을 누르는 일이다 -
+    타이핑 · 기다리기 · 되풀이를 허락하면 "검사기만 하는 조작" 으로 목록을 만들어
+    검사 I 를 지날 수 있다. 누를 대상이 그 화면에 보이는 data-action 요소인지,
+    누른 뒤에도 같은 화면인지는 걸어 봐야 알므로 drive.walk_reveal 이 본다."""
+    problems = []
+    visits = _visits(steps)
+    for action, spec in (flow.get("reveal") or {}).items():
+        where = "reveal.%s" % action
+        if action not in html:
+            problems.append("%s: %r 은 HTML 의 data-action 에 없다. 키는 펼친 뒤 "
+                            "나타나는 선택지의 data-action 이다." % (where, action))
+        if spec.get("at") not in visits:
+            problems.append("%s.at=%r 은 steps 의 화면이 아니다 (있는 것: %s)"
+                            % (where, spec.get("at"), ", ".join(visits)))
+        if not spec.get("do"):
+            problems.append("%s.do 가 비어 있다. 목록을 펼치는 조작을 적어라" % where)
+        do = spec.get("do")
+        for i, act in enumerate(do if isinstance(do, list) else [do]):
+            if not (isinstance(act, dict) and set(act) == {"click"}
+                    and isinstance(act["click"], str)):
+                problems.append("%s.do[%d] 는 click 만 쓸 수 있다 (지금은 %s). 그 화면에 "
+                                "보이는 data-action 버튼을 누르는 것만 적는다 - 예: "
+                                '{"click": "#show-all"}'
+                                % (where, i, json.dumps(act, ensure_ascii=False)[:80]))
+    return problems
+
+
 # 이 순서가 problems 의 순서다.
 CHECKS = [_check_steps, _check_handlers, _check_step_screens, _check_transitions,
           _check_omissions, _check_ids, _check_expect, _check_derived,
@@ -467,6 +520,7 @@ def validate_flow(flow, html, required_errors=None, done_expect=None):
         else:
             problems += check(flow, html, steps, screens)
     problems += _check_error_paths(flow, html, steps, screens, required_errors)
+    problems += _check_reveal(flow, html, steps, screens)
     return problems
 
 

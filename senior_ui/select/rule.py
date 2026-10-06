@@ -19,7 +19,8 @@ from senior_ui.config import FLOWS_DIR, ROOT
 
 DEFAULT_RULE = os.path.join(FLOWS_DIR, "selection_rule.json")
 
-GATES = ("passed", "no_redeclared", "no_truncated", "clean_tree", "not_mock", "model")
+GATES = ("passed", "no_redeclared", "no_truncated", "clean_tree", "not_mock", "model",
+         "no_warning_checks")
 
 # 줄 세우기와 대표성에 쓸 수 있는 값 (collect.collect 의 칸).
 NUMERIC = ("warning", "fatal", "attempts", "format_failures", "audit_failures",
@@ -56,6 +57,10 @@ def validate(rule):
         if k == "model":
             if v is not None and not (isinstance(v, str) and v):
                 raise RuleError("gates.model 은 null 이거나 모델 이름이어야 한다")
+        elif k == "no_warning_checks":
+            if not (isinstance(v, list) and all(isinstance(x, str) and x for x in v)):
+                raise RuleError("gates.no_warning_checks 는 검사 이름(\"J\" 등)의 목록이어야 "
+                                "한다")
         elif not isinstance(v, bool):
             raise RuleError("gates.%s 는 true/false 여야 한다" % k)
     ordering = rule.get("ordering")
@@ -154,6 +159,16 @@ def gate_reasons(row, gates):
                    else "작업 트리 기록 없음 (git.dirty)")
     if gates.get("not_mock") and row.get("mock"):
         out.append("mock 실행 (%s)" % row["mock"])
+    # 이 검사들의 경고가 하나라도 있으면 뺀다. 기본 규칙은 ["J"] - 오류를 알리긴
+    # 했지만 무엇이 틀렸는지 말하지 않는 글. 예비 실행(20261006-124838, gpt-6-astra)은
+    # 은행 오류에 "계좌번호가 맞지 않습니다" 를 띄운 채 통과했다 - 원본의 같은
+    # 문제를 스스로 진단해 놓고 똑같이 틀렸다.
+    by_check = row.get("warning_by_check") or {}
+    for check in gates.get("no_warning_checks") or []:
+        hit = by_check.get(check)
+        if hit and hit.get("count"):
+            out.append("검사 %s 경고 %d건 (%s)" % (
+                check, hit["count"], " ".join(str(hit.get("first") or "").split())[:80]))
     want = gates.get("model")
     if want and row.get("model") != want:
         out.append("모델이 %s 아님 (%s)" % (want, row.get("model")))

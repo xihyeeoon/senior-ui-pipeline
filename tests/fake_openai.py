@@ -141,3 +141,24 @@ def install(monkeypatch, outcomes=None, model_ids=()):
     client = FakeClient(outcomes, model_ids)
     monkeypatch.setattr(openai, "OpenAI", lambda *a, **kw: client)
     return client
+
+
+def images_in(kw):
+    """보낸 요청 인자에서 그림 부분만. Chat 은 image_url, Responses 는 input_image."""
+    msgs = kw.get("messages") or kw.get("input")
+    if not isinstance(msgs, list):
+        return []
+    out = []
+    for m in msgs:
+        content = m.get("content") if isinstance(m, dict) else None
+        if isinstance(content, list):
+            out += [p for p in content if p.get("type") in ("image_url", "input_image")]
+    return out
+
+
+def no_images(model="gpt-fake"):
+    """그림을 받지 않는 모델의 400. 빼고 다시 보낼 인자가 아니다 - ApiRejected."""
+    body = {"message": "Invalid content type. image_url is only supported by certain "
+                       "models.", "type": "invalid_request_error",
+            "param": "messages.[0].content.[1].type", "code": "invalid_value"}
+    return make_error(openai.BadRequestError, "Error code: 400 - %s" % body, 400, body)

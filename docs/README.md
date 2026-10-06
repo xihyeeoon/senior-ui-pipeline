@@ -97,6 +97,32 @@ LLM 이 쓴 것이라 다시 만들려면 API 비용이 들고 바이트까지 �
 `run.log`, `summary.json`. 모델을 바꾸는 법과 처음 쓰는 모델을 먼저 확인하는 명령 둘
 (`--list-models` · `--probe`)은 아래 "모델 바꾸기".
 
+### 화면 보여 주기 (11-5)
+
+모델은 이제 화면을 본다. 두 군데다.
+
+- **보고 진단하기** (`--see`, 기본 on). 루프가 시작할 때 원본을 한 번 걸으며 화면마다
+  스크린샷을 찍고 (스크롤되는 화면은 맨 위부터 창 높이씩 잘라 최대 4장, 오류 상태도),
+  진단·계획 호출에 그림으로 넣는다. 그림은 `shots/original/see/`, 기록은
+  `attempt_1.plan_prompt.txt` 의 그림 줄. 진단마다 `evidence_kind`(screen · code · both)를
+  적게 해 `summary.plan.evidence_kinds` 로 센다. `--see off` 는 전의 동작이다.
+- **보고 다듬기** (`--refine N`, 기본 2, 0 이면 끔). 시도가 검사를 통과하면 그 빌드의
+  스크린샷과 계획 · HTML · 흐름 명세를 주고 다듬게 한다. 답은 비평(json) → html → 흐름
+  명세. 다듬은 빌드는 검사를 다시 통과해야 최종이 되고, 떨어지면 한 번 고치게 한 뒤
+  그래도 떨어지면 직전에 통과한 빌드로 되돌린다. 기록은 `attempt_N.critique.json` ·
+  `summary.refine` · 설명서의 "보고 다듬기" 절과 맨 위 "최종:" 줄.
+
+호출마다 보낸 그림 수와 그림 토큰 어림이 `summary` 의 `calls[].images` ·
+`estimated_images` (실제 실행이면 `measured_images` 도)에 남고, 한 호출에 그림이
+`config.IMAGE_WARN_COUNT`(40)장을 넘으면 `run.log` 에 경고 한 줄을 쓴다. 그림 토큰
+어림은 `config.IMAGE_TOKENS` 이고, 처음 쓰는 모델은 `--probe <모델> --image` 로
+그림을 받는지와 한 장의 실측 토큰을 먼저 잰다.
+
+API 없이: `--mock pass --mock-refine improve` (1회차에 다듬은 빌드가 통과해 최종이
+된다) · `break` (다듬은 빌드와 고친 빌드가 떨어져 되돌린다) · `break-then-fix` ·
+`done` (기본 - 고칠 것 없음). 긴 목록을 눌러 펼치는 설계는 `--mock reveal` (흐름
+명세의 `reveal` 로 통과) · `reveal-undeclared` (같은 HTML, 검사 I 실패).
+
 검사기만 따로 돌리기:
 
 ```powershell

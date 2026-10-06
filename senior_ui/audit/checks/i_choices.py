@@ -26,6 +26,11 @@ DOM 을 더 보는 이유는 그 반대다. 블록을 빼면 "블록을 참조�
 나타나지 않으므로, fatal 로 하면 정상 설계가 떨어진다. 판정은 느슨한 쪽으로
 하고 차이는 사람이 보게 남긴다.
 
+"전체 보기" 를 눌러야 목록이 만들어지는 설계는 흐름 명세의 `reveal` 에 그 조작을
+적는다. drive 가 그 조작을 따로 걸으며 모은 값(`rep["revealed"]`)도 DOM 에서 고를
+수 있던 값으로 센다. 펼친 뒤에도 값이 data-action 요소로 있어야 한다는 기준은
+같다 - 같은 CHOICE_GROUPS 로 모은다.
+
 흐름 파일이 "일부러 뺐다" 를 선언할 수 있다. 안전을 위해 뺀 선택지까지 누락으로
 세면 고칠 수 없는 fatal 이 재생성 루프에 계속 남는다 (declared() 참고).
 """
@@ -126,7 +131,28 @@ def dom_values(rep):
     for row in (rep.get("screens") or {}).values():
         for vals in (row.get("choices") or {}).values():
             seen.update(v for v in (vals or []) if v)
+    # 펼치기 조작(reveal)을 따로 걸으며 모은 것. 흐름 명세가 적은 조작만이다.
+    for res in (rep.get("revealed") or {}).values():
+        for vals in ((res or {}).get("choices") or {}).values():
+            seen.update(v for v in (vals or []) if v)
     return "\n".join(sorted(seen))
+
+
+def reveal_violations(rep):
+    """펼치기 조작이 규칙(그 화면에 보이는 data-action 요소를 click, 같은 화면에
+    머문다)을 어긴 것. `[(action, 내용)]`."""
+    return [(action, v) for action, res in sorted((rep.get("revealed") or {}).items())
+            for v in (res or {}).get("violations") or []]
+
+
+def reveal_failures(rep):
+    """펼치기 조작이 실패한 것. `{action: "단계: 내용"}`."""
+    out = {}
+    for action, res in (rep.get("revealed") or {}).items():
+        err = (res or {}).get("error")
+        if err:
+            out[action] = "%s: %s" % (err.get("phase"), (err.get("detail") or "")[:200])
+    return out
 
 
 def run(ctx):
@@ -191,6 +217,21 @@ def run(ctx):
     metrics["choice_values_selectable"] = selectable
     metrics["choice_values_missing"] = {a: d["missing"]
                                         for a, d in missing_by_action.items()}
+    # 흐름 명세의 펼치기 조작과 그 결과. 없으면 키가 없다 (옛 흐름 그대로).
+    revealed = ctx.rep.get("revealed") or {}
+    if revealed:
+        metrics["reveal"] = {a: {"at": (r or {}).get("at"),
+                                 "values": sum(len(v) for v in ((r or {}).get("choices")
+                                                                or {}).values()),
+                                 "error": ((r or {}).get("error") or {}).get("phase")}
+                             for a, r in revealed.items()}
+    failed = reveal_failures(ctx.rep)
+    # 펼치기 규칙을 어긴 조작. 그 조작으로 모은 값은 이미 버려졌다 (drive 가 거기서
+    # 멈춘다). fatal 로 남기고, 재구성 루프는 이 fatal 을 형식 문제로 센다.
+    for action, why in reveal_violations(ctx.rep):
+        F("I", None, "흐름 명세의 reveal.%s 가 펼치기 규칙을 어겼다: %s. 펼치기는 그 화면에 "
+          "보이는 data-action 버튼을 click 하는 것만이고, 누른 뒤에도 같은 화면이어야 "
+          "한다." % (action, why), action=action, reveal_violation=True)
     # 차이는 경고다. fatal 로 하면 "전체 보기" 뒤나 검색 결과로만 목록을 내놓는
     # 설계가 떨어진다 - 검사기가 그 버튼을 누르지 않으면 DOM 에 나타나지 않고,
     # 그것은 설계의 결함이 아니라 흐름 명세가 그 길을 걷지 않은 것이다. 그래서
@@ -201,8 +242,8 @@ def run(ctx):
                  "원본의 %s 선택지 %d개 중 %d개는 생성물 문서 안에는 있지만 "
                  "검사기가 걷는 동안 DOM 에서는 고를 수 없었다 (예: %s). "
                  '"전체 보기" 뒤나 검색 결과로만 나오는 목록이면 정상이다 - '
-                 "판정에는 넣지 않는다. 그 길을 걷게 하려면 흐름 명세에 그 "
-                 "클릭을 넣어라."
+                 "판정에는 넣지 않는다. 그 길을 걷게 하려면 흐름 명세의 reveal "
+                 "에 펼치는 조작을 적어라."
                  % (action, len(orig_choices[action]), len(hidden), sample),
                  action=action, not_selectable=hidden)
     for action, d in sorted(missing_by_action.items()):
@@ -210,6 +251,8 @@ def run(ctx):
         F("I", None,
           "원본의 %s 선택지 %d개 중 %d개가 생성물에 없다 (예: %s). 화면에 모두 "
           "보일 필요는 없지만 값 자체는 모두 접근 가능해야 한다. 검색이나 단계적 "
-          "선택으로 찾을 수 있게 포함하라."
-          % (action, d["total"], len(d["missing"]), sample),
+          "선택으로 찾을 수 있게 포함하라.%s"
+          % (action, d["total"], len(d["missing"]), sample,
+             "".join(" 흐름 명세의 reveal.%s 조작이 실패했다 (%s)." % (a, why)
+                     for a, why in sorted(failed.items()))),
           action=action, missing=d["missing"])

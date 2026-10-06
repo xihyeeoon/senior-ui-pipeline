@@ -1,6 +1,6 @@
 ## 1. 과제
 
-아래는 은행 앱의 세금·공과금 납부 화면 시제품이다 (HTML 한 파일, 8화면). 60대 이상 고령 사용자가
+아래는 은행 앱의 세금·공과금 납부 화면을 HTML 한 파일로 만든 것이다 (8화면). 60대 이상 고령 사용자가
 **공과금 납부 과업 — 전체메뉴나 메뉴 검색에서 납부하기 찾기, 종이 고지서 촬영, 납부정보 확인, 계좌 비밀번호, 완료 —
 을 혼자서 끝낼 수 있도록** 이 화면들을 다시 설계하라.
 
@@ -9,8 +9,13 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 
 - 규칙 목록은 주지 않는다. 각 화면에서 고령 사용자가 어디서 멈추고, 무엇을 잘못 누르고,
   무엇을 못 읽을지를 원본에서 직접 보고 적어라.
-- 진단마다 원본의 무엇을 보고 그렇게 판단했는지(`evidence`)를 적어라. 마크업·글자·
-  스크립트 어디든 된다. 원본에서 가리킬 수 없는 일반론은 적지 마라.
+- 아래 "원본 화면" 그림이 있으면 먼저 그림을 보라. 진단은 화면에서 보이는 것에서 시작한다.
+- 진단마다 근거(`evidence`)를 적어라. 화면에서 보이는 것을 먼저 적는다 — 어느 화면 그림의
+  어디에 무엇이 어떻게 보이는가. 코드는 화면으로 알 수 없는 동작(누르면 무슨 일이 생기는가,
+  입력한 값이 지워지는가, 무엇이 갖춰져야 버튼이 켜지는가)을 말할 때만 근거로 쓴다. 그림에서
+  보이는 것을 CSS 값으로 옮겨 적지 마라. 원본에서 가리킬 수 없는 일반론은 적지 마라.
+- `evidence_kind` 에 근거의 종류를 적는다: 그림만 보고 `"screen"`, 코드만 보고 `"code"`,
+  둘 다 `"both"`.
 - 화면을 몇 개로 나눌지, 어떤 순서로 둘지는 자유다. 원본 구조를 지킬 필요 없다.
 - 변경마다 어느 진단에 대응하는지(`addresses`)를 적어라.
 - 원본의 화면은 다음과 같다: home, menu, search, bill-home, camera, info, password, done
@@ -34,8 +39,9 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 
 검사가 보는 것은 렌더링된 화면이다. 선택 화면이 열렸을 때 모든 값이 DOM
 안에 있어야 한다 (숨김·접힘은 괜찮다). 검색창을 두더라도 검색어가 비었을
-때는 전체 목록이 DOM 에 있어야 한다. 도구가 넣어 준 데이터 블록은 증거로
-세지 않는다 - 그 데이터를 읽어 **그린** 것만 센다.
+때는 전체 목록이 DOM 에 있어야 한다. 처음에는 일부만 보이고 [전체 보기] 같은
+조작으로 나머지가 만들어지는 설계도 된다 - 그 조작을 흐름 명세의 `reveal` 에 적어라.
+도구가 넣어 준 데이터 블록은 증거로 세지 않는다 - 그 데이터를 읽어 **그린** 것만 센다.
 
 
 
@@ -53,7 +59,8 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   "diagnosis": [
     {"id": "D1", "screen": "<원본 data-screen>", "element": "<요소>",
      "problem": "<고령 사용자가 어디서 왜 막히는지>",
-     "evidence": "<원본의 무엇을 보고>"}
+     "evidence": "<원본의 무엇을 보고>",
+     "evidence_kind": "<screen | code | both>"}
   ],
   "plan": {
     "screens": [
@@ -116,7 +123,6 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   .btn-primary{margin:8px 16px 22px; background:var(--blue-deep); color:#fff; border:0; border-radius:13px;
     padding:18px; font-size:18px; font-weight:700; font-family:inherit;}
 
-  /* ---------- 1. 메인 (이체 원본의 메인과 같다) ---------- */
   .home{background:var(--bg);}
   .homehead{display:flex; align-items:center; justify-content:space-between; padding:8px 18px 14px; background:var(--bg);}
   .homehead .name{font-size:19px; font-weight:700; display:flex; align-items:center; gap:7px;}
@@ -156,7 +162,6 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   .tabbar .ti{font-size:18px;}
   .footlinks{display:flex; justify-content:space-around; padding:16px 0 22px; font-size:13px; color:#5A6069;}
 
-  /* ---------- 2. 전체메뉴 ---------- */
   .menu{background:var(--bg);}
   .searchbar{margin:6px 16px 10px; padding:15px 18px; background:#EDEFF3; border-radius:14px;
     display:flex; justify-content:space-between; font-size:17px; color:#9A9EA6;}
@@ -171,7 +176,6 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   .msec{padding:18px 20px 4px; font-size:16px; font-weight:700; color:#6A6A6F; border-top:1px solid #F0F1F4;}
   .mi{padding:15px 20px; font-size:19px; font-weight:600;}
 
-  /* ---------- 3. 메뉴 검색 ---------- */
   .shead{display:flex; align-items:center; gap:8px; padding:6px 16px 10px 12px;}
   .shead input{flex:1; border:0; outline:0; font-size:20px; font-weight:600; font-family:inherit; min-width:0;}
   .shead input::placeholder{color:#9A9EA6; font-weight:400; font-size:19px;}
@@ -186,7 +190,6 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   .aifoot{display:flex; gap:14px; align-items:center; padding:18px 20px; border-top:1px solid var(--line); margin:0 20px; padding-left:0;}
   .aifoot .s{font-size:15px; color:#9A9EA6;} .aifoot .b{font-size:19px; font-weight:700;}
 
-  /* ---------- 4. 세금/공과금 메인 ---------- */
   .hero{background:#EEF2FB; padding:10px 20px 14px; display:flex; justify-content:space-between;
     font-size:25px; font-weight:800; line-height:1.3;}
   .entry{background:#EEF2FB; padding:0 16px 20px;}
@@ -205,7 +208,6 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   .bi .s{font-size:16px; color:#8A8A8F; font-weight:400; margin-top:2px;}
   .bi .c{color:#B8BDC7;}
 
-  /* ---------- 5. 고지서 촬영 ---------- */
   .camera{background:#0B0D12; color:#fff;}
   .camtext{text-align:center; margin-top:60px; font-size:22px; font-weight:700; line-height:1.35;}
   .frame{width:300px; height:380px; margin:40px auto 0; border:2px solid rgba(255,255,255,.7); border-radius:16px;
@@ -215,7 +217,6 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
     border-radius:50%; background:#fff; border:4px solid #B8BDC7;}
   .camclose{position:absolute; right:24px; bottom:63px; font-size:30px;}
 
-  /* ---------- 6. 납부정보 · 8. 납부완료 ---------- */
   .pad20{padding:0 20px;}
   .h2{font-size:22px; font-weight:800; margin:10px 0 12px;}
   .rule{border-top:1px solid #3A3A3E; margin-bottom:8px;}
@@ -234,11 +235,9 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
     margin:16px auto 18px; display:flex; align-items:center; justify-content:center;}
   .donet{text-align:center; font-size:26px; font-weight:800; margin-bottom:24px;}
   .note{font-size:16px; line-height:1.45; color:#6A6A6F; margin:12px 0 20px;}
-  /* 납부완료는 실제 앱 캡처처럼 안내 문구까지 한 화면에 들어간다 (행 간격을 좁히고 라벨을 꺾지 않는다) */
   [data-screen='done'] .kv{padding:7px 0;}
   [data-screen='done'] .kv .k{white-space:nowrap;}
 
-  /* ---------- 7. 계좌 비밀번호 ---------- */
   .pwtitle{text-align:center; font-size:26px; font-weight:800; margin-top:150px;}
   .dots{display:flex; justify-content:center; gap:24px; margin-top:34px;}
   .dots i{width:22px;height:22px;border-radius:50%;border:2px solid #B8BDC7; display:block;}
@@ -256,7 +255,6 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 <body>
 <div id="phone">
 
-<!-- ================= 1. 메인 ================= -->
 <section class="screen on home" data-screen="home">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="homehead">
@@ -337,7 +335,6 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   </div>
 </section>
 
-<!-- ================= 2. 전체메뉴 ================= -->
 <section class="screen menu" data-screen="menu">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="navbar"><span class="ico" data-action="back-home">‹</span><span class="sp"></span>
@@ -347,7 +344,6 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   <div class="body" id="menu-body"></div>
 </section>
 
-<!-- ================= 3. 메뉴 검색 ================= -->
 <section class="screen" data-screen="search">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="shead">
@@ -359,7 +355,6 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   <div class="body" id="search-body"></div>
 </section>
 
-<!-- ================= 4. 세금/공과금 메인 ================= -->
 <section class="screen" data-screen="bill-home">
   <div class="statusbar" style="background:#EEF2FB"><span>4:31</span><span class="right">67</span></div>
   <div class="navbar" style="background:#EEF2FB"><span class="ico" data-action="back-bill-home">‹</span><span class="sp"></span>
@@ -377,7 +372,6 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   </div>
 </section>
 
-<!-- ================= 5. 고지서 촬영 (모크) ================= -->
 <section class="screen camera" data-screen="camera">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="camtext">지로번호가 잘 보이게<br>준비해주세요</div>
@@ -386,7 +380,6 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   <span class="camclose" data-action="to-bill-home">✕</span>
 </section>
 
-<!-- ================= 6. 납부정보 ================= -->
 <section class="screen" data-screen="info">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="navbar"><span class="ico" data-action="to-bill-home">‹</span><span class="title">전기요금 납부</span>
@@ -413,7 +406,6 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   <button class="btn-primary" data-action="pay">납부</button>
 </section>
 
-<!-- ================= 7. 계좌 비밀번호 ================= -->
 <section class="screen" data-screen="password">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="navbar"><span class="sp"></span><span class="ico" data-action="close-password">✕</span></div>
@@ -422,7 +414,6 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   <div class="pwpad" id="pwpad"></div>
 </section>
 
-<!-- ================= 8. 납부완료 ================= -->
 <section class="screen" data-screen="done">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="navbar"><span class="sp"></span><span class="ico">💬</span><span class="ico" data-action="finish">⌂</span></div>
@@ -447,7 +438,6 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 </div>
 
 <script>
-/* ============ 기록 장치 ============ */
 const LOG = [];
 window.__log = LOG;
 window.__task = { startedAt: null, screen: 'home' };
@@ -458,7 +448,6 @@ function log(type, data){
 window.__startTask = function(){ LOG.length = 0; window.__task.startedAt = Date.now(); log('task_start'); };
 window.__dump = function(){ return JSON.parse(JSON.stringify(LOG)); };
 
-/* 탭 기록: 조작 대상이 아닌 곳을 누른 것은 valid:false */
 document.getElementById('phone').addEventListener('click', function(e){
   const hit = e.target.closest('[data-action]');
   const r = hit ? hit.getBoundingClientRect() : null;
@@ -472,8 +461,6 @@ document.getElementById('phone').addEventListener('click', function(e){
   });
 }, true);
 
-/* ============ 화면 전환 ============
-   keep 이 참이면 스크롤을 두고 간다 (뒤로 돌아온 화면) */
 function show(name, keep){
   document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.dataset.screen===name));
   window.__task.screen = name;
@@ -483,13 +470,8 @@ function show(name, keep){
 }
 window.__screen = ()=>window.__task.screen;
 
-/* ============ 상태 ============ */
 const S = { pw:'', billFrom:'menu', query:'' };
 
-/* ============ 전체메뉴 데이터 (Flutter 더미앱 sh_menu_data.dart) ============
-   탭마다 배열 하나. '#' 로 시작하는 원소는 소분류(칩) 이름이고, 그 뒤 원소들이 그
-   소분류의 항목이다. 이 판(A)은 일곱 탭 전부(소분류 61 · 항목 293)를 넣었다 -
-   docs/bill-menu-full.json 과 같다. */
 const MENU_TABS = ['은행','카드','증권','보험','혜택','상품','고객센터'];
 const MENU_BANK = [
   '#조회/관리','전체계좌 조회','입출금 거래내역','소비 현황','계좌비밀번호 설정','계좌 통합관리',
@@ -515,9 +497,7 @@ const MENU_GOODS = ['#상품가입','대출','외환','보험','투자','퇴직�
 const MENU_HELP = ['#고객센터','고객센터 홈','새소식','이용안내','전화상담','영업점 안내','그룹사 통합 고객지원','금융소비자보호','내 정보','포용·상생금융','지켜요','보이스피싱 비대면 서류제출'];
 const MENU_OF = { '은행':MENU_BANK, '카드':MENU_CARD, '증권':MENU_STOCK, '보험':MENU_INSURE,
   '혜택':MENU_BENEFIT, '상품':MENU_GOODS, '고객센터':MENU_HELP };
-/* 과제 경로로 이어지는 항목. 나머지 항목은 눌러도 아무 일도 하지 않는다 */
 const MENU_ROUTE = { '납부하기':'bill-home' };
-/* 검색 전용 별칭 (앱의 검색 결과 그대로): 공과금납부 → 세금/공과금 메인 */
 const SEARCH_ALIAS = [['공과금납부','은행','납부하기']];
 
 function sections(list){
@@ -529,8 +509,6 @@ function sections(list){
 document.getElementById('menu-tabs').innerHTML = MENU_TABS.map((t,i)=>
   `<div class="mtab${i?'':' act'}" data-action="menu-tab" data-tab="${t}">${t}</div>`).join('');
 
-/* 탭마다: 제목 · 칩 줄(소분류가 둘 이상일 때) · 항목. 한 탭의 소분류 제목과 항목은
-   한 부모 아래 형제로 둔다 */
 document.getElementById('menu-body').innerHTML = MENU_TABS.map(t=>{
   const secs = sections(MENU_OF[t]);
   const chips = secs.length > 1 ? `<div class="chips">${secs.map(s=>
@@ -548,15 +526,12 @@ function scrollMenuTo(id){
   const el = document.getElementById(id);
   body.scrollTop = el.offsetTop - body.offsetTop;
 }
-/* 스크롤 따라 탭 불 켜기 */
 document.getElementById('menu-body').addEventListener('scroll', function(){
   let cur = MENU_TABS[0];
   MENU_TABS.forEach(t=>{ if(document.getElementById('cat-'+t).offsetTop - this.offsetTop <= this.scrollTop + 40) cur = t; });
   activeTab(cur);
 });
 
-/* ============ 메뉴 검색 ============
-   1글자까지는 결과 없이 안내만, 2글자부터 결과. 라벨에 검색어가 들어 있으면 결과다 */
 const SEARCH_ALL = SEARCH_ALIAS.concat(
   MENU_TABS.flatMap(t=>MENU_OF[t].filter(v=>v[0]!=='#').map(v=>[v,t,v])));
 
@@ -579,8 +554,6 @@ document.getElementById('search-input').addEventListener('input', function(){
   renderSearch();
 });
 
-/* ============ 세금/공과금 메인의 납부 항목 ============
-   '#' 은 섹션 제목. 항목은 모두 과제 밖이라 눌러도 아무 일도 하지 않는다 */
 const BILL_ITEMS = ['#국고금','국세','관세','국고','국세 환급금 조회',
   '#통합지방세','지방세','환경개선부담금','세외수입',
   '#생활공과금','아파트/상가관리비','KT통신요금','전기요금/TV수신료','상하수도요금','고속도로 통행료',
@@ -593,8 +566,6 @@ document.getElementById('bill-list').innerHTML = BILL_ITEMS.map(v=> v[0]==='#'
   : `<div class="bi" data-action="pick-bill" data-bill="${v}"><span class="ic"></span>
       <div class="l">${v}${BILL_SUB[v] ? `<div class="s">${BILL_SUB[v]}</div>` : ''}</div><span class="c">›</span></div>`).join('');
 
-/* ============ 비밀번호 보안 키패드 (배열 섞임) ============
-   4자리, 정답 판정이 없다. 화면을 열 때와 [재배열] 을 누를 때 섞는다 */
 const PW_KEYS = ['0','1','2','3','4','5','6','7','8','9'];
 function shuffled(list){ return list.slice().sort(()=>Math.random()-0.5); }
 function buildPwPad(){
@@ -607,7 +578,6 @@ function renderDots(){
   document.querySelectorAll('#pw-dots i').forEach((d,i)=>d.className = i < S.pw.length ? 'fill' : '');
 }
 
-/* ============ 동작 ============ */
 document.getElementById('phone').addEventListener('click', function(e){
   const el = e.target.closest('[data-action]'); if(!el) return;
   const a = el.dataset.action;
@@ -630,11 +600,9 @@ document.getElementById('phone').addEventListener('click', function(e){
   else if(a==='search-hit'){
     if(MENU_ROUTE[el.dataset.route]){ S.billFrom = 'search'; show(MENU_ROUTE[el.dataset.route]); }
   }
-  /* 세금/공과금 메인의 ‹ 는 들어온 화면(메뉴 또는 검색)으로 돌아간다 */
   else if(a==='back-bill-home') show(S.billFrom, true);
-  /* 촬영 ✕ 와 납부정보 ‹ 는 세금/공과금 메인으로 - 촬영 화면은 납부정보로 바뀌며 사라졌다 */
   else if(a==='to-bill-home') show('bill-home', true);
-  else if(a==='pick-bill'){ /* 과제 밖 - 아무 일도 하지 않는다 */ }
+  else if(a==='pick-bill'){ }
   else if(a==='pay-start') show('camera');
   else if(a==='shutter') show('info');
   else if(a==='pay'){ S.pw=''; buildPwPad(); renderDots(); show('password'); }

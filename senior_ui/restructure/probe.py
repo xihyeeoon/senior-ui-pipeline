@@ -12,6 +12,13 @@ r"""연구자가 직접 돌리는 확인 명령 둘. 돈이 거의 들지 않는
       보인다. 그런 오류가 나면 그 인자를 빼고 한 번 더 보낸다 - 400 은 요금이
       없으므로 요금이 드는 요청은 여전히 하나다.
 
+  python -m senior_ui.restructure --probe <모델> --image
+      위의 요청 뒤에 같은 글 + 휴대폰 화면 그림 한 장(390x844, PROBE_IMAGE)을 한 번
+      더 보낸다. 그 모델이 그림을 받는지, 그림 한 장이 입력 토큰 몇 개인지를 잰다
+      - 두 요청의 입력 토큰 차이가 그림 한 장의 실측이다. 그 값을 패치 수로 나눈
+      배수와, config.IMAGE_TOKENS 에 적을 줄을 보인다. 요금이 드는 요청은 둘이다
+      (입력 수백 토큰씩, 출력 PROBE_MAX_TOKENS 씩).
+
 둘 다 실행 폴더를 만들지 않는다. 결과는 화면과 outputs/model-probe.log 에 쓴다
 (로그는 덧붙인다 - 날짜를 바꿔 다시 돌린 결과를 나란히 볼 수 있다).
 
@@ -28,6 +35,9 @@ from senior_ui import config
 from . import model as M
 
 LOG_NAME = "model-probe.log"
+
+# --image 가 보내는 그림. 추적되는 검사기 스크린샷이다 (은행 고르기 화면, 글이 많다).
+PROBE_IMAGE = os.path.join(config.ROOT, "results", "shots", "run4", "audit_bank.png")
 
 # 짧게 답할 질문. 답의 내용은 보지 않는다 - 헤더와 응답 모델 이름이 목적이다.
 PROBE_PROMPT = "Reply with exactly one word: OK"
@@ -108,8 +118,62 @@ def list_models():
         out.close()
 
 
+def image_report(name, text_prompt, image_prompt, size):
+    """그림 한 장의 실측과 config.IMAGE_TOKENS 에 적을 줄. 순수 함수 - 줄 목록."""
+    w, h = size
+    patches = -(-w // 32) * -(-h // 32)
+    measured = image_prompt - text_prompt
+    est, how = M.image_tokens(w, h, name)
+    rule = M.image_rule(name)
+    mult = measured / float(patches)
+    lines = ["그림 한 장의 실측: 입력 %d − 글만 보낸 입력 %d = %d 토큰 (%dx%d, 패치 %d개)"
+             % (image_prompt, text_prompt, measured, w, h, patches),
+             "도구의 어림: %d 토큰 (%s, config.IMAGE_TOKENS%s)"
+             % (est, how, "" if rule["known"] else " 에 없음 - 기본 규칙"),
+             "패치 방식이라면 배수 = %d / %d = %.3f" % (measured, patches, mult),
+             "config.IMAGE_TOKENS 에 적을 줄 (패치 방식, 실측):",
+             '    "%s": {"method": "patch", "multiplier": %s, "budget": %d},'
+             % (name, round(mult, 2), rule.get("budget") or 2500)]
+    if rule["known"] and abs(measured - est) <= max(2, 0.02 * est):
+        lines.append("어림과 실측이 2%% 안에서 같다 - 배수는 그대로 두고 estimated 표시만 "
+                     "지우면 된다.")
+    return lines
+
+
+def probe_image(out, name, text_prompt, temperature=M.TEMPERATURE, seed=M.SEED,
+                reasoning_effort=None, api=None):
+    """같은 글 + 그림 한 장을 보내 그림 토큰을 잰다. 0 = 쟀다, 2 = 못 쟀다."""
+    size = M.png_size(PROBE_IMAGE)
+    out.say("")
+    out.say("그림: %s (%dx%d) 한 장을 더해 다시 보낸다 (detail=%s)"
+            % (os.path.relpath(PROBE_IMAGE, config.ROOT), size[0], size[1],
+               config.IMAGE_DETAIL))
+    notes = []
+    try:
+        reply = M.call_model(name, PROBE_PROMPT, PROBE_MAX_TOKENS, log=notes.append,
+                             backoff=(), temperature=temperature, seed=seed,
+                             reasoning_effort=reasoning_effort, api=api,
+                             images=[{"label": "probe", "path": PROBE_IMAGE}])
+    except M.ModelError as e:
+        for n in notes:
+            out.say("  " + n)
+        out.say("그림을 넣은 요청이 실패했다 (%s): %s" % (type(e).__name__, e))
+        out.say("이 모델이 그림을 받지 않거나 요청 모양이 틀렸다 - 재구성 루프는 --see off "
+                "와 --refine 0 으로만 돌 수 있다.")
+        return 2
+    for n in notes:
+        out.say("  " + n)
+    image_prompt = (reply["usage"] or {}).get("prompt")
+    if text_prompt is None or image_prompt is None:
+        out.say("그림은 받았지만 usage 에 입력 토큰이 없어 재지 못했다")
+        return 2
+    for line in image_report(name, text_prompt, image_prompt, size):
+        out.say(line)
+    return 0
+
+
 def probe(name, temperature=M.TEMPERATURE, seed=M.SEED, reasoning_effort=None,
-          api=None):
+          api=None, image=False):
     out = Out("probe %s" % name)
     try:
         if not _key_or_explain(out):
@@ -148,6 +212,9 @@ def probe(name, temperature=M.TEMPERATURE, seed=M.SEED, reasoning_effort=None,
         if reply["finish_reason"] == "length" and p["reasoning"]:
             out.say("  (추론형은 출력 %d 토큰을 생각에 다 쓰고 잘릴 수 있다 - 확인 "
                     "명령에서는 정상이다)" % PROBE_MAX_TOKENS)
+        if image:
+            return probe_image(out, name, usage.get("prompt"), temperature=temperature,
+                               seed=seed, reasoning_effort=reasoning_effort, api=api)
         return 0
     finally:
         out.close()

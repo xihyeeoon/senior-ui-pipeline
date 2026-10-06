@@ -97,7 +97,7 @@ from senior_ui.audit.stage import STAGES
 from senior_ui.tasks import DEFAULT_TASK, task_names
 
 from .loop import run
-from .model import ALL_MODES, APIS, REASONING_EFFORTS, SEED, TEMPERATURE
+from .model import ALL_MODES, APIS, REASONING_EFFORTS, REFINE_MODES, SEED, TEMPERATURE
 from .probe import list_models, probe
 
 
@@ -161,6 +161,17 @@ def build_parser():
     ap.add_argument("--stage", choices=sorted(STAGES), default=None,
                     help="검사 단계. wireframe 은 A·B·C·F·I·J 만 본다. 주지 않으면 "
                          "config.DEFAULT_STAGE (%s)" % config.DEFAULT_STAGE)
+    ap.add_argument("--see", choices=["on", "off"], default=None,
+                    help="원본 화면 그림을 진단·계획 호출에 넣는가. 주지 않으면 on. "
+                         "off 는 그림 없이 글만 보내던 전의 동작이다")
+    ap.add_argument("--refine", type=int, default=None, metavar="N",
+                    help="보고 다듬기 횟수. 검사를 통과한 빌드의 스크린샷을 보여 주고 "
+                         "다듬게 한다. 0 이면 끈다. 형식 · 검사 예산과 따로 센다. 주지 "
+                         "않으면 config.DEFAULT_REFINE (%d)" % config.DEFAULT_REFINE)
+    ap.add_argument("--mock-refine", choices=REFINE_MODES, default=None,
+                    help="--mock 실행에서 다듬기 호출의 답 (model.REFINE_MODES). 주지 "
+                         "않으면 done - 1회차에 고칠 것이 없다고 답해 최종 빌드가 "
+                         "그대로다")
     ap.add_argument("--list-models", action="store_true",
                     help="이 키로 쓸 수 있는 gpt- 모델을 보이고 끝난다 (models.list, 요금 "
                          "없음). 실행 폴더를 만들지 않는다 - outputs/model-probe.log")
@@ -169,6 +180,10 @@ def build_parser():
                          "보내고, 분당 한도 · 실제 모델 이름 · 지원하지 않는 인자 오류를 "
                          "보이고 끝난다. --api · --reasoning-effort · --temperature · "
                          "--seed 를 따른다. 실행 폴더를 만들지 않는다")
+    ap.add_argument("--image", action="store_true",
+                    help="--probe 와 함께: 같은 글에 화면 그림 한 장을 더해 한 번 더 보내 "
+                         "그 모델이 그림을 받는지, 그림 한 장이 입력 토큰 몇 개인지 잰다 "
+                         "(config.IMAGE_TOKENS 를 고칠 값). 요금이 드는 요청이 둘이다")
     ap.add_argument("--delay", type=float, default=None,
                     help="모델 호출 사이 대기(초) - 진단·계획과 생성 사이, 시도와 "
                          "시도 사이. 주지 않으면 gpt-4o %(g4)g, 추론형 %(rs)g "
@@ -187,7 +202,8 @@ def main():
         return list_models()
     if args.probe:
         return probe(args.probe, temperature=args.temperature, seed=args.seed,
-                     reasoning_effort=args.reasoning_effort, api=args.api)
+                     reasoning_effort=args.reasoning_effort, api=args.api,
+                     image=args.image)
     return run(args)
 
 

@@ -37,7 +37,10 @@ def make_args(out_root, **kw):
              infra_attempts=3, model="test-model", max_tokens=1000, mock=None,
              temperature=0.0, seed=20260101,
              original=os.path.join(ROOT, "inputs", "original_transfer.html"),
-             stage="styled", delay=0)
+             stage="styled", delay=0,
+             # 보고 다듬기(11-5)는 끈다. 이 args 를 쓰는 테스트는 생성 루프를
+             # 본다 - 다듬기는 test_visual_refine.py 가 따로 본다.
+             refine=0)
     d.update(kw)
     return argparse.Namespace(**d)
 

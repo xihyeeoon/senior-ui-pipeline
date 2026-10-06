@@ -297,7 +297,8 @@ def test_the_bill_prompt_has_no_transfer_text(load):
     assert left == []
     assert "{{" not in text.replace("{{ORIGINAL_HTML}}", "").replace(
         "{{RETRY_BLOCK}}", "").replace("{{CHOICES}}", "").replace(
-        "{{ERRORS}}", "").replace("{{PLAN}}", "").replace("{{ORIGINAL_SCREENS}}", "")
+        "{{ERRORS}}", "").replace("{{PLAN}}", "").replace("{{ORIGINAL_SCREENS}}", "").replace(
+        "{{ORIGINAL_SHOTS}}", "")
 
 
 def test_the_bill_prompt_names_the_bill_done_values():

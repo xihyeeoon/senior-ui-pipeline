@@ -22,6 +22,9 @@ BRIEF = "designer_brief.md"
 # 설계를 고칠 기회를 쓴 시도. 연결 실패(call · rate_limit · api_rejected)는
 # 모델이 아무것도 내지 않았으므로 시도로 세지 않는다.
 DESIGN_STAGES = ("plan", "parse", "flow", "truncated", "audit")
+# 다듬기(보고 다듬기)의 시도. 설계를 처음 통과시키기까지의 시도 수 · 실패 수에
+# 넣지 않고 따로 센다.
+REFINE_PHASES = ("refine", "refine_fix")
 
 
 def _load(path):
@@ -54,8 +57,11 @@ def _truncation(attempts, final_n):
     마지막 시도만 최종 시안을 만든다. 중간 시도가 잘렸어도 그다음 시도가 다시
     물어 시안을 냈으면 그 시안과는 상관없다 - 그래서 문지기는 마지막 것만 보고,
     중간의 잘림은 횟수로만 남긴다."""
+    # 다듬기 시도의 잘림은 중간 잘림에 넣지 않는다 - 다듬기가 떨어지면 최종은 그
+    # 전의 통과한 빌드로 되돌아간다 (final.attempt 가 그것을 가리킨다).
     cut = [a.get("n") for a in attempts
-           if a.get("truncated") or a.get("stage") == "truncated"]
+           if (a.get("truncated") or a.get("stage") == "truncated")
+           and (a.get("phase") not in REFINE_PHASES or a.get("n") == final_n)]
     if final_n is None:
         design = [a.get("n") for a in attempts if a.get("stage") in DESIGN_STAGES]
         final_n = design[-1] if design else None
@@ -71,11 +77,26 @@ def _count(entry, report, key):
 
 
 def _failures(summary, kind, stages):
+    """생성 단계의 실패 수. 다듬기 시도(REFINE_PHASES)는 넣지 않는다 - 다듬기는 예산을
+    따로 쓰고 summary.budget 에 들어가지 않는다. 그 수는 _refine_failures."""
     budget = summary.get("budget") or {}
     if isinstance(budget.get(kind + "_used"), int):
         return budget[kind + "_used"]
     attempts = summary.get("attempts") or []
-    return sum(1 for a in attempts if a.get("stage") in stages and not a.get("passed"))
+    return sum(1 for a in attempts if a.get("stage") in stages and not a.get("passed")
+               and a.get("phase") not in REFINE_PHASES)
+
+
+def _refine_failures(summary, kind, stages):
+    """다듬기의 실패 수. 다듬기 기록이 없으면(다듬기 전의 실행) None."""
+    rf = summary.get("refine")
+    if not isinstance(rf, dict):
+        return None
+    if isinstance(rf.get(kind + "_failures"), int):
+        return rf[kind + "_failures"]
+    return sum(1 for a in summary.get("attempts") or []
+               if a.get("phase") in REFINE_PHASES and a.get("stage") in stages
+               and not a.get("passed"))
 
 
 def _choice_groups(metrics):
@@ -121,6 +142,21 @@ def task_from_name(name):
         if t != DEFAULT_TASK and t in parts:
             return t
     return DEFAULT_TASK
+
+
+def _warnings_by_check(report):
+    """최종 검사의 경고를 검사별로 `{검사: {"count", "first"}}`. 리포트가 없으면
+    None - 모른다. 고르기 규칙의 no_warning_checks 가 이것을 본다 (warning 총수만
+    세면 "어느 검사의 경고인가" 를 규칙으로 말할 수 없다)."""
+    if report is None:
+        return None
+    out = {}
+    for w in report.get("warning") or []:
+        c = out.setdefault(w.get("check") or "?", {"count": 0, "first": None})
+        c["count"] += 1
+        if c["first"] is None:
+            c["first"] = w.get("detail")
+    return out
 
 
 def empty_row(name, run_dir, error):
@@ -181,12 +217,20 @@ def collect(run_dir):
         # 결과
         "passed": s.get("passed") is True,
         "stopped_reason": s.get("stopped_reason"),
-        "attempts": sum(1 for a in attempts if a.get("stage") in DESIGN_STAGES),
+        "attempts": sum(1 for a in attempts if a.get("stage") in DESIGN_STAGES
+                        and a.get("phase") not in REFINE_PHASES),
         "format_failures": _failures(s, "format", ("plan", "parse", "flow", "truncated")),
         "audit_failures": _failures(s, "audit", ("audit",)),
+        "refine_format_failures": _refine_failures(s, "format",
+                                                   ("plan", "parse", "flow", "truncated")),
+        "refine_audit_failures": _refine_failures(s, "audit", ("audit",)),
         "final_attempt": final.get("attempt"),
         "fatal": _count(entry, report, "fatal"),
         "warning": _count(entry, report, "warning"),
+        # 검사별 경고 (고르기 규칙의 no_warning_checks)
+        "warning_by_check": _warnings_by_check(report),
+        # 최종 빌드가 어디서 왔나 (보고 다듬기)
+        "final_from": (s.get("refine") or {}).get("final_label"),
         # 도구가 고친 흔적 · 재현 조건
         "redeclared": None if preserved is None else list(preserved.get("redeclared") or []),
         "truncated": truncated,

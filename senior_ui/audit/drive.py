@@ -4,6 +4,7 @@ r"""흐름 파일대로 페이지를 한 번 걷고, 검사가 필요한 것을 
 안에서 실행되는 JavaScript 조각은 probes.py 에 있다.
 """
 import asyncio
+import json
 import os
 import re
 
@@ -280,14 +281,18 @@ async def collect_screen(page, flow, visit, reached=None):
     return row
 
 
-async def drive(url, flow, want_shots=None, errors=True):
+async def drive(url, flow, want_shots=None, errors=True, see=False):
     """Walk the task once and collect everything the checks need.
 
     흐름에 오류 경로(`error_paths`)가 있으면 정답 경로를 걸은 뒤 경로마다 새
     페이지를 열어 한 번씩 더 걷는다 (walk_error_path). 결과는 `error_paths`
     에 따로 담는다 - `screens` 에 섞으면 A~I 가 보는 입력이 바뀐다. 흐름에
     오류 경로가 없거나 `errors=False` 면 그 키 자체가 없다. 비교 기준으로만
-    걷는 원본(새 설계의 검사에서)은 오류 경로를 걸을 필요가 없다."""
+    걷는 원본(새 설계의 검사에서)은 오류 경로를 걸을 필요가 없다.
+
+    `see` 를 주면 (want_shots 와 함께) 화면마다 맨 위부터 잘라 찍은 그림을
+    `want_shots/see/` 에 더 남긴다 (capture_see). 모델에게 보여 줄 그림이고,
+    검사는 보지 않는다. 기본은 꺼짐 - 검사기 명령과 기준값은 그대로다."""
     data = {"screens": {}, "dialogs": [], "js_errors": [], "reached": [],
             "missing_ids": [], "state_pairs": [], "load_failed": None,
             "notes": [], "js_error_details": [], "flow": flow["name"],
@@ -302,8 +307,14 @@ async def drive(url, flow, want_shots=None, errors=True):
         try:
             page = await browser.new_page(viewport={"width": 390, "height": 844})
             tasks = attach_listeners(page, data)
-            await walk(page, flow, data, want_shots, url)
+            await walk(page, flow, data, want_shots, url, see=see)
             await drain_dialogs(tasks)
+            reveal = flow.get("reveal")
+            if isinstance(reveal, dict) and reveal:
+                data["revealed"] = {}
+                for action, spec in reveal.items():
+                    data["revealed"][action] = await walk_reveal(
+                        browser, url, flow, spec if isinstance(spec, dict) else {})
             paths = [e for e in flow.get("error_paths") or []
                      if isinstance(e, dict) and e.get("id")] if errors else []
             if paths:
@@ -318,8 +329,9 @@ async def drive(url, flow, want_shots=None, errors=True):
     return data
 
 
-async def walk(page, flow, data, want_shots, url):
+async def walk(page, flow, data, want_shots, url, see=False):
     """한 페이지를 흐름대로 걷는다. 브라우저의 생명은 drive() 가 쥐고 있다."""
+    seen = []
     try:
         await page.goto(url, wait_until="networkidle")
     except Exception as e:
@@ -359,6 +371,207 @@ async def walk(page, flow, data, want_shots, url):
         if want_shots:
             await page.screenshot(path=os.path.join(
                 want_shots, "audit_%s.png" % SHOT_SAFE.sub("_", visit)))
+            if see:
+                seen += await capture_see(page, want_shots, visit)
+                write_see_index(want_shots, seen)
+
+
+# --------------------------------------------------------------------------- #
+# 보기 (see) - 모델에게 보여 줄 그림
+# --------------------------------------------------------------------------- #
+# 검사기가 찍는 audit_<방문>.png 는 그 순간의 창 하나다. 스크롤되는 화면은
+# 아래가 잘리고, 걸음이 버튼을 누르느라 내려가 있으면 위가 잘린다. 모델에게
+# 화면을 보여 줄 때는 맨 위부터 창 높이씩 잘라 여러 장으로 찍는다.
+#
+# 긴 그림 한 장으로 잇지 않는다 - 아래에 고정된 버튼이 그림 맨 끝으로 밀려
+# 실제와 다른 모습이 된다. 잘라 찍으면 장마다 사용자가 그 위치에서 보는 그대로다.
+#
+# 스크롤은 페이지가 아니라 화면 안(.body · .screen)에서 일어나는 일이 많아서
+# full_page 로는 찍히지 않는다. 켜진 화면 안에서 가장 많이 넘치는 스크롤 요소를
+# 찾고, 없으면 문서 자체를 본다.
+SEE_DIR = "see"
+SEE_MAX_PARTS = 4        # 화면 하나에 최대 장 수. 넘는 높이는 more_px 로 적는다
+SEE_OVERLAP = 100        # 장끼리 겹치는 높이 - 줄이 잘린 자리를 이어 읽게
+SEE_INDEX = "index.json"
+
+SEE_MARK = r"""() => {
+  const lit = document.querySelector('.screen.on') || document.body;
+  let best = null, extra = 0;
+  [lit, ...lit.querySelectorAll('*')].forEach(el => {
+    const oy = getComputedStyle(el).overflowY;
+    if (!/(auto|scroll)/.test(oy)) return;
+    const e = el.scrollHeight - el.clientHeight;
+    if (e > extra + 1) { best = el; extra = e; }
+  });
+  const doc = document.scrollingElement || document.documentElement;
+  const dextra = doc.scrollHeight - window.innerHeight;
+  if (!best && dextra > 1) { best = doc; extra = dextra; }
+  if (!best) return {extra: 0, client: window.innerHeight, top: 0};
+  best.setAttribute('data-see-scroller', '1');
+  const client = best === doc ? window.innerHeight : best.clientHeight;
+  return {extra: Math.round(extra), client: client, top: best.scrollTop};
+}"""
+
+SEE_SCROLL = r"""y => {
+  const el = document.querySelector('[data-see-scroller]');
+  if (el) el.scrollTop = y;
+}"""
+
+SEE_UNMARK = r"""() => document.querySelectorAll('[data-see-scroller]')
+                   .forEach(el => el.removeAttribute('data-see-scroller'))"""
+
+
+def see_parts(extra, client):
+    """`(장 수, 한 장에 내려가는 높이, 찍지 않은 높이)`."""
+    if extra <= 0:
+        return 1, 0, 0
+    step = max(client - SEE_OVERLAP, 200)
+    need = 1 + -(-extra // step)
+    parts = min(need, SEE_MAX_PARTS)
+    more = max(0, extra - (parts - 1) * step) if need > SEE_MAX_PARTS else 0
+    return parts, step, more
+
+
+async def capture_see(page, folder, visit):
+    """켜진 화면을 맨 위부터 잘라 `folder/see/<방문>.<n>.png` 로 찍는다.
+
+    돌려주는 것은 장마다 `{visit, file, part, parts, offset, more_px}`. 다 찍은
+    뒤에는 스크롤 위치를 찍기 전으로 되돌린다 - 걷기의 다음 걸음이 보는 상태를
+    바꾸지 않는다."""
+    out = os.path.join(folder, SEE_DIR)
+    os.makedirs(out, exist_ok=True)
+    m = await page.evaluate(SEE_MARK)
+    parts, step, more = see_parts(m["extra"], m["client"])
+    safe = SHOT_SAFE.sub("_", visit)
+    items = []
+    try:
+        for i in range(parts):
+            y = min(i * step, m["extra"])
+            if m["extra"] > 0:
+                await page.evaluate(SEE_SCROLL, y)
+                await page.wait_for_timeout(60)
+            name = "%s.%d.png" % (safe, i + 1)
+            await page.screenshot(path=os.path.join(out, name))
+            items.append({"visit": visit, "file": name, "part": i + 1, "parts": parts,
+                          "offset": y, "more_px": more if i == parts - 1 else 0})
+    finally:
+        if m["extra"] > 0:
+            await page.evaluate(SEE_SCROLL, m["top"])
+        await page.evaluate(SEE_UNMARK)
+    return items
+
+
+def write_see_index(folder, items):
+    """see/index.json - 찍은 순서대로. 부르는 쪽(재구성 루프)은 이것으로 그림
+    목록과 이름표를 만든다."""
+    out = os.path.join(folder, SEE_DIR)
+    os.makedirs(out, exist_ok=True)
+    with open(os.path.join(out, SEE_INDEX), "w", encoding="utf-8") as f:
+        json.dump(items, f, ensure_ascii=False, indent=1)
+
+
+# 펼치기 조작이 누를 대상. 그 화면에 보이는 data-action 요소여야 한다.
+REVEAL_TARGET = r"""sel => {
+  let el = null;
+  try { el = document.querySelector(sel); } catch (e) { return {ok: false, why: '선택자가 틀렸다'}; }
+  if (!el) return {ok: false, why: '선택자에 맞는 요소가 없다'};
+  if (!el.hasAttribute('data-action')) return {ok: false, why: 'data-action 요소가 아니다'};
+  const lit = document.querySelector('.screen.on');
+  if (lit && !lit.contains(el)) return {ok: false, why: '켜진 화면 밖의 요소다'};
+  const r = el.getBoundingClientRect(), cs = getComputedStyle(el);
+  if (!r.width || !r.height || cs.visibility === 'hidden')
+    return {ok: false, why: '화면에 보이지 않는다'};
+  return {ok: true, action: el.getAttribute('data-action')};
+}"""
+
+
+async def walk_reveal(browser, url, flow, spec):
+    """펼치기 조작 하나를 새 페이지에서 걷는다. 판정은 하지 않는다 (검사 I).
+
+      1. 정답 걸음을 `at` (방문 이름) 에 도착할 때까지 밟는다.
+      2. `do` 의 동작을 하나씩 실행하고, 하나 끝날 때마다 선택지(CHOICE_GROUPS)를
+         모아 합친다. 탭처럼 누를 때마다 다시 그려지는 목록도 그래서 다 센다.
+
+    동작은 click 만이고 (모양은 reply._check_reveal 이 먼저 본다), 누르기 전에
+    대상이 켜진 화면 안의 보이는 data-action 요소인지, 누른 뒤에도 같은 화면인지
+    본다. 어기면 거기서 멈추고 `violations` 에 적는다 - 재구성 루프는 그것을 형식
+    문제로 센다 (loop.audit_build).
+
+    정답 경로의 걷기와 따로 걷는다 - 펼친 상태가 A~H 가 보는 화면을 바꾸지
+    않게. 돌려주는 것은 `{"at", "choices": {action: [값]}, "error"}`."""
+    truth = truth_of(flow)
+    row = {"at": spec.get("at"), "choices": {}, "error": None, "violations": []}
+    page = await browser.new_page(viewport={"width": 390, "height": 844})
+    ed = {"js_errors": [], "js_error_details": [], "dialogs": [], "reached": []}
+    tasks = attach_listeners(page, ed)
+
+    async def failed(phase, e):
+        msg = "%s: %s" % (type(e).__name__, e) if isinstance(e, Exception) else e
+        hint = await where_is(page, msg) if isinstance(e, Exception) else None
+        row["error"] = {"phase": phase, "detail": msg + (" || " + hint if hint else "")}
+
+    def merge(groups):
+        for action, vals in (groups or {}).items():
+            have = row["choices"].setdefault(action, [])
+            have += [v for v in vals if v not in have]
+
+    try:
+        try:
+            await page.goto(url, wait_until="networkidle")
+        except Exception as e:
+            await failed("load", e)
+            return row
+        visits = visit_keys(flow["steps"])
+        if spec.get("at") not in visits:
+            await failed("replay", "at %r 은 steps 의 방문 이름이 아니다 (%s)"
+                         % (spec.get("at"), ", ".join(visits)))
+            return row
+        for step, visit in zip(flow["steps"], visits):
+            try:
+                if "do" in step:
+                    await run_actions(page, step["do"], None, truth)
+                elif "click" in step:
+                    await run_actions(page, {"click": step["click"]}, None, truth)
+            except Exception as e:
+                await failed("replay", e)
+                return row
+            if not await settle(page, step["screen"]):
+                await failed("replay", "정답 걸음 %r 화면이 켜지지 않았다" % visit)
+                return row
+            if visit == spec.get("at"):
+                break
+        merge(await page.evaluate(P.CHOICE_GROUPS))
+        actions = spec.get("do") or []
+        for i, act in enumerate(actions if isinstance(actions, list) else [actions]):
+            sel = act.get("click") if isinstance(act, dict) and set(act) == {"click"} \
+                else None
+            if not isinstance(sel, str):
+                row["violations"].append("do[%d] 는 click 이 아니다" % i)
+                return row
+            target = await page.evaluate(REVEAL_TARGET, sel)
+            if not target.get("ok"):
+                row["violations"].append("do[%d] %s: %s" % (i, sel, target.get("why")))
+                return row
+            before = await _where(page)
+            try:
+                await run_actions(page, [act], None, truth)
+            except Exception as e:
+                await failed("do", e)
+                return row
+            await page.wait_for_timeout(100)
+            after = await _where(page)
+            if after != before:
+                row["violations"].append(
+                    "do[%d] %s: 누른 뒤 화면이 바뀌었다 (%s → %s)"
+                    % (i, sel, before.get("dom_screen") or before.get("landed_on"),
+                       after.get("dom_screen") or after.get("landed_on")))
+                return row
+            merge(await page.evaluate(P.CHOICE_GROUPS))
+        return row
+    finally:
+        await drain_dialogs(tasks)
+        row["js_errors"] = ed["js_errors"]
+        await page.close()
 
 
 def _not_walked(data, ep):

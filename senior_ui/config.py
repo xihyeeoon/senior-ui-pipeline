@@ -131,6 +131,46 @@ MODEL_PRICES = {
     "gpt-6-luna": None,
 }
 
+# 그림(화면 스크린샷) 한 장의 입력 토큰을 어떻게 세는가 (restructure.model.image_tokens).
+# 보내기 전 어림에만 쓴다 - 요금은 API 가 센 usage 로 매겨진다. 출처는 OpenAI 비전
+# 안내(https://developers.openai.com/api/docs/guides/images-vision, 2026-10-06 확인).
+#
+#   patch  32px 패치 수 x multiplier. 패치가 budget 을 넘으면 그 안에 들도록 줄인다.
+#          budget 은 detail=high 의 상한이다 (gpt-6-astra 2,500).
+#   tile   base + 512px 타일 수 x tile. 2048 정사각형 → 짧은 변 768 로 줄인 뒤 센다.
+#
+# gpt-6.1-sol 은 그 안내에 없다 (모델 페이지에는 "Input modalities: text, image" 가
+# 있다). 같은 계열(gpt-6-astra · gpt-5.6-sol)의 값을 넣고 estimated 로 표시한다.
+# 실측은 `python -m senior_ui.restructure --probe gpt-6.1-sol --image` 로 잰다 -
+# 그 결과의 "그림 한 장의 실측 토큰" 을 390x844 한 장의 패치 수(351)로 나눈 값이
+# multiplier 다. 실측으로 고치면 estimated 를 지운다.
+IMAGE_TOKENS = {
+    "gpt-6.1-sol": {"method": "patch", "multiplier": 1.2, "budget": 2500,
+                    "estimated": True},   # 안내에 없음 - 같은 계열 값
+    "gpt-6-astra": {"method": "patch", "multiplier": 1.2, "budget": 2500},
+    "gpt-5.6-sol": {"method": "patch", "multiplier": 1.2, "budget": 2500},
+    "gpt-5.6-terra": {"method": "patch", "multiplier": 1.2, "budget": 2500},
+    "gpt-5.6-luna": {"method": "patch", "multiplier": 1.2, "budget": 2500},
+    "gpt-5.5": {"method": "patch", "multiplier": 1.2, "budget": 2500},
+    "gpt-5.4": {"method": "patch", "multiplier": 1.2, "budget": 2500},
+    "gpt-5.1": {"method": "tile", "base": 70, "tile": 140},
+    "gpt-4o": {"method": "tile", "base": 85, "tile": 170},
+    "gpt-4.1": {"method": "tile", "base": 85, "tile": 170},
+}
+# 표에 없는 모델. 최근 모델들의 규칙으로 어림하고, method 에 "기본 규칙" 을 적는다.
+IMAGE_TOKENS_DEFAULT = {"method": "patch", "multiplier": 1.2, "budget": 2500}
+# 그림의 detail. 보내지 않으면 auto 이고 그 값은 기록에 남지 않으므로 정해 보낸다.
+# 390px 폭의 한국어 글을 읽어야 하므로 high 다 (low 는 512px 안으로 줄인다).
+IMAGE_DETAIL = "high"
+# 한 호출의 그림이 이보다 많으면 run.log 에 경고 한 줄. 화면이 많은 과제(공과금)
+# 에서 입력이 얼마나 커지는지 보려는 것이다. 막지는 않는다.
+IMAGE_WARN_COUNT = 40
+
+# 보고 다듬기 횟수 (--refine). 검사를 통과한 빌드의 스크린샷을 모델에게 보여 주고
+# 다듬게 하는 횟수다. 0 이면 끈다. 형식 · 검사 예산과 따로 센다
+# (restructure.loop.refine_choice).
+DEFAULT_REFINE = 2
+
 # 출력 길이 기본값 (completion 상한, 생각 토큰 포함). --max-tokens ·
 # --plan-max-tokens 를 주지 않으면 부르는 방식(restructure.model.profile_for)의
 # "추론형인가" 로 고른다 (restructure.loop.output_caps).

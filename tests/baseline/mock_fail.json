@@ -33,6 +33,12 @@
     "attempt": 1,
     "diagnosis": "<run>/attempt_1.diagnosis.json",
     "diagnosis_count": 7,
+    "evidence_kinds": {
+      "screen": 0,
+      "code": 0,
+      "both": 0,
+      "missing": 7
+    },
     "screens": [
       "start",
       "who",
@@ -53,7 +59,7 @@
     "response_model": null,
     "system_fingerprint": null,
     "openai_sdk": "<sdk>",
-    "prompt_template_sha256": "c86ef39703bae40845b2aaa71f37cc341b98e532293322b87fa3bf65ec89cdd1"
+    "prompt_template_sha256": "1702431a495747d394a0e413fab74ac42ea821dc50410eedcb9fc7470328badb"
   },
   "attempts": [
     {
@@ -66,23 +72,28 @@
         "response_model": null,
         "system_fingerprint": null,
         "openai_sdk": "<sdk>",
-        "prompt_template_sha256": "c86ef39703bae40845b2aaa71f37cc341b98e532293322b87fa3bf65ec89cdd1"
+        "prompt_template_sha256": "1702431a495747d394a0e413fab74ac42ea821dc50410eedcb9fc7470328badb"
       },
       "plan": "<run>/attempt_1.plan.json",
       "calls": [
         {
           "stage": "plan",
-          "estimated_prompt": 12898,
+          "estimated_prompt": 18574,
           "method": "tiktoken:o200k_base",
           "max_tokens": 6000,
-          "usage": null
+          "usage": null,
+          "images": 14,
+          "estimated_images": 5950,
+          "image_method": "tile 85+170"
         },
         {
           "stage": "generate",
-          "estimated_prompt": 15344,
+          "estimated_prompt": 14892,
           "method": "tiktoken:o200k_base",
           "max_tokens": 14000,
-          "usage": null
+          "usage": null,
+          "images": 0,
+          "estimated_images": 0
         }
       ],
       "plan_call": {
@@ -125,16 +136,18 @@
         "response_model": null,
         "system_fingerprint": null,
         "openai_sdk": "<sdk>",
-        "prompt_template_sha256": "c86ef39703bae40845b2aaa71f37cc341b98e532293322b87fa3bf65ec89cdd1"
+        "prompt_template_sha256": "1702431a495747d394a0e413fab74ac42ea821dc50410eedcb9fc7470328badb"
       },
       "plan": "<run>/attempt_2.plan.json",
       "calls": [
         {
           "stage": "retry",
-          "estimated_prompt": 25950,
+          "estimated_prompt": 25498,
           "method": "tiktoken:o200k_base",
           "max_tokens": 14000,
-          "usage": null
+          "usage": null,
+          "images": 0,
+          "estimated_images": 0
         }
       ],
       "reflection": "<run>/attempt_2.reflection.json",
@@ -230,7 +243,9 @@
     "by_stage": {
       "plan": {
         "calls": 1,
-        "estimated_prompt": 12898,
+        "estimated_prompt": 18574,
+        "images": 14,
+        "estimated_images": 5950,
         "max_tokens": 6000,
         "prompt": null,
         "completion": null,
@@ -238,7 +253,9 @@
       },
       "generate": {
         "calls": 1,
-        "estimated_prompt": 15344,
+        "estimated_prompt": 14892,
+        "images": 0,
+        "estimated_images": 0,
         "max_tokens": 14000,
         "prompt": null,
         "completion": null,
@@ -246,7 +263,9 @@
       },
       "retry": {
         "calls": 1,
-        "estimated_prompt": 25950,
+        "estimated_prompt": 25498,
+        "images": 0,
+        "estimated_images": 0,
         "max_tokens": 14000,
         "prompt": null,
         "completion": null,
@@ -255,7 +274,9 @@
     },
     "total": {
       "calls": 3,
-      "estimated_prompt": 54192,
+      "estimated_prompt": 58964,
+      "images": 14,
+      "estimated_images": 5950,
       "max_tokens": 34000,
       "prompt": null,
       "completion": null,
@@ -263,7 +284,9 @@
     },
     "first_attempt": {
       "calls": 2,
-      "estimated_prompt": 28242,
+      "estimated_prompt": 33466,
+      "images": 14,
+      "estimated_images": 5950,
       "max_tokens": 20000,
       "prompt": null,
       "completion": null,
@@ -290,5 +313,20 @@
     ],
     "total_usd": null,
     "note": "입력 x input + 출력(생각 포함) x output, 100만 토큰당. 캐시 할인 미반영 (상한)"
+  },
+  "see": {
+    "on": true,
+    "source": "기본값 (켜짐)",
+    "original_images": 14
+  },
+  "refine": {
+    "budget": 2,
+    "source": "config.DEFAULT_REFINE",
+    "rounds": [],
+    "final_from": null,
+    "final_label": null,
+    "reverted": null,
+    "format_failures": 0,
+    "audit_failures": 0
   }
 }

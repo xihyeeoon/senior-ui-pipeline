@@ -30,6 +30,7 @@ import time
 
 from senior_ui import audit as A
 from senior_ui import config
+from senior_ui.audit.drive import SHOT_SAFE
 from senior_ui.audit.flow import required_errors
 from senior_ui.config import OUTPUTS_ENV, ROOT, inside_root, outputs_dir, url_for
 from senior_ui.devserver import ensure_server
@@ -40,13 +41,18 @@ from .brief import write_brief
 from .model import (MOCK_TASK, TEMPERATURE, SEED, ApiRejected, InfraFailed,
                     RateLimited, call_model, cost_usd, describe, describe_ratelimit,
                     estimate_tokens, load_env, mock_plan_reply, mock_reply, price_for,
-                    profile_for, sdk_version, wait_for_tokens)
-from .plan import (PlanProblems, apply_changes, match_problems, parse_plan,
-                   parse_reflection, plan_report, screens_in, unaddressed)
+                    profile_for, sdk_version, wait_for_tokens, describe_images,
+                    model_text, prompt_record, mock_refine_reply,
+                    mock_refine_fix_reply)
+from .plan import (PlanProblems, apply_changes, critique_issues, evidence_kinds,
+                   match_problems, parse_critique, parse_plan, parse_reflection,
+                   plan_report, screens_in, unaddressed)
 from .preserve import inject, names_read, preserved_data
-from .prompt import (build_plan_prompt, build_prompt, choices_block, errors_block,
-                     load_plan_template, load_template, one_line, plan_retry_block,
-                     retry_block, with_reflection)
+from .prompt import (BUILD_SHOTS_INTRO, build_plan_prompt, build_prompt,
+                     build_refine_prompt, choices_block, errors_block,
+                     load_plan_template, load_refine_template, load_template,
+                     model_input_html, one_line, REFINE_FIX_NOTE,
+                     plan_retry_block, retry_block, shots_section, with_reflection)
 from .reply import (FlowShape, accept_done_alias, failure_report, parse_reply,
                     preserved_problems, problems_report, validate_flow)
 
@@ -105,6 +111,58 @@ def budget_choice(args):
             out[kind] = (both, "--attempts")
         else:
             out[kind] = (config.DEFAULT_BUDGET[kind], "config.DEFAULT_BUDGET")
+    return out
+
+
+def see_choice(args):
+    """`(보기를 켜는가, 어디서 왔나)`. --see off 면 끈다 - 화면을 보여 주지 않던
+    전의 동작으로, 보여 준 효과를 견줄 때 쓴다."""
+    given = getattr(args, "see", None)
+    if given:
+        return given != "off", "--see"
+    return True, "기본값 (켜짐)"
+
+
+def refine_choice(args):
+    """`(다듬기 횟수, 어디서 왔나)`. --refine N, 아니면 config.DEFAULT_REFINE."""
+    given = getattr(args, "refine", None)
+    if given is not None:
+        return given, "--refine"
+    return config.DEFAULT_REFINE, "config.DEFAULT_REFINE"
+
+
+# 그림 이름표. 원본은 진단·계획 호출에, 빌드는 다듬기 호출에 들어간다.
+ORIGINAL_LABELS = {"screen": "원본 화면", "error": "원본 오류 상태"}
+BUILD_LABELS = {"screen": "화면", "error": "오류 상태"}
+
+
+def see_images(shots, labels, error_ids=()):
+    """찍어 둔 그림들을 `[{"label", "path"}]` 로. 화면은 see/index.json 순서,
+    그 뒤에 오류 상태(audit_error_<id>.png, 과제의 오류 순서). 없는 것은 건너뛴다.
+
+    이름표에는 화면 이름과, 스크롤되는 화면이면 몇 번째 장인지와 몇 px 내린
+    모습인지를 적는다. 4장에서 끊긴 화면은 남은 높이도 적는다."""
+    if not shots:
+        return []
+    out = []
+    index = os.path.join(shots, "see", "index.json")
+    items = json.load(io.open(index, encoding="utf-8")) if os.path.exists(index) else []
+    for it in items:
+        label = "%s %s" % (labels["screen"], it["visit"])
+        if it["parts"] > 1:
+            label += " — 스크롤 %d/%d (%s)" % (
+                it["part"], it["parts"],
+                "맨 위" if it["offset"] == 0 else "%dpx 내린 모습" % it["offset"])
+        if it.get("more_px"):
+            label += " · 아래로 %dpx 더 있음 (찍지 않음)" % it["more_px"]
+        path = os.path.join(shots, "see", it["file"])
+        if os.path.exists(path):
+            out.append({"label": label, "path": path})
+    for eid in error_ids:
+        path = os.path.join(shots, "audit_error_%s.png" % SHOT_SAFE.sub("_", eid))
+        if os.path.exists(path):
+            out.append({"label": "%s %s — 잘못된 값을 넣은 직후" % (labels["error"], eid),
+                        "path": path})
     return out
 
 
@@ -185,8 +243,10 @@ class Run:
     """한 실행이 공유하는 것들. 단계 함수들은 이것만 주고받는다."""
 
     def __init__(self, args, log, run_dir, model, template, original_html,
-                 original_url=None, plan_template="", task=None, model_source=None):
+                 original_url=None, plan_template="", task=None, model_source=None,
+                 refine_template=""):
         self.args = args
+        self.refine_template = refine_template
         # 프롬프트에 넣는 원본과 브라우저가 걷는 원본은 같은 문서다.
         self.original_url = original_url
         self.log = log
@@ -195,6 +255,9 @@ class Run:
         self.template = template
         self.plan_template = plan_template
         self.original_html = original_html
+        # 모델에 보내는 원본 - 주석을 뺀 것 (prompt.model_input_html). 검사기의
+        # 비교 기준은 위의 원본 그대로다.
+        self.model_original = model_input_html(original_html)
         # 원본의 화면 이름. 계획의 from 이 가리킬 수 있는 이름들이다.
         self.original_screens = screens_in(original_html)
         # 이 실행의 과제 (tasks/<과제>.json). 과제가 정한 오류 경로는 계획 ·
@@ -238,6 +301,13 @@ class Run:
         budget = budget_choice(args)
         self.budget = Budget(budget["format"][0], budget["audit"][0],
                              getattr(args, "infra_attempts", 3))
+        # 보기 (--see): 원본 그림을 진단·계획 호출에 넣는가. 원본 그림은 실행
+        # 시작 때 한 번 찍는다 (run).
+        self.see, see_source = see_choice(args)
+        self.original_images = []
+        # 보고 다듬기 (--refine): 통과한 빌드를 그림으로 보여 주고 다듬게 하는
+        # 횟수. 형식 · 검사 예산과 따로 센다.
+        self.refine, refine_source = refine_choice(args)
         # 마지막으로 **검사까지 간** 빌드와 그 결과. 셋은 늘 같은 시도의 것이다.
         self.last = {"report": None, "html": None, "flow_text": None}
         # 마지막 형식 오류. 검사 결과와 다른 것이므로 따로 들고 있는다 - 한쪽을
@@ -266,7 +336,13 @@ class Run:
                         # 마지막 실제 호출이 받은 분당 한도 (호출마다는 calls[].ratelimit)
                         "ratelimit": None,
                         # 시도별·전체 예상 금액 (config.MODEL_PRICES, tally_cost)
-                        "cost": None}
+                        "cost": None,
+                        "see": {"on": self.see, "source": see_source,
+                                "original_images": 0},
+                        "refine": {"budget": self.refine, "source": refine_source,
+                                   "rounds": [], "final_from": None,
+                                   "final_label": None, "reverted": None,
+                                   "format_failures": 0, "audit_failures": 0}}
 
 
 # --------------------------------------------------------------------------- #
@@ -388,6 +464,8 @@ def _tally(calls):
     그중 생각에 쓴 몫 - 추론형이 아니면 None 이거나 0 이다."""
     return {"calls": len(calls),
             "estimated_prompt": sum(c["estimated_prompt"] for c in calls),
+            "images": sum(c.get("images") or 0 for c in calls),
+            "estimated_images": sum(c.get("estimated_images") or 0 for c in calls),
             "max_tokens": sum(c["max_tokens"] for c in calls),
             "prompt": _sum(calls, "prompt"),
             "completion": _sum(calls, "completion"),
@@ -465,13 +543,18 @@ def request_plan(r, n, p):
     outcome 이 None 이면 계획이 섰다 (r.diagnosis · r.plan). 아니면 이 시도는
     여기서 끝났고 outcome 이 다음에 할 일이다. 쓸 수 없는 답은 형식 실패다 -
     모델이 고칠 수 있는 것이므로 형식 예산을 쓴다."""
-    prompt = build_plan_prompt(r.plan_template, r.original_html, r.choices,
+    images = r.original_images
+    prompt = build_plan_prompt(r.plan_template, r.model_original, r.choices,
                                r.original_screens, plan_retry_block(r.plan_error),
-                               errors=errors_block(r.errors))
-    io.open(p + ".plan_prompt.txt", "w", encoding="utf-8", newline="\n").write(prompt)
-    r.log("plan prompt: %d chars%s" % (len(prompt),
-                                       " (with retry block)" if r.plan_error else ""))
-    reply, outcome = ask_model(r, n, p, prompt, r.caps["plan"], mock_plan_reply, "plan")
+                               errors=errors_block(r.errors),
+                               shots=shots_section(images))
+    io.open(p + ".plan_prompt.txt", "w", encoding="utf-8", newline="\n").write(
+        prompt_record(prompt, images, r.model, base=r.run_dir))
+    r.log("plan prompt: %d chars%s%s" % (len(prompt),
+                                         " (with retry block)" if r.plan_error else "",
+                                         " + 그림 %d장" % len(images) if images else ""))
+    reply, outcome = ask_model(r, n, p, prompt, r.caps["plan"], mock_plan_reply, "plan",
+                               images=images)
     if reply is None:
         return None, outcome
     io.open(p + ".plan_response.txt", "w", encoding="utf-8",
@@ -507,11 +590,16 @@ def request_plan(r, n, p):
     r.diagnosis, r.plan = diagnosis, plan
     _dump(diagnosis, p + ".diagnosis.json")
     left = unaddressed(diagnosis, plan)
+    kinds = evidence_kinds(diagnosis)
     r.summary["plan"] = {"attempt": n, "diagnosis": p + ".diagnosis.json",
                          "diagnosis_count": len(diagnosis),
+                         # 근거의 종류 - 화면 그림을 보고 한 진단이 얼마나 되나
+                         "evidence_kinds": kinds,
                          "screens": [sc["name"] for sc in plan["screens"]],
                          "changes": len(plan["changes"]),
                          "unaddressed": left}
+    r.log("plan: 근거 화면 %d · 코드 %d · 둘 다 %d · 미표시 %d"
+          % (kinds["screen"], kinds["code"], kinds["both"], kinds["missing"]))
     r.log("plan: 진단 %d · 화면 %d (%s) · 변경 %d%s"
           % (len(diagnosis), len(plan["screens"]),
              ", ".join(sc["name"] for sc in plan["screens"]), len(plan["changes"]),
@@ -537,22 +625,38 @@ def wait_tokens(r, need):
     return wait
 
 
-def ask_model(r, n, p, prompt, max_tokens, mock, stage):
+def ask_model(r, n, p, prompt, max_tokens, mock, stage, images=None):
     """모델에 한 번 묻는다. 진단·계획과 생성이 같은 길을 쓴다.
 
     보내기 전에 예상 토큰을 로그에 남긴다. 분당 한도는 입력에 max_tokens 를
     더해 세므로 그 합도 적는다 - 한도에 걸렸을 때 어느 호출이 얼마였는지를
     로그만 보고 알 수 있어야 한다.
 
+    그림(images)이 있으면 그 수와 예상 토큰을 호출 기록에 남기고, 예상 입력에
+    더한다 (model.describe_images). 한 호출의 그림이 config.IMAGE_WARN_COUNT 를
+    넘으면 경고 한 줄을 쓴다 - 막지는 않는다.
+
     돌려주는 것은 (reply, outcome). reply 가 None 이면 이 시도가 모델 호출에서
     끝난 것이고 outcome 이 다음에 할 일이다."""
-    est, method = estimate_tokens(prompt, r.model)
+    images = images or []
+    text_est, method = estimate_tokens(model_text(prompt, images), r.model)
+    pics = describe_images(images, r.model)
+    est = text_est + pics["estimated"]
     call = {"stage": stage, "estimated_prompt": est, "method": method,
-            "max_tokens": max_tokens, "usage": None}
+            "max_tokens": max_tokens, "usage": None,
+            "images": pics["count"], "estimated_images": pics["estimated"]}
+    if images:
+        call["image_method"] = pics["method"]
     r.calls.append(call)
     r.all_calls.append((n, call))
-    r.log("tokens: %s 예상 입력 %d (%s) + max_tokens %d = 분당 한도 계산 %d"
-          % (stage, est, method, max_tokens, est + max_tokens))
+    r.log("tokens: %s 예상 입력 %d (%s%s) + max_tokens %d = 분당 한도 계산 %d"
+          % (stage, est, method,
+             " · 그림 %d장 %d토큰 %s" % (pics["count"], pics["estimated"], pics["method"])
+             if images else "", max_tokens, est + max_tokens))
+    if pics["count"] > config.IMAGE_WARN_COUNT:
+        r.log("경고: %s 호출에 그림이 %d장이다 (config.IMAGE_WARN_COUNT %d 초과) — 그림만 "
+              "예상 %d토큰" % (stage, pics["count"], config.IMAGE_WARN_COUNT,
+                            pics["estimated"]))
     if r.args.mock:
         reply = mock(r.args.mock)
     else:
@@ -562,7 +666,8 @@ def ask_model(r, n, p, prompt, max_tokens, mock, stage):
         try:
             reply = call_model(r.model, prompt, max_tokens, r.log,
                                temperature=r.temperature, seed=r.seed,
-                               reasoning_effort=r.reasoning_effort, api=r.api)
+                               reasoning_effort=r.reasoning_effort, api=r.api,
+                               **({"images": images} if images else {}))
         except RateLimited as e:
             # 설계 실패가 아니다. 예산을 깎지 않고 여기서 멈춘다.
             r.log("중단: 인프라 한도 — 백오프를 다 쓰고도 429 (%s)" % e)
@@ -576,6 +681,13 @@ def ask_model(r, n, p, prompt, max_tokens, mock, stage):
             # 키·권한·요청 자체가 틀렸다. 다시 보내도 같은 답이 오므로, 여기서
             # 멈추지 않으면 예산과 무관하게 같은 실패만 반복된다.
             r.log("중단: API 가 요청을 거절했다 — 다시 보내도 같은 답이 온다 (%s)" % e)
+            if images:
+                # 그림을 빼고 다시 보내면 모델이 화면을 보지 않은 답이 "본 답" 으로
+                # 기록된다. 조용히 바꾸지 않고 멈춘다.
+                r.log("중단: 그림 %d장을 넣은 %s 요청이었다 — 그림을 빼고 다시 보내지 "
+                      "않는다. 그림 없이 돌리려면 --see off · --refine 0. 이 모델이 그림을 "
+                      "받는지는 --probe %s --image 로 먼저 본다"
+                      % (len(images), stage, r.model))
             r.summary["stopped_reason"] = "api_rejected"
             _dump(failure_report("INFRA", "API 가 요청을 거절했다: %s" % e),
                   p + ".audit.json")
@@ -606,6 +718,12 @@ def ask_model(r, n, p, prompt, max_tokens, mock, stage):
                 return None, STOP
             return None, GO_ON
     call["usage"] = reply.get("usage")
+    if images and (call["usage"] or {}).get("prompt") is not None:
+        # 실측 입력에서 글의 어림을 뺀 것. 그림 토큰의 실측에 가장 가까운 값이다.
+        call["measured_images"] = call["usage"]["prompt"] - text_est
+        r.log("그림: %d장 — 실측 입력 %d − 글 어림 %d = %d (어림 %d)"
+              % (pics["count"], call["usage"]["prompt"], text_est,
+                 call["measured_images"], pics["estimated"]))
     if reply.get("dropped"):
         # 모델이 거절해 빼고 보낸 인자 (model.DROPPABLE)
         call["dropped"] = list(reply["dropped"])
@@ -654,8 +772,11 @@ def note_truncated(r, entry, phase):
           "실패로 세고 다시 묻는다" % (phase, cap, thinking))
 
 
-def request_reply(r, n, p):
+def request_reply(r, n, p, stage=None, mock=None):
     """계획을 넣은 프롬프트를 보내고 답을 받아 적는다.
+
+    `stage` · `mock` 은 다듬기의 고치기 호출이 준다 - 토큰을 refine_fix 로 세고,
+    mock 실행이면 다듬기 mock 의 고치기 답을 쓴다.
 
     돌려주는 것은 (reply, outcome). reply 가 None 이면 이 시도가 모델 호출에서
     끝난 것이고 outcome 이 다음에 할 일이다."""
@@ -665,15 +786,17 @@ def request_reply(r, n, p):
     # 재시도에서는 코드보다 반성을 먼저 쓰게 한다. 그래서 실패 목록보다 앞이다.
     r.asked_reflection = bool(block)
     block = with_reflection(block)
-    prompt = build_prompt(r.template, r.original_html, block, r.choices, plan_text(r),
+    if block and stage == "refine_fix":
+        block = REFINE_FIX_NOTE + "\n\n" + block
+    prompt = build_prompt(r.template, r.model_original, block, r.choices, plan_text(r),
                           errors=errors_block(r.errors))
     io.open(p + ".prompt.txt", "w", encoding="utf-8", newline="\n").write(prompt)
     r.log("prompt: %d chars%s" % (len(prompt), " (with retry block)" if block else ""))
 
     reflect = r.asked_reflection
     reply, outcome = ask_model(r, n, p, prompt, r.caps["generate"],
-                               lambda mode: mock_reply(mode, reflect=reflect),
-                               "retry" if reflect else "generate")
+                               mock or (lambda mode: mock_reply(mode, reflect=reflect)),
+                               stage or ("retry" if reflect else "generate"))
     if reply is None:
         return None, outcome
     io.open(p + ".response.txt", "w", encoding="utf-8", newline="\n").write(reply["text"])
@@ -734,6 +857,14 @@ def revise_plan(r, n, p, entry, refl, problems):
     if problems:
         return list(problems)
     changes = refl.get("plan_changes") or []
+    if changes and entry.get("phase") == "refine_fix":
+        # 다듬기 중에는 화면 구성을 바꾸지 않는다. 적용하지 않고 남긴다 - 바뀐
+        # 화면으로 답했으면 아래 일치 검사가 형식 문제로 잡는다.
+        entry["plan_changes"] = 0
+        entry["plan_changes_ignored"] = len(changes)
+        r.log("reflection: 다듬기의 고치기라 계획 변경 %d건을 적용하지 않았다 (화면 "
+              "구성 고정)" % len(changes))
+        return []
     if not changes:
         entry["plan_changes"] = 0
         return []
@@ -882,6 +1013,14 @@ def audit_build(r, n, entry, build):
         return problems_report(problems)
 
     report = _drive_audit(r, n, build)
+    # 펼치기(reveal) 규칙 위반은 흐름 명세의 형식 문제다 - 검사기가 걸어 봐야 알 수
+    # 있어 검사 I 의 fatal 로 오지만, 형식 예산을 쓴다.
+    violated = [f["detail"] for f in report.get("fatal") or [] if f.get("reveal_violation")]
+    if violated:
+        r.log("flow: reveal 규칙 위반 %d건: %s" % (len(violated), " | ".join(violated)[:300]))
+        entry.update(stage="flow", passed=False, fatal=len(violated))
+        r.budget.spend("format")
+        return problems_report(violated)
     entry.update(stage="audit", passed=bool(report.get("passed")),
                  fatal=len(report.get("fatal", [])),
                  warning=len(report.get("warning", [])))
@@ -902,7 +1041,8 @@ def _drive_audit(r, n, build):
                          build["flow_path"], url_for(rel), shots, r.args.stage,
                          original_url=r.original_url,
                          allowed_removals=r.allowed_removals,
-                         task=r.task["id"])
+                         task=r.task["id"],
+                         **({"see": True} if r.refine > 0 else {}))
     except Exception as e:                           # a flow the audit cannot drive
         r.log("audit: crashed: %s: %s" % (type(e).__name__, e))
         return failure_report("AUDIT", "검사기가 흐름 명세를 실행하지 못했다: %s: %s"
@@ -964,8 +1104,10 @@ def _budget_stop(r, entry):
     return GO_ON
 
 
-def attempt(r, n):
-    """한 번의 시도. 돌려주는 것은 STOP 또는 GO_ON."""
+def attempt(r, n, stage=None, mock=None):
+    """한 번의 시도. 돌려주는 것은 STOP 또는 GO_ON.
+
+    `stage` · `mock` 은 다듬기의 고치기 시도가 준다 (refine_round)."""
     b = r.budget
     r.log("---- attempt %d (형식 %d/%d · 검사 %d/%d)"
           % (n, b.format_used, b.budget["format"], b.audit_used, b.budget["audit"]))
@@ -985,7 +1127,7 @@ def attempt(r, n):
     # 이 시도가 따른 계획. 재시도에서 계획이 바뀌면 시도마다 다른 파일이 된다.
     _dump(r.plan, p + ".plan.json")
 
-    reply, outcome = request_reply(r, n, p)
+    reply, outcome = request_reply(r, n, p, stage=stage, mock=mock)
     if reply is None:
         return outcome
     entry = {"n": n, "finish_reason": reply["finish_reason"], "usage": reply["usage"],
@@ -993,6 +1135,8 @@ def attempt(r, n):
              "plan": p + ".plan.json", "calls": r.calls}
     if plan_call:
         entry["plan_call"] = plan_call
+    if stage:
+        entry["phase"] = stage
     build, outcome = check_reply(r, p, entry, reply, n)
     if build is None:
         return outcome
@@ -1133,6 +1277,194 @@ def write_briefs(r, out, name):
 
 
 # --------------------------------------------------------------------------- #
+# 보고 다듬기
+# --------------------------------------------------------------------------- #
+def refine(r, n):
+    """통과한 빌드를 그림으로 보여 주고 다듬게 한다. 최대 r.refine 회.
+
+    한 회차는 다듬기 호출 하나와, 다듬은 빌드가 떨어졌을 때 고치기 호출 하나다.
+    통과하면 그것이 새 최종이고 다음 회차는 그 빌드를 다듬는다. 고치기까지
+    떨어지면 직전에 통과한 빌드를 최종으로 되돌리고 다듬기를 끝낸다 - 통과한
+    결과를 잃지 않는다.
+
+    예산은 형식 · 검사 예산과 따로다. 회차 안에서는 루프의 단계 함수를 그대로
+    쓰되, 그 함수들이 쓰는 예산을 이 회차의 것으로 잠시 바꿔 끼운다 - 다듬기의
+    실패가 생성 예산을 깎지도, 생성 예산이 다듬기를 막지도 않는다."""
+    rf = r.summary["refine"]
+    rf["final_from"] = "generate"
+    rf["final_label"] = final_label(rf)
+    if r.refine <= 0:
+        r.log("다듬기: 꺼짐 (--refine 0)")
+        return n
+    main_budget = r.budget
+    try:
+        for k in range(1, r.refine + 1):
+            if r.delay and not r.args.mock:
+                time.sleep(r.delay)
+            n, go_on = refine_round(r, k, n)
+            if not go_on:
+                break
+    finally:
+        r.budget = main_budget
+    final = r.summary["final"] or {}
+    rf["final_label"] = final_label(rf)
+    r.log("다듬기: 끝 — 최종은 %s (시도 %s)%s"
+          % (final_label(rf), final.get("attempt"),
+             " · 되돌림: %s" % rf["reverted"]["reason"] if rf.get("reverted") else ""))
+    return n
+
+
+def final_label(rf):
+    """설명서 맨 위 한 줄과 run.log 가 쓰는 "최종이 어디서 왔나"."""
+    rounds = rf.get("rounds") or []
+    if rf.get("final_from") == "refine":
+        last = max((x for x in rounds if x.get("became_final")),
+                   key=lambda x: x["round"], default=None)
+        label = "다듬기 %s회차" % (last["round"] if last else "?")
+    else:
+        label = "생성"
+    if rf.get("reverted"):
+        label += " (다듬기 %s회차가 실패해 되돌림)" % rf["reverted"]["round"]
+    return label
+
+
+def _round_cost(r, attempts):
+    calls = [c for m, c in r.all_calls if m in attempts]
+    return {"tokens": _tally(calls) if calls else None,
+            "usd": _add(cost_usd(c.get("usage"), price_for(r.model)) for c in calls)}
+
+
+def refine_round(r, k, n):
+    """다듬기 한 회차. `(마지막 시도 번호, 다음 회차로 가는가)`."""
+    rf = r.summary["refine"]
+    best = dict(r.summary["final"])
+    best_n = best["attempt"]
+    n += 1
+    p = os.path.join(r.run_dir, "attempt_%d" % n)
+    r.calls = []
+    r.budget = Budget(1, 1, r.budget.budget["infra"])
+    shots = os.path.join(r.run_dir, "shots", "attempt_%d" % best_n)
+    images = see_images(shots, BUILD_LABELS, [e["id"] for e in r.errors])
+    row = {"round": k, "attempt": n, "from_attempt": best_n, "images": len(images),
+           "before_shots": os.path.join(shots, "see"), "after_shots": None,
+           "critique": None, "issues": None, "keep": None, "done": None,
+           "passed": None, "fix_attempt": None, "fix_passed": None,
+           "became_final": False, "stopped": None}
+    rf["rounds"].append(row)
+    r.log("---- 다듬기 %d/%d (시도 %d — 시도 %d 의 빌드, 그림 %d장)"
+          % (k, r.refine, n, best_n, len(images)))
+
+    model_html = io.open(best.get("model_html") or best["html"], encoding="utf-8").read()
+    flow_text = io.open(best["flow"], encoding="utf-8").read()
+    prompt = build_refine_prompt(
+        r.refine_template, model_html, flow_text, plan_text(r), r.choices,
+        errors_block(r.errors),
+        shots=shots_section(images, "지금 화면", BUILD_SHOTS_INTRO))
+    io.open(p + ".refine_prompt.txt", "w", encoding="utf-8", newline="\n").write(
+        prompt_record(prompt, images, r.model, base=r.run_dir))
+    refine_mode = getattr(r.args, "mock_refine", None) or "done"
+    reply, outcome = ask_model(
+        r, n, p, prompt, r.caps["generate"],
+        lambda mode: mock_refine_reply(refine_mode, mode, k), "refine", images=images)
+
+    def finish(stopped, go_on):
+        row["stopped"] = stopped
+        # 이 회차의 형식 · 검사 실패. 생성 예산(summary.budget)과 섞지 않는다.
+        row["format_failures"] = r.budget.format_used
+        row["audit_failures"] = r.budget.audit_used
+        rf["format_failures"] = rf.get("format_failures", 0) + r.budget.format_used
+        rf["audit_failures"] = rf.get("audit_failures", 0) + r.budget.audit_used
+        row.update(_round_cost(r, [x for x in (n, row.get("fix_attempt")) if x]))
+        return (row.get("fix_attempt") or n), go_on
+
+    if reply is None:
+        r.log("다듬기 %d: 모델 호출에서 끝났다 — 최종은 그대로 (시도 %d)" % (k, best_n))
+        return finish("call_failed", False)
+    io.open(p + ".response.txt", "w", encoding="utf-8", newline="\n").write(reply["text"])
+    critique, problems = parse_critique(reply["text"])
+    if critique is not None:
+        row["critique"] = p + ".critique.json"
+        _dump(critique, row["critique"])
+        row["issues"] = len(critique_issues(critique))
+        row["keep"] = len(critique.get("keep") or []) \
+            if isinstance(critique.get("keep"), list) else None
+        row["done"] = critique.get("done") if isinstance(critique.get("done"), bool) \
+            else None
+        if problems:
+            row["critique_problems"] = problems
+        r.log("다듬기 %d: 비평 %s건 · keep %s · done=%s%s"
+              % (k, row["issues"], row["keep"], row["done"],
+                 (" (비평 모양 문제: %s)" % " | ".join(problems)[:200]) if problems else ""))
+    else:
+        r.log("다듬기 %d: 비평 블록이 없다" % k)
+    if row["done"] is True and row["issues"] == 0:
+        # 빌드가 없는 회차는 시도 목록(attempts)에 넣지 않는다 - 그 호출의 토큰은
+        # 이 회차 기록과 tokens.by_stage.refine 에 남는다.
+        r.log("다듬기 %d: 모델이 더 고칠 것이 없다고 했다 — 멈춘다" % k)
+        return finish("done", False)
+
+    # 다듬은 빌드. 생성 시도와 같은 단계 함수로 모양을 보고 검사한다.
+    r.last = {"report": None, "html": model_html, "flow_text": flow_text}
+    r.last_error, r.truncated, r.asked_reflection = None, 0, False
+    entry = {"n": n, "phase": "refine", "finish_reason": reply["finish_reason"],
+             "usage": reply["usage"], "seconds": reply["seconds"],
+             "repro": repro(r.refine_template, reply), "plan": p + ".plan.json",
+             "calls": r.calls, "critique": row["critique"]}
+    _dump(r.plan, p + ".plan.json")
+    build, _outcome = check_reply(r, p, entry, reply, n)
+    passed = False
+    if build is not None:
+        report = audit_build(r, n, entry, build)
+        record(r, n, p, entry, report, build)
+        passed = bool(report.get("passed"))
+        row["after_shots"] = os.path.join(r.run_dir, "shots", "attempt_%d" % n, "see")
+    row["passed"] = passed
+    if passed:
+        return _refine_passed(r, k, n, row, critique, finish)
+
+    # 떨어졌다. 보통 재시도 블록(반성 + 실패 목록)으로 한 번 고치게 한다.
+    r.log("다듬기 %d: 다듬은 빌드가 떨어졌다 — 한 번 고치게 한다" % k)
+    if r.delay and not r.args.mock:
+        time.sleep(r.delay)
+    fix_n = n + 1
+    row["fix_attempt"] = fix_n
+    r.calls = []
+    attempt(r, fix_n, stage="refine_fix",
+            mock=lambda mode: mock_refine_fix_reply(refine_mode, mode))
+    fixed = (r.summary["final"] or {}).get("attempt") == fix_n and \
+        bool(r.summary["attempts"] and r.summary["attempts"][-1].get("passed"))
+    row["fix_passed"] = fixed
+    if fixed:
+        row["after_shots"] = os.path.join(r.run_dir, "shots", "attempt_%d" % fix_n, "see")
+        return _refine_passed(r, k, fix_n, row, critique, finish)
+
+    # 고치기도 떨어졌다. 직전에 통과한 빌드를 최종으로 되돌린다. final 은 그 빌드의
+    # 기록 그대로다 - final.attempt 가 실제 최종 빌드를 가리켜야 고르기(잘림 판정 ·
+    # 마지막 시도의 값)가 맞는 시도를 본다.
+    r.summary["final"] = best
+    r.summary["passed"] = True
+    rf["reverted"] = {"round": k, "to_attempt": best_n,
+                      "failed_attempts": [n, fix_n],
+                      "reason": "다듬기 %d회차의 빌드(시도 %d)와 고친 빌드(시도 %d)가 "
+                                "모두 검사를 통과하지 못했다" % (k, n, fix_n)}
+    r.log("다듬기 %d: 고친 빌드도 떨어졌다 — 직전에 통과한 시도 %d 를 최종으로 되돌린다"
+          % (k, best_n))
+    return finish("reverted", False)
+
+
+def _refine_passed(r, k, n, row, critique, finish):
+    rf = r.summary["refine"]
+    rf["final_from"] = "refine"
+    rf["reverted"] = None
+    row["became_final"] = True
+    r.log("다듬기 %d: 통과 — 시도 %d 가 새 최종이다" % (k, n))
+    if row["done"] is True:
+        r.log("다듬기 %d: 모델이 이번 수정으로 끝났다고 했다 (done=true) — 멈춘다" % k)
+        return finish("done_after_fix", False)
+    return finish(None, True)
+
+
+# --------------------------------------------------------------------------- #
 # 종료 코드
 # --------------------------------------------------------------------------- #
 # 이 이유로 멈춘 실행은 "빌드가 떨어졌다" 가 아니라 "돌지 못했다" 다. 부르는
@@ -1234,6 +1566,7 @@ def run(args):
                                % (args.mock, MOCK_TASK.get(args.mock), task["id"]))
         template = load_template(task["id"])
         plan_template = load_plan_template(task["id"])
+        refine_template = load_refine_template(task["id"])
         original_html = io.open(args.original, encoding="utf-8").read()
         orig_url = original_url(args.original)
         allowed = load_allowed_removals(task["id"])
@@ -1252,7 +1585,8 @@ def run(args):
            args.mock, orig_url)
         + ("" if task["id"] == DEFAULT_TASK else " | task=%s" % task["id"]))
     r = Run(args, log, run_dir, model, template, original_html, orig_url,
-            plan_template=plan_template, task=task, model_source=source)
+            plan_template=plan_template, task=task, model_source=source,
+            refine_template=refine_template)
     r.summary["git"] = git
     r.allowed_removals = allowed
     if allowed:
@@ -1276,8 +1610,21 @@ def run(args):
         log("audit: driving the original once (baseline for contrast / language)")
         # 비교 기준으로만 쓰므로 원본의 오류 경로는 걷지 않는다 - 모델의 설계는
         # 원본과 화면이 다르고, 오류 경로는 생성물의 흐름으로 걷는다.
-        r.orig_snapshot = asyncio.run(A.drive(r.original_url, base_flow,
-                                              errors=False))
+        #
+        # 보기가 켜져 있으면(--see) 같은 걷기에서 원본 화면을 찍는다 - 진단·계획
+        # 호출에 그림으로 들어간다. 오류 상태도 찍으려고 오류 경로까지 걷지만,
+        # 그 결과는 스냅샷에서 떼어 둔다 - 비교 기준은 전과 같아야 한다.
+        shots = os.path.join(run_dir, "shots", "original") if r.see else None
+        snap = asyncio.run(A.drive(r.original_url, base_flow, errors=r.see,
+                                   want_shots=shots, see=r.see))
+        snap.pop("error_paths", None)
+        r.orig_snapshot = snap
+        r.original_images = see_images(shots, ORIGINAL_LABELS,
+                                       [e["id"] for e in r.errors]) if r.see else []
+        r.summary["see"]["original_images"] = len(r.original_images)
+        if r.see:
+            log("보기: 원본 그림 %d장 (%s)" % (len(r.original_images),
+                                          os.path.relpath(shots, run_dir)))
         r.choices = choices_block(r.orig_snapshot, original_html)
         if r.choices:
             log("선택지: %s" % " / ".join(
@@ -1297,6 +1644,8 @@ def run(args):
                 time.sleep(r.delay)
             if attempt(r, n) is STOP:
                 break
+        if r.summary["passed"]:
+            refine(r, n)
 
         if not r.summary["passed"]:
             log("통과 없음 — 형식 재시도 %d회 / 검사 재시도 %d회"

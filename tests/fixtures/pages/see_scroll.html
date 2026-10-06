@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>보기 - 스크롤되는 화면을 잘라 찍는다</title>
+<style>
+  html,body{margin:0;background:#fff;color:#111;font-size:18px;}
+  #phone{width:390px;position:relative;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  /* 화면 안에서 스크롤된다 (원본 이체 화면의 .body 와 같다). */
+  #inner.on{display:flex;flex-direction:column;height:844px;}
+  .body{flex:1 1 auto;overflow-y:auto;}
+  .row{height:100px;border-bottom:1px solid #ccc;}
+  .foot{flex:0 0 auto;padding:12px;}
+  button{background:#F1F3F7;color:#111;border:0;padding:12px;font-size:18px;}
+</style>
+</head>
+<body>
+<!-- 세 화면. short 는 넘치지 않는다. inner 는 화면 안의 .body 가 2,600px 넘친다
+     (아래 [다음] 은 늘 보인다). page 는 문서 자체가 1,200px 넘친다. -->
+<div id="phone">
+<section class="screen on" data-screen="short">
+  <p>짧은 화면</p>
+  <button data-action="go-inner">다음</button>
+</section>
+<section class="screen" data-screen="inner" id="inner">
+  <div class="body" id="inner-body">
+    <div class="row">맨 위 줄</div>
+    <div class="row">2</div><div class="row">3</div><div class="row">4</div>
+    <div class="row">5</div><div class="row">6</div><div class="row">7</div>
+    <div class="row">8</div><div class="row">9</div><div class="row">10</div>
+    <div class="row">11</div><div class="row">12</div><div class="row">13</div>
+    <div class="row">14</div><div class="row">15</div><div class="row">16</div>
+    <div class="row">17</div><div class="row">18</div><div class="row">19</div>
+    <div class="row">20</div><div class="row">21</div><div class="row">22</div>
+    <div class="row">23</div><div class="row">24</div><div class="row">25</div>
+    <div class="row">26</div><div class="row">27</div><div class="row">28</div>
+    <div class="row">29</div><div class="row">30</div><div class="row">31</div>
+    <div class="row">32</div><div class="row">33</div><div class="row">맨 아래 줄</div>
+  </div>
+  <div class="foot"><button data-action="go-page" id="to-page">다음</button></div>
+</section>
+<section class="screen" data-screen="page">
+  <p>문서가 길다</p>
+  <div style="height:1900px">긴 내용</div>
+  <button data-action="go-end">끝</button>
+</section>
+<section class="screen" data-screen="end"><p id="dn-amt">10,000원</p></section>
+</div>
+<script>
+  window.__log = [];
+  let cur = 'short';
+  window.__screen = () => cur;
+  window.__dump = () => window.__log;
+  window.__startTask = () => {};
+  function go(n){
+    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.dataset.screen === n));
+    cur = n; window.__log.push({type:'screen_enter', to:n}); window.scrollTo(0, 0);
+  }
+  document.getElementById('phone').addEventListener('click', e => {
+    const el = e.target.closest('[data-action]'); if (!el) return;
+    const a = el.dataset.action;
+    if (a === 'go-inner') { go('inner'); document.getElementById('inner-body').scrollTop = 300; }
+    else if (a === 'go-page') go('page');
+    else if (a === 'go-end') go('end');
+  });
+</script>
+</body>
+</html>

@@ -169,7 +169,7 @@ def test_first_prompt_matches_baseline():
     블록이 모두 제자리에 들어갔는지를 한 번에 못박는다."""
     want = load_text("prompt", "attempt_1.txt")
     choices = _api.choices_block(orig_snapshot(), original_html())
-    got = _api.build_prompt(_api.load_template(), original_html(), "", choices,
+    got = _api.build_prompt(_api.load_template(), C.model_html(original_html()), "", choices,
                             C.prompt_plan())
     assert got == want
 
@@ -188,7 +188,7 @@ def test_retry_prompt_matches_baseline():
     retry = load_text("retry_block", "%s.txt" % case)
     choices = _api.choices_block(orig_snapshot(), original_html())
     # 루프가 넣는 그대로 - 반성 요청이 실패 목록보다 앞이다
-    got = _api.build_prompt(_api.load_template(), original_html(),
+    got = _api.build_prompt(_api.load_template(), C.model_html(original_html()),
                             _api.prompt_module.with_reflection(retry), choices,
                             C.prompt_plan())
     assert got == want

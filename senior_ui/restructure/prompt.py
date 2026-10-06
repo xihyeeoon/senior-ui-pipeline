@@ -26,6 +26,7 @@ from senior_ui.config import ROOT
 from senior_ui.preserved import GLOBAL_NAME
 from senior_ui.tasks import load_task
 
+from .model import IMAGE_MARK
 from .preserve import preserved_data, split_groups
 from .reply import read_forms
 
@@ -50,7 +51,10 @@ def _with_task(name, task=None):
     그 칸(줄 목록)으로 채운다. 칸이 없는 슬롯이 남으면 멈춘다 - 빈 문자열로
     두면 과제의 규칙 한 덩이가 말없이 프롬프트에서 사라진다."""
     t = load_task(task)
-    text = load_block(name).replace("{{TASK}}", t["description"])
+    # 기술 계약은 생성 · 다듬기가 같은 블록을 쓴다 (CONTRACT). 계약 안에도 과제
+    # 칸({{TASK_RULES}})이 있으므로 칸을 채우기 전에 넣는다.
+    text = load_block(name).replace("{{CONTRACT}}", load_block("CONTRACT").rstrip("\n"))
+    text = text.replace("{{TASK}}", t["description"])
     parts = t.get("prompt") or {}
 
     def fill(m):
@@ -74,6 +78,51 @@ def load_plan_template(task=None):
     return _with_task("PLAN_PROMPT", task)
 
 
+# 원본 HTML 의 주석은 모델에 보내지 않는다. 화면으로 알 수 없는 정보다 - 원본에는
+# 탭 기록 장치 설명, Flutter 더미앱 언급, "(임시)" 같은 제작 메모가 주석으로 있고,
+# 모델은 그것을 원본의 사정으로 읽는다. 마크업 주석(<!-- -->)은 어디서든,
+# 블록 주석(/* */)은 <style> · <script> 안에서만 지운다. 주석 하나가 한 줄을 다
+# 차지하면 그 줄도 지운다. 주석 끝(-->, */)을 넘어 다음 주석까지 삼키지 않도록
+# 몸통에 끝 표시가 들어가지 못하게 한다.
+HTML_COMMENT_LINE = re.compile(r"^[ \t]*<!--(?:(?!-->).)*-->[ \t]*\r?\n", re.S | re.M)
+HTML_COMMENT = re.compile(r"<!--(?:(?!-->).)*-->", re.S)
+BLOCK_COMMENT_LINE = re.compile(r"^[ \t]*/\*(?:(?!\*/).)*\*/[ \t]*\r?\n", re.S | re.M)
+BLOCK_COMMENT = re.compile(r"[ \t]*/\*(?:(?!\*/).)*\*/", re.S)
+STYLE_SCRIPT = re.compile(r"(<(style|script)\b[^>]*>)(.*?)(</\2>)", re.S | re.I)
+
+
+def model_input_html(html):
+    """모델에 보내는 원본 - 주석을 뺀 것. 검사기는 원본 그대로를 본다."""
+    def code(m):
+        body = BLOCK_COMMENT.sub("", BLOCK_COMMENT_LINE.sub("", m.group(3)))
+        return m.group(1) + body + m.group(4)
+    html = STYLE_SCRIPT.sub(code, html or "")
+    return HTML_COMMENT.sub("", HTML_COMMENT_LINE.sub("", html))
+
+
+def load_refine_template(task=None):
+    """보고 다듬기 프롬프트 (REFINE_PROMPT). 기술 계약은 생성과 같은 블록이다."""
+    return _with_task("REFINE_PROMPT", task)
+
+
+BUILD_SHOTS_INTRO = (
+    "아래 그림들은 지금 HTML 을 휴대폰(폭 390px, 높이 844px)에서 연 모습이다. 그림마다 앞에 "
+    "화면 이름이 있다.\n스크롤되는 화면은 맨 위부터 창 높이씩 잘라 여러 장으로 찍었다. "
+    "오류 상태는 잘못된 값을 넣은 직후의 모습이다.")
+
+
+def build_refine_prompt(template, html, flow_text, plan, choices="", errors="",
+                        shots=""):
+    """`html` 은 모델이 쓴 것(데이터 블록을 넣기 전)이다 - 재시도 블록과 같은
+    이유다. `shots` 는 shots_section 이 만든 "지금 화면" 절."""
+    return (template.replace("{{CURRENT_HTML}}", (html or "").strip())
+                    .replace("{{CURRENT_FLOW}}", (flow_text or "").strip())
+                    .replace("{{PLAN}}", plan)
+                    .replace("{{CHOICES}}", choices)
+                    .replace("{{ERRORS}}", errors)
+                    .replace("{{BUILD_SHOTS}}", shots))
+
+
 def build_prompt(template, original_html, retry_block, choices="", plan="",
                  errors=None):
     """`errors` 를 주지 않으면 원본 흐름의 오류 조건으로 채운다 (errors_block)."""
@@ -87,14 +136,31 @@ def build_prompt(template, original_html, retry_block, choices="", plan="",
 
 
 def build_plan_prompt(template, original_html, choices, original_screens,
-                      retry="", errors=None):
+                      retry="", errors=None, shots=""):
+    """`shots` 는 shots_section 이 만든 "원본 화면" 머리 + 그림 자리다. 그림이
+    없으면 빈 글자 - 전의 프롬프트와 같다."""
     if errors is None:
         errors = errors_block(original_error_paths())
     return (template.replace("{{ORIGINAL_HTML}}", original_html)
                     .replace("{{RETRY_BLOCK}}", retry)
                     .replace("{{CHOICES}}", choices)
                     .replace("{{ERRORS}}", errors)
+                    .replace("{{ORIGINAL_SHOTS}}", shots)
                     .replace("{{ORIGINAL_SCREENS}}", ", ".join(original_screens)))
+
+
+ORIGINAL_SHOTS_INTRO = (
+    "아래 그림들은 원본을 휴대폰(폭 390px, 높이 844px)에서 연 모습이다. 그림마다 앞에 "
+    "화면 이름이 있다.\n스크롤되는 화면은 맨 위부터 창 높이씩 잘라 여러 장으로 찍었다. "
+    "오류 상태는 잘못된 값을 넣은 직후의 모습이다.")
+
+
+def shots_section(images, title="원본 화면", intro=ORIGINAL_SHOTS_INTRO):
+    """그림이 들어갈 절. 글에는 머리와 그림 자리 표시(IMAGE_MARK) 하나만 들어가고,
+    그림은 보낼 때 그 자리에 끼운다 (model.content_parts). 그림이 없으면 빈 글자."""
+    if not images:
+        return ""
+    return "## %s\n\n%s\n\n%s\n\n" % (title, intro, IMAGE_MARK)
 
 
 def errors_block(paths):
@@ -135,6 +201,12 @@ def errors_block(paths):
             "잘못된 값이 무엇인지는 알려 주지 않는다. 정답이 아닌 모든 값에서 같은 "
             "오류가 나야 한다.", ""]
     return "\n".join(out)
+
+
+# 다듬기의 고치기 시도에 붙는 말. 다듬기 중에는 화면 구성을 바꾸지 않는다 -
+# 반성의 plan_changes 는 받지 않는다 (loop.revise_plan).
+REFINE_FIX_NOTE = ("이번 고치기는 다듬은 빌드를 고치는 것이다. 화면 구성(화면 이름 · 순서 · "
+                   "과업 경로)은 계획 그대로 둔다 - 반성의 `plan_changes` 는 `[]` 로 둔다.")
 
 
 def reflection_request():
@@ -205,9 +277,12 @@ def choices_block(orig_snapshot, original_html):
                 "값이 DOM",
                 "안에 있어야 한다 (숨김·접힘은 괜찮다). 검색창을 두더라도 검색어가 "
                 "비었을",
-                "때는 전체 목록이 DOM 에 있어야 한다. 도구가 넣어 준 데이터 "
-                "블록은 증거로",
-                "세지 않는다 - 그 데이터를 읽어 **그린** 것만 센다.", ""]
+                "때는 전체 목록이 DOM 에 있어야 한다. 처음에는 일부만 보이고 "
+                "[전체 보기] 같은",
+                "조작으로 나머지가 만들어지는 설계도 된다 - 그 조작을 흐름 명세의 "
+                "`reveal` 에 적어라.",
+                "도구가 넣어 준 데이터 블록은 증거로 세지 않는다 - 그 데이터를 "
+                "읽어 **그린** 것만 센다.", ""]
     if inline:
         out.append("마크업에 직접 있는 것 (그대로 두면 된다):")
         for action, count, _src in inline:
