@@ -73,15 +73,15 @@
     "done_amount": "32,000",
     "data-screen_original": 10,
     "data-screen_repaired": 10,
-    "data-action_original": 25,
-    "data-action_repaired": 25,
+    "data-action_original": 56,
+    "data-action_repaired": 56,
     "id_original": 25,
     "id_repaired": 25,
     "per_screen_attr_loss": {},
     "injected_dialog_calls": 0,
     "onclick_added": 0,
     "dialogs_during_task": 0,
-    "handled_actions": 26,
+    "handled_actions": 57,
     "dead_controls_unverifiable": [],
     "dead_controls_new": 0,
     "dead_controls_pre_existing": [],
@@ -186,6 +186,10 @@
         "recovered_to": "confirm"
       }
     },
+    "entrances_original": 31,
+    "entrances_kept": 31,
+    "entrances_missing": [],
+    "entrances_not_in_original": [],
     "fatal_duplicates_removed": 0,
     "fatal_total": 0,
     "fatal_derived": 0,
@@ -206,7 +210,8 @@
       "C",
       "F",
       "I",
-      "J"
+      "J",
+      "K"
     ]
   }
 }

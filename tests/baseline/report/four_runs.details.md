@@ -31,6 +31,7 @@ fatal 행의 '독립' 은 `fatal_root`, '파생' 은 `fatal_derived` (한 번 �
 | H | 미정의 클래스 | warning | 0 | 0 | 0 | 0 △ |
 | I | 선택지 보존 | fatal | fatal 1 | fatal 1 | fatal 1 | fatal 2 |
 | J | 오류 경로 | fatal | 0 | 0 | 0 | 0 |
+| K | 과제 밖 입구 | fatal | 0 | 0 | 0 | 0 |
 
 △ = 이 빌드에서 해당 검사의 일부가 생략됨 (아래 '생략된 검사' 참고)
 

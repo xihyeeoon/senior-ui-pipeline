@@ -296,6 +296,9 @@ async def drive(url, flow, want_shots=None, errors=True, see=False):
     data = {"screens": {}, "dialogs": [], "js_errors": [], "reached": [],
             "missing_ids": [], "state_pairs": [], "load_failed": None,
             "notes": [], "js_error_details": [], "flow": flow["name"],
+            # 걷는 동안 DOM 의 data-action 요소들이 가진 이름 (글자 · aria-label).
+            # 걸음마다 모아 합친다 - 검사 K (과제 밖 입구) 가 본다.
+            "action_texts": [],
             # 이 걸음에 눌러 넣은 정답. 검사 B 가 원본 화면에 있던 받는 사람
             # 이름을 찾을 때 원본의 정답을 써야 한다 - 빌드의 정답과 다를 수 있다.
             "truth": truth_of(flow)}
@@ -344,6 +347,7 @@ async def walk(page, flow, data, want_shots, url, see=False):
     data["state_pairs"] = await page.evaluate(P.STATE_PAIRS)
     data["undefined_classes"] = await page.evaluate(P.UNDEFINED_CLASSES)
 
+    texts = set()
     for step, visit in zip(flow["steps"], visit_keys(flow["steps"])):
         name = step["screen"]
         try:
@@ -368,6 +372,8 @@ async def walk(page, flow, data, want_shots, url, see=False):
 
         data["screens"][visit] = await collect_screen(
             page, flow, visit, data["reached"])
+        texts.update(await page.evaluate(P.ACTION_TEXTS))
+        data["action_texts"] = sorted(texts)
         if want_shots:
             await page.screenshot(path=os.path.join(
                 want_shots, "audit_%s.png" % SHOT_SAFE.sub("_", visit)))
@@ -500,7 +506,8 @@ async def walk_reveal(browser, url, flow, spec):
     정답 경로의 걷기와 따로 걷는다 - 펼친 상태가 A~H 가 보는 화면을 바꾸지
     않게. 돌려주는 것은 `{"at", "choices": {action: [값]}, "error"}`."""
     truth = truth_of(flow)
-    row = {"at": spec.get("at"), "choices": {}, "error": None, "violations": []}
+    row = {"at": spec.get("at"), "choices": {}, "error": None, "violations": [],
+           "action_texts": []}
     page = await browser.new_page(viewport={"width": 390, "height": 844})
     ed = {"js_errors": [], "js_error_details": [], "dialogs": [], "reached": []}
     tasks = attach_listeners(page, ed)
@@ -514,6 +521,11 @@ async def walk_reveal(browser, url, flow, spec):
         for action, vals in (groups or {}).items():
             have = row["choices"].setdefault(action, [])
             have += [v for v in vals if v not in have]
+
+    async def merge_texts():
+        # 펼친 뒤 나타난 누를 수 있는 요소의 이름 - 검사 K 가 정답 경로의 것과 함께 센다
+        row["action_texts"] = sorted(set(row["action_texts"])
+                                     | set(await page.evaluate(P.ACTION_TEXTS)))
 
     try:
         try:
@@ -541,6 +553,7 @@ async def walk_reveal(browser, url, flow, spec):
             if visit == spec.get("at"):
                 break
         merge(await page.evaluate(P.CHOICE_GROUPS))
+        await merge_texts()
         actions = spec.get("do") or []
         for i, act in enumerate(actions if isinstance(actions, list) else [actions]):
             sel = act.get("click") if isinstance(act, dict) and set(act) == {"click"} \
@@ -567,6 +580,7 @@ async def walk_reveal(browser, url, flow, spec):
                        after.get("dom_screen") or after.get("landed_on")))
                 return row
             merge(await page.evaluate(P.CHOICE_GROUPS))
+            await merge_texts()
         return row
     finally:
         await drain_dialogs(tasks)

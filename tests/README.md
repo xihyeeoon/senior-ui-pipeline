@@ -50,9 +50,10 @@
 | `test_select.py` | C 후보 고르기 (`python -m senior_ui.select`) - 가짜 실행 폴더 다섯(통과 셋 · 실패 하나 · 도구가 고친 것 하나)으로 순위와 제외 이유, 규칙 파일의 문지기 · 순서 · 가중치, 결과에 남는 규칙과 커밋, 지난 결과와 나란히. `-m browser` 에서는 mock 실행(preserved-all · bill-identity)을 실제로 돌리고 그 폴더로 끝까지 돈다 |
 | `test_preflight_loop.py` | 최신 모델(gpt-6.1-sol · gpt-6-astra) 첫 실행의 형식 검사 거짓 실패 - 실제 답을 `fixtures/real_runs/` 에 복사해 두고 다시 넣는다. 모델도 브라우저도 부르지 않는다 |
 | `test_judge_inputs.py` | 판정 입력(`audit/inputs.judged_flow`) - 모델이 쓴 truth · 완료 화면 값 · done_amount · derived_from_original · task · stage 가 판정을 바꾸지 못하는지, 같은 빌드를 루프와 검사기 CLI 가 같게 판정하는지, 오류 경로에서 뜬 대화상자를 판정하는지. 걷기만 가짜다 |
+| `test_entrances.py` | 과제 밖 입구 (검사 K) - 과제 파일의 확정 목록, 원본의 data-action · aria-label · 무동작 분기, 판정(지운 빌드 fatal · reveal 뒤 통과 · 원본 글자나 라벨 · 경계 규칙 · 원본에 없는 입구는 세지 않음), 프롬프트의 한 문장. `-m browser` 에서는 mock 셋(entrances-none · entrances-reveal · pass)을 실제로 걷는다 |
 | `test_format_rules.py` | 형식 검사(`reply.py`)가 검사기의 규칙 함수(back_to · 화면 목록 · 방문 이름 · 조작부 이름)를 그대로 쓰는지 |
 | `test_tool_failures.py` | 도구 버그(종료 2 · internal_error) · 바깥 문제(인프라 예산) · 시작 실패(cannot_start) · CLI 의 `--out` · 인프라 예산의 출처 |
-| `test_real_runs_browser.py` | `fixtures/real_runs/` 의 첫 답을 루프의 길과 CLI 로 실제로 판정한다 (sol 통과 · astra J fatal 1). `-m browser` |
+| `test_real_runs_browser.py` | `fixtures/real_runs/` 의 첫 답을 루프의 길과 CLI 로 실제로 판정한다 (sol 은 K fatal 1 - 입구 31개 중 2개만 남았다 · astra 는 J 1 · K 1). `-m browser` |
 | `fixtures/real_runs/` | 실제 실행의 답 그대로 (`sol` = `outputs/restructure_auto/20261006-124055`, `astra` = `20261006-124838`). `attempt_N.response.txt` · 첫 계획(`plan.json`) · 도구가 넣은 선택지 데이터(`preserved.json`, `attempt_1.html` 의 블록) |
 | `fake_openai.py` | `openai.OpenAI` 의 대역 (with_raw_response 의 헤더 · Responses · models.list · 429 · 400) |
 | `baseline/` | 기준값. 마지막 캡처 실행의 결과다 |
@@ -105,7 +106,10 @@
   `mock_preserved_some` 은 검사 I 에서, `mock_preserved_none` 은 형식 검사에서
   떨어진다. `mock_errors_undeclared` 는 오류 경로를 적지 않아 형식 검사에서,
   `mock_errors_unhandled` 는 오류 경로는 적었지만 오류 처리가 없어 검사 J 에서
-  떨어진다. mock 실행은 `.mock-outputs/` 를 쓴다 — 통과한 빌드가
+  떨어진다. `mock_entrances_none` 은 과제 밖 입구를 넣지 않아 검사 K 에서 떨어지고,
+  `mock_entrances_reveal` 은 입구를 [다른 메뉴] 를 눌러야 그리지만 흐름 명세의 reveal 로
+  걸어 모아 통과한다. 나머지 이체 모드는 첫 화면의 접힌 블록(`<details>`)에 입구를
+  모두 넣는다 (`model.ENTRANCE_MODES`). mock 실행은 `.mock-outputs/` 를 쓴다 — 통과한 빌드가
   `outputs/restructured_auto.*` 를 덮지 않게 떼어 놓았다 (이제 `--mock` 의
   기본값이기도 하다. 캡처는 같은 폴더를 환경 변수로 한 번 더 못박는다)
 - `session_report.md` / `.csv`
@@ -129,16 +133,17 @@
 |---|---|---|---|---|
 | `original_vs_original` | ○ | 0 | 3 (D 2 · J 1) (wireframe 1) | 8/8 |
 | `bill/original_vs_original` | ○ | 0 | 2 (D 2) (wireframe 0) | 8/8 |
-| `run1` | ✕ | 3 (I 3) | 4 (D 3 · I 1) (wireframe 1) | 9/9 |
-| `run2` | ✕ | 3 (I 3) | 4 (D 3 · I 1) (wireframe 1) | 7/7 |
-| `run3` | ✕ | 3 (I 3) | 4 (D 3 · I 1) (wireframe 1) | 8/8 |
+| `run1` | ✕ | 4 (I 3 · K 1) | 4 (D 3 · I 1) (wireframe 1) | 9/9 |
+| `run2` | ✕ | 4 (I 3 · K 1) | 4 (D 3 · I 1) (wireframe 1) | 7/7 |
+| `run3` | ✕ | 4 (I 3 · K 1) | 4 (D 3 · I 1) (wireframe 1) | 8/8 |
 
-`run1~3` 의 fatal 3건은 모두 검사 I(선택지 보존)다 — 원본의 `pick-bank` 67개 중
-58개, `quick` 의 `all`, `num` 의 `00` 이 생성물에 없다. mock 실행: `mock_pass` ·
-`mock_preserved_all` · `bill/mock_bill_identity` 는 통과하고, `mock_fail` 은 검사에서
-(2회), `mock_preserved_some` 은 검사 I 에서, `mock_preserved_none` ·
-`mock_errors_undeclared` 는 형식 검사에서, `mock_errors_unhandled` 는 검사 J 에서
-떨어진다.
+`run1~3` 의 fatal 중 셋은 검사 I(선택지 보존)다 — 원본의 `pick-bank` 67개 중 58개,
+`quick` 의 `all`, `num` 의 `00` 이 생성물에 없다. 나머지 하나는 검사 K(과제 밖 입구)다 —
+원본의 입구 31개가 하나도 없다. 원본 대 원본은 입구 31/31 (공과금 33/33). mock 실행:
+`mock_pass` · `mock_preserved_all` · `mock_entrances_reveal` · `bill/mock_bill_identity`
+는 통과하고, `mock_fail` 은 검사에서 (2회), `mock_preserved_some` 은 검사 I 에서,
+`mock_preserved_none` · `mock_errors_undeclared` 는 형식 검사에서,
+`mock_errors_unhandled` 는 검사 J 에서, `mock_entrances_none` 은 검사 K 에서 떨어진다.
 
 정리 단계에서는 `metrics.fatal_total` 이 0 인데 `fatal` 목록에는 1건이 있는 버그가
 기준값에 담겨 있었다 (집계가 검사 I 보다 앞에 있었다). `fix/audit-counting` 에서

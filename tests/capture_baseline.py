@@ -418,6 +418,11 @@ MOCK_RUNS = [
     # 흐름에 적지 않았으면 형식 검사가, 적었으면 검사 J 가 잡는다.
     ("mock_errors_undeclared", ["--mock", "errors-undeclared", "--attempts", "1"]),
     ("mock_errors_unhandled", ["--mock", "errors-unhandled", "--attempts", "1"]),
+    # 과제 밖 입구(검사 K)의 두 경우. 다른 모드는 첫 화면의 접힌 블록에 입구를 모두
+    # 넣는다 (model.ENTRANCE_MODES). 지운 빌드는 K 에서 떨어지고, [다른 메뉴] 를
+    # 눌러야 그리는 빌드는 흐름 명세의 reveal 로 걸어 모아 통과한다.
+    ("mock_entrances_none", ["--mock", "entrances-none", "--attempts", "1"]),
+    ("mock_entrances_reveal", ["--mock", "entrances-reveal", "--attempts", "1"]),
 ]
 
 # mock 실행이 쓸 산출물 폴더. 실제 outputs/ 와 떼어 놓는다.

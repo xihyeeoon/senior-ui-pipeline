@@ -32,6 +32,51 @@
     "wrong-account",
     "wrong-bank"
   ],
+  "entrances": {
+    "note": [
+      "과제 밖 입구 - 과제 경로 위 화면에서 누를 수 있지만 이 과제에는 쓰지 않는 메뉴 · 버튼 (검사 K).",
+      "연구 원칙: 보여 주는 방식은 자유, 사용자가 할 수 있는 일은 줄이지 않는다 (연구자 결정 (나), 2026-10-06).",
+      "연구자 확정 2026-10-07 (11-7): A1 에서 누를 수 있는 것은 모두 보존한다. 선택지 데이터(메뉴 항목 · 납부 항목)는 검사 I 가 세므로 여기 없다.",
+      "id: T = 이체 경로 · B = 공과금 경로 · R = 더미앱에서는 범위 안이지만 원본 HTML 에서는 죽어 있던 요소.",
+      "action: 원본 HTML 에 붙인 data-action (ASCII - 분기를 읽는 규칙 audit/handlers.py 가 ASCII 만 읽는다). 원본의 처리기는 그것을 받고 아무 일도 하지 않는다.",
+      "label: 더미앱 OutOfScope 의 라벨 = 원본에 붙인 aria-label. text: 원본에 보이는 글자 (null 이면 이름으로 쓰지 않는다).",
+      "판정 (검사 K): 원본을 걷는 동안 찾은 입구마다, 빌드를 걷는 동안(reveal 포함) DOM 의 data-action 요소의 글자나 aria-label 이 [text, label] 중 하나와 맞아야 한다. 경계 규칙은 검사 I 와 같다. 같은 화면이 아니어도 · 접혀 있어도 된다."
+    ],
+    "source": "senior-ui-dummy-app 00834ca 의 OutOfScope · showOutOfScope 코드 - lib/screens/a1_home.dart · a1_transfer_entry.dart · a1_transfer_amount.dart · a1_transfer_done.dart (+ R1 menuEntry · R3 home_link_쉬운홈 · R4 home_nav_홈 은 범위 안이지만 원본 HTML 에서는 죽어 있던 요소). 표: 11-7 입구 후보표",
+    "items": [
+      {"id": "T1", "dummy": "home_header_메시지", "screen": "home", "action": "oos-message", "label": "메시지", "text": "☺"},
+      {"id": "T2", "dummy": "home_header_지갑", "screen": "home", "action": "oos-wallet", "label": "지갑", "text": "▤"},
+      {"id": "T3", "dummy": "home_header_알림", "screen": "home", "action": "oos-alarm", "label": "알림", "text": "♤"},
+      {"id": "T4", "dummy": "home_irp_banner", "screen": "home", "action": "oos-irp", "label": "IRP 안내", "text": "절세혜택과 안정적인 노후, IRP로 준비하세요"},
+      {"id": "T5", "dummy": "home_button_앱카드 가입", "screen": "home", "action": "oos-appcard", "label": "앱카드 가입", "text": "앱카드 가입"},
+      {"id": "T6", "dummy": "home_pill_바로받기", "screen": "home", "action": "oos-get-coupon", "label": "바로받기", "text": "바로받기"},
+      {"id": "T7", "dummy": "home_dd_link_이벤트", "screen": "home", "action": "oos-event", "label": "이벤트", "text": "이벤트"},
+      {"id": "T8", "dummy": "home_dd_link_쿠폰", "screen": "home", "action": "oos-coupon", "label": "쿠폰", "text": "쿠폰"},
+      {"id": "T9", "dummy": "home_dd_link_포인트", "screen": "home", "action": "oos-point", "label": "포인트", "text": "포인트"},
+      {"id": "T10", "dummy": "home_spend_detail", "screen": "home", "action": "oos-spend-detail", "label": "소비 상세", "text": null, "remark": "원본 글자 › 는 다른 입구 · 목록 행에도 있어 이름으로 쓰지 않는다"},
+      {"id": "T11", "dummy": "home_point_promo", "screen": "home", "action": "oos-my-point", "label": "마이신한포인트", "text": "마이신한포인트"},
+      {"id": "T12", "dummy": "home_connect_banner", "screen": "home", "action": "oos-connect-event", "label": "자산 연결 이벤트", "text": "이벤트 바로가기"},
+      {"id": "T13", "dummy": "home_link_홈화면 설정", "screen": "home", "action": "oos-home-setting", "label": "홈화면 설정", "text": "홈화면 설정"},
+      {"id": "T14", "dummy": "home_link_금액 숨기기", "screen": "home", "action": "oos-hide-amount", "label": "금액 숨기기", "text": "금액 숨기기"},
+      {"id": "T15", "dummy": "home_nav_금융", "screen": "home", "action": "oos-tab-finance", "label": "금융", "text": "금융"},
+      {"id": "T16", "dummy": "home_nav_상품", "screen": "home", "action": "oos-tab-goods", "label": "상품", "text": "상품"},
+      {"id": "T17", "dummy": "home_nav_혜택", "screen": "home", "action": "oos-tab-benefit", "label": "혜택", "text": "혜택"},
+      {"id": "T18", "dummy": "home_nav_주식", "screen": "home", "action": "oos-tab-stock", "label": "주식", "text": "주식"},
+      {"id": "T19", "dummy": "transfer_entry_multi", "screen": "recipient", "action": "oos-multi-transfer", "label": "다건이체", "text": "다건이체"},
+      {"id": "T20", "dummy": "transfer_entry_payee_manage", "screen": "recipient", "action": "oos-payee-manage", "label": "받는 사람 관리", "text": "👤"},
+      {"id": "T21", "dummy": "transfer_entry_search", "screen": "recipient", "action": "oos-search", "label": "검색", "text": "⌕"},
+      {"id": "T22", "dummy": "transfer_entry_section_자주쓰는 계좌", "screen": "recipient", "action": "oos-frequent", "label": "자주쓰는 계좌", "text": "자주쓰는 계좌", "remark": "줄 하나가 입구 하나 (편집 · 펼침을 따로 세지 않는다)"},
+      {"id": "T23", "dummy": "transfer_entry_section_내 계좌", "screen": "recipient", "action": "oos-my-accounts", "label": "내 계좌", "text": "내 계좌"},
+      {"id": "T24", "dummy": "transfer_entry_section_최근", "screen": "recipient", "action": "oos-recent", "label": "최근", "text": "최근"},
+      {"id": "T25", "dummy": "transfer_amount_from_account", "screen": "amount", "action": "oos-from-account", "label": "출금계좌 변경", "text": "[금융거래한도계좌2]신한 주거래 우대통장 계좌에서"},
+      {"id": "T26", "dummy": "transfer_done_pill_추가이체", "screen": "done", "action": "oos-more-transfer", "label": "추가이체", "text": "추가이체"},
+      {"id": "T27", "dummy": "transfer_done_pill_상세보기", "screen": "done", "action": "oos-detail", "label": "상세보기", "text": "상세보기"},
+      {"id": "T28", "dummy": "transfer_done_share", "screen": "done", "action": "oos-share", "label": "공유", "text": "공유"},
+      {"id": "R1", "dummy": "menuEntry", "screen": "home", "action": "oos-menu", "label": "전체메뉴", "text": "⌕"},
+      {"id": "R3", "dummy": "home_link_쉬운홈", "screen": "home", "action": "oos-easy-home", "label": "쉬운홈", "text": "쉬운홈"},
+      {"id": "R4", "dummy": "home_nav_홈", "screen": "home", "action": "oos-tab-home", "label": "홈", "text": "홈"}
+    ]
+  },
   "prompt": {
     "plan_errors": [
       "원본의 오류 화면도 진단 대상이다. 오류를 어디서 어떻게 알리고 어디로 돌아가게 할지는",

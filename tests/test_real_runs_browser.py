@@ -97,18 +97,24 @@ def test_both_first_replies_pass_the_format_check(verdicts):
         assert verdicts[model]["problems"] == [], model
 
 
-def test_sol_first_attempt_still_passes(verdicts):
+def test_sol_first_attempt_now_fails_only_on_the_entrances(verdicts):
+    """sol 의 첫 답은 A~J 를 모두 지난다 - 그런데 이체 홈 · 받는 사람 · 완료 화면의
+    다른 메뉴를 거의 다 지웠다. 11-7 에서 검사 K (과제 밖 입구 보존, 연구자 결정 (나))
+    가 생긴 뒤로 그것 하나로 떨어진다. 전에는 통과했다."""
     v = verdicts["sol"]
-    assert v["loop"]["passed"] is True, v["loop"]["fatal"]
-    assert v["loop"]["metrics"]["stage"] == "wireframe"
-    assert v["code"] == 0
+    fatal = v["loop"]["fatal"]
+    assert [f["check"] for f in fatal] == ["K"], fatal
+    m = v["loop"]["metrics"]
+    assert m["stage"] == "wireframe"
+    assert (m["entrances_original"], m["entrances_kept"]) == (31, 2)
+    assert v["code"] == 1
 
 
-def test_astra_first_attempt_still_has_one_J_fatal(verdicts):
+def test_astra_first_attempt_has_the_J_fatal_and_now_K(verdicts):
     v = verdicts["astra"]
     fatal = v["loop"]["fatal"]
-    assert [(f["check"], f.get("error_path")) for f in fatal] == [("J", "wrong-bank")], \
-        fatal
+    assert [(f["check"], f.get("error_path")) for f in fatal] == [("J", "wrong-bank"),
+                                                                    ("K", None)], fatal
     assert "되돌아가는 조작이 막혔다" in fatal[0]["detail"]
     assert "TimeoutError" in fatal[0]["detail"]
     assert v["code"] == 1

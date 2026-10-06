@@ -49,7 +49,7 @@
 2. **기준값 걷기.** 재구성 루프는 실행마다 한 번 원본을 브라우저로 걷는다
    (`restructure/loop.py` → `audit.drive(원본, 그 과제의 원본 흐름)` — 과제 파일의 `flow`,
    이체는 `flows/original.json` · 공과금은 `flows/original_bill.json`). 걸음마다
-   `audit/probes.py` 의 probe 가 화면을 긁어 스냅샷을 만들고, 검사 A~I 가 그것을
+   `audit/probes.py` 의 probe 가 화면을 긁어 스냅샷을 만들고, 검사 A~I · K 가 그것을
    기준으로 쓴다. (검사 J 는 원본이 아니라 빌드의 오류 경로를 걷는다 — 원본에서
    읽는 것은 흐름 파일의 오류 정의다.) 선택지 요약(`choices_block`)과 데이터 보존(`preserved_data`)도 이
    스냅샷에서 나온다.

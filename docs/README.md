@@ -41,7 +41,7 @@ LLM 을 부르는 것은 재구성 루프 하나뿐이고, 키는 `.envs` 의 `O
 | `senior_ui/` | 이 프로젝트에서 쓴 코드 전부 — 재구성 루프, 검사기, 뷰어 색인, 실험 서버. 모두 `python -m senior_ui.…` 로 실행한다. | yes |
 | `web/` | 브라우저에서 열리는 것 — `dashboard.html`(내부 확인용 4화면), `session.html`(HTML 실험 장치 - 본실험에 쓰지 않는다. `--session` 을 줄 때만 서빙된다). | yes |
 | `flows/` | 흐름 파일. 검사기가 화면을 어떤 순서로 어떻게 몰고 다니는지의 명세. `original.json` 과 재구성본별 `restructured`·`run2`·`run3`·`run4`. `allowed_removals.json` 은 그것들과 다르다 — 과제별로 "빼도 되는 선택지" 를 적는 곳이고, **연구자만** 손으로 고친다 (아래 참고). `selection_rule.json` 은 C 후보를 고르는 규칙이다 (아래 'C 후보 고르기'). | yes |
-| `tasks/` | 과제 정의 — `transfer.json`(이체) · `bill.json`(공과금). 프롬프트의 과제 문단, 원본 HTML · 원본 흐름, 완료 화면 값, 필수 오류 경로가 과제마다 여기 있다 (`senior_ui/tasks.py`). | yes |
+| `tasks/` | 과제 정의 — `transfer.json`(이체) · `bill.json`(공과금). 프롬프트의 과제 문단, 원본 HTML · 원본 흐름, 완료 화면 값, 필수 오류 경로, 과제 밖 입구(`entrances`, 검사 K)가 과제마다 여기 있다 (`senior_ui/tasks.py`). | yes |
 | `inputs/` | 파이프라인이 읽는 것. `original_transfer.html`(8화면 이체) · `original_bill.html`(8화면 공과금)이 원본 시제품이고 그 과제의 모든 갈래가 여기서 출발한다. `*.png` 는 실제 SOL 캡처라 추적하지 않는다 (실명이 보인다). | html 만 |
 | `kb/` | 재구성본 사후 대조용 규칙 46개. 생성에는 쓰지 않는다. | yes |
 | `results/` | 남겨야 할 증거. 재구성본 html, 그 검사 JSON, 스크린샷, 자동 실행 폴더 사본. `python -m senior_ui.collect_results` 가 `outputs/` 에서 복사해 온다. | **yes** |
@@ -602,6 +602,7 @@ in `metrics.flow_notes`. It does not silently accept the mismatch.
 | H | classes the markup uses that no stylesheet defines | warning |
 | I | values the original offered as choices must still exist somewhere in the build | fatal |
 | J | each required wrong input (the task's `required_error_paths`) brings up an error state with new text and `recover` leads back to a screen where it can be fixed; warns when the text has none of the task's words | fatal |
+| K | 과제 밖 입구 — 과제 파일 `entrances` 의 메뉴 · 버튼 (더미앱 A1 의 OutOfScope 탭 대상, 연구자 확정)이 빌드 어딘가에 누를 수 있는 요소로 남아 있다. 걷는 동안(reveal 포함) DOM 의 `data-action` 요소의 글자나 `aria-label` 이 [원본 글자, 더미 라벨] 중 하나와 맞으면 있다 (경계 규칙은 I 와 같다). 원본을 걷는 동안 찾은 입구만 센다 | fatal |
 
 H is not in the original brief. It was added because it is the shared root cause
 of two rendering failures: example1's `bg-primary`/`text-primary` and the
@@ -615,7 +616,7 @@ the JS that runs inside the page lives in `probes.py`; `flow.py` loads and
 validates a flow file; `drive.py` walks the page with Playwright.
 
 The JSON is for machines. `python -m senior_ui.audit.report` turns any number of
-those files into one side-by-side Markdown table (overview, per-check A–J, the
+those files into one side-by-side Markdown table (overview, per-check A–K, the
 metrics behind each check, what was stood down, and with `--details` every
 finding):
 

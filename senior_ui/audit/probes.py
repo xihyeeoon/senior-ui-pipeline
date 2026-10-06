@@ -556,3 +556,30 @@ CHOICE_GROUPS = r"""
   return out;
 }
 """
+
+
+# --- K: 누를 수 있는 요소의 이름 ---------------------------------------------
+# 과제 밖 입구(과제 파일의 entrances)가 빌드에 남았는지 보려고, 문서 전체의
+# data-action 요소마다 보이는 글자와 aria-label 을 모은다. 켜진 화면만이 아니라
+# 문서 전체다 - 같은 화면이 아니어도, 접혀 있어도 된다는 규칙(검사 I 와 같다).
+# 글자는 글자 노드를 공백 하나로 이어 붙인다 - textContent 는 `<div>쓰는</div>
+# <div>마이신한포인트</div>` 를 "쓰는마이신한포인트" 로 붙여, 낱말 경계로 찾는
+# 검사 I 의 규칙이 맞지 않는다.
+ACTION_TEXTS = r"""
+() => {
+  const out = new Set();
+  const clean = s => (s || '').replace(/\s+/g, ' ').trim();
+  document.querySelectorAll('[data-action]').forEach(el => {
+    const parts = [];
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let n = w.nextNode(); n; n = w.nextNode()) {
+      const t = clean(n.nodeValue);
+      if (t) parts.push(t);
+    }
+    if (parts.length) out.add(parts.join(' '));
+    const aria = clean(el.getAttribute('aria-label'));
+    if (aria) out.add(aria);
+  });
+  return Array.from(out);
+}
+"""
