@@ -1142,8 +1142,11 @@ MOCK_CRITIQUE_BREAK = {
     "keep": [],
     "done": False}
 
-# improve 가 바꾸는 눈에 보이는 한 자리. 클래스 규칙만 더하므로 흐름과 선택자는 같다.
-REFINE_STYLE = ("</style>", "#phone .primary{min-height:64px;font-size:22px}\n</style>")
+# improve 가 바꾸는 눈에 보이는 한 자리. 규칙만 더하므로 흐름과 선택자는 같다. Run 1
+# 빌드의 .primary 는 이미 22px · 패딩 22px 이라 크기를 키우는 규칙은 화면을 바꾸지
+# 않는다 - 바탕색과 테두리를 바꾼다 (흰 글자와의 대비는 더 커진다).
+REFINE_STYLE = ("</style>",
+                "#phone .primary{background:#0B3D91;border:3px solid #000}\n</style>")
 
 
 def _json_block(obj):
