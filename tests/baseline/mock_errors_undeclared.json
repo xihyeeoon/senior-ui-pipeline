@@ -48,7 +48,7 @@
     "response_model": null,
     "system_fingerprint": null,
     "openai_sdk": "<sdk>",
-    "prompt_template_sha256": "80cc688545f34e3ce576dce76f48fc838b323217118f6f31c3b163b29b5260ad"
+    "prompt_template_sha256": "c86ef39703bae40845b2aaa71f37cc341b98e532293322b87fa3bf65ec89cdd1"
   },
   "attempts": [
     {
@@ -61,20 +61,20 @@
         "response_model": null,
         "system_fingerprint": null,
         "openai_sdk": "<sdk>",
-        "prompt_template_sha256": "80cc688545f34e3ce576dce76f48fc838b323217118f6f31c3b163b29b5260ad"
+        "prompt_template_sha256": "c86ef39703bae40845b2aaa71f37cc341b98e532293322b87fa3bf65ec89cdd1"
       },
       "plan": "<run>/attempt_1.plan.json",
       "calls": [
         {
           "stage": "plan",
-          "estimated_prompt": 12876,
+          "estimated_prompt": 12898,
           "method": "tiktoken:o200k_base",
           "max_tokens": 6000,
           "usage": null
         },
         {
           "stage": "generate",
-          "estimated_prompt": 15286,
+          "estimated_prompt": 15344,
           "method": "tiktoken:o200k_base",
           "max_tokens": 14000,
           "usage": null
@@ -158,7 +158,7 @@
     "by_stage": {
       "plan": {
         "calls": 1,
-        "estimated_prompt": 12876,
+        "estimated_prompt": 12898,
         "max_tokens": 6000,
         "prompt": null,
         "completion": null,
@@ -166,7 +166,7 @@
       },
       "generate": {
         "calls": 1,
-        "estimated_prompt": 15286,
+        "estimated_prompt": 15344,
         "max_tokens": 14000,
         "prompt": null,
         "completion": null,
@@ -175,7 +175,7 @@
     },
     "total": {
       "calls": 2,
-      "estimated_prompt": 28162,
+      "estimated_prompt": 28242,
       "max_tokens": 20000,
       "prompt": null,
       "completion": null,
@@ -183,7 +183,7 @@
     },
     "first_attempt": {
       "calls": 2,
-      "estimated_prompt": 28162,
+      "estimated_prompt": 28242,
       "max_tokens": 20000,
       "prompt": null,
       "completion": null,

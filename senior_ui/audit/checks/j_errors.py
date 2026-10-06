@@ -16,9 +16,11 @@ r"""검사 J - 오류 경로. fatal (알림 글은 warning).
   알아챔   새 글에 과제가 정한 단어(`notice_any`)가 하나라도 있다 (warning).
            단어는 원본 흐름에서 읽는다. 모델이 적은 `expect_text_any` 로
            판정하면 자기가 띄운 글을 그대로 적어 경고를 끌 수 있다.
-  돌아감   `recover` 뒤에 `back_to` 에 있다 (fatal). `back_to` 는 오류가
-           나타난 화면이거나 정답 경로에서 그보다 앞의 화면이어야 한다
-           (back_to_ok).
+  돌아감   `recover` 뒤에 `back_to` 에 있다 (fatal). `back_to` 는 정답
+           경로에 있는 화면이고 완료 화면이 아니어야 한다 (back_to_ok).
+           오류가 나타난 화면보다 뒤여도 된다 - 계좌 화면에서 은행이
+           틀렸다고 알리고 뒤의 은행 고르기 화면으로 보내는 것은 고칠
+           곳으로 보내는 설계다. 실제로 거기 닿는지는 위의 걷기가 본다.
 
 "새로 나타난 글" 은 잘못된 입력의 마지막 동작 바로 앞에 보이던 글, 그리고 같은
 화면이 정답 경로에서 보이던 글에 없던 줄이다. 줄을 견주기 전에 숫자와 정답
@@ -72,19 +74,26 @@ def step_screens(steps):
     return out
 
 
-def back_to_ok(screens, back_to, error_screen, trigger_screen):
-    """`back_to` 가 오류가 나타난 화면이거나 정답 경로에서 그보다 앞인가.
+def back_to_ok(screens, back_to, error_screen, done_screen):
+    """`back_to` 가 사용자가 고칠 수 있는 곳인가 - 정답 경로에 있는 화면이고
+    완료 화면이 아니다. 오류가 나타난 화면 자신(그 자리에서 고치는 설계)도
+    된다.
 
-    오류가 나타난 화면이 정답 경로 위에 있으면(같은 화면 안에서 알리는 설계)
-    그 화면이 기준이다. 정답 경로 밖의 화면(팝업 같은 오류 전용 화면)이면
-    그 화면을 띄운 곳 - 잘못된 입력의 마지막 동작을 누른 화면 - 이 기준이다.
+    전에는 "오류가 나타난 화면이거나 그보다 앞" 이었다. gpt-6.1-sol 의 첫 시도
+    (20261006-124055)는 계좌 화면에서 은행 오류를 알리고 은행 고르기 화면으로
+    보냈는데, 은행 화면이 순서상 뒤라서 떨어졌다. 규칙의 목적은 고칠 수 있는
+    곳으로 돌아가는 것이고 순서가 아니다. 완료 화면으로 보내는 것만은 고칠
+    기회가 없으므로 막는다.
     """
-    if back_to == error_screen:
-        return True
-    ref = error_screen if error_screen in screens else trigger_screen
-    if back_to not in screens or ref not in screens:
+    if back_to == done_screen:
         return False
-    return screens.index(back_to) <= screens.index(ref)
+    return back_to == error_screen or back_to in screens
+
+
+def done_screen(steps):
+    """완료 화면 - 정답 경로의 마지막 단계의 화면."""
+    last = steps[-1] if steps else None
+    return last.get("screen") if isinstance(last, dict) else None
 
 
 def _happy_text(ctx, screen):
@@ -159,11 +168,13 @@ def _judge(ctx, ep, row, defs, result):
         F("J", exp, "오류 경로 %s: 되돌아가지 못했다 - %r 로 가야 하는데 켜진 화면은 "
           "%r 이다." % (eid, back, rec), error_path=eid)
         return
-    if not back_to_ok(step_screens(ctx.flow.get("steps") or []), back, exp, trigger):
-        F("J", exp, "오류 경로 %s: 돌아가는 화면 %r 은 오류가 나타난 곳(%r)보다 "
-          "뒤다. 고치려면 오류가 난 화면이나 그 앞으로 돌아가야 한다."
-          % (eid, back, exp if exp in step_screens(ctx.flow.get("steps") or [])
-             else trigger), error_path=eid)
+    steps = ctx.flow.get("steps") or []
+    done = done_screen(steps)
+    if not back_to_ok(step_screens(steps), back, exp, done):
+        F("J", exp, "오류 경로 %s: 돌아가는 화면 %r 은 %s. 고치려면 정답 경로에서 "
+          "완료 화면이 아닌 곳으로 돌아가야 한다."
+          % (eid, back, "완료 화면이다" if back == done else "정답 경로에 없다"),
+          error_path=eid)
         return
     result["recovered"] = True
 

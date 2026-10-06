@@ -180,3 +180,20 @@ def test_the_prompt_examples_no_longer_name_the_last_screen_done():
         assert list(example["expect"]) == [example["steps"][-1]["screen"]]
         assert "마지막 화면의 이름" in "\n".join(p["flow_done"])
         assert "`done`" not in "\n".join(p["flow_done"])
+
+
+# --------------------------------------------------------------------- #
+# 3. 오류 경로 back_to - 정답 경로의 화면이고 완료 화면이 아니면 된다
+# --------------------------------------------------------------------- #
+def test_both_real_first_attempts_send_the_bank_error_to_the_bank_screen():
+    """sol 은 계좌 화면(account)에서 은행 오류를 알리고 뒤의 bank 로, astra 는
+    recipient-details 에서 알리고 뒤의 bank-select 로 보냈다. 전의 규칙("오류가
+    나타난 화면이거나 그보다 앞")으로는 둘 다 형식 문제였다."""
+    for model, back in (("sol", "bank"), ("astra", "bank-select")):
+        html, flow = real(model, 1)
+        wb = [e for e in flow["error_paths"] if e["id"] == "wrong-bank"][0]
+        assert wb["back_to"] == back
+        order = [s["screen"] for s in flow["steps"]]
+        assert order.index(back) > order.index(wb["expect_screen"])
+        probs = _api.validate_flow(flow, html)
+        assert not any("back_to" in p for p in probs), (model, probs)
