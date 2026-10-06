@@ -386,6 +386,12 @@ def strip_volatile(summary):
         for k, v in list((s.get(key) or {}).items()):
             if isinstance(v, str):
                 s[key][k] = fix(v)
+    # 보고 다듬기(11-5)의 회차 기록도 실행 폴더 아래 파일(비평 · 전후 스크린샷)을
+    # 가리킨다.
+    for row in (s.get("refine") or {}).get("rounds") or []:
+        for k, v in list(row.items()):
+            if isinstance(v, str):
+                row[k] = fix(v)
     return s
 
 

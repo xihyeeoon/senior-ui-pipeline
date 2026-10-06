@@ -337,7 +337,7 @@ class Run:
                                 "original_images": 0},
                         "refine": {"budget": self.refine, "source": refine_source,
                                    "rounds": [], "final_from": None,
-                                   "reverted": None}}
+                                   "final_label": None, "reverted": None}}
 
 
 # --------------------------------------------------------------------------- #

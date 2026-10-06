@@ -33,6 +33,12 @@
     "attempt": 1,
     "diagnosis": "<run>/attempt_1.diagnosis.json",
     "diagnosis_count": 7,
+    "evidence_kinds": {
+      "screen": 0,
+      "code": 0,
+      "both": 0,
+      "missing": 7
+    },
     "screens": [
       "start",
       "who",
@@ -53,7 +59,7 @@
     "response_model": null,
     "system_fingerprint": null,
     "openai_sdk": "<sdk>",
-    "prompt_template_sha256": "c86ef39703bae40845b2aaa71f37cc341b98e532293322b87fa3bf65ec89cdd1"
+    "prompt_template_sha256": "32b65140b3b3642c7e5aad2c763fa741d171c1f06c447297a50ba2c2636a3d4e"
   },
   "attempts": [
     {
@@ -66,23 +72,28 @@
         "response_model": null,
         "system_fingerprint": null,
         "openai_sdk": "<sdk>",
-        "prompt_template_sha256": "c86ef39703bae40845b2aaa71f37cc341b98e532293322b87fa3bf65ec89cdd1"
+        "prompt_template_sha256": "32b65140b3b3642c7e5aad2c763fa741d171c1f06c447297a50ba2c2636a3d4e"
       },
       "plan": "<run>/attempt_1.plan.json",
       "calls": [
         {
           "stage": "plan",
-          "estimated_prompt": 12898,
+          "estimated_prompt": 19395,
           "method": "tiktoken:o200k_base",
           "max_tokens": 6000,
-          "usage": null
+          "usage": null,
+          "images": 14,
+          "estimated_images": 5950,
+          "image_method": "tile 85+170"
         },
         {
           "stage": "generate",
-          "estimated_prompt": 15344,
+          "estimated_prompt": 15681,
           "method": "tiktoken:o200k_base",
           "max_tokens": 14000,
-          "usage": null
+          "usage": null,
+          "images": 0,
+          "estimated_images": 0
         }
       ],
       "plan_call": {
@@ -173,7 +184,9 @@
     "by_stage": {
       "plan": {
         "calls": 1,
-        "estimated_prompt": 12898,
+        "estimated_prompt": 19395,
+        "images": 14,
+        "estimated_images": 5950,
         "max_tokens": 6000,
         "prompt": null,
         "completion": null,
@@ -181,7 +194,9 @@
       },
       "generate": {
         "calls": 1,
-        "estimated_prompt": 15344,
+        "estimated_prompt": 15681,
+        "images": 0,
+        "estimated_images": 0,
         "max_tokens": 14000,
         "prompt": null,
         "completion": null,
@@ -190,7 +205,9 @@
     },
     "total": {
       "calls": 2,
-      "estimated_prompt": 28242,
+      "estimated_prompt": 35076,
+      "images": 14,
+      "estimated_images": 5950,
       "max_tokens": 20000,
       "prompt": null,
       "completion": null,
@@ -198,7 +215,9 @@
     },
     "first_attempt": {
       "calls": 2,
-      "estimated_prompt": 28242,
+      "estimated_prompt": 35076,
+      "images": 14,
+      "estimated_images": 5950,
       "max_tokens": 20000,
       "prompt": null,
       "completion": null,
@@ -221,5 +240,18 @@
     ],
     "total_usd": null,
     "note": "입력 x input + 출력(생각 포함) x output, 100만 토큰당. 캐시 할인 미반영 (상한)"
+  },
+  "see": {
+    "on": true,
+    "source": "기본값 (켜짐)",
+    "original_images": 14
+  },
+  "refine": {
+    "budget": 2,
+    "source": "config.DEFAULT_REFINE",
+    "rounds": [],
+    "final_from": null,
+    "final_label": null,
+    "reverted": null
   }
 }

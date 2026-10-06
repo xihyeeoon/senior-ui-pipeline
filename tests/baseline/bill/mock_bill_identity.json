@@ -37,6 +37,12 @@
     "attempt": 1,
     "diagnosis": "<run>/attempt_1.diagnosis.json",
     "diagnosis_count": 2,
+    "evidence_kinds": {
+      "screen": 0,
+      "code": 0,
+      "both": 0,
+      "missing": 2
+    },
     "screens": [
       "home",
       "menu",
@@ -56,7 +62,7 @@
     "response_model": null,
     "system_fingerprint": null,
     "openai_sdk": "<sdk>",
-    "prompt_template_sha256": "2cd9a97209887e9c0ee8fb4ba8e1cbc5d748f122465719aeec660d03937081c3"
+    "prompt_template_sha256": "6ccadda2c0e67009446f551e3a4b520ca03a9eeb007b281943f742f4ee226d37"
   },
   "attempts": [
     {
@@ -69,23 +75,28 @@
         "response_model": null,
         "system_fingerprint": null,
         "openai_sdk": "<sdk>",
-        "prompt_template_sha256": "2cd9a97209887e9c0ee8fb4ba8e1cbc5d748f122465719aeec660d03937081c3"
+        "prompt_template_sha256": "6ccadda2c0e67009446f551e3a4b520ca03a9eeb007b281943f742f4ee226d37"
       },
       "plan": "<run>/attempt_1.plan.json",
       "calls": [
         {
           "stage": "plan",
-          "estimated_prompt": 13594,
+          "estimated_prompt": 20581,
           "method": "tiktoken:o200k_base",
           "max_tokens": 6000,
-          "usage": null
+          "usage": null,
+          "images": 15,
+          "estimated_images": 6375,
+          "image_method": "tile 85+170"
         },
         {
           "stage": "generate",
-          "estimated_prompt": 15151,
+          "estimated_prompt": 15437,
           "method": "tiktoken:o200k_base",
           "max_tokens": 14000,
-          "usage": null
+          "usage": null,
+          "images": 0,
+          "estimated_images": 0
         }
       ],
       "plan_call": {
@@ -199,7 +210,9 @@
     "by_stage": {
       "plan": {
         "calls": 1,
-        "estimated_prompt": 13594,
+        "estimated_prompt": 20581,
+        "images": 15,
+        "estimated_images": 6375,
         "max_tokens": 6000,
         "prompt": null,
         "completion": null,
@@ -207,7 +220,19 @@
       },
       "generate": {
         "calls": 1,
-        "estimated_prompt": 15151,
+        "estimated_prompt": 15437,
+        "images": 0,
+        "estimated_images": 0,
+        "max_tokens": 14000,
+        "prompt": null,
+        "completion": null,
+        "reasoning": null
+      },
+      "refine": {
+        "calls": 1,
+        "estimated_prompt": 19955,
+        "images": 15,
+        "estimated_images": 6375,
         "max_tokens": 14000,
         "prompt": null,
         "completion": null,
@@ -215,16 +240,20 @@
       }
     },
     "total": {
-      "calls": 2,
-      "estimated_prompt": 28745,
-      "max_tokens": 20000,
+      "calls": 3,
+      "estimated_prompt": 55973,
+      "images": 30,
+      "estimated_images": 12750,
+      "max_tokens": 34000,
       "prompt": null,
       "completion": null,
       "reasoning": null
     },
     "first_attempt": {
       "calls": 2,
-      "estimated_prompt": 28745,
+      "estimated_prompt": 36018,
+      "images": 15,
+      "estimated_images": 6375,
       "max_tokens": 20000,
       "prompt": null,
       "completion": null,
@@ -243,9 +272,55 @@
       {
         "attempt": 1,
         "usd": null
+      },
+      {
+        "attempt": 2,
+        "usd": null
       }
     ],
     "total_usd": null,
     "note": "입력 x input + 출력(생각 포함) x output, 100만 토큰당. 캐시 할인 미반영 (상한)"
+  },
+  "see": {
+    "on": true,
+    "source": "기본값 (켜짐)",
+    "original_images": 15
+  },
+  "refine": {
+    "budget": 2,
+    "source": "config.DEFAULT_REFINE",
+    "rounds": [
+      {
+        "round": 1,
+        "attempt": 2,
+        "from_attempt": 1,
+        "images": 15,
+        "before_shots": "<run>/shots/attempt_1/see",
+        "after_shots": null,
+        "critique": "<run>/attempt_2.critique.json",
+        "issues": 0,
+        "keep": 1,
+        "done": true,
+        "passed": null,
+        "fix_attempt": null,
+        "fix_passed": null,
+        "became_final": false,
+        "stopped": "done",
+        "tokens": {
+          "calls": 1,
+          "estimated_prompt": 19955,
+          "images": 15,
+          "estimated_images": 6375,
+          "max_tokens": 14000,
+          "prompt": null,
+          "completion": null,
+          "reasoning": null
+        },
+        "usd": null
+      }
+    ],
+    "final_from": "generate",
+    "final_label": "생성",
+    "reverted": null
   }
 }
