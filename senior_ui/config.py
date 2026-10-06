@@ -75,7 +75,11 @@ ORIGINAL_URL = url_for(ORIGINAL_REL)
 # 돌린 실행은 의도와 다른 모델로 돌아 고르기 문지기(flows/selection_rule.json 의
 # gates.model)에서 전부 빠졌다. 두 값은 같아야 한다 (test_model_upgrade 가 본다).
 DEFAULT_MODEL = "gpt-6.1-sol"
-MODEL_ENV_VARS = ("RESTRUCTURE_MODEL", "DESIGNREPAIR_MODEL")
+# 모델을 정하는 환경 변수. DESIGNREPAIR_MODEL 은 더 읽지 않는다 - 연구에서 뺀
+# DesignRepair 갈래(5300063 · 979c938)의 이름이 기본 모델을 이기고 있었다 (감사 B-34).
+# mock 실행은 이것도 .envs 도 듣지 않는다 (restructure.loop.model_choice) - mock
+# 기준값이 PC 의 셸 변수를 따라 바뀌면 안 된다 (감사 B-26).
+MODEL_ENV_VARS = ("RESTRUCTURE_MODEL",)
 
 # 추론형 모델이 생각에 쓸 노력. --reasoning-effort 를 주지 않으면 이 값을 보낸다
 # (restructure.loop.effort_choice). 모델의 기본값에 맡기면 그 값이 어디에도 남지

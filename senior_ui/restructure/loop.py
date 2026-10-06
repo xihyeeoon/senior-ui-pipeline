@@ -398,13 +398,25 @@ def model_choice(args):
     어디서 왔는지를 함께 돌려주는 이유는 환경 변수다. .envs 나 셸에 남아 있던
     RESTRUCTURE_MODEL 하나가 기본값을 말없이 이기면, 실행 기록의 모델 이름만
     보고는 그것이 의도한 것인지 알 수 없다.
+
+    mock 실행은 환경 변수를 보지 않는다 (--model 은 본다). mock 기준값(tests/
+    baseline/mock_*.json)은 모델에 따라 부르는 방식 · 길이 제한 · 가격표가 갈리는데,
+    셸에 남은 변수 하나로 그것이 PC 마다 달라지면 기준값 비교가 뜻을 잃는다
+    (감사 B-26). .envs 도 읽지 않는다 (run).
     """
     if getattr(args, "model", None):
         return args.model, "--model"
-    for name in config.MODEL_ENV_VARS:
-        if os.environ.get(name):
-            return os.environ[name], name
+    if not getattr(args, "mock", None):
+        for name in config.MODEL_ENV_VARS:
+            if os.environ.get(name):
+                return os.environ[name], name
     return config.DEFAULT_MODEL, "config.DEFAULT_MODEL"
+
+
+# mock 실행이 run.log 둘째 줄에 남기는 말. PC 마다 같은 글이다 - 변수가 있었는지는
+# 적지 않는다 (있었든 없었든 듣지 않았다).
+MOCK_ENV_NOTE = ("mock: .envs 와 환경 변수(%s)의 모델 값은 읽지 않는다 - mock 결과가 "
+                 "PC 마다 달라지지 않게")
 
 
 def pick_model(args):
@@ -1569,10 +1581,13 @@ def run(args):
         log("summary: %s" % os.path.join(run_dir, "summary.json"))
         return 2
 
-    try:
-        load_env()
-    except RuntimeError as e:
-        return cannot_start(e)
+    # mock 은 키가 필요 없고, .envs 에 적힌 모델 값이 mock 을 바꿔서도 안 된다
+    # (model_choice). 그래서 읽지 않는다.
+    if not mock:
+        try:
+            load_env()
+        except RuntimeError as e:
+            return cannot_start(e)
     # 첫 줄은 모델이다 - 어느 모델로 돌았는지가 run.log 를 여는 사람에게 가장 먼저
     # 보여야 한다. 모델은 .envs 의 환경 변수로도 정해지므로 키를 읽은 뒤에 고른다.
     # API 가 답한 실제 판 이름은 호출마다 "model: 응답 모델" 줄로, 실행 전체는
@@ -1596,6 +1611,8 @@ def run(args):
            " · reasoning_effort=%s (출처 %s)" % (effort, effort_source) if effort else "")
         + " | " + describe_settings((args.stage, args.stage_source), budget_choice(args))
         + (" | " + warning if warning else ""))
+    if mock:
+        log(MOCK_ENV_NOTE % ", ".join(config.MODEL_ENV_VARS))
     if not profile["known"]:
         log("경고: 모르는 모델 %s — gpt-4o 처럼 부른다 (%s). 모델이 거절하는 인자는 "
             "빼고 다시 보낸다. 처음이면 --probe %s 로 먼저 확인한다"

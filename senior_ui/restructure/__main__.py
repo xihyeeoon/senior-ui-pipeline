@@ -78,9 +78,10 @@ mock 모드는 일곱이고 Run 1 빌드를 되읽는다. 모드마다 은행 �
                   -> 검사 J 에서 실패 (틀린 값으로 다음 화면에 넘어간다)
 
 The key comes from .envs (OPENAI_API_KEY=...) or the environment. The model
-comes from --model, then RESTRUCTURE_MODEL, then DESIGNREPAIR_MODEL, then
-config.DEFAULT_MODEL (지금 gpt-6.1-sol). 어디서 왔는지는 run.log 첫 줄과
-summary.json 의 model_source 에 남는다.
+comes from --model, then RESTRUCTURE_MODEL, then config.DEFAULT_MODEL (지금
+gpt-6.1-sol). 어디서 왔는지는 run.log 첫 줄과 summary.json 의 model_source 에
+남는다. --mock 은 .envs 와 RESTRUCTURE_MODEL 을 읽지 않는다 (--model 은 듣는다) -
+mock 기준값이 PC 마다 달라지지 않게.
 Exit: 0 = a build passed, 1 = every attempt failed, 2 = could not run.
 
 "돌지 못했다"(2)에 들어가는 것은 넷이다 - 레이트 리밋으로 멈춤, API 가 요청을
@@ -124,8 +125,8 @@ def build_parser():
                          "답하지 않았다 - 에 쓸 재시도 횟수 (기본: config.DEFAULT_BUDGET "
                          "의 %d)" % config.DEFAULT_BUDGET["infra"])
     ap.add_argument("--model", default=None,
-                    help="부를 모델. 주지 않으면 환경 변수 RESTRUCTURE_MODEL · "
-                         "DESIGNREPAIR_MODEL, 그다음 config.DEFAULT_MODEL (%s)"
+                    help="부를 모델. 주지 않으면 환경 변수 RESTRUCTURE_MODEL, 그다음 "
+                         "config.DEFAULT_MODEL (%s). --mock 은 환경 변수를 듣지 않는다"
                          % config.DEFAULT_MODEL)
     ap.add_argument("--temperature", type=float, default=TEMPERATURE,
                     help="못박아 보낸다. 기본 %s - 재현에 가장 가깝다. 추론형 모델에는 "

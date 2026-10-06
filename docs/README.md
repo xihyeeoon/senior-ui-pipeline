@@ -160,10 +160,12 @@ API 없이: `--mock pass --mock-refine improve` (1회차에 다듬은 빌드가 
 12번 본 실행의 모델 — 고르기 규칙의 `gates.model` 과 같다). 그래도 실행 명령에는
 `--model gpt-6.1-sol` 을 적는다 — 명령만 보고 조건을 알 수 있게. 한 번만 바꿔 돌리려면
 `--model` 을 준다. 정하는 순서는 `--model` → 환경 변수
-`RESTRUCTURE_MODEL` → `DESIGNREPAIR_MODEL` → `config.DEFAULT_MODEL` 이다
-(`loop.model_choice`). `.envs` 에 남은 환경 변수가 기본값을 이길 수 있으므로,
-어디서 왔는지가 run.log 첫 줄(`model=… (출처 …)`)과 `summary.json` 의
-`model_source` 에 남는다. API 가 실제로 답한 판 이름(`gpt-4o` 는 날짜가 붙은
+`RESTRUCTURE_MODEL` → `config.DEFAULT_MODEL` 이다 (`loop.model_choice`).
+`DESIGNREPAIR_MODEL` 은 더 읽지 않는다 (연구에서 뺀 갈래의 이름). `.envs` 에 남은
+환경 변수가 기본값을 이길 수 있으므로, 어디서 왔는지가 run.log 첫 줄(`model=… (출처 …)`)과
+`summary.json` 의 `model_source` 에 남는다. `--mock` 실행은 `.envs` 도
+`RESTRUCTURE_MODEL` 도 읽지 않는다 (`--model` 은 듣는다) — mock 기준값이 PC 마다
+달라지지 않게. run.log 둘째 줄에 그 사실이 남는다. API 가 실제로 답한 판 이름(`gpt-4o` 는 날짜가 붙은
 판으로 풀린다)은 호출마다 `model: 응답 모델 …` 줄과 `summary.response_models` 에
 남는다.
 

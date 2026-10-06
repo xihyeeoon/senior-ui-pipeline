@@ -74,6 +74,48 @@ def test_where_the_model_came_from_is_known(no_model_env):
     assert loop.model_choice(args_with("gpt-x")) == ("gpt-x", "--model")
 
 
+def test_the_designrepair_variable_is_no_longer_read(no_model_env):
+    """DesignRepair 갈래(연구에서 뺌)의 이름이 기본 모델을 이기고 있었다 (감사 B-34)."""
+    no_model_env.setenv("DESIGNREPAIR_MODEL", "gpt-old-branch")
+    assert loop.model_choice(args_with()) == (config.DEFAULT_MODEL, "config.DEFAULT_MODEL")
+    assert config.MODEL_ENV_VARS == ("RESTRUCTURE_MODEL",)
+
+
+def test_restructure_model_is_read_and_its_source_is_on_the_first_line(
+        fake_run_env, out_root, no_model_env):
+    no_model_env.setenv("RESTRUCTURE_MODEL", "gpt-env-model")
+    _code, summary = run_loop(fake_run_env, out_root, replying(), attempts=1, model=None)
+    first = run_log(summary)[0]
+    assert "model=gpt-env-model (출처 RESTRUCTURE_MODEL)" in first
+    assert (summary["model"], summary["model_source"]) == ("gpt-env-model",
+                                                           "RESTRUCTURE_MODEL")
+
+
+def test_a_mock_run_does_not_listen_to_the_model_variable(fake_run_env, out_root,
+                                                          no_model_env):
+    """mock 기준값이 PC 의 셸 변수를 따라 바뀌면 안 된다 (감사 B-26)."""
+    no_model_env.setenv("RESTRUCTURE_MODEL", "gpt-env-model")
+    _code, summary = run_loop(fake_run_env, out_root, None, attempts=1, model=None,
+                              mock="pass")
+    assert (summary["model"], summary["model_source"]) == (config.DEFAULT_MODEL,
+                                                           "config.DEFAULT_MODEL")
+    assert any("mock" in l and "RESTRUCTURE_MODEL" in l and ".envs" in l
+               for l in run_log(summary)[:3])
+
+
+def test_a_mock_run_does_not_read_envs(fake_run_env, out_root, no_model_env, tmp_path):
+    """.envs 에 적힌 모델도 mock 을 바꾸지 못한다. mock 은 키도 필요 없다."""
+    no_model_env.delenv("OPENAI_API_KEY", raising=False)
+    no_model_env.setattr(model, "ROOT", str(tmp_path))
+    (tmp_path / ".envs").write_text("OPENAI_API_KEY=sk-x\nRESTRUCTURE_MODEL=gpt-envs\n",
+                                    encoding="utf-8")
+    _code, summary = run_loop(fake_run_env, out_root, None, attempts=1, model=None,
+                              mock="pass")
+    assert summary["model"] == config.DEFAULT_MODEL
+    assert "RESTRUCTURE_MODEL" not in os.environ
+    assert "OPENAI_API_KEY" not in os.environ
+
+
 def test_the_cli_model_flag_defaults_to_nothing_so_config_decides():
     """--model 의 기본값을 파서에 또 적으면 config 와 두 군데가 된다."""
     args = _api.restructure_parser().parse_args([])
