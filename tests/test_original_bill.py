@@ -225,6 +225,18 @@ def test_direct_menu_route(page):
     assert wait_screen(page, "done")
 
 
+def test_the_menu_is_scope_a(page):
+    """범위 A (2026-10-06): 일곱 탭 전부 - docs/bill-menu-full.json 과 같은 순서."""
+    full = json.load(io.open(os.path.join(ROOT, "docs", "bill-menu-full.json"),
+                             encoding="utf-8"))
+    want = [it for tab in full["tabs"] for sec in tab["sections"] for it in sec["items"]]
+    assert len(want) == 293
+    click(page, "[data-action='go-menu']", "menu")
+    got = page.eval_on_selector_all("[data-action='menu-item']",
+                                    "els => els.map(e => e.dataset.item)")
+    assert got == want
+
+
 def test_menu_tab_scrolls_to_its_category(page):
     click(page, "[data-action='go-menu']", "menu")
     page.click("[data-action='menu-tab'][data-tab='카드']")
@@ -312,7 +324,8 @@ def test_search_states(page):
     page.fill("#search-input", "납부")
     hits = page.eval_on_selector_all("[data-action='search-hit']",
                                      "els => els.map(e => e.dataset.item)")
-    assert hits == ["공과금납부", "납부하기", "자동납부", "납부내역 조회"]
+    # 범위 A: 카드 › 분할납부 까지 - Flutter 더미앱과 같다 (B 판에서는 빠졌다)
+    assert hits == ["공과금납부", "납부하기", "자동납부", "납부내역 조회", "분할납부"]
     page.click("#search-clear")
     assert page.input_value("#search-input") == ""
     assert not page.is_visible("#search-clear")

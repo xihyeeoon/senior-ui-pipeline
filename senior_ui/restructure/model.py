@@ -6,6 +6,7 @@ mock_reply 가 여기 있다. 돌려주는 모양은 셋 다 같다:
 """
 import io
 import json
+import math
 import os
 import re
 import time
@@ -144,8 +145,9 @@ UNSUPPORTED = ("unsupported_parameter", "unsupported_value")
 
 # 생각에 쓸 노력. SDK 의 ReasoningEffort 와 같은 값들이다. 모델마다 받는 값과
 # 기본값이 다르다 (gpt-5 는 minimal~high · 기본 medium, gpt-5.1 은 기본 none,
-# gpt-6.1-sol 은 none 이 없다). 그래서 주지 않으면 보내지 않고 모델의 기본값을
-# 쓴다 - 그 사실은 summary 의 model_call.reasoning_effort = null 로 남는다.
+# gpt-6.1-sol 은 none 이 없다). call_model 은 받은 것만 보낸다. 재구성 루프는
+# 추론형이면 주지 않아도 config.DEFAULT_REASONING_EFFORT 를 넘긴다 - 모델의
+# 기본값에 맡기면 그 값이 기록에 남지 않는다 (loop.effort_choice).
 REASONING_EFFORTS = ["none", "minimal", "low", "medium", "high", "xhigh", "max"]
 APIS = ["auto", "chat", "responses"]
 
@@ -306,6 +308,28 @@ def describe_ratelimit(rl):
     return ("토큰 %s (남은 %s) · 요청 %s"
             % (rl.get("limit_tokens"), rl.get("remaining_tokens"),
                rl.get("limit_requests")))
+
+
+def wait_for_tokens(rl, need, elapsed):
+    """다음 요청 전에 기다릴 초 (정수). 기다릴 일이 없거나 모르면 0.
+
+    rl 은 직전 응답 헤더의 분당 한도(read_ratelimit), need 는 다음 요청이
+    한도에서 먹을 양(예상 입력 + max_tokens), elapsed 는 그 헤더를 받은 뒤 지난
+    초다. 분당 한도는 1분에 걸쳐 고르게 다시 찬다고 보고(초당 한도/60), 그동안
+    찬 몫을 더한 남은 양이 need 보다 적을 때만 모자란 만큼 기다린다.
+
+    need 가 한도보다 크면 기다려도 들어가지 않는다 - 다 찰 때까지만 기다리고
+    나머지는 shrink_for_minute 이 맡는다. 그래서 60초를 넘지 않는다."""
+    limit = (rl or {}).get("limit_tokens")
+    left = (rl or {}).get("remaining_tokens")
+    if not isinstance(limit, int) or not isinstance(left, int) or limit <= 0:
+        return 0
+    per_sec = limit / 60.0
+    now = min(limit, left + elapsed * per_sec)
+    short = min(need, limit) - now
+    if short <= 0:
+        return 0
+    return int(math.ceil(short / per_sec))
 
 
 def request_kwargs(model, prompt, cap, profile, temperature=None, seed=None,
@@ -771,7 +795,10 @@ BILL_ORIGINAL = os.path.join(ROOT, "inputs", "original_bill.html")
 BILL_FLOW = os.path.join(FLOWS_DIR, "original_bill.json")
 
 # 공과금 원본에서 도구가 꺼내 넣어 주는 배열 (docs/input-contract.md 의 공과금 그룹 표).
-BILL_ARRAYS = ["MENU_TABS", "MENU_BANK", "MENU_CARD", "BILL_ITEMS", "PW_KEYS"]
+# 범위 A (2026-10-06) 부터 메뉴 일곱 탭이 모두 차 있다 - B 판에서는 뒤의 다섯이 빈
+# 배열이라 뽑히지 않았다.
+BILL_ARRAYS = ["MENU_TABS", "MENU_BANK", "MENU_CARD", "MENU_STOCK", "MENU_INSURE",
+               "MENU_BENEFIT", "MENU_GOODS", "MENU_HELP", "BILL_ITEMS", "PW_KEYS"]
 
 # mock 모드 -> 그 모드가 되읽는 빌드의 과제. 다른 과제로 돌리면 루프가 시작하지 않는다.
 BILL_MODES = ["bill-identity"]

@@ -40,7 +40,7 @@ from .brief import write_brief
 from .model import (MOCK_TASK, TEMPERATURE, SEED, ApiRejected, InfraFailed,
                     RateLimited, call_model, cost_usd, describe, describe_ratelimit,
                     estimate_tokens, load_env, mock_plan_reply, mock_reply, price_for,
-                    profile_for, sdk_version)
+                    profile_for, sdk_version, wait_for_tokens)
 from .plan import (PlanProblems, apply_changes, match_problems, parse_plan,
                    parse_reflection, plan_report, screens_in, unaddressed)
 from .preserve import inject, names_read, preserved_data
@@ -54,10 +54,46 @@ def runs_dir(mock=False):
     """실행 폴더들이 쌓이는 곳. 산출물 폴더와 같이 움직인다 (config.outputs_dir)."""
     return os.path.join(outputs_dir(mock), "restructure_auto")
 
-# 진단·계획 호출의 길이 제한. 생성 호출(--max-tokens)과 따로 둔다 - 분당
-# 한도는 max_tokens 를 미리 잡아 두고 세므로, 계획 JSON 에 생성과 같은 한도를
-# 주면 쓰지도 않을 토큰이 한도를 먹는다.
-PLAN_MAX_TOKENS = 6000
+def output_caps(profile, args=None):
+    """`{"generate", "plan"}` - 이 실행의 두 호출의 길이 제한.
+
+    진단·계획 호출은 생성 호출과 따로 둔다 - 분당 한도는 max_tokens 를 미리
+    잡아 두고 세므로, 계획 JSON 에 생성과 같은 한도를 주면 쓰지도 않을 토큰이
+    한도를 먹는다. 주지 않은 쪽은 config.OUTPUT_CAPS 에서 추론형이냐로 고른다 -
+    추론형은 생각 토큰도 이 안에서 쓴다."""
+    caps = dict(config.OUTPUT_CAPS["reasoning" if profile["reasoning"] else "gpt-4o"])
+    given = {"generate": getattr(args, "max_tokens", None),
+             "plan": getattr(args, "plan_max_tokens", None)}
+    caps.update({k: v for k, v in given.items() if v})
+    return caps
+
+
+def effort_choice(profile, args=None):
+    """`(reasoning_effort, 어디서 왔나)`. 추론형이 아니면 (None, None) - 보내지 않는다.
+
+    추론형인데 --reasoning-effort 를 주지 않았으면 config.DEFAULT_REASONING_EFFORT
+    를 보낸다. 모델의 기본값에 맡기면 그 값이 기록에 남지 않는다 - 모델마다
+    다르고, 같은 모델도 바뀔 수 있다."""
+    if not profile["reasoning"]:
+        return None, None
+    given = getattr(args, "reasoning_effort", None)
+    if given:
+        return given, "--reasoning-effort"
+    return config.DEFAULT_REASONING_EFFORT, "config.DEFAULT_REASONING_EFFORT"
+
+
+def call_delay(profile, args=None):
+    """모델 호출 사이 대기(초). --delay 를 주면 그 값, 아니면 config.DELAY."""
+    given = getattr(args, "delay", None)
+    if given is not None:
+        return given
+    return config.DELAY["reasoning" if profile["reasoning"] else "gpt-4o"]
+
+
+def cap_source(profile):
+    """run.log 에 적는, 기본값이 어디서 왔는지."""
+    return "기본값 config.OUTPUT_CAPS[%r]" % ("reasoning" if profile["reasoning"]
+                                            else "gpt-4o")
 
 # 한 번의 시도가 끝나는 방식
 STOP = "stop"            # 루프를 끝낸다
@@ -146,11 +182,18 @@ class Run:
         # 기록에 남지 않는다 - 나중에 "그때 무엇이 달랐나" 를 물을 수 없다.
         self.temperature = getattr(args, "temperature", TEMPERATURE)
         self.seed = getattr(args, "seed", SEED)
-        # 모델마다 부르는 방식 (model.profile_for). 생각에 쓸 노력은 주지 않으면
-        # 보내지 않는다 - 모델마다 받는 값과 기본값이 다르다.
+        # 모델마다 부르는 방식 (model.profile_for). 생각에 쓸 노력은 추론형이면
+        # 주지 않아도 config 의 기본값을 보낸다 (effort_choice).
         self.api = getattr(args, "api", None)
-        self.reasoning_effort = getattr(args, "reasoning_effort", None)
         self.profile = profile_for(model, self.api)
+        self.reasoning_effort = effort_choice(self.profile, args)[0]
+        # 두 호출의 길이 제한 (output_caps). 주지 않았으면 모델에 맞춘 기본값.
+        self.caps = output_caps(self.profile, args)
+        # 호출 사이 대기 (call_delay). 추론형이면 호출 직전에 직전 응답 헤더의
+        # 남은 토큰도 본다 (wait_tokens) - 그 헤더와 받은 때를 들고 있는다.
+        self.delay = call_delay(self.profile, args)
+        self.last_ratelimit = None
+        self.last_ratelimit_at = None
         self.choices = ""
         # 입력이 가진 선택지 데이터. 실행마다 한 번 뽑아 시도마다 넣는다.
         # {배열 이름: [원소들]} (preserve.preserved_data).
@@ -175,8 +218,7 @@ class Run:
         self.summary = {"run_dir": run_dir, "model": model, "model_source": model_source,
                         "response_models": [],
                         "model_call": dict(self.profile,
-                                           reasoning_effort=self.reasoning_effort
-                                           if self.profile["reasoning"] else None),
+                                           reasoning_effort=self.reasoning_effort),
                         "mock": args.mock,
                         "task": self.task["id"],
                         "stage": args.stage, "preserved": {}, "plan": None,
@@ -393,9 +435,7 @@ def request_plan(r, n, p):
     io.open(p + ".plan_prompt.txt", "w", encoding="utf-8", newline="\n").write(prompt)
     r.log("plan prompt: %d chars%s" % (len(prompt),
                                        " (with retry block)" if r.plan_error else ""))
-    reply, outcome = ask_model(r, n, p, prompt,
-                               getattr(r.args, "plan_max_tokens", PLAN_MAX_TOKENS),
-                               mock_plan_reply, "plan")
+    reply, outcome = ask_model(r, n, p, prompt, r.caps["plan"], mock_plan_reply, "plan")
     if reply is None:
         return None, outcome
     io.open(p + ".plan_response.txt", "w", encoding="utf-8",
@@ -443,6 +483,24 @@ def request_plan(r, n, p):
     return call, None
 
 
+def wait_tokens(r, need):
+    """추론형이면, 직전 응답 헤더의 남은 토큰이 이번 요청(need)보다 적을 때만
+    모자란 만큼 기다린다. 기다린 초를 돌려준다 (안 기다렸으면 0).
+
+    gpt-4o 는 보지 않는다 - 늘 60초를 기다리던 동작 그대로다 (config.DELAY)."""
+    if not r.profile["reasoning"] or not r.last_ratelimit:
+        return 0
+    elapsed = time.monotonic() - r.last_ratelimit_at
+    wait = wait_for_tokens(r.last_ratelimit, need, elapsed)
+    if wait:
+        r.log("대기 %ds — 남은 토큰 %s (직전 응답 헤더, %.0f초 전) 이 이번 요청 %d "
+              "(예상 입력 + max_tokens) 보다 적다. 분당 한도 %s"
+              % (wait, r.last_ratelimit.get("remaining_tokens"), elapsed, need,
+                 r.last_ratelimit.get("limit_tokens")))
+        time.sleep(wait)
+    return wait
+
+
 def ask_model(r, n, p, prompt, max_tokens, mock, stage):
     """모델에 한 번 묻는다. 진단·계획과 생성이 같은 길을 쓴다.
 
@@ -462,6 +520,9 @@ def ask_model(r, n, p, prompt, max_tokens, mock, stage):
     if r.args.mock:
         reply = mock(r.args.mock)
     else:
+        waited = wait_tokens(r, est + max_tokens)
+        if waited:
+            call["waited_for_tokens"] = waited
         try:
             reply = call_model(r.model, prompt, max_tokens, r.log,
                                temperature=r.temperature, seed=r.seed,
@@ -517,6 +578,7 @@ def ask_model(r, n, p, prompt, max_tokens, mock, stage):
         call["ratelimit"] = reply.get("ratelimit")
         if call["ratelimit"]:
             r.summary["ratelimit"] = call["ratelimit"]
+            r.last_ratelimit, r.last_ratelimit_at = call["ratelimit"], time.monotonic()
         r.log("분당 한도 (%s 응답 헤더): %s" % (stage, describe_ratelimit(call["ratelimit"])))
     if reply.get("max_tokens") not in (None, max_tokens):
         # 분당 한도에 맞추느라 줄여서 보냈다 (model.shrink_for_minute)
@@ -573,7 +635,7 @@ def request_reply(r, n, p):
     r.log("prompt: %d chars%s" % (len(prompt), " (with retry block)" if block else ""))
 
     reflect = r.asked_reflection
-    reply, outcome = ask_model(r, n, p, prompt, r.args.max_tokens,
+    reply, outcome = ask_model(r, n, p, prompt, r.caps["generate"],
                                lambda mode: mock_reply(mode, reflect=reflect),
                                "retry" if reflect else "generate")
     if reply is None:
@@ -874,9 +936,9 @@ def attempt(r, n):
             return outcome
         # 두 호출이 같은 1분 안에 들어가면 분당 한도를 넘는다 - 원본 HTML 이
         # 두 프롬프트에 다 들어 있다.
-        if r.args.delay and not r.args.mock:
-            r.log("대기 %ss (진단·계획 → 생성)" % r.args.delay)
-            time.sleep(r.args.delay)
+        if r.delay and not r.args.mock:
+            r.log("대기 %ss (진단·계획 → 생성)" % r.delay)
+            time.sleep(r.delay)
     # 이 시도가 따른 계획. 재시도에서 계획이 바뀌면 시도마다 다른 파일이 된다.
     _dump(r.plan, p + ".plan.json")
 
@@ -1085,17 +1147,29 @@ def run(args):
     # run.log 를 여는 사람에게 가장 먼저 보여야 한다. 실행은 막지 않는다.
     model, source = model_choice(args)
     warning = dirty_warning(git)
-    log("model=%s (출처 %s) — API 가 답한 판 이름은 호출마다 '응답 모델' 줄에 남는다"
-        % (model, source) + (" | " + warning if warning else ""))
+    #
+    # 추론형이면 보낸 reasoning_effort 와 그 출처도 첫 줄에 남긴다 - 모델과 같이
+    # 결과를 가르는 조건이다 (effort_choice). gpt-4o 의 첫 줄은 전과 같다.
     profile = profile_for(model, getattr(args, "api", None))
+    effort, effort_source = effort_choice(profile, args)
+    log("model=%s (출처 %s)%s — API 가 답한 판 이름은 호출마다 '응답 모델' 줄에 남는다"
+        % (model, source,
+           " · reasoning_effort=%s (출처 %s)" % (effort, effort_source) if effort else "")
+        + (" | " + warning if warning else ""))
     if not profile["known"]:
         log("경고: 모르는 모델 %s — gpt-4o 처럼 부른다 (%s). 모델이 거절하는 인자는 "
             "빼고 다시 보낸다. 처음이면 --probe %s 로 먼저 확인한다"
             % (model, describe(profile), model))
-    effort = getattr(args, "reasoning_effort", None)
     log("model: 부르는 방식 %s · 토큰 어림 %s · reasoning_effort %s"
-        % (describe(profile), profile["encoding"],
-           (effort or "보내지 않음(모델 기본값)") if profile["reasoning"] else "해당 없음"))
+        % (describe(profile), profile["encoding"], effort or "해당 없음"))
+    caps = output_caps(profile, args)
+    log("model: max_tokens 생성 %d (%s) · 진단·계획 %d (%s) · 호출 사이 대기 %gs%s"
+        % (caps["generate"], "--max-tokens" if getattr(args, "max_tokens", None)
+           else cap_source(profile),
+           caps["plan"], "--plan-max-tokens" if getattr(args, "plan_max_tokens", None)
+           else cap_source(profile),
+           call_delay(profile, args),
+           " + 남은 토큰이 모자라면 더" if profile["reasoning"] else ""))
     if not args.mock and not os.environ.get("OPENAI_API_KEY"):
         print("no OPENAI_API_KEY in the environment or .envs", file=sys.stderr)
         return 2
@@ -1169,8 +1243,8 @@ def run(args):
         n = 0
         while True:
             n += 1
-            if n > 1 and args.delay and not args.mock:
-                time.sleep(args.delay)
+            if n > 1 and r.delay and not args.mock:
+                time.sleep(r.delay)
             if attempt(r, n) is STOP:
                 break
 

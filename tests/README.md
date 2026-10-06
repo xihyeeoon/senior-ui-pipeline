@@ -38,6 +38,7 @@
 | `test_drive.py` | 브라우저로 실제로 다시 걷고 비교 (`-m browser`) |
 | `test_restructure_bugs.py` | 재구성 루프의 버그 재현. 모델도 브라우저도 부르지 않는다 |
 | `test_model_upgrade.py` | 모델 바꾸기 준비 - 기본값 · 모델별 부르는 방식 · 분당 한도 · 확인 명령 · 가격. 실제 API 는 부르지 않는다 |
+| `test_run_settings.py` | 12번 실행 설정 - 추론형의 출력 길이 · 호출 사이 대기(남은 토큰 확인) · reasoning_effort 를 늘 보내고 남기기. gpt-4o 는 그대로인지. 실제 API 는 부르지 않는다 |
 | `fake_openai.py` | `openai.OpenAI` 의 대역 (with_raw_response 의 헤더 · Responses · models.list · 429 · 400) |
 | `baseline/` | 기준값. 마지막 캡처 실행의 결과다 |
 | `fixtures/sessions/` | `session_report` 용 가짜 세션 4건 |

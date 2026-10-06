@@ -68,8 +68,8 @@
     "data-screen_repaired": 8,
     "data-action_original": 19,
     "data-action_repaired": 19,
-    "id_original": 33,
-    "id_repaired": 33,
+    "id_original": 83,
+    "id_repaired": 83,
     "per_screen_attr_loss": {},
     "injected_dialog_calls": 0,
     "onclick_added": 0,
@@ -129,23 +129,23 @@
     "undefined_classes_new": [],
     "choice_groups_original": {
       "menu-tab": 7,
-      "menu-chip": 10,
-      "menu-item": 73,
+      "menu-chip": 60,
+      "menu-item": 289,
       "pick-bill": 18,
       "pw": 10
     },
     "choice_values_removed_by_design": {},
     "choice_values_kept": {
       "menu-tab": 7,
-      "menu-chip": 10,
-      "menu-item": 73,
+      "menu-chip": 60,
+      "menu-item": 289,
       "pick-bill": 18,
       "pw": 10
     },
     "choice_values_selectable": {
       "menu-tab": 7,
-      "menu-chip": 10,
-      "menu-item": 73,
+      "menu-chip": 60,
+      "menu-item": 289,
       "pick-bill": 18,
       "pw": 10
     },

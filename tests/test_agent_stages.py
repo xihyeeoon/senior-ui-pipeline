@@ -602,10 +602,12 @@ def test_the_loop_waits_between_the_two_calls(fake_run_env, out_root):
 
 
 def test_the_new_defaults():
+    """길이 제한은 파서가 아니라 모델이 정한다 (loop.output_caps). gpt-4o 로
+    부를 때는 전과 같다 - 추론형은 tests/test_run_settings.py."""
     args = _api.restructure_parser().parse_args([])
-    assert args.delay == 60
-    assert args.max_tokens == 14000
-    assert args.plan_max_tokens == 6000
+    gpt_4o = model.profile_for("gpt-4o")
+    assert loop.call_delay(gpt_4o, args) == 60
+    assert loop.output_caps(gpt_4o, args) == {"generate": 14000, "plan": 6000}
 
 
 # ===================================================================== #

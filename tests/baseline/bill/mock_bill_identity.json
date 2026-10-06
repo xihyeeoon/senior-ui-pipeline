@@ -18,7 +18,12 @@
   "stage": "styled",
   "preserved": {
     "MENU_BANK": 79,
-    "MENU_CARD": 5,
+    "MENU_CARD": 77,
+    "MENU_STOCK": 72,
+    "MENU_INSURE": 55,
+    "MENU_BENEFIT": 41,
+    "MENU_GOODS": 18,
+    "MENU_HELP": 12,
     "BILL_ITEMS": 23,
     "PW_KEYS": 10,
     "MENU_TABS": 7
@@ -65,14 +70,14 @@
       "calls": [
         {
           "stage": "plan",
-          "estimated_prompt": 11761,
+          "estimated_prompt": 13549,
           "method": "tiktoken:o200k_base",
           "max_tokens": 6000,
           "usage": null
         },
         {
           "stage": "generate",
-          "estimated_prompt": 13273,
+          "estimated_prompt": 15061,
           "method": "tiktoken:o200k_base",
           "max_tokens": 14000,
           "usage": null
@@ -86,7 +91,12 @@
       "preserved": {
         "injected": {
           "MENU_BANK": 79,
-          "MENU_CARD": 5,
+          "MENU_CARD": 77,
+          "MENU_STOCK": 72,
+          "MENU_INSURE": 55,
+          "MENU_BENEFIT": 41,
+          "MENU_GOODS": 18,
+          "MENU_HELP": 12,
           "BILL_ITEMS": 23,
           "PW_KEYS": 10,
           "MENU_TABS": 7
@@ -95,6 +105,11 @@
         "read": [
           "MENU_BANK",
           "MENU_CARD",
+          "MENU_STOCK",
+          "MENU_INSURE",
+          "MENU_BENEFIT",
+          "MENU_GOODS",
+          "MENU_HELP",
           "BILL_ITEMS",
           "PW_KEYS",
           "MENU_TABS"
@@ -120,7 +135,12 @@
     "preserved": {
       "injected": {
         "MENU_BANK": 79,
-        "MENU_CARD": 5,
+        "MENU_CARD": 77,
+        "MENU_STOCK": 72,
+        "MENU_INSURE": 55,
+        "MENU_BENEFIT": 41,
+        "MENU_GOODS": 18,
+        "MENU_HELP": 12,
         "BILL_ITEMS": 23,
         "PW_KEYS": 10,
         "MENU_TABS": 7
@@ -129,6 +149,11 @@
       "read": [
         "MENU_BANK",
         "MENU_CARD",
+        "MENU_STOCK",
+        "MENU_INSURE",
+        "MENU_BENEFIT",
+        "MENU_GOODS",
+        "MENU_HELP",
         "BILL_ITEMS",
         "PW_KEYS",
         "MENU_TABS"
@@ -169,7 +194,7 @@
     "by_stage": {
       "plan": {
         "calls": 1,
-        "estimated_prompt": 11761,
+        "estimated_prompt": 13549,
         "max_tokens": 6000,
         "prompt": null,
         "completion": null,
@@ -177,7 +202,7 @@
       },
       "generate": {
         "calls": 1,
-        "estimated_prompt": 13273,
+        "estimated_prompt": 15061,
         "max_tokens": 14000,
         "prompt": null,
         "completion": null,
@@ -186,7 +211,7 @@
     },
     "total": {
       "calls": 2,
-      "estimated_prompt": 25034,
+      "estimated_prompt": 28610,
       "max_tokens": 20000,
       "prompt": null,
       "completion": null,
@@ -194,7 +219,7 @@
     },
     "first_attempt": {
       "calls": 2,
-      "estimated_prompt": 25034,
+      "estimated_prompt": 28610,
       "max_tokens": 20000,
       "prompt": null,
       "completion": null,

@@ -73,6 +73,15 @@ ORIGINAL_URL = url_for(ORIGINAL_REL)
 DEFAULT_MODEL = "gpt-4o"
 MODEL_ENV_VARS = ("RESTRUCTURE_MODEL", "DESIGNREPAIR_MODEL")
 
+# 추론형 모델이 생각에 쓸 노력. --reasoning-effort 를 주지 않으면 이 값을 보낸다
+# (restructure.loop.effort_choice). 모델의 기본값에 맡기면 그 값이 어디에도 남지
+# 않고, 모델이 기본값을 바꾸면 같은 명령이 다른 조건으로 돈다. 보낸 값과 출처는
+# run.log 첫 줄과 summary.json 의 model_call.reasoning_effort 에 남는다.
+# medium 은 gpt-6.1-sol · gpt-6-astra 가 받는 값(low~max)이고, OpenAI 문서가 말하는
+# gpt-5.5 · gpt-6.1-sol 의 기본값과 같다 (2026-10-06 확인). 추론형이 아니면 보내지
+# 않는다.
+DEFAULT_REASONING_EFFORT = "medium"
+
 # 모델별 100만 토큰당 가격 (USD). summary.json 의 cost 가 이 표로 시도별·전체
 # 예상 금액을 센다. None 이면 금액은 null 이다 - 0 이 아니라 "모른다".
 #
@@ -82,8 +91,13 @@ MODEL_ENV_VARS = ("RESTRUCTURE_MODEL", "DESIGNREPAIR_MODEL")
 #   따로 더하지 않는다.
 #   캐시된 입력의 할인은 넣지 않았다. 그래서 금액은 상한 쪽 어림이다.
 #
-# gpt-4o 만 채워 두었다. 나머지는 연구자가 공식 가격표를 보고 채운다
+# 채운 것은 셋이다. 나머지는 연구자가 공식 가격표를 보고 채운다
 # (https://developers.openai.com/api/docs/pricing).
+#
+#   gpt-6.1-sol · gpt-6-astra: 2026-10-06 공식 가격표에서 확인. Standard 단계의
+#   "Short context" 값이다 (입력 272K 토큰 이하 - 이 도구의 프롬프트는 3만 안팎).
+#   입력이 272K 를 넘으면 값이 다르다 (sol 4.00 / 15.00, astra 20.00 / 75.00).
+#   Batch · Flex 단계의 할인 가격은 넣지 않았다 - 이 도구는 Standard 로 부른다.
 MODEL_PRICES = {
     "gpt-4o": {"input": 2.50, "output": 10.00},
     "gpt-4.1": None,
@@ -95,10 +109,40 @@ MODEL_PRICES = {
     "gpt-5.6-sol": None,
     "gpt-5.6-terra": None,
     "gpt-5.6-luna": None,
-    "gpt-6-astra": None,
-    "gpt-6.1-sol": None,
+    "gpt-6-astra": {"input": 10.00, "output": 50.00},   # 2026-10-06 확인
+    "gpt-6.1-sol": {"input": 2.00, "output": 10.00},    # 2026-10-06 확인
     "gpt-6-luna": None,
 }
+
+# 출력 길이 기본값 (completion 상한, 생각 토큰 포함). --max-tokens ·
+# --plan-max-tokens 를 주지 않으면 부르는 방식(restructure.model.profile_for)의
+# "추론형인가" 로 고른다 (restructure.loop.output_caps).
+#
+#   gpt-4o    gpt-4o 의 답(HTML + 흐름 명세)은 3,300~3,500 토큰이었다. 분당 한도
+#             30,000 이 입력에 이 값을 더해 세므로 낮춰 둔 값이다. 이체 기준값이
+#             이 값으로 뽑혀 있어 바꾸지 않는다. 표에 없는 모델도 이것을 쓴다.
+#   reasoning 추론형은 생각 토큰도 같은 상한 안에서 쓰고, 생각이 다 쓰면 보이는
+#             답이 빈 채로 잘려 온다. OpenAI 는 "처음 실험할 때는 생각과 출력에
+#             적어도 25,000 을 남겨 두라" 고 한다 (Reasoning models 안내,
+#             2026-10-06 확인). 생성은 그보다 넉넉히 32,000 (답 3,500 에 생각 몫),
+#             진단·계획은 답이 짧아도 생각은 같이 하므로 그 최소인 25,000 이다.
+#             상한은 쓴 만큼만 요금이 매겨지고, 분당 500,000 에서는 입력 3만 +
+#             32,000 도 한 요청에 넉넉하다. gpt-6.1-sol · gpt-6-astra 의 최대 출력은
+#             128K 다.
+OUTPUT_CAPS = {"gpt-4o": {"generate": 14000, "plan": 6000},
+               "reasoning": {"generate": 32000, "plan": 25000}}
+
+# 모델 호출 사이 대기(초) - 진단·계획과 생성 사이, 시도와 시도 사이. --delay 를
+# 주지 않으면 OUTPUT_CAPS 와 같은 방식으로 고른다 (restructure.loop.call_delay).
+#
+#   gpt-4o    원본 HTML 이 두 호출에 다 들어가서 같은 1분 안에 보내면 분당
+#             30,000 을 넘었다. 그 동작 그대로 - 헤더는 보지 않고 늘 60초.
+#   reasoning gpt-6.1-sol · gpt-6-astra 는 분당 500,000 이다 (2026-10-06 --probe).
+#             짧게 5초만 두고, 대신 호출 직전에 직전 응답 헤더의 남은 토큰을 본다
+#             - 다음 요청(예상 입력 + max_tokens)보다 적을 때만 모자란 만큼 더
+#             기다린다 (restructure.model.wait_for_tokens). 한도가 작은 추론형을
+#             불러도 그 확인이 지킨다.
+DELAY = {"gpt-4o": 60.0, "reasoning": 5.0}
 
 # The two builds under comparison. `url` is what the phone loads in the frame.
 CONDITIONS = [

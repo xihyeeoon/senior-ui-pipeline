@@ -473,7 +473,11 @@ USAGE = {"prompt": 20000, "completion": 3000, "reasoning": None}
 
 def test_the_price_table_lives_in_config():
     assert config.MODEL_PRICES["gpt-4o"] == {"input": 2.50, "output": 10.00}
-    others = [v for k, v in config.MODEL_PRICES.items() if k != "gpt-4o"]
+    # 12번 실행에 쓰는 둘 - 공식 가격표의 단문맥(입력 272K 이하) 표준 가격
+    assert config.MODEL_PRICES["gpt-6.1-sol"] == {"input": 2.00, "output": 10.00}
+    assert config.MODEL_PRICES["gpt-6-astra"] == {"input": 10.00, "output": 50.00}
+    filled = ("gpt-4o", "gpt-6.1-sol", "gpt-6-astra")
+    others = [v for k, v in config.MODEL_PRICES.items() if k not in filled]
     assert others and all(v is None for v in others)   # 연구자가 나중에 채운다
 
 
