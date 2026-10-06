@@ -8,8 +8,18 @@ r"""검사기 CLI. 원본과 생성물을 같은 과제로 한 번씩 걷고 비
               J 오류 경로
   styled      A~J 전부
 
-단계는 --stage 가 가장 세고, 없으면 흐름 파일의 "stage", 그것도 없으면 styled
-다. 즉 단계를 적지 않은 기존 흐름은 예전과 똑같이 전부 검사한다.
+흐름 파일은 누가 썼는지에 따라 두 가지로 읽는다 (inputs.researcher_flow).
+
+  연구자 흐름   flows/ 아래 (과제의 원본 흐름, 옛 Run 흐름). 흐름 파일을 그대로
+                믿는다 - 자기 truth, 흐름의 task. 단계는 --stage, 없으면 흐름의
+                "stage", 그것도 없으면 styled 다. 단계를 적지 않은 옛 흐름은
+                예전과 똑같이 전부 검사한다.
+  모델 흐름     그 밖 (재구성 루프의 attempt_N.flow.json 등). 루프와 같은 판정
+                입력(inputs.judged_flow)을 거친다 - 판정 기준은 흐름이 아니라
+                과제에서 온다. 과제는 --task, 없으면 transfer. 단계는 --stage,
+                없으면 config.DEFAULT_STAGE. 흐름에 적힌 task · stage · truth 는
+                듣지 않는다. 그래서 루프가 실행의 과제 · 단계로 판정한 빌드는
+                같은 --task · --stage 로 다시 검사하면 같은 판정을 받는다.
 
 Usage:
   python -m senior_ui.audit \
@@ -40,6 +50,7 @@ from ..tasks import abs_path, load_task, task_names
 from .core import audit
 from .drive import drive
 from .flow import load_flow
+from .inputs import judged_flow, read_flow, researcher_flow
 from .stage import STAGES, apply_stage
 
 
@@ -62,9 +73,9 @@ def main(argv=None):
     setup_stdout()
     ap = argparse.ArgumentParser(prog="python -m senior_ui.audit")
     ap.add_argument("--task", choices=task_names(), default=None,
-                    help="과제 (tasks/<이름>.json). 주지 않으면 흐름 파일의 task, "
-                         "그것도 없으면 transfer. 기본 원본과 원본을 걷는 흐름이 "
-                         "여기서 온다")
+                    help="과제 (tasks/<이름>.json). 주지 않으면 연구자 흐름은 흐름 "
+                         "파일의 task, 모델 흐름은 transfer. 기본 원본과 원본을 "
+                         "걷는 흐름, 모델 흐름의 판정 기준이 여기서 온다")
     ap.add_argument("--original", default=None,
                     help="원본의 URL. 주지 않으면 과제 파일의 original")
     ap.add_argument("--build", "--repaired", dest="build", required=True,
@@ -78,16 +89,24 @@ def main(argv=None):
     ap.add_argument("--flow", default=None,
                     help="flow file describing the screens and how to reach them")
     ap.add_argument("--stage", choices=sorted(STAGES), default=None,
-                    help="흐름 파일의 stage 를 덮어씁니다")
+                    help="검사 단계. 주지 않으면 연구자 흐름은 흐름 파일의 stage "
+                         "(없으면 styled), 모델 흐름은 config.DEFAULT_STAGE")
     ap.add_argument("--shots", default=None, help="directory to save screenshots in")
     args = ap.parse_args(argv)
 
 
     # 흐름을 먼저 읽는다 - 과제(그리고 기본 원본)는 흐름이 정할 수 있다.
+    # 모델 흐름은 루프와 같은 판정 입력으로 바꾼다 - 판정 기준은 과제에서 온다.
+    author = "researcher" if researcher_flow(args.flow) else "model"
     try:
-        flow = load_flow(args.flow, task=args.task)
+        if author == "researcher":
+            flow = load_flow(args.flow, task=args.task)
+            stage = args.stage or flow.get("stage") or "styled"
+        else:
+            flow = judged_flow(read_flow(args.flow), task=args.task, stage=args.stage)
+            stage = flow["stage"]
         task = load_task(flow["task"])
-    except (OSError, ValueError) as e:
+    except (OSError, ValueError, RuntimeError) as e:
         return cannot_run("cannot read the flow: %s" % e)
     args.original = args.original or url_for(task["original"])
     args.original_file = args.original_file or abs_path(task["original"])
@@ -98,7 +117,6 @@ def main(argv=None):
     except OSError as e:
         return cannot_run("cannot read inputs: %s" % e)
 
-    stage = args.stage or flow.get("stage") or "styled"
     if stage not in STAGES:
         print("알 수 없는 단계: %s (가능: %s)" % (stage, ", ".join(sorted(STAGES))),
               file=sys.stderr)
@@ -129,7 +147,7 @@ def main(argv=None):
         # 키 이름은 바꾸지 않는다. results/ 의 옛 JSON 과 같은 모양이어야 한다.
         report["inputs"] = {"original": args.original, "repaired": args.build,
                             "flow": args.flow or "(builtin original)",
-                            "stage": stage}
+                            "stage": stage, "flow_author": author}
 
         if args.out:
             os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)

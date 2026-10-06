@@ -33,5 +33,6 @@ def run_audit(orig_snapshot, orig_html, html_path, flow_path, url, shots, stage,
     # 비교 기준이 된 문서를 그대로 적는다. 부르는 쪽이 --original 로 바꿀 수
     # 있으므로, 여기서 못박으면 리포트가 비교하지 않은 문서를 가리키게 된다.
     report["inputs"] = {"original": original_url, "repaired": url,
-                        "flow": flow_path, "stage": flow["stage"]}
+                        "flow": flow_path, "stage": flow["stage"],
+                        "flow_author": "model"}
     return report

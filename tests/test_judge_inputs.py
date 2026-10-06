@@ -12,6 +12,7 @@ r"""판정 입력 - 모델이 쓴 흐름 명세가 판정 기준을 바꾸지 �
 import io
 import json
 import os
+import sys
 
 import pytest
 
@@ -70,19 +71,22 @@ def fake_drive(rep):
 
     async def drive(url, flow, want_shots=None, **kw):
         seen.append(flow)
-        return json.loads(json.dumps(ORIGINAL_SNAPSHOT if ORIGINAL_REL in url else rep))
+        original = "/inputs/original_" in url
+        return json.loads(json.dumps(ORIGINAL_SNAPSHOT if original else rep))
     drive.seen = seen
     return drive
 
 
 def loop_verdict(monkeypatch, tmp_path, flow, rep, stage="wireframe", task=None):
     """루프가 검사기를 부르는 길(audit_call.run_audit)로 판정한다. 흐름 명세는
-    루프가 저장하는 모양 그대로다 (check_reply 가 derived_from_original 을 false 로
-    적는다)."""
-    html_path, flow_path = write_build(tmp_path, dict(flow, derived_from_original=False))
+    루프가 저장하는 모양 그대로 - 모델이 쓴 그대로다."""
+    html_path, flow_path = write_build(tmp_path, flow)
     drive = fake_drive(rep)
     monkeypatch.setattr(AC.A, "drive", drive)
-    report = AC.run_audit(ORIGINAL_SNAPSHOT, ORIGINAL_HTML, html_path, flow_path,
+    # 루프는 그 과제의 원본(과제 파일의 original)을 비교 기준으로 읽는다.
+    original = _api.load_task(task)["original"]
+    orig_html = io.open(os.path.join(ROOT, original), encoding="utf-8").read()
+    report = AC.run_audit(ORIGINAL_SNAPSHOT, orig_html, html_path, flow_path,
                           "http://localhost:3003/outputs/attempt_1.html", None, stage,
                           original_url="http://localhost:3003/" + ORIGINAL_REL,
                           task=task)
@@ -316,3 +320,82 @@ def test_the_done_pairs_follow_the_last_screen_and_the_task():
     out = _api.judged_flow(flow, task="bill")
     assert out["expect"]["finish"] == _api.load_task("bill")["done_expect"]
     assert out["done_amount"] == "#dn-paid"
+
+
+# --------------------------------------------------------------------- #
+# 6. 같은 빌드는 루프와 검사기 CLI 에서 같은 판정을 받는다 (B-03 · B-24)
+# --------------------------------------------------------------------- #
+BUILD_URL = "http://localhost:3003/outputs/attempt_1.html"
+
+
+def cli_verdict(monkeypatch, tmp_path, flow, rep, extra=()):
+    """검사기 CLI(python -m senior_ui.audit)로 같은 빌드 · 같은 흐름 파일을 판정한다.
+    걷기만 대역이고 흐름 읽기 · 판정 · 단계는 CLI 의 것 그대로다."""
+    html_path, flow_path = write_build(tmp_path, flow)
+    CLI = _api.audit_cli_module
+    monkeypatch.setattr(CLI, "drive", fake_drive(rep))
+    out = tmp_path / "audit.json"
+    monkeypatch.setattr(sys, "stdout", io.StringIO())
+    code = _api.audit_cli_main(["--build", BUILD_URL, "--build-file", html_path,
+                                "--flow", flow_path, "--out", str(out)] + list(extra))
+    return code, json.load(io.open(str(out), encoding="utf-8"))
+
+
+def without_inputs(report):
+    return {k: v for k, v in report.items() if k != "inputs"}
+
+
+PARITY = [
+    ("good", model_flow(), build_snapshot(TASK_AMOUNT_SHOWN), None, None),
+    ("model-truth-and-empty-done",
+     model_flow(truth=MODEL_TRUTH, expect={"done": [["#dn-amt", ""]]}),
+     build_snapshot("999"), None, None),
+    ("model-says-derived", model_flow(derived_from_original=True),
+     build_snapshot(TASK_AMOUNT_SHOWN), None, None),
+    ("model-says-stage-and-task", model_flow(stage="styled", task="bill"),
+     build_snapshot(TASK_AMOUNT_SHOWN), None, None),
+    ("styled", model_flow(), build_snapshot(TASK_AMOUNT_SHOWN), "styled", None),
+    ("bill", model_flow(), build_snapshot(TASK_AMOUNT_SHOWN), None, "bill"),
+]
+
+
+@pytest.mark.parametrize("flow,rep,stage,task", [c[1:] for c in PARITY],
+                         ids=[c[0] for c in PARITY])
+def test_the_cli_and_the_loop_judge_a_model_flow_alike(monkeypatch, tmp_path, flow, rep,
+                                                       stage, task):
+    """고치기 전: CLI 는 모델 흐름을 연구자 흐름처럼 읽었다 - 모델의 truth, 흐름의
+    task · stage(없으면 styled), derived_from_original 기본값 true, 허용 목록 ·
+    필수 오류 경로 없음 (감사 B-03 의 (a)~(e)). 루프는 그 다섯을 과제로 정했다.
+
+    루프는 실행의 과제 · 단계로 부르고, CLI 는 --task · --stage 로 같은 것을 준다.
+    둘 다 주지 않으면 양쪽 모두 기본값(이체 · config.DEFAULT_STAGE)이다."""
+    (tmp_path / "loop").mkdir()
+    (tmp_path / "cli").mkdir()
+    loop_report, _ = loop_verdict(monkeypatch, tmp_path / "loop", flow, rep,
+                                  stage=stage or _api.config_module.DEFAULT_STAGE,
+                                  task=task)
+    extra = (["--stage", stage] if stage else []) + (["--task", task] if task else [])
+    code, cli_report = cli_verdict(monkeypatch, tmp_path / "cli", flow, rep, extra)
+    assert without_inputs(cli_report) == without_inputs(loop_report)
+    assert cli_report["inputs"]["stage"] == loop_report["inputs"]["stage"]
+    assert code == (0 if loop_report["passed"] else 1)
+
+
+def test_the_cli_still_trusts_a_researcher_flow(monkeypatch, tmp_path):
+    """flows/ 아래의 흐름(옛 Run 흐름)은 연구자의 것이다. 자기 truth(옛 원본의
+    정답) · 자기 단계(없으면 styled)로 판정한다 - 기준값 run1~3 이 그것이다."""
+    CLI = _api.audit_cli_module
+    drive = fake_drive(build_snapshot(TASK_AMOUNT_SHOWN))
+    monkeypatch.setattr(CLI, "drive", drive)
+    monkeypatch.setattr(sys, "stdout", io.StringIO())
+    out = tmp_path / "audit.json"
+    path = os.path.join(ROOT, "flows", "restructured.json")
+    _api.audit_cli_main(["--build", BUILD_URL, "--build-file",
+                         os.path.join(ROOT, "results", "restructured_transfer.html"),
+                         "--flow", path, "--out", str(out)])
+    own = json.load(io.open(path, encoding="utf-8"))["truth"]
+    built = drive.seen[-1]
+    assert built["truth"]["AMOUNT"] == own["AMOUNT"] != F.task_truth()["AMOUNT"]
+    assert "model_claims_dropped" not in built
+    report = json.load(io.open(str(out), encoding="utf-8"))
+    assert report["inputs"]["stage"] == "styled"
