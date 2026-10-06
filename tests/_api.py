@@ -39,6 +39,9 @@ from senior_ui.restructure import reply as _reply            # noqa: E402
 from senior_ui.experiment import report as _session_report    # noqa: E402
 from senior_ui.experiment import server as _exp_server        # noqa: E402
 from senior_ui import tasks as _tasks                        # noqa: E402
+from senior_ui.select import __main__ as _select_cli         # noqa: E402
+from senior_ui.select import collect as _select_collect      # noqa: E402
+from senior_ui.select import rule as _select_rule            # noqa: E402
 # ======================================================================= #
 
 # ---- senior_ui/audit (core.audit · drive.drive · flow.load_flow) ------- #
@@ -168,3 +171,9 @@ from senior_ui.audit.context import AuditContext             # noqa: E402
 from senior_ui.audit.checks import b_display                 # noqa: E402
 # 검사 A (과제 완수). 완료 화면의 값을 과제에서 읽는지 손으로 만든 스냅샷으로 본다.
 from senior_ui.audit.checks import a_completion                # noqa: E402
+
+# ---- senior_ui/select (C 후보 고르기) ----------------------------------- #
+select_main = _select_cli.main
+select_collect = _select_collect.collect
+select_rule_module = _select_rule
+DEFAULT_SELECTION_RULE = _select_rule.DEFAULT_RULE
