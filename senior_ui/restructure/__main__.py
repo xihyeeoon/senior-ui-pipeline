@@ -46,9 +46,9 @@ This file is the command line and nothing else. The work is split up:
   loop.py        재시도 루프 · 예산 · 요약 (run)
 
 Usage:
-  python -m senior_ui.restructure                 # real model, 형식 5 · 검사 6, wireframe
-  python -m senior_ui.restructure --attempts 2 --model gpt-4o
-  python -m senior_ui.restructure --task bill     # 공과금 과제 (기본은 transfer)
+  python -m senior_ui.restructure --model gpt-6.1-sol   # real model, 형식 5 · 검사 6, wireframe
+  python -m senior_ui.restructure --model gpt-6.1-sol --attempts 2
+  python -m senior_ui.restructure --model gpt-6.1-sol --task bill   # 공과금 (기본 transfer)
   python -m senior_ui.restructure --mock pass     # no API: replays Run 1
   python -m senior_ui.restructure --mock fail     # no API: a broken flow, every attempt fails
   python -m senior_ui.restructure --list-models   # 이 키로 쓸 수 있는 gpt- 모델 (요금 없음)
@@ -79,7 +79,7 @@ mock 모드는 일곱이고 Run 1 빌드를 되읽는다. 모드마다 은행 �
 
 The key comes from .envs (OPENAI_API_KEY=...) or the environment. The model
 comes from --model, then RESTRUCTURE_MODEL, then DESIGNREPAIR_MODEL, then
-config.DEFAULT_MODEL (지금 gpt-4o). 어디서 왔는지는 run.log 첫 줄과
+config.DEFAULT_MODEL (지금 gpt-6.1-sol). 어디서 왔는지는 run.log 첫 줄과
 summary.json 의 model_source 에 남는다.
 Exit: 0 = a build passed, 1 = every attempt failed, 2 = could not run.
 

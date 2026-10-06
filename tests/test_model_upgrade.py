@@ -51,14 +51,22 @@ def args_with(model_name=None):
 
 
 def test_the_default_model_lives_in_config(no_model_env):
-    assert config.DEFAULT_MODEL == "gpt-4o"
-    assert loop.pick_model(args_with()) == "gpt-4o"
+    """기본 모델은 12번 본 실행의 모델이다 (감사 D-1 (가)). 인자 없이 돌린 실행이
+    고르기 문지기(model: gpt-6.1-sol)에서 빠지지 않는다."""
+    assert config.DEFAULT_MODEL == "gpt-6.1-sol"
+    assert loop.pick_model(args_with()) == "gpt-6.1-sol"
     no_model_env.setattr(config, "DEFAULT_MODEL", "gpt-other")
     assert loop.pick_model(args_with()) == "gpt-other"
 
 
+def test_the_default_model_is_what_the_selection_rule_keeps():
+    """기본값과 고르기 규칙의 모델이 갈라지면 인자 없이 돈 실행은 전부 빠진다."""
+    rule = json.load(io.open(_api.DEFAULT_SELECTION_RULE, encoding="utf-8"))
+    assert rule["gates"]["model"] == config.DEFAULT_MODEL
+
+
 def test_where_the_model_came_from_is_known(no_model_env):
-    assert loop.model_choice(args_with()) == ("gpt-4o", "config.DEFAULT_MODEL")
+    assert loop.model_choice(args_with()) == ("gpt-6.1-sol", "config.DEFAULT_MODEL")
     assert loop.model_choice(args_with("gpt-x")) == ("gpt-x", "--model")
     no_model_env.setenv("RESTRUCTURE_MODEL", "gpt-env")
     assert loop.model_choice(args_with()) == ("gpt-env", "RESTRUCTURE_MODEL")
@@ -84,9 +92,14 @@ def test_run_log_first_line_says_when_it_is_the_default(fake_run_env, out_root,
     _code, summary = run_loop(fake_run_env, out_root, replying(), attempts=1,
                               model=None)
     first = run_log(summary)[0]
-    assert "model=gpt-4o" in first and "config.DEFAULT_MODEL" in first
-    assert summary["model"] == "gpt-4o"
+    assert "model=gpt-6.1-sol" in first and "config.DEFAULT_MODEL" in first
+    assert summary["model"] == "gpt-6.1-sol"
     assert summary["model_source"] == "config.DEFAULT_MODEL"
+    # 기본 모델이 추론형이므로 부르는 방식도 그것을 따른다 - temperature 를 보내지
+    # 않고, reasoning_effort 는 config 의 기본값을 보낸다.
+    assert summary["model_call"]["reasoning"] is True
+    assert summary["model_call"]["temperature"] is False
+    assert summary["model_call"]["reasoning_effort"] == config.DEFAULT_REASONING_EFFORT
 
 
 def test_the_summary_keeps_what_the_api_said_it_was(fake_run_env, out_root):

@@ -64,7 +64,7 @@ LLM 이 쓴 것이라 다시 만들려면 API 비용이 들고 바이트까지 �
 되먹임, 통과하거나 예산이 끝날 때까지:
 
 ```powershell
-.\.venv\Scripts\python.exe -m senior_ui.restructure    # 기본 --stage wireframe · 예산 형식 5 · 검사 6
+.\.venv\Scripts\python.exe -m senior_ui.restructure --model gpt-6.1-sol    # 기본 --stage wireframe · 예산 형식 5 · 검사 6
 .\.venv\Scripts\python.exe -m senior_ui.restructure --mock pass    # API 없이 확인
 ```
 
@@ -156,8 +156,10 @@ API 없이: `--mock pass --mock-refine improve` (1회차에 다듬은 빌드가 
 
 ### 모델 바꾸기
 
-기본 모델은 `senior_ui/config.py` 의 `DEFAULT_MODEL` 한 곳에 있다 (지금 `gpt-4o`).
-한 번만 바꿔 돌리려면 `--model` 을 준다. 정하는 순서는 `--model` → 환경 변수
+기본 모델은 `senior_ui/config.py` 의 `DEFAULT_MODEL` 한 곳에 있다 (지금 `gpt-6.1-sol`,
+12번 본 실행의 모델 — 고르기 규칙의 `gates.model` 과 같다). 그래도 실행 명령에는
+`--model gpt-6.1-sol` 을 적는다 — 명령만 보고 조건을 알 수 있게. 한 번만 바꿔 돌리려면
+`--model` 을 준다. 정하는 순서는 `--model` → 환경 변수
 `RESTRUCTURE_MODEL` → `DESIGNREPAIR_MODEL` → `config.DEFAULT_MODEL` 이다
 (`loop.model_choice`). `.envs` 에 남은 환경 변수가 기본값을 이길 수 있으므로,
 어디서 왔는지가 run.log 첫 줄(`model=… (출처 …)`)과 `summary.json` 의

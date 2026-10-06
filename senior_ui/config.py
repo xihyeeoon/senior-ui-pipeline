@@ -70,7 +70,11 @@ ORIGINAL_URL = url_for(ORIGINAL_REL)
 # (restructure.loop.model_choice). 실행마다 어디서 왔는지가 run.log 첫 줄과
 # summary.json 의 model_source 에 남는다. 모델마다 부르는 방식이 다르다 -
 # restructure.model.profile_for.
-DEFAULT_MODEL = "gpt-4o"
+#
+# 12번 본 실행의 모델이다 (감사 D-1 (가), 2026-10-06). 전에는 gpt-4o 였고, 인자 없이
+# 돌린 실행은 의도와 다른 모델로 돌아 고르기 문지기(flows/selection_rule.json 의
+# gates.model)에서 전부 빠졌다. 두 값은 같아야 한다 (test_model_upgrade 가 본다).
+DEFAULT_MODEL = "gpt-6.1-sol"
 MODEL_ENV_VARS = ("RESTRUCTURE_MODEL", "DESIGNREPAIR_MODEL")
 
 # 추론형 모델이 생각에 쓸 노력. --reasoning-effort 를 주지 않으면 이 값을 보낸다
@@ -180,8 +184,9 @@ DEFAULT_REFINE = 2
 # "추론형인가" 로 고른다 (restructure.loop.output_caps).
 #
 #   gpt-4o    gpt-4o 의 답(HTML + 흐름 명세)은 3,300~3,500 토큰이었다. 분당 한도
-#             30,000 이 입력에 이 값을 더해 세므로 낮춰 둔 값이다. 이체 기준값이
-#             이 값으로 뽑혀 있어 바꾸지 않는다. 표에 없는 모델도 이것을 쓴다.
+#             30,000 이 입력에 이 값을 더해 세므로 낮춰 둔 값이다. 표에 없는 모델도
+#             이것을 쓴다. (기본 모델이 gpt-6.1-sol 이 된 뒤로 mock 기준값은 아래
+#             reasoning 값으로 뽑혀 있다.)
 #   reasoning 추론형은 생각 토큰도 같은 상한 안에서 쓰고, 생각이 다 쓰면 보이는
 #             답이 빈 채로 잘려 온다. OpenAI 는 "처음 실험할 때는 생각과 출력에
 #             적어도 25,000 을 남겨 두라" 고 한다 (Reasoning models 안내,
