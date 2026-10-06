@@ -32,11 +32,12 @@ from senior_ui import audit as A
 from senior_ui import config
 from senior_ui.audit.drive import SHOT_SAFE
 from senior_ui.audit.flow import required_errors
+from senior_ui.audit.inputs import load_allowed_removals, model_claims
 from senior_ui.config import OUTPUTS_ENV, ROOT, inside_root, outputs_dir, url_for
 from senior_ui.devserver import ensure_server
 from senior_ui.tasks import DEFAULT_TASK, abs_path, load_task
 
-from .audit_call import load_allowed_removals, run_audit
+from .audit_call import run_audit
 from .brief import write_brief
 from .model import (MOCK_TASK, TEMPERATURE, SEED, ApiRejected, InfraFailed,
                     RateLimited, call_model, cost_usd, describe, describe_ratelimit,
@@ -805,27 +806,29 @@ def request_reply(r, n, p, stage=None, mock=None):
     return reply, None
 
 
-def drop_declared_removals(r, flow):
-    """모델이 쓴 choices_removed 를 지운다. 지운 action 이름을 돌려준다.
+def note_model_claims(r, entry, flow):
+    """모델이 흐름 명세에 적은 판정 기준(truth · choices_removed · stage 등)을
+    남긴다. 버리는 일은 판정 입력을 만드는 곳(audit.inputs.judged_flow)이 한다 -
+    루프와 검사기 CLI 가 같은 함수를 거치므로, 여기서 따로 지우면 두 곳이 같은
+    일을 하게 된다. 흐름 명세 파일은 모델이 쓴 그대로 남는다.
 
-    검사 I 는 흐름 명세의 choices_removed 를 읽어 그 값을 누락으로 세지 않는다.
-    그 선언은 "연구자가 안전을 이유로 뺐다" 는 뜻인데, 여기서는 흐름 명세를
-    모델이 쓴다 - 모델이 스스로 그것을 적으면 자기가 뺀 선택지를 자기가 면제해
-    검사 I 를 피해 간다.
-
-    허용하는 제거는 연구자가 관리하는 파일에서만 온다 (audit_call). 그 목록은
-    검사 직전에 합쳐지므로, 여기서 지우는 것은 모델의 말뿐이다.
-
-    조용히 지우지 않는다. 남기지 않으면 "모델이 적지 않았다" 와 "적었는데
-    지웠다" 를 구분할 수 없고, 모델이 검사를 피하려 했다는 사실 자체가 결과다.
+    조용히 넘어가지 않는다. 남기지 않으면 "모델이 적지 않았다" 와 "적었는데
+    버렸다" 를 구분할 수 없고, 모델이 판정 기준을 고르려 했다는 것 자체가
+    결과다. choices_removed 는 검사 I 를 피해 가는 장치였으므로 action 이름까지
+    적는다 - 허용하는 제거는 flows/allowed_removals.json 에서만 읽는다.
     """
-    spec = flow.pop("choices_removed", None)
-    if not spec:
-        return []
-    names = sorted(spec) if isinstance(spec, dict) else [str(spec)]
-    r.log("flow: 모델이 쓴 choices_removed 를 지웠다 (%s). 허용하는 제거는 "
-          "flows/allowed_removals.json 에서만 읽는다." % ", ".join(names))
-    return names
+    claims = model_claims(flow, r.task["id"])
+    if not claims:
+        return
+    entry["model_claims_dropped"] = claims
+    if "choices_removed" in claims:
+        spec = flow["choices_removed"]
+        names = sorted(spec) if isinstance(spec, dict) else [str(spec)]
+        entry["choices_removed_dropped"] = names
+        r.log("flow: 모델이 쓴 choices_removed 를 판정에 쓰지 않는다 (%s). 허용하는 "
+              "제거는 flows/allowed_removals.json 에서만 읽는다." % ", ".join(names))
+    r.log("flow: 모델이 쓴 판정 기준 %s 는 판정에 쓰지 않는다 - 과제와 연구자 파일의 "
+          "것으로 판정한다" % ", ".join(claims))
 
 
 def note_reflection(r, p, entry, text):
@@ -900,10 +903,7 @@ def check_reply(r, p, entry, reply, n=None):
                              "코드 블록 두 개만, 군더더기 없이 출력하라")
         html, flow, flow_text = parse_reply(reply["text"])
         flow.setdefault("name", "auto")
-        flow["derived_from_original"] = False
-        dropped = drop_declared_removals(r, flow)
-        if dropped:
-            entry["choices_removed_dropped"] = dropped
+        note_model_claims(r, entry, flow)
         # 마지막 화면을 다른 이름으로 지어 놓고 완료 칸만 "done" 으로 적은 흐름.
         # done 화면이 없을 때만 받고, 받은 사실을 남긴다 (reply.accept_done_alias).
         alias = accept_done_alias(flow)

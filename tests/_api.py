@@ -27,6 +27,7 @@ from senior_ui.audit import __main__ as _audit_cli           # noqa: E402
 from senior_ui.audit import stage as _audit_stage            # noqa: E402
 from senior_ui.audit import report as _audit_report          # noqa: E402
 from senior_ui.restructure import audit_call as _audit_call  # noqa: E402
+from senior_ui.audit import inputs as _audit_inputs          # noqa: E402
 from senior_ui.restructure import loop as _loop              # noqa: E402
 from senior_ui.restructure import model as _model            # noqa: E402
 from senior_ui.restructure import plan as _plan              # noqa: E402
@@ -133,10 +134,15 @@ model_module = _model
 loop_module = _loop
 
 # ---- senior_ui/restructure/audit_call.py -------------------------------- #
-# 허용하는 제거 목록을 읽고 검사 직전에 합치는 곳.
-load_allowed_removals = _audit_call.load_allowed_removals
-merge_allowed_removals = _audit_call.merge_allowed_removals
+# 루프가 검사기를 부르는 곳.
 audit_call_module = _audit_call
+
+# ---- senior_ui/audit/inputs.py (판정 입력) ------------------------------ #
+# 모델 흐름 + 과제 -> 판정에 쓰는 흐름. 루프와 CLI 가 같은 함수를 부른다.
+# 허용하는 제거 목록(연구자 파일)도 여기서 읽는다.
+judged_flow = _audit_inputs.judged_flow
+load_allowed_removals = _audit_inputs.load_allowed_removals
+inputs_module = _audit_inputs
 
 # ---- senior_ui/devserver.py · senior_ui/config.py ---------------------- #
 listening = _devserver.listening

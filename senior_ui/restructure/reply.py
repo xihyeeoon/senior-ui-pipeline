@@ -343,13 +343,6 @@ def accept_done_alias(flow):
     return last
 
 
-def _check_derived(flow, html, steps, screens):
-    """새 설계이므로 원본에서 파생된 빌드가 아니다."""
-    if flow.get("derived_from_original", False):
-        return ["derived_from_original 은 false 여야 한다"]
-    return []
-
-
 def _error_paths_of(flow):
     paths = flow.get("error_paths")
     return [e for e in paths if isinstance(e, dict)] if isinstance(paths, list) else []
@@ -486,8 +479,9 @@ def _check_reveal(flow, html, steps, screens):
 
 # 이 순서가 problems 의 순서다.
 CHECKS = [_check_steps, _check_handlers, _check_step_screens, _check_transitions,
-          _check_omissions, _check_ids, _check_expect, _check_derived,
-          _check_coverage]
+          _check_omissions, _check_ids, _check_expect, _check_coverage]
+# derived_from_original 은 보지 않는다. 판정 입력(audit.inputs.judged_flow)이 모델
+# 흐름을 늘 새 설계로 판정하므로, 그 칸 하나로 형식 재시도를 쓰게 할 까닭이 없다.
 # 과제의 완료 화면 짝(done_expect)을 함께 받는 검사들.
 DONE_CHECKS = (_check_ids, _check_expect)
 

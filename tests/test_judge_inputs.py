@@ -157,3 +157,104 @@ def test_the_loop_judges_a_model_flow_as_a_new_design(fake_run_env, out_root):  
     assert seen[0]["derived_from_original"] is False
     assert seen[0]["truth"] == F.task_truth("transfer")
     assert code == 0
+
+
+# --------------------------------------------------------------------- #
+# 3. 버려질 truth 는 검증하지 않는다 (B-02)
+# --------------------------------------------------------------------- #
+BAD_TRUTHS = [
+    # 쉼표가 든 금액 - 원본 흐름이면 멈춰야 할 모양이다
+    {"ACCOUNT": "110234567890", "AMOUNT": "32,000", "BANK": "신한", "NAME": "김철수"},
+    # 필수 키가 빠졌다
+    {"AMOUNT": "32000"},
+]
+
+
+@pytest.mark.parametrize("truth", BAD_TRUTHS, ids=["comma", "missing-keys"])
+def test_a_badly_shaped_model_truth_does_not_stop_the_audit(monkeypatch, tmp_path,
+                                                            truth):
+    """고치기 전: run_audit 이 load_flow 로 모델의 truth 를 먼저 검증해 ValueError 가
+    났다 - 어차피 과제의 정답으로 덮을 값이었다. 루프는 그것을 "검사기가 흐름
+    명세를 실행하지 못했다" 로 받아 검사 예산을 하나 썼다 (감사 R-2)."""
+    report, judged = loop_verdict(monkeypatch, tmp_path, model_flow(truth=truth),
+                                  build_snapshot(TASK_AMOUNT_SHOWN))
+    assert judged["truth"] == F.task_truth("transfer")
+    assert [f for f in report["fatal"] if f["check"] in ("A", "B", None)] == []
+
+
+def test_a_badly_shaped_model_truth_costs_no_retry(fake_run_env, out_root):  # noqa: F811
+    """루프 전체로: 시도는 검사까지 가고, 검사 예산은 그대로이며, 모델이 truth 를
+    적었다는 사실은 기록에 남는다."""
+    seen = spy_on_the_judge(fake_run_env)
+    flow = model_flow(truth=BAD_TRUTHS[0])
+    call = lambda *a, **kw: {"text": reply_text(GOOD_HTML, flow),  # noqa: E731
+                             "finish_reason": "stop", "seconds": 0.0, "usage": None}
+    code, summary = run_loop(fake_run_env, out_root, call, attempts=1)
+    entry = summary["attempts"][0]
+    assert entry["stage"] == "audit" and entry["passed"], entry
+    assert summary["budget"]["audit_used"] == 0
+    assert entry["model_claims_dropped"] == ["truth"]
+    assert seen[0]["truth"] == F.task_truth("transfer")
+    assert code == 0
+
+
+# --------------------------------------------------------------------- #
+# 4. 판정 입력 함수 자체 - 입력과 출력
+# --------------------------------------------------------------------- #
+def test_judged_flow_takes_the_judging_fields_from_the_task():
+    flow = model_flow(truth=MODEL_TRUTH, task="bill", stage="styled",
+                      derived_from_original=True, error_paths_required=[],
+                      choices_removed={"pick-bank": {"values": ["x"], "reason": "r"}})
+    before = json.loads(json.dumps(flow))
+    out = _api.judged_flow(flow, task="transfer", stage="wireframe",
+                           allowed_removals={})
+    assert flow == before                         # 받은 흐름은 그대로
+    assert out["task"] == "transfer"
+    assert out["truth"] == F.task_truth("transfer")
+    assert out["derived_from_original"] is False
+    assert out["choices_removed"] == {}
+    assert out["error_paths_required"] == ["wrong-account", "wrong-bank"]
+    assert out["stage"] == "wireframe"
+    assert out["model_claims_dropped"] == ["truth", "choices_removed", "task", "stage",
+                                           "error_paths_required",
+                                           "derived_from_original"]
+    # 걷는 법은 모델의 것 그대로
+    assert out["steps"] == flow["steps"]
+    assert out["required_ids"] == flow["required_ids"]
+
+
+def test_judged_flow_defaults_are_the_loops_defaults():
+    out = _api.judged_flow(model_flow())
+    assert out["task"] == "transfer"
+    assert out["stage"] == _api.config_module.DEFAULT_STAGE
+    assert out["choices_removed"] == _api.load_allowed_removals("transfer")
+    assert out["model_claims_dropped"] == []
+
+
+def test_judged_flow_reads_the_bill_task():
+    out = _api.judged_flow(model_flow(), task="bill")
+    assert out["truth"] == F.task_truth("bill")
+    assert out["error_paths_required"] == []
+
+
+def test_judged_flow_passes_the_reveal_in_one_shape():
+    """펼치기(11-5)도 판정 입력을 거친다. `do` 는 늘 목록이고, click 하나가 아닌
+    동작은 걷는 쪽이 규칙 위반으로 적도록 그대로 둔다."""
+    flow = model_flow(reveal={"pick-bank": {"at": "start", "do": {"click": "#all"}},
+                              "pick-sec": {"at": "start",
+                                           "do": [{"type": "x", "key": "#k"}]},
+                              "odd": "start"})
+    out = _api.judged_flow(flow)
+    assert out["reveal"] == {"pick-bank": {"at": "start", "do": [{"click": "#all"}]},
+                             "pick-sec": {"at": "start",
+                                          "do": [{"type": "x", "key": "#k"}]},
+                             "odd": {"at": None, "do": []}}
+    assert "reveal" not in _api.judged_flow(model_flow())
+
+
+def test_only_files_under_flows_are_researcher_flows(tmp_path):
+    I = _api.inputs_module
+    assert I.researcher_flow(None)
+    assert I.researcher_flow(os.path.join(ROOT, "flows", "run2.json"))
+    assert not I.researcher_flow(os.path.join(ROOT, "outputs", "x.flow.json"))
+    assert not I.researcher_flow(str(tmp_path / "flows" / "run2.json"))
