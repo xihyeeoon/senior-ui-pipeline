@@ -87,6 +87,7 @@ def back_to_ok(screens, back_to, error_screen, done_screen):
     """
     if back_to == done_screen:
         return False
+    # 오류 화면 자신은 steps 밖(팝업)이어도 둔다 - 원본 팝업 동작과 같고 J 가 걸어서 확인한다 (11-4 결정).
     return back_to == error_screen or back_to in screens
 
 
