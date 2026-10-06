@@ -299,6 +299,8 @@ class Run:
         # 주지 않아도 config 의 기본값을 보낸다 (effort_choice).
         self.api = getattr(args, "api", None)
         self.profile = profile_for(model, self.api)
+        # 그 부르는 방식에서 실제로 보내는 값 (sent_values). 재현 기록은 이것만 적는다.
+        self.sent = sent_values(self.profile, self.temperature, self.seed)
         self.reasoning_effort = effort_choice(self.profile, args)[0]
         # 두 호출의 길이 제한 (output_caps). 주지 않았으면 모델에 맞춘 기본값.
         self.caps = output_caps(self.profile, args)
@@ -344,8 +346,8 @@ class Run:
                         "stage_source": getattr(args, "stage_source", None),
                         "budget_source": {k: v[1] for k, v in budget.items()},
                         "preserved": {}, "plan": None,
-                        "repro": repro(template, temperature=self.temperature,
-                                       seed=self.seed),
+                        "repro": repro(template, temperature=self.sent["temperature"],
+                                       seed=self.sent["seed"]),
                         "attempts": [], "passed": False, "final": None,
                         "budget": {}, "stopped_reason": None, "trend": [],
                         "git": None, "tokens": None,
@@ -421,6 +423,17 @@ MOCK_ENV_NOTE = ("mock: .envs 와 환경 변수(%s)의 모델 값은 읽지 않�
 
 def pick_model(args):
     return model_choice(args)[0]
+
+
+def sent_values(profile, temperature, seed):
+    """`{"temperature", "seed"}` - 그 부르는 방식(model.profile_for)에서 실제로 보내는
+    값. 보내지 않는 것은 None 이다 (model.request_kwargs 와 같은 규칙).
+
+    재현 기록(repro)은 이것만 적는다. 추론형은 temperature 를 받지 않는데 실행
+    전체의 repro 에 0.0 이 적혀, 같은 summary 의 model_call.temperature=false ·
+    시도별 None 과 모순됐다 (감사 B-18)."""
+    return {"temperature": temperature if profile["temperature"] else None,
+            "seed": seed if profile["seed"] else None}
 
 
 def repro(template, reply=None, temperature=TEMPERATURE, seed=SEED):
@@ -686,7 +699,9 @@ def ask_model(r, n, p, prompt, max_tokens, mock, stage, images=None):
               "예상 %d토큰" % (stage, pics["count"], config.IMAGE_WARN_COUNT,
                             pics["estimated"]))
     if r.args.mock:
-        reply = mock(r.args.mock)
+        # mock 의 답은 모델 없이 만든 것이다. 재현 기록은 이 실행의 부르는 방식이
+        # 보냈을 값으로 적는다 - 답이 들고 오는 상수(model.TEMPERATURE)가 아니라.
+        reply = dict(mock(r.args.mock), **r.sent)
     else:
         waited = wait_tokens(r, est + max_tokens)
         if waited:
@@ -757,8 +772,13 @@ def ask_model(r, n, p, prompt, max_tokens, mock, stage, images=None):
               % (pics["count"], call["usage"]["prompt"], text_est,
                  call["measured_images"], pics["estimated"]))
     if reply.get("dropped"):
-        # 모델이 거절해 빼고 보낸 인자 (model.DROPPABLE)
+        # 모델이 거절해 빼고 보낸 인자 (model.DROPPABLE). 그 인자는 이제 보내지 않는
+        # 것이므로 실행 전체의 재현 기록에서도 지운다.
         call["dropped"] = list(reply["dropped"])
+        for k in ("temperature", "seed"):
+            if k in reply["dropped"]:
+                r.sent[k] = None
+                r.summary["repro"][k] = None
     if not r.args.mock:
         # 분당 한도는 모델·계정마다 다르다. 실제 호출이 받은 값을 남긴다.
         call["ratelimit"] = reply.get("ratelimit")

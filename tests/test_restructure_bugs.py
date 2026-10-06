@@ -536,6 +536,64 @@ def test_the_summary_records_it_once_for_the_run(fake_run_env, out_root):
     assert summary["repro"]["response_model"] is None    # 실행 자체는 모델이 없다
 
 
+def sending_reply(dropped=()):
+    """실제 call_model 처럼, 그 모델의 부르는 방식(profile_for)으로 **실제로 보낸**
+    temperature · seed 를 돌려주는 대역. `dropped` 는 모델이 거절해 빼고 보낸 인자."""
+    def call(model_name, prompt, max_tokens, log=None, temperature=None, seed=None,
+             reasoning_effort=None, api=None, **kw):
+        sent = model.request_kwargs(model_name, prompt, max_tokens,
+                                    model.profile_for(model_name, api), temperature,
+                                    seed, reasoning_effort)
+        for k in dropped:
+            sent.pop(k, None)
+        return {"text": GOOD_REPLY, "finish_reason": "stop", "seconds": 0.0,
+                "usage": None, "model": model_name, "system_fingerprint": None,
+                "temperature": sent.get("temperature"), "seed": sent.get("seed"),
+                "dropped": list(dropped)}
+    return call
+
+
+@pytest.mark.parametrize("name,api,temperature,seed", [
+    # 추론형은 temperature 를 보내지 않는다 - 그런데 summary.repro 에는 0.0 이
+    # 적혀 model_call.temperature=false · 시도별 None 과 모순됐다 (감사 B-18).
+    ("gpt-6.1-sol", None, None, 20260101),
+    # Responses API 에는 seed 인자가 없다.
+    ("gpt-6.1-sol", "responses", None, None),
+    # gpt-4o 는 둘 다 보낸다.
+    ("gpt-4o", None, 0.0, 20260101),
+])
+def test_repro_records_only_what_was_sent(fake_run_env, out_root, name, api,
+                                          temperature, seed):
+    _code, summary = run_loop(fake_run_env, out_root, sending_reply(), attempts=1,
+                              model=name, api=api)
+    for where, rec in (("summary", summary["repro"]),
+                       ("attempt", summary["attempts"][0]["repro"])):
+        assert (where, rec["temperature"], rec["seed"]) == (where, temperature, seed)
+    assert summary["model_call"]["temperature"] is (temperature is not None)
+
+
+def test_repro_drops_what_the_model_refused(fake_run_env, out_root):
+    """표에 없는 모델은 gpt-4o 처럼 보내고, 거절된 인자는 빼고 다시 보낸다
+    (model.DROPPABLE). 그러면 그 인자는 보내지 않은 것이다."""
+    _code, summary = run_loop(fake_run_env, out_root, sending_reply(["temperature"]),
+                              attempts=1, model="test-model")
+    assert summary["attempts"][0]["repro"]["temperature"] is None
+    assert summary["repro"]["temperature"] is None
+    assert summary["repro"]["seed"] == 20260101
+
+
+def test_a_mock_attempt_records_what_the_default_model_would_be_sent(fake_run_env,
+                                                                     out_root):
+    """mock 의 답은 모델 없이 만든 것이지만, 기록은 그 실행의 부르는 방식을 따른다 -
+    기본 모델(추론형)이면 temperature 는 보내지 않는 값이다."""
+    _code, summary = run_loop(fake_run_env, out_root, None, attempts=1, model=None,
+                              mock="pass")
+    assert summary["model_call"]["temperature"] is False
+    assert summary["repro"]["temperature"] is None
+    assert summary["attempts"][0]["repro"]["temperature"] is None
+    assert summary["attempts"][0]["repro"]["seed"] == summary["repro"]["seed"]
+
+
 def test_the_prompt_template_is_fingerprinted(fake_run_env, out_root):
     """템플릿이 바뀌면 같은 입력도 다른 답을 낸다. 어느 템플릿이었는지 남긴다."""
     import hashlib
