@@ -94,3 +94,89 @@ def test_the_message_and_the_prompt_show_the_accepted_forms():
             "draw(BANKS, 'pick');</script></body></html>")
     block = _api.choices_block(snap, html)
     assert "const P = window.PRESERVED; P.BANKS" in block
+
+
+# --------------------------------------------------------------------- #
+# 2. 완료 화면 키 - 마지막 화면의 이름
+# --------------------------------------------------------------------- #
+loop = _api.loop_module
+DONE_PROBLEM = "expect 의 키 'done' 는 steps 의 화면이 아니다"
+
+
+def make_run(out_root):
+    """check_reply 하나만 보는 Run. 로그는 리스트에 쌓인다."""
+    import argparse
+    args = argparse.Namespace(
+        attempts=2, format_attempts=None, audit_attempts=None, infra_attempts=3,
+        model="test-model", max_tokens=1000, mock=None, temperature=0.0,
+        seed=20260101, original=None, stage="wireframe", delay=0)
+    lines = []
+    r = loop.Run(args, lines.append, str(out_root), "test-model", "T", "<html></html>")
+    r.log_lines = lines
+    return r
+
+
+def test_astra_wrote_done_for_a_last_screen_named_complete():
+    """astra 의 1·3 번째 답은 마지막 화면을 complete 로 지어 놓고 expect 의 키를
+    done 으로 적었다. 받아들이기 전에는 형식 문제였다."""
+    for n in (1, 3):
+        html, flow = real("astra", n)
+        assert flow["steps"][-1]["screen"] == "complete"
+        assert list(flow["expect"]) == ["done"]
+        assert any(DONE_PROBLEM in p for p in _api.validate_flow(flow, html))
+        assert reply.accept_done_alias(flow) == "complete"
+        assert flow["expect"] == {"complete": [["#dn-amt", "{AMOUNT_SHOWN}"]]}
+        probs = _api.validate_flow(flow, html)
+        assert not any("expect" in p for p in probs), probs
+
+
+def test_done_is_left_alone_when_the_flow_has_a_done_screen():
+    """sol 의 마지막 화면은 정말 done 이다 - 그 칸은 그 화면의 것이다."""
+    _html, flow = real("sol", 1)
+    before = json.dumps(flow, sort_keys=True)
+    assert reply.accept_done_alias(flow) is None
+    assert json.dumps(flow, sort_keys=True) == before
+
+
+def test_done_screen_used_only_by_an_error_path_blocks_the_alias():
+    flow = {"steps": [{"screen": "a"}, {"screen": "b", "click": "#x"}],
+            "expect": {"done": [["#dn-amt", "{AMOUNT_SHOWN}"]]},
+            "error_paths": [{"id": "e", "expect_screen": "done", "back_to": "a"}]}
+    assert reply.accept_done_alias(flow) is None
+    assert "done" in flow["expect"]
+
+
+def test_done_pairs_join_an_existing_last_screen_entry():
+    flow = {"steps": [{"screen": "a"}, {"screen": "fin", "click": "#x"}],
+            "expect": {"fin": [["#x", "1"]],
+                       "done": [["#x", "1"], ["#dn-amt", "{AMOUNT_SHOWN}"]]}}
+    assert reply.accept_done_alias(flow) == "fin"
+    assert flow["expect"] == {"fin": [["#x", "1"], ["#dn-amt", "{AMOUNT_SHOWN}"]]}
+
+
+def test_the_loop_records_that_it_took_done_as_the_last_screen(tmp_path):
+    """받아들였다는 사실은 run.log 와 시도 기록에 남고, 검사기가 여는 흐름
+    명세에는 마지막 화면의 칸으로 적힌다."""
+    r = make_run(tmp_path)
+    text = io.open(os.path.join(REAL, "astra", "attempt_3.response.txt"),
+                   encoding="utf-8").read()
+    entry = {}
+    build, _outcome = loop.check_reply(r, str(tmp_path / "attempt_3"), entry,
+                                       {"text": text, "finish_reason": "stop"})
+    assert entry["done_alias"] == "complete"
+    assert any("'done'" in l and "'complete'" in l for l in r.log_lines)
+    saved = json.load(io.open(build["flow_path"], encoding="utf-8"))
+    assert "done" not in saved["expect"] and "complete" in saved["expect"]
+    assert not any("expect" in p for p in build["problems"]), build["problems"]
+
+
+def test_the_prompt_examples_no_longer_name_the_last_screen_done():
+    """예시의 마지막 화면이 done 이면 모델은 그것을 고정된 키로 읽는다. 완료
+    화면의 키가 마지막 화면의 이름이라는 것을 글로도 적는다."""
+    for task in ("transfer", "bill"):
+        p = _api.load_task(task)["prompt"]
+        example = json.loads("\n".join(p["flow_example"]).replace("\"...\"", "\"x\""))
+        assert example["steps"][-1]["screen"] != "done"
+        assert list(example["expect"]) == [example["steps"][-1]["screen"]]
+        assert "마지막 화면의 이름" in "\n".join(p["flow_done"])
+        assert "`done`" not in "\n".join(p["flow_done"])

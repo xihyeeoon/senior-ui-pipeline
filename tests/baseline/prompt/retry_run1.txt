@@ -310,12 +310,12 @@
       {"type": "{ACCOUNT}", "key": "[data-action='acc-num'][data-v='%s']"},
       {"click": "#acc-next"}
     ]},
-    {"screen": "done", "do": [
+    {"screen": "sent", "do": [
       {"repeat": 4, "click": "#pwpad [data-action='pw']", "wait": 0.15}
     ]}
   ],
   "expect": {
-    "done": [["#dn-amt", "{AMOUNT_SHOWN}"]]
+    "sent": [["#dn-amt", "{AMOUNT_SHOWN}"]]
   },
   "done_amount": "#dn-amt",
   "error_paths": [
@@ -349,7 +349,9 @@
   `expect_screen` 은 그 화면 그대로이고, 새로 보인 이유 글이 오류 상태다.
 - `back_to` 는 오류가 나타난 화면이거나 `steps` 에서 그보다 앞의 화면이다.
 - `required_ids` 는 네 HTML 에 실제로 있는 id 만 적는다. `phone` 과 `dn-amt` 는 반드시 포함.
-- `expect` 의 `done` 에는 반드시 `["#dn-amt", "{AMOUNT_SHOWN}"]` 이 있어야 한다.
+- 완료 화면은 `steps` 의 마지막 화면이다. `expect` 에서 완료 화면의 키는 **마지막 화면의 이름** 이다 —
+  네가 지은 이름을 그대로 쓴다 (예시의 `sent` 도 그 설계의 마지막 화면 이름일 뿐이다). 그 칸에는
+  반드시 `["#dn-amt", "{AMOUNT_SHOWN}"]` 이 있어야 한다. `expect` 의 키는 `steps` 의 화면 이름이다.
 - `derived_from_original` 은 `false`.
 - 선택자는 네 HTML 에 있는 것만 쓴다. 검사기는 없는 선택자에서 멈춘다.
 

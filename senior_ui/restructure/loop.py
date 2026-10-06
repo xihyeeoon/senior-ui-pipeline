@@ -47,7 +47,7 @@ from .preserve import inject, names_read, preserved_data
 from .prompt import (build_plan_prompt, build_prompt, choices_block, errors_block,
                      load_plan_template, load_template, one_line, plan_retry_block,
                      retry_block, with_reflection)
-from .reply import (FlowShape, failure_report, parse_reply,
+from .reply import (FlowShape, accept_done_alias, failure_report, parse_reply,
                     preserved_problems, problems_report, validate_flow)
 
 def runs_dir(mock=False):
@@ -737,6 +737,13 @@ def check_reply(r, p, entry, reply, n=None):
         dropped = drop_declared_removals(r, flow)
         if dropped:
             entry["choices_removed_dropped"] = dropped
+        # 마지막 화면을 다른 이름으로 지어 놓고 완료 칸만 "done" 으로 적은 흐름.
+        # done 화면이 없을 때만 받고, 받은 사실을 남긴다 (reply.accept_done_alias).
+        alias = accept_done_alias(flow)
+        if alias:
+            entry["done_alias"] = alias
+            r.log("flow: expect 의 'done' 을 마지막 화면 %r 의 칸으로 받았다 - 흐름 "
+                  "명세에 done 화면이 없다" % alias)
         # 과제가 정한 오류 경로를 모두 적었는지, 완료 화면에서 과제의 값을
         # 확인하는지도 본다 (과제 파일 · 과제의 원본 흐름).
         problems = validate_flow(flow, html, r.errors, r.task["done_expect"])

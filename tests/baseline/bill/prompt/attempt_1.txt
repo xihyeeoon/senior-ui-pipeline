@@ -172,12 +172,12 @@
       {"type": "{QUERY}", "key": "#find-input"},
       {"click": "[data-action='pick-pay']"}
     ]},
-    {"screen": "done", "do": [
+    {"screen": "paid", "do": [
       {"repeat": 4, "click": "#pwpad [data-action='pw']", "wait": 0.15}
     ]}
   ],
   "expect": {
-    "done": [["#dn-paid", "{AMOUNT_SHOWN}"], ["#dn-eno", "{ENO}"]]
+    "paid": [["#dn-paid", "{AMOUNT_SHOWN}"], ["#dn-eno", "{ENO}"]]
   },
   "done_amount": "#dn-paid"
 }
@@ -195,8 +195,9 @@
   보여야 할 값이다. 설계에 검색어를 미리 채워 두라는 뜻이 아니다.
 - `steps` 는 홈에서 납부 메뉴를 찾아 납부를 마치는 가장 긴 경로다. HTML 의 모든 화면을 `steps` 가 지나가야 한다.
 - `required_ids` 는 네 HTML 에 실제로 있는 id 만 적는다. `phone` · `dn-paid` · `dn-eno` 는 반드시 포함.
-- 완료 화면은 `steps` 의 마지막 화면이다. `expect` 의 그 화면 칸에는 반드시 `["#dn-paid", "{AMOUNT_SHOWN}"]` 과
-  `["#dn-eno", "{ENO}"]` 이 있어야 한다. `expect` 의 키는 `steps` 의 화면 이름이다.
+- 완료 화면은 `steps` 의 마지막 화면이다. `expect` 에서 완료 화면의 키는 **마지막 화면의 이름** 이다 —
+  네가 지은 이름을 그대로 쓴다 (예시의 `paid` 도 그 설계의 마지막 화면 이름일 뿐이다). 그 칸에는
+  반드시 `["#dn-paid", "{AMOUNT_SHOWN}"]` 과 `["#dn-eno", "{ENO}"]` 이 있어야 한다. `expect` 의 키는 `steps` 의 화면 이름이다.
 - `derived_from_original` 은 `false`.
 - 선택자는 네 HTML 에 있는 것만 쓴다. 검사기는 없는 선택자에서 멈춘다.
 

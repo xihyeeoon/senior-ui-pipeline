@@ -289,6 +289,42 @@ def _check_expect(flow, html, steps, screens, done=None):
     return problems
 
 
+DONE_ALIAS = "done"
+
+
+def accept_done_alias(flow):
+    """expect 의 "done" 칸을 마지막 화면의 칸으로 옮긴다. 옮겼으면 그 화면 이름을,
+    아니면 None 을 돌려준다. 흐름 명세를 제자리에서 바꾼다.
+
+    완료 화면의 칸은 마지막 화면의 이름이다 (_check_expect). 그런데 gpt-6-astra 는
+    마지막 화면을 complete 로 지어 놓고 expect 의 키를 "done" 으로 네 번 중 두 번
+    적었다 - 원본의 완료 화면 이름이 done 이고, 전의 프롬프트 예시도 done 이었다.
+    무엇을 확인할지는 맞게 적었으므로 설계 실패가 아니다.
+
+    그래서 흐름 명세에 "done" 이라는 화면이 **없을 때만** 마지막 화면의 별칭으로
+    받는다. done 화면이 있으면 그 칸은 그 화면의 것이므로 건드리지 않는다 -
+    그때 칸이 어긋난 것은 _check_expect 가 그대로 문제로 센다. 마지막 화면 칸이
+    이미 있으면 거기 없는 짝만 더한다. 받았다는 사실은 부르는 쪽이 남긴다."""
+    expect = flow.get("expect")
+    if not isinstance(expect, dict) or DONE_ALIAS not in expect:
+        return None
+    steps = _steps_of(flow)
+    named = {st.get("screen") for st in steps if isinstance(st, dict)}
+    for e in _error_paths_of(flow):
+        named |= {e.get("expect_screen"), e.get("back_to")}
+    visits = _visits(steps)
+    if not visits or DONE_ALIAS in named:
+        return None
+    last = visits[-1]
+    moved = expect.pop(DONE_ALIAS)
+    pairs = list(expect.get(last) or [])
+    for p in moved if isinstance(moved, list) else []:
+        if p not in pairs:
+            pairs.append(p)
+    expect[last] = pairs
+    return last
+
+
 def _check_derived(flow, html, steps, screens):
     """새 설계이므로 원본에서 파생된 빌드가 아니다."""
     if flow.get("derived_from_original", False):
