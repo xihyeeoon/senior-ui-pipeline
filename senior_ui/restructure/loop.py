@@ -27,16 +27,20 @@ import shutil
 import subprocess
 import sys
 import time
+import traceback
+
+from playwright.async_api import Error as PlaywrightError
 
 from senior_ui import audit as A
 from senior_ui import config
 from senior_ui.audit.drive import SHOT_SAFE
 from senior_ui.audit.flow import required_errors
+from senior_ui.audit.inputs import load_allowed_removals, model_claims
 from senior_ui.config import OUTPUTS_ENV, ROOT, inside_root, outputs_dir, url_for
 from senior_ui.devserver import ensure_server
 from senior_ui.tasks import DEFAULT_TASK, abs_path, load_task
 
-from .audit_call import load_allowed_removals, run_audit
+from .audit_call import run_audit
 from .brief import write_brief
 from .model import (MOCK_TASK, TEMPERATURE, SEED, ApiRejected, InfraFailed,
                     RateLimited, call_model, cost_usd, describe, describe_ratelimit,
@@ -97,14 +101,15 @@ def stage_choice(args):
 
 
 def budget_choice(args):
-    """`{"format": (횟수, 출처), "audit": (횟수, 출처)}`.
+    """`{"format": (횟수, 출처), "audit": (횟수, 출처), "infra": (횟수, 출처)}`.
 
-    예산마다 --format-attempts · --audit-attempts, 그다음 둘을 한 번에 정하는
-    --attempts, 그다음 config.DEFAULT_BUDGET 순서다."""
+    예산마다 --format-attempts · --audit-attempts · --infra-attempts, 그다음 설계
+    예산 둘을 한 번에 정하는 --attempts (infra 에는 닿지 않는다), 그다음
+    config.DEFAULT_BUDGET 순서다."""
     out = {}
-    for kind in ("format", "audit"):
+    for kind in ("format", "audit", "infra"):
         own = getattr(args, kind + "_attempts", None)
-        both = getattr(args, "attempts", None)
+        both = getattr(args, "attempts", None) if kind != "infra" else None
         if own is not None:
             out[kind] = (own, "--%s-attempts" % kind)
         elif both is not None:
@@ -171,6 +176,8 @@ def describe_settings(stage, budget):
     (f, fs), (a, as_) = budget["format"], budget["audit"]
     money = ("예산 형식 %d · 검사 %d (출처 %s)" % (f, a, fs) if fs == as_
              else "예산 형식 %d (출처 %s) · 검사 %d (출처 %s)" % (f, fs, a, as_))
+    if "infra" in budget:
+        money += " · 인프라 %d (출처 %s)" % budget["infra"]
     return "stage=%s (출처 %s) · %s" % (stage[0], stage[1], money)
 
 
@@ -207,7 +214,7 @@ class Budget:
     쓰지 않아서, 키가 틀리면 루프가 끝나지 않았다.
     """
 
-    def __init__(self, fmt, aud, infra=3):
+    def __init__(self, fmt, aud, infra):
         self.budget = {"format": fmt, "audit": aud, "infra": infra}
         self.used = {"format": 0, "audit": 0, "infra": 0}
 
@@ -237,6 +244,15 @@ class Budget:
         return {"format_used": self.used["format"], "format_budget": self.budget["format"],
                 "audit_used": self.used["audit"], "audit_budget": self.budget["audit"],
                 "infra_used": self.used["infra"], "infra_budget": self.budget["infra"]}
+
+
+class Stopped(Exception):
+    """설계와 무관한 이유로 실행을 여기서 끝낸다 - 시도 안 깊은 곳(검사기 호출)
+    에서 run() 까지 곧장 올라간다. `reason` 이 summary.stopped_reason 이 된다."""
+
+    def __init__(self, reason):
+        Exception.__init__(self, reason)
+        self.reason = reason
 
 
 class Run:
@@ -300,7 +316,7 @@ class Run:
         self.orig_snapshot = None
         budget = budget_choice(args)
         self.budget = Budget(budget["format"][0], budget["audit"][0],
-                             getattr(args, "infra_attempts", 3))
+                             budget["infra"][0])
         # 보기 (--see): 원본 그림을 진단·계획 호출에 넣는가. 원본 그림은 실행
         # 시작 때 한 번 찍는다 (run).
         self.see, see_source = see_choice(args)
@@ -695,14 +711,18 @@ def ask_model(r, n, p, prompt, max_tokens, mock, stage, images=None):
                                           "passed": False, "error": str(e),
                                           "calls": list(r.calls)})
             return None, STOP
-        except Exception as e:                       # 연결 실패·타임아웃·그 밖
+        except InfraFailed as e:                     # 연결 실패·타임아웃·5xx
             # 설계 실패가 아니므로 형식·검사 예산은 건드리지 않는다. 대신 인프라
             # 예산을 쓴다 - 다시 될 수도 있지만 무한히 기다리지는 않는다.
             #
             # 오류 문구는 프롬프트로 가지 않는다 (r.last 를 그대로 둔다). 모델이
             # 고칠 수 있는 것이 아니고, 직전에 검사받은 빌드의 실패 목록을
             # API 오류로 덮으면 다음 시도가 고칠 것을 잃는다.
-            kind = "InfraFailed" if isinstance(e, InfraFailed) else type(e).__name__
+            #
+            # 그 밖의 예외는 여기서 받지 않는다. 바깥 문제는 call_model 이 셋
+            # (RateLimited · ApiRejected · InfraFailed)으로 갈라 올리므로, 그 밖의
+            # 것은 도구의 버그다 - run() 이 실행을 멈추고 2 로 끝낸다 (D-6).
+            kind = "InfraFailed"
             r.budget.spend("infra")
             r.log("model: 호출 실패 (인프라 %d/%d) — %s: %s"
                   % (r.budget.infra_used, r.budget.budget["infra"], kind, e))
@@ -805,27 +825,29 @@ def request_reply(r, n, p, stage=None, mock=None):
     return reply, None
 
 
-def drop_declared_removals(r, flow):
-    """모델이 쓴 choices_removed 를 지운다. 지운 action 이름을 돌려준다.
+def note_model_claims(r, entry, flow):
+    """모델이 흐름 명세에 적은 판정 기준(truth · choices_removed · stage 등)을
+    남긴다. 버리는 일은 판정 입력을 만드는 곳(audit.inputs.judged_flow)이 한다 -
+    루프와 검사기 CLI 가 같은 함수를 거치므로, 여기서 따로 지우면 두 곳이 같은
+    일을 하게 된다. 흐름 명세 파일은 모델이 쓴 그대로 남는다.
 
-    검사 I 는 흐름 명세의 choices_removed 를 읽어 그 값을 누락으로 세지 않는다.
-    그 선언은 "연구자가 안전을 이유로 뺐다" 는 뜻인데, 여기서는 흐름 명세를
-    모델이 쓴다 - 모델이 스스로 그것을 적으면 자기가 뺀 선택지를 자기가 면제해
-    검사 I 를 피해 간다.
-
-    허용하는 제거는 연구자가 관리하는 파일에서만 온다 (audit_call). 그 목록은
-    검사 직전에 합쳐지므로, 여기서 지우는 것은 모델의 말뿐이다.
-
-    조용히 지우지 않는다. 남기지 않으면 "모델이 적지 않았다" 와 "적었는데
-    지웠다" 를 구분할 수 없고, 모델이 검사를 피하려 했다는 사실 자체가 결과다.
+    조용히 넘어가지 않는다. 남기지 않으면 "모델이 적지 않았다" 와 "적었는데
+    버렸다" 를 구분할 수 없고, 모델이 판정 기준을 고르려 했다는 것 자체가
+    결과다. choices_removed 는 검사 I 를 피해 가는 장치였으므로 action 이름까지
+    적는다 - 허용하는 제거는 flows/allowed_removals.json 에서만 읽는다.
     """
-    spec = flow.pop("choices_removed", None)
-    if not spec:
-        return []
-    names = sorted(spec) if isinstance(spec, dict) else [str(spec)]
-    r.log("flow: 모델이 쓴 choices_removed 를 지웠다 (%s). 허용하는 제거는 "
-          "flows/allowed_removals.json 에서만 읽는다." % ", ".join(names))
-    return names
+    claims = model_claims(flow, r.task["id"])
+    if not claims:
+        return
+    entry["model_claims_dropped"] = claims
+    if "choices_removed" in claims:
+        spec = flow["choices_removed"]
+        names = sorted(spec) if isinstance(spec, dict) else [str(spec)]
+        entry["choices_removed_dropped"] = names
+        r.log("flow: 모델이 쓴 choices_removed 를 판정에 쓰지 않는다 (%s). 허용하는 "
+              "제거는 flows/allowed_removals.json 에서만 읽는다." % ", ".join(names))
+    r.log("flow: 모델이 쓴 판정 기준 %s 는 판정에 쓰지 않는다 - 과제와 연구자 파일의 "
+          "것으로 판정한다" % ", ".join(claims))
 
 
 def note_reflection(r, p, entry, text):
@@ -900,10 +922,7 @@ def check_reply(r, p, entry, reply, n=None):
                              "코드 블록 두 개만, 군더더기 없이 출력하라")
         html, flow, flow_text = parse_reply(reply["text"])
         flow.setdefault("name", "auto")
-        flow["derived_from_original"] = False
-        dropped = drop_declared_removals(r, flow)
-        if dropped:
-            entry["choices_removed_dropped"] = dropped
+        note_model_claims(r, entry, flow)
         # 마지막 화면을 다른 이름으로 지어 놓고 완료 칸만 "done" 으로 적은 흐름.
         # done 화면이 없을 때만 받고, 받은 사실을 남긴다 (reply.accept_done_alias).
         alias = accept_done_alias(flow)
@@ -1012,7 +1031,7 @@ def audit_build(r, n, entry, build):
         r.budget.spend("format")
         return problems_report(problems)
 
-    report = _drive_audit(r, n, build)
+    report = _drive_audit(r, n, entry, build)
     # 펼치기(reveal) 규칙 위반은 흐름 명세의 형식 문제다 - 검사기가 걸어 봐야 알 수
     # 있어 검사 I 의 fatal 로 오지만, 형식 예산을 쓴다.
     violated = [f["detail"] for f in report.get("fatal") or [] if f.get("reveal_violation")]
@@ -1030,23 +1049,43 @@ def audit_build(r, n, entry, build):
     return report
 
 
-def _drive_audit(r, n, build):
-    """브라우저를 띄워 한 번 걷는다. 검사기가 흐름을 아예 실행하지 못하는 것도
-    결과이므로 리포트 모양으로 바꿔 돌려준다."""
+def _drive_audit(r, n, entry, build):
+    """브라우저를 띄워 한 번 걷는다.
+
+    설계가 걷기를 막는 것(선택자가 없다 · 화면이 켜지지 않는다)은 걷기가 리포트에
+    적는다 - 설계 실패다. 여기까지 올라오는 예외는 둘 중 하나다 (감사 D-6 (가)).
+
+      바깥 문제   브라우저(Playwright)가 실패했거나 시간 안에 답하지 않았다. 인프라
+                  예산 하나를 쓰고 **같은 빌드**를 다시 검사한다 - 모델과 무관하다.
+                  예산을 다 쓰면 실행을 멈춘다 (infra_exhausted, 종료 2).
+      도구 버그   그 밖의 예외. 잡지 않는다 - run() 이 멈추고 2 로 끝낸다. 전에는
+                  "검사기가 흐름 명세를 실행하지 못했다" 로 모델에게 가고 검사 예산을
+                  썼다 - 모델이 고칠 수 없는 것을 고치라고 했다.
+    """
     rel = os.path.relpath(build["html_path"], ROOT).replace(os.sep, "/")
     shots = os.path.join(r.run_dir, "shots", "attempt_%d" % n)
     os.makedirs(shots, exist_ok=True)
-    try:
-        return run_audit(r.orig_snapshot, r.original_html, build["html_path"],
-                         build["flow_path"], url_for(rel), shots, r.args.stage,
-                         original_url=r.original_url,
-                         allowed_removals=r.allowed_removals,
-                         task=r.task["id"],
-                         **({"see": True} if r.refine > 0 else {}))
-    except Exception as e:                           # a flow the audit cannot drive
-        r.log("audit: crashed: %s: %s" % (type(e).__name__, e))
-        return failure_report("AUDIT", "검사기가 흐름 명세를 실행하지 못했다: %s: %s"
-                              % (type(e).__name__, e))
+    while True:
+        try:
+            return run_audit(r.orig_snapshot, r.original_html, build["html_path"],
+                             build["flow_path"], url_for(rel), shots, r.args.stage,
+                             original_url=r.original_url,
+                             allowed_removals=r.allowed_removals,
+                             task=r.task["id"],
+                             **({"see": True} if r.refine > 0 else {}))
+        except PlaywrightError as e:
+            why = "%s: %s" % (type(e).__name__, one_line(str(e))[:300])
+            r.budget.spend("infra")
+            entry.setdefault("audit_infra_failures", []).append(why)
+            r.log("audit: 브라우저 실패 (인프라 %d/%d) — %s"
+                  % (r.budget.infra_used, r.budget.budget["infra"], why))
+            if r.budget.out_of("infra"):
+                r.log("인프라 재시도 예산 소진 (%d회) — 검사기를 돌리지 못했다"
+                      % r.budget.infra_used)
+                entry.update(stage="audit_infra", passed=False)
+                r.summary["attempts"].append(entry)
+                raise Stopped("infra_exhausted")
+            r.log("audit: 같은 빌드를 다시 검사한다")
 
 
 def _note_audit(r, n, report):
@@ -1470,14 +1509,30 @@ def _refine_passed(r, k, n, row, critique, finish):
 # 이 이유로 멈춘 실행은 "빌드가 떨어졌다" 가 아니라 "돌지 못했다" 다. 부르는
 # 쪽은 둘을 구분해야 한다 - 떨어진 빌드는 다시 만들고, 돌지 못한 실행은 다시
 # 만들 것이 없다. senior_ui.audit 의 종료 코드 규약과 같다 (docs/README.md).
-CANNOT_RUN = {"rate_limit", "api_rejected", "infra_exhausted", "cannot_start"}
+CANNOT_RUN = {"rate_limit", "api_rejected", "infra_exhausted", "cannot_start",
+              "internal_error"}
 
 
 def exit_code(summary):
-    """0 = 통과한 빌드가 있다, 1 = 전부 실패, 2 = 아예 돌지 못했다."""
+    """0 = 통과한 빌드가 있다, 1 = 전부 실패, 2 = 아예 돌지 못했다.
+
+    도구가 버그로 멈췄으면(internal_error) 통과한 빌드가 있어도 2 다. 0 이면
+    부르는 쪽은 그 실행이 끝까지 멀쩡히 돌았다고 믿는다 - 다듬기나 승격 도중에
+    멈췄어도."""
+    if summary.get("stopped_reason") == "internal_error":
+        return 2
     if summary.get("passed"):
         return 0
     return 2 if summary.get("stopped_reason") in CANNOT_RUN else 1
+
+
+def note_internal_error(r, e):
+    """도구의 버그로 멈췄다. 역추적은 run.log 에, 종류와 문구는 summary 에 남긴다.
+    설계 실패로 세지 않고(예산을 쓰지 않는다) 모델에게도 보내지 않는다."""
+    r.log("내부 오류 — 도구의 버그로 실행을 멈춘다 (설계 실패로 세지 않는다):\n%s"
+          % traceback.format_exc().rstrip())
+    r.summary["stopped_reason"] = "internal_error"
+    r.summary["error"] = "%s: %s" % (type(e).__name__, e)
 
 
 def run(args):
@@ -1503,16 +1558,21 @@ def run(args):
     log = make_logger(os.path.join(run_dir, "run.log"))
     git = git_state()
 
-    try:
-        load_env()
-    except RuntimeError as e:
-        log("cannot start: %s" % e)
-        print("cannot start: %s" % e, file=sys.stderr)
+    def cannot_start(why):
+        """실행을 시작하지 못했다 (종료 2). Run 이 서기 전이라도 summary 를 남긴다 -
+        남기지 않으면 그 실행 폴더에는 run.log 조각만 있다 (감사 B-16)."""
+        log("cannot start: %s" % why)
+        print("cannot start: %s" % why, file=sys.stderr)
         _dump({"run_dir": run_dir, "task": task_name, "passed": False, "attempts": [],
-               "stopped_reason": "cannot_start", "error": str(e), "git": git},
+               "stopped_reason": "cannot_start", "error": str(why), "git": git},
               os.path.join(run_dir, "summary.json"))
         log("summary: %s" % os.path.join(run_dir, "summary.json"))
         return 2
+
+    try:
+        load_env()
+    except RuntimeError as e:
+        return cannot_start(e)
     # 첫 줄은 모델이다 - 어느 모델로 돌았는지가 run.log 를 여는 사람에게 가장 먼저
     # 보여야 한다. 모델은 .envs 의 환경 변수로도 정해지므로 키를 읽은 뒤에 고른다.
     # API 가 답한 실제 판 이름은 호출마다 "model: 응답 모델" 줄로, 실행 전체는
@@ -1551,8 +1611,7 @@ def run(args):
            call_delay(profile, args),
            " + 남은 토큰이 모자라면 더" if profile["reasoning"] else ""))
     if not args.mock and not os.environ.get("OPENAI_API_KEY"):
-        print("no OPENAI_API_KEY in the environment or .envs", file=sys.stderr)
-        return 2
+        return cannot_start("no OPENAI_API_KEY in the environment or .envs")
 
     try:
         # 과제가 프롬프트의 과제 설명과 기본 원본을 정한다. 과제를 주지 않은
@@ -1571,22 +1630,21 @@ def run(args):
         orig_url = original_url(args.original)
         allowed = load_allowed_removals(task["id"])
     except (OSError, RuntimeError, ValueError) as e:
-        log("cannot start: %s" % e)
-        print("cannot start: %s" % e, file=sys.stderr)
-        _dump({"run_dir": run_dir, "task": task_name, "passed": False, "attempts": [],
-               "stopped_reason": "cannot_start", "error": str(e), "git": git},
-              os.path.join(run_dir, "summary.json"))
-        log("summary: %s" % os.path.join(run_dir, "summary.json"))
-        return 2
+        return cannot_start(e)
 
     budget = budget_choice(args)
     log("run: %s | model=%s | 예산 형식 %d · 검사 %d | stage=%s | mock=%s | original=%s"
         % (run_dir, model, budget["format"][0], budget["audit"][0], args.stage,
            args.mock, orig_url)
         + ("" if task["id"] == DEFAULT_TASK else " | task=%s" % task["id"]))
-    r = Run(args, log, run_dir, model, template, original_html, orig_url,
-            plan_template=plan_template, task=task, model_source=source,
-            refine_template=refine_template)
+    try:
+        # 과제의 필수 오류 경로(required_errors)가 원본 흐름에 정의되지 않았으면
+        # 여기서 멈춘다 - 과제 파일의 문제이고 실행을 시작할 수 없다.
+        r = Run(args, log, run_dir, model, template, original_html, orig_url,
+                plan_template=plan_template, task=task, model_source=source,
+                refine_template=refine_template)
+    except (OSError, RuntimeError, ValueError) as e:
+        return cannot_start(e)
     r.summary["git"] = git
     r.allowed_removals = allowed
     if allowed:
@@ -1606,17 +1664,29 @@ def run(args):
         # 대비·언어 검사의 기준이 되는 원본 스냅샷. 실행마다 한 번만 걷는다.
         # 과제의 원본 흐름으로 걷는다 - 다른 과제의 흐름으로 걸으면 첫 화면에서
         # 멈추고, 선택지 요약 · 지킬 데이터가 빈다.
-        base_flow = A.load_flow(None, task=task["id"])
-        log("audit: driving the original once (baseline for contrast / language)")
         # 비교 기준으로만 쓰므로 원본의 오류 경로는 걷지 않는다 - 모델의 설계는
         # 원본과 화면이 다르고, 오류 경로는 생성물의 흐름으로 걷는다.
         #
         # 보기가 켜져 있으면(--see) 같은 걷기에서 원본 화면을 찍는다 - 진단·계획
         # 호출에 그림으로 들어간다. 오류 상태도 찍으려고 오류 경로까지 걷지만,
         # 그 결과는 스냅샷에서 떼어 둔다 - 비교 기준은 전과 같아야 한다.
+        #
+        # 원본 흐름을 읽지 못했거나 브라우저가 원본을 걷지 못했으면 비교 기준이
+        # 없다 - 시작하지 못한 것이다 (종료 2). 전에는 역추적과 함께 종료 1(= 전부
+        # 실패)이었다 (감사 B-16). 그 밖의 예외는 도구의 버그다 (아래 except).
         shots = os.path.join(run_dir, "shots", "original") if r.see else None
-        snap = asyncio.run(A.drive(r.original_url, base_flow, errors=r.see,
-                                   want_shots=shots, see=r.see))
+        try:
+            base_flow = A.load_flow(None, task=task["id"])
+            log("audit: driving the original once (baseline for contrast / language)")
+            snap = asyncio.run(A.drive(r.original_url, base_flow, errors=r.see,
+                                       want_shots=shots, see=r.see))
+        except (PlaywrightError, OSError, ValueError) as e:
+            why = "원본을 걷지 못했다: %s: %s" % (type(e).__name__, one_line(str(e)))
+            log("cannot start: %s" % why)
+            print("cannot start: %s" % why, file=sys.stderr)
+            r.summary["stopped_reason"] = "cannot_start"
+            r.summary["error"] = why
+            return exit_code(r.summary)
         snap.pop("error_paths", None)
         r.orig_snapshot = snap
         r.original_images = see_images(shots, ORIGINAL_LABELS,
@@ -1653,6 +1723,13 @@ def run(args):
             if r.summary["stopped_reason"] is None:
                 r.summary["stopped_reason"] = "budget_exhausted"
         log_trend(r)
+    except Stopped as e:
+        # 설계와 무관한 이유로 멈췄다 (검사기의 인프라 예산 소진 등). 무엇 때문인지는
+        # 멈춘 곳이 run.log 에 이미 적었다.
+        r.summary["stopped_reason"] = e.reason
+    except Exception as e:
+        # 도구의 버그 (감사 D-6 (가)). 예산을 쓰는 실패로 바꾸지 않고 여기서 멈춘다.
+        note_internal_error(r, e)
     finally:
         if server:
             server.terminate()

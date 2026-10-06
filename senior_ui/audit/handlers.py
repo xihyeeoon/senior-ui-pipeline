@@ -31,6 +31,11 @@ CASE = re.compile(r"\bcase\s*['\"]([\w-]+)['\"]", re.ASCII)
 
 PATTERNS = (BRANCH, CASE)
 
+# 문서에 글자 그대로 적힌 data-action 이름. 스크립트의 템플릿이 그리는 이름
+# (`data-action="${'num'}"`, `data-action="key-${k}"`)은 렌더되기 전에는 이름이
+# 아니다 - 원본의 keyButtons 가 이 관용구를 쓴다.
+ATTR = re.compile(r'data-action="([^"]+)"')
+
 
 def handled_actions(html):
     """`html` 의 처리기가 분기로 다루는 data-action 이름의 집합."""
@@ -38,3 +43,14 @@ def handled_actions(html):
     for p in PATTERNS:
         out |= set(p.findall(html))
     return out
+
+
+def literal_actions(html):
+    """`html` 에 글자 그대로 적힌 data-action 이름의 집합. 템플릿(`${…}`)이 든
+    값은 뺀다.
+
+    검사 C 는 렌더된 DOM 의 data-action 으로 판정한다 - 템플릿이 그린 조작부도
+    렌더된 이름(num)으로 본다. 브라우저 없이 미리 보는 형식 검사는 렌더된 이름을
+    알 수 없으므로 템플릿 값은 판단하지 않고 검사 C 에 맡긴다. `${'num'}` 을
+    이름으로 읽으면 분기가 멀쩡한 설계가 형식에서 떨어진다 (감사 B-11)."""
+    return {a for a in ATTR.findall(html) if "${" not in a}

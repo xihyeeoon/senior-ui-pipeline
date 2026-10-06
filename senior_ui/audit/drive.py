@@ -602,6 +602,13 @@ async def _where(page):
             "dom_screen": await page.evaluate(P.DOM_SCREEN)}
 
 
+async def _dialogs_so_far(ed):
+    """지금까지 뜬 대화상자 수. 처리기는 task 로 돌므로 한 번 양보해 이미 뜬
+    것이 목록에 들어가게 한다 (attach_listeners)."""
+    await asyncio.sleep(0)
+    return len(ed["dialogs"])
+
+
 async def walk_error_path(browser, url, flow, ep, want_shots=None):
     """오류 경로 하나를 새 페이지에서 걷는다. 판정은 하지 않는다 (검사 J).
 
@@ -661,6 +668,10 @@ async def walk_error_path(browser, url, flow, ep, want_shots=None):
                 await run_actions(page, inputs[:-1], None, truth)
             row["trigger"] = await _where(page)
             row["before_text"] = await _visible_text(page)
+            # 여기까지 뜬 대화상자는 정답 걸음을 다시 밟다 뜬 것이다 - 정답
+            # 경로에서 이미 셌다. 이 뒤의 것이 잘못된 입력과 되돌아가기의 것이다
+            # (검사 B 가 판정하고, 오류 상태까지의 것은 J 가 알림 글로 본다).
+            row["dialogs_at_trigger"] = await _dialogs_so_far(ed)
             if inputs:
                 await run_actions(page, inputs[-1:], None, truth)
         except Exception as e:
@@ -669,6 +680,7 @@ async def walk_error_path(browser, url, flow, ep, want_shots=None):
         row["settled"] = await settle(page, ep.get("expect_screen"))
         row["after"] = await _where(page)
         row["after_text"] = await _visible_text(page)
+        row["dialogs_at_after"] = await _dialogs_so_far(ed)
         if want_shots:
             # 오류 상태의 모습. 디자이너용 설명서의 오류 경로 표가 가리킨다.
             await page.screenshot(path=os.path.join(

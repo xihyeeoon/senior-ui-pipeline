@@ -869,15 +869,19 @@ def test_check_I_catches_values_the_model_declared_removed(fake_run_env, out_roo
 
     def spy(orig_snapshot, orig_html, html_path, flow_path, url, shots, stage,
             original_url=None, allowed_removals=None, task=None):
-        seen["flow"] = json.load(io.open(flow_path, encoding="utf-8"))
+        # 판정 입력은 루프와 CLI 가 함께 쓰는 judged_flow 가 만든다 (11-6).
+        # 흐름 명세 파일은 모델이 쓴 그대로이고, 검사기가 받는 것은 이것이다.
+        seen["flow"] = _api.judged_flow(
+            json.load(io.open(flow_path, encoding="utf-8")), task=task, stage=stage,
+            allowed_removals=allowed_removals)
         return passing_report()
 
     fake_run_env.setattr(loop, "run_audit", spy)
     call = replies(reply_text(GOOD_HTML, REMOVED_FLOW))
     _code, summary = run_loop(fake_run_env, out_root, call, attempts=1)
 
-    # 검사기에 가는 흐름 명세에는 모델이 쓴 선언이 없어야 한다
-    assert "choices_removed" not in seen["flow"]
+    # 검사기에 가는 흐름에는 모델이 쓴 선언이 없어야 한다 - 연구자 파일의 것만
+    assert seen["flow"]["choices_removed"] == {}
     assert summary["attempts"][0]["choices_removed_dropped"] == ["pick-bank"]
 
 
@@ -902,15 +906,15 @@ def test_the_allowed_list_comes_from_the_researchers_file():
     assert allowed == {}          # 지금은 비어 있다 - 무엇을 넣을지는 연구자가 정한다
 
 
-def test_the_allowed_list_is_merged_just_before_the_audit(tmp_path):
-    """합치는 자리는 검사 직전이다 - 모델이 쓴 흐름 명세에 섞이지 않는다."""
-    flow = {"name": "auto", "steps": [{"screen": "start"}]}
-    path = tmp_path / "flow.json"
-    path.write_text(json.dumps(flow), encoding="utf-8")
+def test_the_allowed_list_is_merged_just_before_the_audit():
+    """합치는 자리는 판정 입력을 만드는 곳이다 - 모델이 쓴 흐름 명세에 섞이지
+    않고, 모델이 쓴 선언은 연구자의 목록으로 바뀐다."""
+    flow = dict(REMOVED_FLOW)
     allowed = {"quick": {"values": ["all"], "reason": "연구자가 허용했다"}}
 
-    merged = _api.merge_allowed_removals(_api.load_flow(str(path)), allowed)
-    assert merged["choices_removed"] == allowed
+    judged = _api.judged_flow(flow, allowed_removals=allowed)
+    assert judged["choices_removed"] == allowed
+    assert "pick-bank" in flow["choices_removed"]      # 받은 흐름은 그대로
 
 
 def test_the_declared_values_are_still_counted_when_nobody_allowed_them():

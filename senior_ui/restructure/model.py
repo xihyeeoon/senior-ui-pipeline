@@ -558,8 +558,8 @@ def call_model(model, prompt, max_tokens, log=None, backoff=(20, 45, 90, 180),
     429 가 아닌 실패는 ApiRejected 와 InfraFailed 로 갈라 올린다 - 어느 쪽인지는
     여기서만 알 수 있다 (openai 의 예외 종류). 루프는 그 종류만 보고 판단한다."""
     from openai import (OpenAI, APIConnectionError, AuthenticationError,
-                        BadRequestError, NotFoundError, OpenAIError,
-                        PermissionDeniedError, RateLimitError)
+                        BadRequestError, InternalServerError, NotFoundError,
+                        OpenAIError, PermissionDeniedError, RateLimitError)
     profile = profile_for(model, api)
     # 키가 아예 없으면 생성자부터 OpenAIError 다. 그것도 "다시 보내도 같다" 다.
     try:
@@ -606,6 +606,8 @@ def call_model(model, prompt, max_tokens, log=None, backoff=(20, 45, 90, 180),
         except (AuthenticationError, PermissionDeniedError, NotFoundError) as e:
             raise ApiRejected("%s: %s" % (type(e).__name__, e))
         except APIConnectionError as e:          # APITimeoutError 도 이 아래다
+            raise InfraFailed("%s: %s" % (type(e).__name__, e))
+        except InternalServerError as e:         # 5xx - 공급자 쪽 문제
             raise InfraFailed("%s: %s" % (type(e).__name__, e))
     text, finish, status, usage, fingerprint = read_reply(resp, profile["api"])
     return {

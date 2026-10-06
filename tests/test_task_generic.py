@@ -209,7 +209,9 @@ def test_a_bill_reply_still_needs_the_bill_done_ids(fake_run_env, out_root):  # 
         ".html", ".audit.json"), encoding="utf-8"))
     details = [f["detail"] for f in report["fatal"]]
     assert "required_ids 에 'dn-paid' 이 없다" in details
-    assert 'expect.done 에 ["#dn-eno", "{ENO}"] 이 없다' in details
+    assert "HTML 에 id='dn-eno' 요소가 없다" in details
+    # 값 짝은 요구하지 않는다 - 판정이 과제의 done_expect 로 본다 (11-6)
+    assert not [d for d in details if d.startswith("expect.")]
 
 
 def test_the_bill_prompts_carry_the_bill_task_and_no_transfer_errors(
@@ -235,7 +237,8 @@ def test_validate_flow_reads_the_done_values_from_the_task():
     # 과제를 주지 않으면 이체 - 문구도 전과 같다
     got = _api.validate_flow(dict(BILL_FLOW), BILL_HTML)
     assert "required_ids 에 'dn-amt' 이 없다" in got
-    assert 'expect.done 에 ["#dn-amt", "{AMOUNT_SHOWN}"] 이 없다' in got
+    # 값 짝은 요구하지 않는다 - 판정이 과제의 done_expect 로 본다 (11-6)
+    assert not [p for p in got if p.startswith("expect.")]
 
 
 def test_required_errors_follow_the_task():
@@ -302,9 +305,12 @@ def test_the_bill_prompt_has_no_transfer_text(load):
 
 
 def test_the_bill_prompt_names_the_bill_done_values():
+    """공과금 프롬프트는 공과금의 완료 화면 자리를 말한다. 값 짝을 expect 에
+    적으라고는 하지 않는다 - 판정이 과제에서 읽는다 (11-6)."""
     text = _api.load_template("bill")
-    assert '"#dn-paid", "{AMOUNT_SHOWN}"' in text
-    assert '"#dn-eno", "{ENO}"' in text
+    assert "#dn-paid" in text and "#dn-eno" in text
+    assert '"#dn-paid", "{AMOUNT_SHOWN}"' not in text
+    assert '"#dn-eno", "{ENO}"' not in text
 
 
 def placeholder_pairs(text):
@@ -329,9 +335,10 @@ def test_the_placeholder_line_agrees_with_the_truth(name):
 # --------------------------------------------------------------------- #
 # 6. 검사기 CLI - 과제의 원본과 흐름
 # --------------------------------------------------------------------- #
-def cli_drives(monkeypatch, tmp_path, extra):
+def cli_drives(monkeypatch, tmp_path, extra, flow_path=None):
     """CLI 를 부르고, drive 가 받은 (URL, 흐름 이름, 흐름의 과제) 를 돌려준다.
-    drive · audit 은 대역이다 - 무엇을 걷는지만 본다."""
+    drive · audit 은 대역이다 - 무엇을 걷는지만 본다. 흐름은 BILL_FLOW 를 쓴
+    모델 흐름이고, `flow_path` 를 주면 그 흐름이다."""
     CLI = _api.audit_cli_module
     seen = []
 
@@ -350,8 +357,8 @@ def cli_drives(monkeypatch, tmp_path, extra):
     import sys
     monkeypatch.setattr(sys, "stdout", io.StringIO())
     code = _api.audit_cli_main(["--build", "http://x/b.html", "--build-file", str(build),
-                                "--flow", str(flow), "--out", str(tmp_path / "a.json")]
-                               + extra)
+                                "--flow", flow_path or str(flow),
+                                "--out", str(tmp_path / "a.json")] + extra)
     assert code == 0
     return seen
 
@@ -366,8 +373,12 @@ def test_the_cli_walks_the_bill_original_with_the_bill_flow(monkeypatch, tmp_pat
     assert seen[1][2] == "bill"                 # 빌드도 공과금 정답으로 걷는다
 
 
-def test_the_cli_defaults_to_transfer(monkeypatch, tmp_path):
-    seen = cli_drives(monkeypatch, tmp_path, [])
+def test_the_cli_defaults_to_transfer_for_a_researcher_flow(monkeypatch, tmp_path):
+    """연구자 흐름(flows/ 아래)은 --task 가 없으면 흐름의 task, 없으면 이체다.
+    모델 흐름은 --task 가 꼭 있어야 한다 (test_judge_inputs.py 8 절)."""
+    seen = cli_drives(monkeypatch, tmp_path, [],
+                      flow_path=os.path.join(_api.ROOT_DIR, "flows",
+                                             "restructured.json"))
     assert seen[0][0].endswith("/inputs/original_transfer.html")
     assert seen[0][1:] == ("original", "transfer")
 
@@ -572,10 +583,15 @@ def test_the_format_check_reads_the_done_values_on_the_last_screen():
     done = _api.load_task("bill")["done_expect"]
     flow = finish_flow({"done": [["#dn-paid", "{AMOUNT_SHOWN}"], ["#dn-eno", "{ENO}"]]})
     got = _api.validate_flow(flow, FINISH_HTML, [], done)
-    assert 'expect.finish 에 ["#dn-eno", "{ENO}"] 이 없다' in got
+    # 11-6: 완료 화면의 값 짝은 요구하지 않는다 - 판정이 과제에서 읽고(judged_flow),
+    # 마지막 화면(finish)의 칸에 과제의 짝을 넣는다. 화면이 아닌 칸은 그대로 알린다.
+    assert not [p for p in got if p.startswith("expect.")]
     assert any("expect 의 키 'done'" in p for p in got)
-    ok = finish_flow({"finish": [["#dn-paid", "{AMOUNT_SHOWN}"], ["#dn-eno", "{ENO}"]]})
-    assert _api.validate_flow(ok, FINISH_HTML, [], done) == []
+    judged = _api.judged_flow(flow, task="bill")
+    assert judged["expect"]["finish"] == done
+    for expect in ({"finish": [["#dn-paid", "{AMOUNT_SHOWN}"], ["#dn-eno", "{ENO}"]]},
+                   {}):
+        assert _api.validate_flow(finish_flow(expect), FINISH_HTML, [], done) == []
 
 
 def finish_ctx(expect, shown):

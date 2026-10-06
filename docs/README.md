@@ -133,6 +133,18 @@ API 없이: `--mock pass --mock-refine improve` (1회차에 다듬은 빌드가 
    --stage wireframe --out outputs\audit_run4.json
 ```
 
+루프가 만든 빌드(모델 흐름 - `flows/` 밖의 흐름 파일)를 다시 검사할 때는 그 실행의
+과제를 `--task` 로 꼭 준다. 없으면 판정하지 않고 종료 2 다. 판정 기준(정답 · 완료
+화면 값 · 오류 경로)은 흐름이 아니라 과제에서 오고, 루프와 같은 판정 입력
+(`senior_ui/audit/inputs.py` 의 `judged_flow`)을 거친다.
+
+```powershell
+.\.venv\Scripts\python.exe -m senior_ui.audit --task bill `
+   --flow outputs\restructure_auto\<실행>\attempt_1.flow.json `
+   --build http://localhost:3003/outputs/restructure_auto/<실행>/attempt_1.html `
+   --build-file outputs\restructure_auto\<실행>\attempt_1.html
+```
+
 나머지:
 
 ```powershell

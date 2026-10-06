@@ -12,8 +12,11 @@ import json
 import re
 
 from ..audit.checks.i_choices import present
-from ..audit.checks.j_errors import done_screen
-from ..audit.handlers import handled_actions
+# 오류 경로 · 방문 이름의 규칙은 검사기의 것을 그대로 쓴다. 따로 쓰면 한쪽만
+# 고쳐지는 순간 형식 검사와 검사 J 가 갈라진다 (감사 B-10).
+from ..audit.checks.j_errors import back_to_ok, done_screen, step_screens
+from ..audit.flow import visit_keys
+from ..audit.handlers import handled_actions, literal_actions
 from ..preserved import GLOBAL_NAME
 from ..tasks import load_task
 from .preserve import names_read
@@ -170,7 +173,7 @@ def _check_handlers(flow, html, steps, screens):
     것이 갈라진다."""
     problems = []
     handled = handled_actions(html)
-    actions = set(re.findall(r'data-action="([^"]+)"', html))
+    actions = literal_actions(html)
     if not handled:
         problems.append("클릭 처리기에 data-action 분기가 하나도 없다. 검사기가 읽는 모양은 "
                         "`a === '이름'` 과 `switch(a){ case '이름': }` 두 가지다 (따옴표는 "
@@ -277,33 +280,28 @@ def _check_ids(flow, html, steps, screens, done=None):
     return problems
 
 
-def _check_expect(flow, html, steps, screens, done=None):
-    """완료 화면에서 과제의 값(done_expect - 이체는 금액)을 확인할 짝이 있는지.
+def _check_expect(flow, html, steps, screens):
+    """expect 가 객체이고, 칸이 모두 steps 의 방문 이름인지.
 
-    완료 화면은 steps 의 마지막 화면이다 - 이름이 "done" 이 아니어도. 전에는
-    expect 의 "done" 칸만 보아서, 마지막 화면을 finish 로 지은 설계가
-    expect.done 을 적으면 형식 검사를 지나고 검사 B 는 그 칸을 말없이 건너뛰었다.
-    같은 이유로 steps 의 방문 이름이 아닌 expect 칸도 문제로 센다 - 검사기는
-    그 칸의 값을 보지 않는다."""
+    steps 의 방문 이름이 아닌 칸은 검사기가 보지 않는다 - 모델은 확인한다고 적었는데
+    아무도 확인하지 않게 되므로 문제로 센다.
+
+    완료 화면에서 과제의 값(done_expect)을 확인하는 짝은 요구하지 않는다. 판정은
+    모델의 expect 가 아니라 과제의 done_expect 로 한다 (audit.inputs.judged_flow).
+    전에는 그 짝이 없으면 형식 실패였다 - 판정을 바꾸지 않는 요구로 재시도 하나를
+    썼다."""
     problems = []
     expect = flow.get("expect")
     if not isinstance(expect, dict):
         problems.append("expect 가 객체가 아니다")
         return problems
-    visits = _visits(steps)
-    last = visits[-1] if visits else "done"
-    pairs = expect.get(last) or []
-    for sel, val in _done_of(done):
-        if not any(isinstance(p, list) and len(p) == 2 and p[0] == sel for p in pairs):
-            problems.append("expect.%s 에 %s 이 없다"
-                            % (last, json.dumps([sel, val], ensure_ascii=False)))
+    visits = visit_keys(steps)
     stray = [k for k in expect if visits and k not in visits]
     if stray:
         problems.append("expect 의 키 %s 는 steps 의 화면이 아니다 - 검사기는 그 값을 "
                         "보지 않는다. 키는 steps 의 screen 이름(같은 화면을 두 번 지나면 "
-                        "\"이름#2\")이고, 완료 화면의 값은 마지막 화면(%s) 칸에 적는다 "
-                        "(있는 것: %s)" % (", ".join(repr(k) for k in stray), last,
-                                         ", ".join(visits)))
+                        "\"이름#2\")이다 (있는 것: %s)"
+                        % (", ".join(repr(k) for k in stray), ", ".join(visits)))
     return problems
 
 
@@ -330,7 +328,7 @@ def accept_done_alias(flow):
     named = {st.get("screen") for st in steps if isinstance(st, dict)}
     for e in _error_paths_of(flow):
         named |= {e.get("expect_screen"), e.get("back_to")}
-    visits = _visits(steps)
+    visits = visit_keys(steps)
     if not visits or DONE_ALIAS in named:
         return None
     last = visits[-1]
@@ -341,13 +339,6 @@ def accept_done_alias(flow):
             pairs.append(p)
     expect[last] = pairs
     return last
-
-
-def _check_derived(flow, html, steps, screens):
-    """새 설계이므로 원본에서 파생된 빌드가 아니다."""
-    if flow.get("derived_from_original", False):
-        return ["derived_from_original 은 false 여야 한다"]
-    return []
 
 
 def _error_paths_of(flow):
@@ -369,16 +360,6 @@ def _check_coverage(flow, html, steps, screens):
         return ["steps 와 error_paths 가 지나가지 않는 화면: "
                 + ", ".join(sorted(unseen))]
     return []
-
-
-def _visits(steps):
-    """steps 의 방문 이름 (audit.flow.visit_keys 와 같은 규칙)."""
-    seen, out = {}, []
-    for st in steps:
-        name = st.get("screen") if isinstance(st, dict) else None
-        seen[name] = seen.get(name, 0) + 1
-        out.append(name if seen[name] == 1 else "%s#%d" % (name, seen[name]))
-    return out
 
 
 def _check_error_paths(flow, html, steps, screens, required=None):
@@ -405,11 +386,8 @@ def _check_error_paths(flow, html, steps, screens, required=None):
                 "어디로 되돌아가는지 적어라. 잘못된 입력은 %s 로 넣는다."
                 % (rid, d.get("about") or "?",
                    ", ".join("{%s}" % k for k in d.get("uses") or []) or "?"))
-    order = []
-    for st in steps:
-        if isinstance(st, dict) and st.get("screen") not in order:
-            order.append(st.get("screen"))
-    visits = _visits(steps)
+    order = step_screens(steps)
+    visits = visit_keys(steps)
     done = done_screen(steps)
     for i, e in enumerate(paths):
         eid = e.get("id")
@@ -426,13 +404,15 @@ def _check_error_paths(flow, html, steps, screens, required=None):
         if exp not in screens:
             problems.append("%s.expect_screen=%r 은 HTML 의 data-screen 에 없다"
                             % (where, exp))
-        if back != exp and back not in order:
-            problems.append("%s.back_to=%r 은 steps 의 화면도 오류가 나타난 화면도 "
-                            "아니다" % (where, back))
+        if back_to_ok(order, back, exp, done):
+            pass
         elif back == done:
             problems.append("%s.back_to=%r 은 완료 화면이다. 고칠 수 있는 곳 - "
                             "steps 에 있는 화면 중 완료 화면이 아닌 곳 - 으로 돌아가야 "
                             "한다." % (where, back))
+        else:
+            problems.append("%s.back_to=%r 은 steps 의 화면도 오류가 나타난 화면도 "
+                            "아니다" % (where, back))
         if not e.get("inputs"):
             problems.append("%s.inputs 가 비어 있다. 잘못된 입력을 넣는 동작을 적어라"
                             % where)
@@ -462,7 +442,7 @@ def _check_reveal(flow, html, steps, screens):
     검사 I 를 지날 수 있다. 누를 대상이 그 화면에 보이는 data-action 요소인지,
     누른 뒤에도 같은 화면인지는 걸어 봐야 알므로 drive.walk_reveal 이 본다."""
     problems = []
-    visits = _visits(steps)
+    visits = visit_keys(steps)
     for action, spec in (flow.get("reveal") or {}).items():
         where = "reveal.%s" % action
         if action not in html:
@@ -486,10 +466,11 @@ def _check_reveal(flow, html, steps, screens):
 
 # 이 순서가 problems 의 순서다.
 CHECKS = [_check_steps, _check_handlers, _check_step_screens, _check_transitions,
-          _check_omissions, _check_ids, _check_expect, _check_derived,
-          _check_coverage]
-# 과제의 완료 화면 짝(done_expect)을 함께 받는 검사들.
-DONE_CHECKS = (_check_ids, _check_expect)
+          _check_omissions, _check_ids, _check_expect, _check_coverage]
+# derived_from_original 은 보지 않는다. 판정 입력(audit.inputs.judged_flow)이 모델
+# 흐름을 늘 새 설계로 판정하므로, 그 칸 하나로 형식 재시도를 쓰게 할 까닭이 없다.
+# 과제의 완료 화면 짝(done_expect)을 함께 받는 검사 - 그 id 가 있는지만 본다.
+DONE_CHECKS = (_check_ids,)
 
 
 def validate_flow(flow, html, required_errors=None, done_expect=None):
@@ -504,7 +485,8 @@ def validate_flow(flow, html, required_errors=None, done_expect=None):
     오류 경로가 생기기 전의 흐름(Run 1~4)을 다시 볼 때 결과가 같아야 한다.
 
     `done_expect` 는 과제가 정한 완료 화면의 짝(tasks/<과제>.json)이다. 주지
-    않으면 기본 과제(이체)의 것이다."""
+    않으면 기본 과제(이체)의 것이다. 그 선택자의 id 가 HTML 과 required_ids 에
+    있는지만 본다 (_check_ids) - 값 짝은 판정이 과제에서 읽으므로 요구하지 않는다."""
     bad_shape = shape_problems(flow)
     if bad_shape:
         return bad_shape

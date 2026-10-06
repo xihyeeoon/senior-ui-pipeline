@@ -3135,12 +3135,14 @@
           "dom_screen": "account"
         },
         "before_text": "4:31\n67\n‹\n✕\n누구에게 보낼까요?\n계좌번호\n110234567891\nⓧ\n신한\n⌄\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n⌫\n다음",
+        "dialogs_at_trigger": 0,
         "settled": true,
         "after": {
           "landed_on": "err-account",
           "dom_screen": "err-account"
         },
         "after_text": "4:31\n67\nELB00016\n계좌번호[110234567891]\n입력하신 계좌번호가 올바르지 않습니다.\n계좌번호를 확인하시기 바랍니다.\n확인",
+        "dialogs_at_after": 0,
         "recovered": true,
         "recover": {
           "landed_on": "account",
@@ -3159,12 +3161,14 @@
           "dom_screen": "confirm"
         },
         "before_text": "4:31\n67\n‹\n✕\n국\n아래 계좌로\n32,000원 보낼까요?\n수수료 무료\n보내는 계좌\n신한 110-000-000000\n받는 계좌\n국민 110234567890\n받는분 메모\n김철수 ✎\n내통장 메모\n김철수 ✎\n보내기",
+        "dialogs_at_trigger": 0,
         "settled": true,
         "after": {
           "landed_on": "err-bank",
           "dom_screen": "err-bank"
         },
         "after_text": "4:31\n67\nETA00325\n해당 계좌번호내 과목코드 오류입니다.\n입력하신 계좌번호를 확인해주세요.\n확인",
+        "dialogs_at_after": 0,
         "recovered": true,
         "recover": {
           "landed_on": "confirm",
@@ -6311,12 +6315,14 @@
           "dom_screen": "account"
         },
         "before_text": "4:31\n67\n‹\n✕\n누구에게 보낼까요?\n계좌번호\n110234567891\nⓧ\n신한\n⌄\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n⌫\n다음",
+        "dialogs_at_trigger": 0,
         "settled": true,
         "after": {
           "landed_on": "err-account",
           "dom_screen": "err-account"
         },
         "after_text": "4:31\n67\nELB00016\n계좌번호[110234567891]\n입력하신 계좌번호가 올바르지 않습니다.\n계좌번호를 확인하시기 바랍니다.\n확인",
+        "dialogs_at_after": 0,
         "recovered": true,
         "recover": {
           "landed_on": "account",
@@ -6335,12 +6341,14 @@
           "dom_screen": "confirm"
         },
         "before_text": "4:31\n67\n‹\n✕\n국\n아래 계좌로\n32,000원 보낼까요?\n수수료 무료\n보내는 계좌\n신한 110-000-000000\n받는 계좌\n국민 110234567890\n받는분 메모\n김철수 ✎\n내통장 메모\n김철수 ✎\n보내기",
+        "dialogs_at_trigger": 0,
         "settled": true,
         "after": {
           "landed_on": "err-bank",
           "dom_screen": "err-bank"
         },
         "after_text": "4:31\n67\nETA00325\n해당 계좌번호내 과목코드 오류입니다.\n입력하신 계좌번호를 확인해주세요.\n확인",
+        "dialogs_at_after": 0,
         "recovered": true,
         "recover": {
           "landed_on": "confirm",

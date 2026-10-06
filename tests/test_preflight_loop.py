@@ -172,13 +172,16 @@ def test_the_loop_records_that_it_took_done_as_the_last_screen(tmp_path):
 
 def test_the_prompt_examples_no_longer_name_the_last_screen_done():
     """예시의 마지막 화면이 done 이면 모델은 그것을 고정된 키로 읽는다. 완료
-    화면의 키가 마지막 화면의 이름이라는 것을 글로도 적는다."""
+    화면은 마지막 화면이라는 것을 글로도 적는다.
+
+    11-6 부터 예시의 expect 는 비어 있다 - 완료 화면의 값 짝은 판정이 과제에서
+    읽으므로 모델에게 요구하지 않는다 (test_format_rules.py 3 절)."""
     for task in ("transfer", "bill"):
         p = _api.load_task(task)["prompt"]
         example = json.loads("\n".join(p["flow_example"]).replace("\"...\"", "\"x\""))
         assert example["steps"][-1]["screen"] != "done"
-        assert list(example["expect"]) == [example["steps"][-1]["screen"]]
-        assert "마지막 화면의 이름" in "\n".join(p["flow_done"])
+        assert "done" not in example["expect"]
+        assert "마지막 화면" in "\n".join(p["flow_done"])
         assert "`done`" not in "\n".join(p["flow_done"])
 
 
@@ -216,9 +219,11 @@ def test_defaults_are_wireframe_and_five_six():
     assert args.stage is None and args.attempts is None
     assert loop.stage_choice(args) == ("wireframe", "config.DEFAULT_STAGE")
     assert loop.budget_choice(args) == {"format": (5, "config.DEFAULT_BUDGET"),
-                                        "audit": (6, "config.DEFAULT_BUDGET")}
+                                        "audit": (6, "config.DEFAULT_BUDGET"),
+                                        "infra": (3, "config.DEFAULT_BUDGET")}
     assert config.DEFAULT_STAGE == "wireframe"
-    assert config.DEFAULT_BUDGET == {"format": 5, "audit": 6}
+    # 인프라 예산도 config 에 있다 (11-6, 감사 B-33)
+    assert config.DEFAULT_BUDGET == {"format": 5, "audit": 6, "infra": 3}
 
 
 def test_the_command_line_still_wins():
@@ -227,7 +232,8 @@ def test_the_command_line_still_wins():
                          "--audit-attempts", "4"])
     assert loop.stage_choice(args) == ("styled", "--stage")
     assert loop.budget_choice(args) == {"format": (2, "--attempts"),
-                                        "audit": (4, "--audit-attempts")}
+                                        "audit": (4, "--audit-attempts"),
+                                        "infra": (3, "config.DEFAULT_BUDGET")}
 
 
 def test_stage_and_budget_are_on_the_first_line_and_in_the_summary(fake_run_env,
@@ -243,8 +249,10 @@ def test_stage_and_budget_are_on_the_first_line_and_in_the_summary(fake_run_env,
     assert summary["stage_source"] == "config.DEFAULT_STAGE"
     assert summary["budget"]["format_budget"] == 5
     assert summary["budget"]["audit_budget"] == 6
+    # make_args 는 --infra-attempts 3 을 준다
     assert summary["budget_source"] == {"format": "config.DEFAULT_BUDGET",
-                                        "audit": "config.DEFAULT_BUDGET"}
+                                        "audit": "config.DEFAULT_BUDGET",
+                                        "infra": "--infra-attempts"}
 
 
 def test_mixed_sources_are_written_one_by_one(fake_run_env, out_root):

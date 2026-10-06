@@ -87,6 +87,25 @@ def test_preventive_design_counts_as_an_error_state(server):
     assert [w for w in report["warning"] if w["check"] == "J"] == []
 
 
+def test_an_alert_on_the_error_path_is_judged_once(server):
+    """같은 설계가 화면에 쓰지 않고 alert(변수) 로만 알린다 (?alert).
+
+    고치기 전: 오류 경로에서 뜬 대화상자는 기록만 되고 판정되지 않았고(감사
+    B-12), J 는 화면에 새 글이 없다고 떨어뜨렸다. 이제 막는 대화상자는 B 의 fatal
+    하나이고, 사용자가 읽은 그 글로 J 의 "나타남" 은 인정된다."""
+    flow = inline_flow([TYPE_WRONG])
+    rep, report = run(FIXTURE, flow, base_flow=_api.load_flow(None), query="?alert")
+    row = rep["error_paths"]["wrong-account"]
+    assert row["dialogs_at_trigger"] == 0
+    assert [d["message"] for d in row["dialogs"]] == \
+        ["없는 계좌번호예요. 계좌번호를 다시 확인해 주세요"]
+    # 작은 설계라 완료 화면 · 선택지 검사(A · I)는 떨어진다 - 여기서 보는 것은 B 와 J 다.
+    assert [(f["check"], f.get("error_path")) for f in report["fatal"]
+            if f["check"] in ("B", "J")] == [("B", "wrong-account")], report["fatal"]
+    r = report["metrics"]["error_paths"]["wrong-account"]
+    assert r["appeared"] and r["recovered"]
+
+
 def test_design_without_error_handling_is_caught(server):
     """같은 설계에서 확인을 끈 것 (?none). 흐름은 [다음] 까지 누르고, 틀린
     계좌번호로 금액 화면에 넘어간다 - J fatal."""
