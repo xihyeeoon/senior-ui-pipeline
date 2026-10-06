@@ -1,8 +1,10 @@
 # 재구성 프롬프트 템플릿
 
 재구성 루프(`senior_ui/restructure/prompt.py`)가 이 파일을 읽어 LLM 에
-보낸다. 실행은 `python -m senior_ui.restructure` 다. `<!-- PROMPT -->` 와
-`<!-- /PROMPT -->` 사이만 프롬프트이고, 그 밖은 사람용 메모다.
+보낸다. 실행은 `python -m senior_ui.restructure --model gpt-6.1-sol` 이다. 프롬프트는
+`<!-- 이름 -->` 과 `<!-- /이름 -->` 으로 감싼 블록들뿐이고, 그 밖은 사람용 메모다:
+`PLAN_PROMPT` (진단·계획) · `PROMPT` (생성과 재시도) · `REFINE_PROMPT` (보고 다듬기) ·
+`CONTRACT` (셋이 함께 쓰는 기술 계약, `{{CONTRACT}}` 자리) · `REFLECT` (재시도의 반성 요청).
 
 **출처 메모.** Run 1 (`outputs/restructured_transfer.html`) 은 대화에서 직접 지시해 만들었고
 그 문장은 저장소에 남아 있지 않다. 아래 본문은 `restructure-runs.md` 에 인용된 브리프
@@ -26,7 +28,9 @@
 호출(생성)과 재시도에 쓴다. 두 단계로 나눈 이유와 루프는 `senior_ui/restructure/loop.py`
 머리말에 있다.
 
-생성 프롬프트의 치환 자리 다섯: `{{ORIGINAL_HTML}}` (원본 파일 전체), `{{RETRY_BLOCK}}`
+생성 프롬프트에서 도구가 채우는 치환 자리 다섯 (과제 파일이 채우는 `{{TASK}}` ·
+`{{TASK_<칸>}}` 과 `{{CONTRACT}}` 는 위에 적었다): `{{ORIGINAL_HTML}}` (원본 파일 —
+주석을 뺀 것, `prompt.model_input_html`), `{{RETRY_BLOCK}}`
 (재시도일 때만 채워짐, 첫 시도는 빈 문자열), `{{CHOICES}}` (원본이 가진 선택지 요약 —
 검사 I 가 세는 바로 그 집합이다), `{{ERRORS}}` (원본의 오류 조건 — 검사 J 가 걷는
 바로 그 오류들이다), `{{PLAN}}` (첫 호출이 세운 계획, 재시도에서 고쳐진 것).
@@ -40,8 +44,9 @@
 경로 줄이 남는다. `--see off` 이면 이 자리는 빈 글자다 - 전의 프롬프트와 같다.
 생성 · 재시도 프롬프트에는 그림을 넣지 않는다.
 
-**오류 조건.** `{{ERRORS}}` 는 원본 흐름(`flows/original.json`)의 `error_paths` 에서
-도구가 만든다 (`prompt.errors_block`). 넣는 것은 오류 id · 무엇이 틀렸는가 · 원본이
+**오류 조건.** `{{ERRORS}}` 는 그 과제의 원본 흐름(과제 파일의 `flow` — 이체는
+`flows/original.json`)의 `error_paths` 중 과제가 정한 `required_error_paths` 에서 도구가
+만든다 (`prompt.errors_block`). 오류 경로가 없는 과제(공과금)는 빈 글자다. 넣는 것은 오류 id · 무엇이 틀렸는가 · 원본이
 어떻게 하는가 · 잘못된 값의 **자리표시자 이름** 뿐이다. 잘못된 값의 실제 값
 (`truth` 의 `ACCOUNT_WRONG` 등)은 넣지 않는다 — 모델이 그 값을 알면 "그 값일 때만
 오류를 띄우는" HTML 로 검사 J 를 지날 수 있다 (`tests/test_error_paths.py` 가 확인한다).
@@ -355,16 +360,23 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 
 ## 재시도 블록의 모양
 
-`{{RETRY_BLOCK}}` 은 이전 시도가 검사에 떨어졌을 때만 채워진다. 스크립트가 만드는 내용:
+`{{RETRY_BLOCK}}` 은 이전 시도가 형식 검사나 검사에 떨어졌을 때만 채워진다 — 맨 앞에 위의
+반성 요청(`REFLECT`)이 붙는다. 스크립트(`prompt.retry_block`)가 만드는 내용의 모양
+(`tests/baseline/retry_block/` 에 실제 예가 있다):
 
 ```
 ## 이전 시도의 실패
 
-직전 출력은 검사에서 다음 fatal 에 걸렸다. 아래 목록을 모두 고쳐서 HTML 과 흐름 명세를
-다시 전체로 출력하라. 설계를 처음부터 새로 하지 말고 직전 출력을 고쳐라.
+[이번 답의 형식 오류]          ← 형식 검사에 떨어졌을 때만
+  …
+[원인]                         ← JS 오류가 있으면 그것 하나 (줄 번호와 코드 세 줄)
+  …
+[고칠 것]                      ← JS 오류가 없으면 근본 fatal 만, 한 줄에 하나
+  bank: [data-action='bank-yes']  그런 요소가 없음
+[아래는 위 원인의 결과다. 따로 고치지 마라]
+  amount · review · done — 도달 못 함
 
-- [A] screen=bank: never reached (task stopped after 3 of 9 screens)
-- [C] data-action='bank-yes' has no branch in the handler - ...
+직전 출력을 고쳐라. 설계를 처음부터 새로 하지 마라.
 
 ### 직전 흐름 명세
 ```json … ```

@@ -10,6 +10,9 @@
 - 같은 종류가 한 파일에 여러 번 나오면 한 줄로 묶고 줄 번호를 나열했다 (예: 잘라 보이는 글자 수).
 - 줄 번호는 이 브랜치의 마지막 커밋 기준이다.
 - 판단: **고쳐야 함** (어느 단계에서 고치면 좋을지 한 줄 제안) / **일부러 둠** / **모르겠음**.
+- **11-7 갱신 (2026-10-07):** 아래 행 중 지금 코드와 다른 것 다섯을 고쳤다 — 명령줄 예산
+  기본값(`--infra-attempts 3` 등), `loop.py:58` 의 `PLAN_MAX_TOKENS`, `loop.py:209` 의 모델
+  대체값, 프롬프트의 대비 문구, 프롬프트 메모. 위 요약 표의 숫자는 11번 당시 그대로다.
 
 ## 요약
 
@@ -119,10 +122,10 @@
 |---|---|---|---|---|
 | `__main__.py:1` | "redesigned transfer prototype" | 과제 | **고쳐야 함** | 위 9번 |
 | `__main__.py:51–78,97–101,126` | mock 설명 · 도움말이 Run 1 · 은행 목록 · 숫자판 | 과제 | 일부러 둠 | 이체 mock 일곱의 설명 (그 mock 은 이체 전용이다) |
-| `__main__.py:106,112,119,135` | `--attempts 3`, `--infra-attempts 3`, `--max-tokens 14000`, `--delay 60` | 상수 | 일부러 둠 | 명령줄 기본값, 분당 한도 근거가 도움말에 있다 (테스트가 못박는다) |
+| `__main__.py:114,123,145,151,190` (11-7) | `--attempts` · `--infra-attempts` · `--max-tokens` · `--plan-max-tokens` · `--delay` | 상수 | **config 로 옮김** | 파서의 기본값은 모두 `None` 이다. 값은 `config.DEFAULT_BUDGET` (형식 5 · 검사 6 · 인프라 3) · `OUTPUT_CAPS` · `DELAY` 한 곳에서 고르고, 출처가 run.log 첫 줄과 summary 의 `budget_source` 에 남는다. 전에는 `--attempts 3` · `--infra-attempts 3` 이 파서와 `loop.Budget` · `loop.Run` 세 곳에 따로 있었다 (감사 B-33) |
 | `__main__.py:128` | `--task` 기본 `transfer` | 과제 | 일부러 둠 | 이체 기준값 |
-| `loop.py:58` | `PLAN_MAX_TOKENS = 6000` | 상수 | 일부러 둠 | 이름 붙인 상수 |
-| `loop.py:209` | 모델 대체값 `"gpt-4o"` (환경 변수 `RESTRUCTURE_MODEL` · `DESIGNREPAIR_MODEL` 다음) | 환경 | **모델 바꾸기 준비에서 옮김** | `config.DEFAULT_MODEL` 한 곳. 출처는 `loop.model_choice` 가 run.log 첫 줄 · `summary.model_source` 에 남긴다 |
+| `loop.py:58` | `PLAN_MAX_TOKENS = 6000` | 상수 | **config 로 옮김** | 지금은 `config.OUTPUT_CAPS` 의 `plan` (gpt-4o 6,000 · 추론형 25,000) |
+| `loop.py:209` | 모델 대체값 `"gpt-4o"` (환경 변수 `RESTRUCTURE_MODEL` · `DESIGNREPAIR_MODEL` 다음) | 환경 | **모델 바꾸기 준비에서 옮김** | `config.DEFAULT_MODEL` 한 곳 — 11-7 에서 `gpt-6.1-sol` (감사 D-1 (가)). `DESIGNREPAIR_MODEL` 은 더 읽지 않고, mock 은 환경 변수를 듣지 않는다. 출처는 `loop.model_choice` 가 run.log 첫 줄 · `summary.model_source` 에 남긴다 |
 | `loop.py:838–867` | 승격 이름 `restructured_auto*` | 실행 | **11번에서 고침** | 과제를 넣었다 (`promoted_name`) |
 | `loop.py:937` | 종료 코드 2 의 이유 넷 | 상수 | 일부러 둠 | 종료 코드 규약 한 곳 |
 | `loop.py` 여러 줄 | 시도 파일 이름 `attempt_N.*`, `run.log`, `summary.json` | 실행 | 일부러 둠 | 실행 폴더 규약 |
@@ -207,9 +210,9 @@
 | 파일:줄 | 무엇이 박혀 있나 | 분류 | 판단 | 이유 |
 |---|---|---|---|---|
 | `:145–154` (PROMPT 2절) | `#phone`, 390×844, `data-screen` · `on`, `data-action` 과 `const a`, `data-v`, `__screen()` 등 | 과제 | 일부러 둠 | HTML 기술 계약 — 과제와 무관하게 같다 |
-| `:163` | "흰 배경에서 4.5:1 이상" | 상수 | 일부러 둠 | 검사 D 의 기준과 같은 값 |
+| `:163` | "흰 배경에서 4.5:1 이상" | 상수 | **11-7 에서 뺌** | 와이어프레임 단계는 대비를 검사하지 않고, 프롬프트는 설계 방법을 알려 주지 않는다 (감사 D-5 (가)) |
 | `:176` | "오류는 계획의 `errors` 대로 알린다." | 과제 | **11번에서 고침** | 위 10번 |
-| `:26,32` (사람용 메모) | "치환 자리 다섯", "원본 흐름(`flows/original.json`)" | 과제 | **고쳐야 함** | 위 11번 |
+| `:26,32` (사람용 메모) | "치환 자리 다섯", "원본 흐름(`flows/original.json`)" | 과제 | **11-7 에서 고침** | 블록 다섯 · 과제 칸 · 과제별 원본 흐름으로 (감사 B-31) |
 | `:7–12,43–51` (사람용 메모) | Run 1 출처, Run 4·5 · 67개 근거 | 실행 | 일부러 둠 | 기록 |
 | `:262,263` (재시도 블록 모양 메모) | `screen=bank`, `bank-yes` | 과제 | 일부러 둠 | 사람용 예시 |
 | `{{TASK_*}}` 슬롯들 | 과제마다 다른 문단 | — | — | 11번에서 과제 파일로 옮겼다 (표에서 세지 않음) |
