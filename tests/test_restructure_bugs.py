@@ -894,6 +894,33 @@ CLI_FILES = ["senior_ui/audit/__main__.py", "senior_ui/audit/report.py",
              "senior_ui/devserver.py"]
 
 
+def test_every_outside_package_that_is_imported_is_in_requirements():
+    """새 가상환경에서 `pip install -r requirements.txt` 만 하고 pytest 를 돌리면
+    import 단계에서 죽지 않아야 한다. tests/fake_openai.py 가 httpx 를 import 하는데
+    목록에 없었다 - openai 가 끌어오니 우연히 돌았을 뿐이다."""
+    import ast
+    import glob
+    import re
+    names = set()
+    files = glob.glob(os.path.join(ROOT, "senior_ui", "**", "*.py"), recursive=True) \
+        + glob.glob(os.path.join(ROOT, "tests", "*.py"))
+    local = {"senior_ui"} | {os.path.splitext(os.path.basename(f))[0]
+                             for f in glob.glob(os.path.join(ROOT, "tests", "*.py"))}
+    for path in files:
+        tree = ast.parse(io.open(path, encoding="utf-8").read())
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                names |= {a.name.split(".")[0] for a in node.names}
+            elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                names.add(node.module.split(".")[0])
+    outside = sorted(n for n in names
+                     if n not in sys.stdlib_module_names and n not in local)
+    listed = {re.split(r"[=<>!~ ]", l.strip())[0].lower()
+              for l in io.open(os.path.join(ROOT, "requirements.txt"), encoding="utf-8")
+              if l.strip() and not l.strip().startswith("#")}
+    assert [n for n in outside if n.lower() not in listed] == []
+
+
 def test_the_list_of_clis_is_complete():
     """CLI 가 늘면 이 목록도 늘어야 한다. 늘지 않으면 아래 검사가 헛돈다."""
     import glob
