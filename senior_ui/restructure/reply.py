@@ -12,6 +12,7 @@ import json
 import re
 
 from ..audit.checks.i_choices import present
+from ..audit.checks.j_errors import done_screen
 from ..audit.handlers import handled_actions
 from ..preserved import GLOBAL_NAME
 from ..tasks import load_task
@@ -289,6 +290,42 @@ def _check_expect(flow, html, steps, screens, done=None):
     return problems
 
 
+DONE_ALIAS = "done"
+
+
+def accept_done_alias(flow):
+    """expect 의 "done" 칸을 마지막 화면의 칸으로 옮긴다. 옮겼으면 그 화면 이름을,
+    아니면 None 을 돌려준다. 흐름 명세를 제자리에서 바꾼다.
+
+    완료 화면의 칸은 마지막 화면의 이름이다 (_check_expect). 그런데 gpt-6-astra 는
+    마지막 화면을 complete 로 지어 놓고 expect 의 키를 "done" 으로 네 번 중 두 번
+    적었다 - 원본의 완료 화면 이름이 done 이고, 전의 프롬프트 예시도 done 이었다.
+    무엇을 확인할지는 맞게 적었으므로 설계 실패가 아니다.
+
+    그래서 흐름 명세에 "done" 이라는 화면이 **없을 때만** 마지막 화면의 별칭으로
+    받는다. done 화면이 있으면 그 칸은 그 화면의 것이므로 건드리지 않는다 -
+    그때 칸이 어긋난 것은 _check_expect 가 그대로 문제로 센다. 마지막 화면 칸이
+    이미 있으면 거기 없는 짝만 더한다. 받았다는 사실은 부르는 쪽이 남긴다."""
+    expect = flow.get("expect")
+    if not isinstance(expect, dict) or DONE_ALIAS not in expect:
+        return None
+    steps = _steps_of(flow)
+    named = {st.get("screen") for st in steps if isinstance(st, dict)}
+    for e in _error_paths_of(flow):
+        named |= {e.get("expect_screen"), e.get("back_to")}
+    visits = _visits(steps)
+    if not visits or DONE_ALIAS in named:
+        return None
+    last = visits[-1]
+    moved = expect.pop(DONE_ALIAS)
+    pairs = list(expect.get(last) or [])
+    for p in moved if isinstance(moved, list) else []:
+        if p not in pairs:
+            pairs.append(p)
+    expect[last] = pairs
+    return last
+
+
 def _check_derived(flow, html, steps, screens):
     """새 설계이므로 원본에서 파생된 빌드가 아니다."""
     if flow.get("derived_from_original", False):
@@ -335,9 +372,11 @@ def _check_error_paths(flow, html, steps, screens, required=None):
     틀린 값의 실제 값은 여기서도 말하지 않는다 - 모델이 그 값을 알면 "그 값일
     때만 오류를 띄우는" HTML 로 검사 J 를 지날 수 있다. 자리표시자 이름만 쓴다.
 
-    back_to 의 순서 규칙(오류가 나타난 화면이거나 그보다 앞)은 오류가 정답 경로
-    위의 화면에 나타나는 경우만 여기서 본다. 오류 전용 화면(팝업)은 그 화면을
-    띄운 곳을 걸어 봐야 알 수 있으므로 검사 J 가 본다."""
+    back_to 는 정답 경로에 있는 화면이고 완료 화면이 아니어야 한다 (오류가
+    나타난 화면 자신도 된다). 오류가 나타난 화면보다 뒤여도 된다 - 순서로 막던
+    전의 규칙은 계좌 화면에서 은행 오류를 알리고 은행 고르기 화면으로 보낸
+    gpt-6.1-sol 의 설계를 떨어뜨렸다. 실제로 돌아갈 수 있는지는 검사 J 가 걸어서
+    본다 (j_errors.back_to_ok 와 같은 규칙)."""
     problems = []
     paths = _error_paths_of(flow)
     defs = {d["id"]: d for d in required or [] if isinstance(d, dict) and "id" in d}
@@ -354,6 +393,7 @@ def _check_error_paths(flow, html, steps, screens, required=None):
         if isinstance(st, dict) and st.get("screen") not in order:
             order.append(st.get("screen"))
     visits = _visits(steps)
+    done = done_screen(steps)
     for i, e in enumerate(paths):
         eid = e.get("id")
         where = "error_paths[%d] (%s)" % (i, eid or "id 없음")
@@ -372,10 +412,10 @@ def _check_error_paths(flow, html, steps, screens, required=None):
         if back != exp and back not in order:
             problems.append("%s.back_to=%r 은 steps 의 화면도 오류가 나타난 화면도 "
                             "아니다" % (where, back))
-        elif exp in order and back in order and order.index(back) > order.index(exp):
-            problems.append("%s.back_to=%r 은 오류가 나타난 화면(%r)보다 뒤다. 고칠 "
-                            "수 있는 곳 - 오류가 나타난 화면이나 그 앞 - 으로 돌아가야 "
-                            "한다." % (where, back, exp))
+        elif back == done:
+            problems.append("%s.back_to=%r 은 완료 화면이다. 고칠 수 있는 곳 - "
+                            "steps 에 있는 화면 중 완료 화면이 아닌 곳 - 으로 돌아가야 "
+                            "한다." % (where, back))
         if not e.get("inputs"):
             problems.append("%s.inputs 가 비어 있다. 잘못된 입력을 넣는 동작을 적어라"
                             % where)
@@ -458,9 +498,16 @@ def preserved_problems(html, data):
         return []
     return ["재설계 HTML 의 스크립트가 도구가 넣어 주는 선택지 데이터를 읽지 "
             "않는다: %s. 이 데이터는 window.%s.<이름> 으로 들어간다 - 목록을 "
-            "직접 쓰지 말고 그 이름을 참조해 그려라. 몇 개를 어떻게 보일지는 "
-            "네가 정하되 모든 값을 고를 수 있어야 한다."
-            % (", ".join(missed), GLOBAL_NAME)]
+            "직접 쓰지 말고 그 이름을 참조해 그려라 (%s). 몇 개를 어떻게 "
+            "보일지는 네가 정하되 모든 값을 고를 수 있어야 한다."
+            % (", ".join(missed), GLOBAL_NAME, read_forms(missed[0]))]
+
+
+def read_forms(name):
+    """검사기가 읽기로 세는 모양의 예. 프롬프트와 형식 오류가 같은 글을 쓴다
+    (preserve.names_read 가 세는 모양 중 흔한 셋)."""
+    return ("`window.{g}.{n}` · `const P = window.{g}; P.{n}` · "
+            "`const {{{n}}} = window.{g}` 모두 된다".format(g=GLOBAL_NAME, n=name))
 
 
 def problems_report(problems):

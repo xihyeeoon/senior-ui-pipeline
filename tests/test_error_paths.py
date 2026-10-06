@@ -59,32 +59,38 @@ ORIGINAL_TRIGGERS = {"wrong-account": "account", "wrong-bank": "confirm"}
 
 
 def test_original_error_paths_pass_the_back_to_rule():
-    """back_to 는 오류가 나타난 화면이거나 그보다 앞이어야 한다.
+    """back_to 는 정답 경로에 있는 화면이고 완료 화면이 아니어야 한다.
 
-    갈라진 지점(from_step)과는 견주지 않는다 - wrong-bank 는 bank 에서 갈라져
-    confirm 으로 돌아가는데, confirm 은 bank 보다 뒤지만 오류(보내기)가 나타난
-    곳이므로 맞다."""
+    원본의 두 경로(account · confirm 으로 돌아간다)는 전의 규칙("오류가 나타난
+    화면이거나 그보다 앞")에서도, 지금 규칙에서도 맞다."""
     flow = original()
     screens = J.step_screens(flow["steps"])
+    done = J.done_screen(flow["steps"])
+    assert done == "done"
     for e in flow["error_paths"]:
-        assert J.back_to_ok(screens, e["back_to"], e["expect_screen"],
-                            ORIGINAL_TRIGGERS[e["id"]]), e["id"]
+        assert J.back_to_ok(screens, e["back_to"], e["expect_screen"], done), e["id"]
     wb = [e for e in flow["error_paths"] if e["id"] == "wrong-bank"][0]
     assert screens.index(wb["back_to"]) > screens.index(wb["from_step"])
 
 
-def test_back_to_rule_rejects_screens_after_the_error():
-    screens = J.step_screens(original()["steps"])
-    # 오류는 confirm 에서 났다 - password · done 은 그보다 뒤다.
-    assert not J.back_to_ok(screens, "password", "err-bank", "confirm")
-    assert not J.back_to_ok(screens, "done", "err-bank", "confirm")
-    # 앞의 화면은 된다.
-    assert J.back_to_ok(screens, "account", "err-bank", "confirm")
-    # 같은 화면 안에서 알리는 설계는 그 화면이 기준이다.
-    assert J.back_to_ok(screens, "account", "account", "account")
-    assert not J.back_to_ok(screens, "amount", "account", "account")
+def test_back_to_rule_allows_any_step_screen_but_the_done_screen():
+    """규칙의 목적은 "사용자가 고칠 수 있는 곳으로 돌아간다" 이다. 전에는
+    "오류가 나타난 화면이거나 그보다 앞" 이어서, 계좌 화면에서 은행 오류를 알리고
+    뒤의 은행 고르기 화면으로 보낸 gpt-6.1-sol 의 설계가 떨어졌다."""
+    flow = original()
+    screens, done = J.step_screens(flow["steps"]), J.done_screen(flow["steps"])
+    # 오류가 난 화면보다 뒤여도 정답 경로 위면 된다.
+    assert J.back_to_ok(screens, "password", "err-bank", done)
+    assert J.back_to_ok(screens, "bank", "account", done)
+    assert J.back_to_ok(screens, "account", "err-bank", done)
+    # 같은 화면 안에서 알리고 거기서 고치는 설계.
+    assert J.back_to_ok(screens, "account", "account", done)
+    # 완료 화면은 고칠 곳이 아니다 - 오류가 거기 나타났어도.
+    assert not J.back_to_ok(screens, "done", "err-bank", done)
+    assert not J.back_to_ok(screens, "done", "done", done)
     # 정답 경로에 없는 화면으로는 돌아갈 수 없다 (오류 화면 자신만 예외).
-    assert not J.back_to_ok(screens, "somewhere", "err-bank", "confirm")
+    assert not J.back_to_ok(screens, "somewhere", "err-bank", done)
+    assert J.back_to_ok(screens, "err-bank", "err-bank", done)
 
 
 # --------------------------------------------------------------------- #
@@ -191,12 +197,23 @@ def test_not_getting_back_is_fatal():
     assert "되돌아가지 못했다" in ctx.fatal[0]["detail"]
 
 
-def test_back_to_after_the_error_is_fatal():
+def test_back_to_the_done_screen_is_fatal():
+    """정답 경로의 마지막 화면(amount)이 완료 화면이다."""
     after = HAPPY_ACCOUNT + "\n계좌번호가 맞지 않아요"
     ctx = judge(flow_with([ep(back_to="amount")]),
                 {"wrong-account": walked(after_text=after, recover="amount")})
     assert [f["check"] for f in ctx.fatal] == ["J"]
-    assert "뒤다" in ctx.fatal[0]["detail"]
+    assert "완료 화면" in ctx.fatal[0]["detail"]
+
+
+def test_back_to_a_later_screen_that_is_not_done_is_fine():
+    """계좌 화면에서 알리고 뒤의 은행 화면으로 보내 고치게 하는 설계."""
+    steps = STEPS[:2] + [{"screen": "bank", "click": "#next"}] + STEPS[2:]
+    after = HAPPY_ACCOUNT + "\n은행이 맞지 않아요"
+    ctx = judge(flow_with([ep(back_to="bank")], steps=steps),
+                {"wrong-account": walked(after_text=after, recover="bank")})
+    assert ctx.fatal == []
+    assert ctx.metrics["error_paths"]["wrong-account"]["recovered"]
 
 
 def test_notice_without_the_task_words_is_a_warning_only():
@@ -306,12 +323,12 @@ def test_error_path_names_must_exist():
     assert "from_step" in text and "expect_screen" in text and "back_to" in text
 
 
-def test_back_to_after_an_on_path_error_screen_is_a_format_problem():
-    """오류가 정답 경로 위의 화면(account)에 나타나면, 그보다 뒤(amount)로
-    돌아가는 것은 흐름만 보고도 틀렸다."""
+def test_back_to_the_done_screen_is_a_format_problem():
+    """완료 화면(steps 의 마지막 - 여기서는 amount)으로 돌아가는 것은 흐름만
+    보고도 틀렸다."""
     e = ep(back_to="amount")
     probs = _api.validate_flow(model_flow([e, popup_ep(id="x")]), HTML)
-    assert any("back_to" in p and "amount" in p for p in probs)
+    assert any("back_to" in p and "amount" in p and "완료 화면" in p for p in probs)
 
 
 def test_error_paths_of_the_wrong_type_are_a_shape_problem():

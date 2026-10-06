@@ -47,7 +47,7 @@ from .preserve import inject, names_read, preserved_data
 from .prompt import (build_plan_prompt, build_prompt, choices_block, errors_block,
                      load_plan_template, load_template, one_line, plan_retry_block,
                      retry_block, with_reflection)
-from .reply import (FlowShape, failure_report, parse_reply,
+from .reply import (FlowShape, accept_done_alias, failure_report, parse_reply,
                     preserved_problems, problems_report, validate_flow)
 
 def runs_dir(mock=False):
@@ -80,6 +80,40 @@ def effort_choice(profile, args=None):
     if given:
         return given, "--reasoning-effort"
     return config.DEFAULT_REASONING_EFFORT, "config.DEFAULT_REASONING_EFFORT"
+
+
+def stage_choice(args):
+    """`(검사 단계, 어디서 왔나)`. --stage 를 주면 그 값, 아니면 config.DEFAULT_STAGE."""
+    given = getattr(args, "stage", None)
+    if given:
+        return given, "--stage"
+    return config.DEFAULT_STAGE, "config.DEFAULT_STAGE"
+
+
+def budget_choice(args):
+    """`{"format": (횟수, 출처), "audit": (횟수, 출처)}`.
+
+    예산마다 --format-attempts · --audit-attempts, 그다음 둘을 한 번에 정하는
+    --attempts, 그다음 config.DEFAULT_BUDGET 순서다."""
+    out = {}
+    for kind in ("format", "audit"):
+        own = getattr(args, kind + "_attempts", None)
+        both = getattr(args, "attempts", None)
+        if own is not None:
+            out[kind] = (own, "--%s-attempts" % kind)
+        elif both is not None:
+            out[kind] = (both, "--attempts")
+        else:
+            out[kind] = (config.DEFAULT_BUDGET[kind], "config.DEFAULT_BUDGET")
+    return out
+
+
+def describe_settings(stage, budget):
+    """run.log 첫 줄에 잇는 검사 단계와 예산. 출처가 같으면 한 번만 적는다."""
+    (f, fs), (a, as_) = budget["format"], budget["audit"]
+    money = ("예산 형식 %d · 검사 %d (출처 %s)" % (f, a, fs) if fs == as_
+             else "예산 형식 %d (출처 %s) · 검사 %d (출처 %s)" % (f, fs, a, as_))
+    return "stage=%s (출처 %s) · %s" % (stage[0], stage[1], money)
 
 
 def call_delay(profile, args=None):
@@ -201,10 +235,9 @@ class Run:
         # 연구자가 관리하는 "빼도 되는 선택지" 목록. 검사 직전에 흐름에 합친다.
         self.allowed_removals = {}
         self.orig_snapshot = None
-        self.budget = Budget(
-            args.format_attempts if args.format_attempts is not None else args.attempts,
-            args.audit_attempts if args.audit_attempts is not None else args.attempts,
-            getattr(args, "infra_attempts", 3))
+        budget = budget_choice(args)
+        self.budget = Budget(budget["format"][0], budget["audit"][0],
+                             getattr(args, "infra_attempts", 3))
         # 마지막으로 **검사까지 간** 빌드와 그 결과. 셋은 늘 같은 시도의 것이다.
         self.last = {"report": None, "html": None, "flow_text": None}
         # 마지막 형식 오류. 검사 결과와 다른 것이므로 따로 들고 있는다 - 한쪽을
@@ -221,7 +254,10 @@ class Run:
                                            reasoning_effort=self.reasoning_effort),
                         "mock": args.mock,
                         "task": self.task["id"],
-                        "stage": args.stage, "preserved": {}, "plan": None,
+                        "stage": args.stage,
+                        "stage_source": getattr(args, "stage_source", None),
+                        "budget_source": {k: v[1] for k, v in budget.items()},
+                        "preserved": {}, "plan": None,
                         "repro": repro(template, temperature=self.temperature,
                                        seed=self.seed),
                         "attempts": [], "passed": False, "final": None,
@@ -737,6 +773,13 @@ def check_reply(r, p, entry, reply, n=None):
         dropped = drop_declared_removals(r, flow)
         if dropped:
             entry["choices_removed_dropped"] = dropped
+        # 마지막 화면을 다른 이름으로 지어 놓고 완료 칸만 "done" 으로 적은 흐름.
+        # done 화면이 없을 때만 받고, 받은 사실을 남긴다 (reply.accept_done_alias).
+        alias = accept_done_alias(flow)
+        if alias:
+            entry["done_alias"] = alias
+            r.log("flow: expect 의 'done' 을 마지막 화면 %r 의 칸으로 받았다 - 흐름 "
+                  "명세에 done 화면이 없다" % alias)
         # 과제가 정한 오류 경로를 모두 적었는지, 완료 화면에서 과제의 값을
         # 확인하는지도 본다 (과제 파일 · 과제의 원본 흐름).
         problems = validate_flow(flow, html, r.errors, r.task["done_expect"])
@@ -1152,9 +1195,14 @@ def run(args):
     # 결과를 가르는 조건이다 (effort_choice). gpt-4o 의 첫 줄은 전과 같다.
     profile = profile_for(model, getattr(args, "api", None))
     effort, effort_source = effort_choice(profile, args)
+    # 검사 단계와 재시도 예산도 결과를 가르는 조건이다. 둘 다 기본값이 말없이
+    # 바뀐 적이 있으므로(config.DEFAULT_STAGE · DEFAULT_BUDGET) 출처와 함께 첫
+    # 줄에 둔다. 단계는 여기서 정해 args 에 적는다 - 검사기와 summary 가 그것을 읽는다.
+    args.stage, args.stage_source = stage_choice(args)
     log("model=%s (출처 %s)%s — API 가 답한 판 이름은 호출마다 '응답 모델' 줄에 남는다"
         % (model, source,
            " · reasoning_effort=%s (출처 %s)" % (effort, effort_source) if effort else "")
+        + " | " + describe_settings((args.stage, args.stage_source), budget_choice(args))
         + (" | " + warning if warning else ""))
     if not profile["known"]:
         log("경고: 모르는 모델 %s — gpt-4o 처럼 부른다 (%s). 모델이 거절하는 인자는 "
@@ -1198,8 +1246,10 @@ def run(args):
         log("summary: %s" % os.path.join(run_dir, "summary.json"))
         return 2
 
-    log("run: %s | model=%s | attempts=%d | stage=%s | mock=%s | original=%s"
-        % (run_dir, model, args.attempts, args.stage, args.mock, orig_url)
+    budget = budget_choice(args)
+    log("run: %s | model=%s | 예산 형식 %d · 검사 %d | stage=%s | mock=%s | original=%s"
+        % (run_dir, model, budget["format"][0], budget["audit"][0], args.stage,
+           args.mock, orig_url)
         + ("" if task["id"] == DEFAULT_TASK else " | task=%s" % task["id"]))
     r = Run(args, log, run_dir, model, template, original_html, orig_url,
             plan_template=plan_template, task=task, model_source=source)

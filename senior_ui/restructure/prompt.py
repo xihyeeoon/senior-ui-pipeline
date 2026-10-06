@@ -27,6 +27,7 @@ from senior_ui.preserved import GLOBAL_NAME
 from senior_ui.tasks import load_task
 
 from .preserve import preserved_data, split_groups
+from .reply import read_forms
 
 PROMPT_FILE = os.path.join(ROOT, "docs", "restructure-prompt.md")
 
@@ -128,8 +129,9 @@ def errors_block(paths):
             "1. 그 잘못된 입력에서 오류 상태가 나타난다 — 틀린 값으로 다음 단계에 "
             "넘어가지 않는다.",
             "2. 무엇이 틀렸는지 알아챌 수 있는 글이 새로 보인다.",
-            "3. 고칠 수 있는 화면 — 오류가 나타난 화면이나 그 앞 — 으로 되돌아갈 수 "
-            "있다.", "",
+            "3. 그 값을 고칠 수 있는 화면 — 정답 경로에 있는 화면 중 완료 화면이 "
+            "아닌 곳 — 으로",
+            "   되돌아갈 수 있다. 오류가 나타난 화면보다 앞이든 뒤든 된다.", "",
             "잘못된 값이 무엇인지는 알려 주지 않는다. 정답이 아닌 모든 값에서 같은 "
             "오류가 나야 한다.", ""]
     return "\n".join(out)
@@ -197,7 +199,8 @@ def choices_block(orig_snapshot, original_html):
                 "값을 고를",
                 "수 있어야 한다. 위 이름을 하나도 빠뜨리지 말고 참조하라 - 읽지 "
                 "않은 이름이",
-                "있으면 형식 오류로 돌아온다.", "",
+                "있으면 형식 오류로 돌아온다. 읽는 모양은 "
+                + read_forms(next(iter(data))) + ".", "",
                 "검사가 보는 것은 렌더링된 화면이다. 선택 화면이 열렸을 때 모든 "
                 "값이 DOM",
                 "안에 있어야 한다 (숨김·접힘은 괜찮다). 검색창을 두더라도 검색어가 "

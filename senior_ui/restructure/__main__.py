@@ -46,7 +46,7 @@ This file is the command line and nothing else. The work is split up:
   loop.py        재시도 루프 · 예산 · 요약 (run)
 
 Usage:
-  python -m senior_ui.restructure                 # real model, 3 attempts
+  python -m senior_ui.restructure                 # real model, 형식 5 · 검사 6, wireframe
   python -m senior_ui.restructure --attempts 2 --model gpt-4o
   python -m senior_ui.restructure --task bill     # 공과금 과제 (기본은 transfer)
   python -m senior_ui.restructure --mock pass     # no API: replays Run 1
@@ -110,12 +110,15 @@ MOCK_PASS_NOTE = ("pass 는 숫자판·빠른 금액까지 도구가 넣은 배�
 
 def build_parser():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--attempts", type=int, default=3,
-                    help="두 예산의 기본값")
+    ap.add_argument("--attempts", type=int, default=None,
+                    help="두 예산을 한 번에 정한다. 주지 않으면 config.DEFAULT_BUDGET "
+                         "(형식 %(format)d · 검사 %(audit)d)" % config.DEFAULT_BUDGET)
     ap.add_argument("--format-attempts", type=int, default=None,
-                    help="흐름 명세 형식 오류에 쓸 재시도 횟수 (기본: --attempts)")
+                    help="흐름 명세 형식 오류에 쓸 재시도 횟수 (기본: --attempts, "
+                         "그다음 %d)" % config.DEFAULT_BUDGET["format"])
     ap.add_argument("--audit-attempts", type=int, default=None,
-                    help="검사 fatal 에 쓸 재시도 횟수 (기본: --attempts)")
+                    help="검사 fatal 에 쓸 재시도 횟수 (기본: --attempts, 그다음 %d)"
+                         % config.DEFAULT_BUDGET["audit"])
     ap.add_argument("--infra-attempts", type=int, default=3,
                     help="모델에 닿지 못했을 때(연결 실패) 쓸 재시도 횟수")
     ap.add_argument("--model", default=None,
@@ -155,8 +158,9 @@ def build_parser():
                          "여기서 온다. 기본 %s" % DEFAULT_TASK)
     ap.add_argument("--original", default=None,
                     help="원본 HTML. 주지 않으면 과제 파일의 original")
-    ap.add_argument("--stage", choices=sorted(STAGES), default="styled",
-                    help="검사 단계. wireframe 은 A·B·C·F·I 만 본다")
+    ap.add_argument("--stage", choices=sorted(STAGES), default=None,
+                    help="검사 단계. wireframe 은 A·B·C·F·I·J 만 본다. 주지 않으면 "
+                         "config.DEFAULT_STAGE (%s)" % config.DEFAULT_STAGE)
     ap.add_argument("--list-models", action="store_true",
                     help="이 키로 쓸 수 있는 gpt- 모델을 보이고 끝난다 (models.list, 요금 "
                          "없음). 실행 폴더를 만들지 않는다 - outputs/model-probe.log")

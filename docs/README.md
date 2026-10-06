@@ -64,7 +64,7 @@ LLM 이 쓴 것이라 다시 만들려면 API 비용이 들고 바이트까지 �
 되먹임, 통과하거나 예산이 끝날 때까지:
 
 ```powershell
-.\.venv\Scripts\python.exe -m senior_ui.restructure --stage wireframe
+.\.venv\Scripts\python.exe -m senior_ui.restructure    # 기본 --stage wireframe · 예산 형식 5 · 검사 6
 .\.venv\Scripts\python.exe -m senior_ui.restructure --mock pass    # API 없이 확인
 ```
 
@@ -305,8 +305,10 @@ o 계열과 맞지 않는다) · `types/shared/reasoning_effort.py`.
   같은 화면에서 바로 알려도, [다음] 을 끄고 이유를 보여도 된다.
 - **검사 J** 는 오류 경로마다 새 페이지에서 정답대로 `from_step` 까지 간 뒤 잘못된
   입력을 넣는다. `expect_screen` 에 있고 새 글이 나타나야 하며(fatal), `recover`
-  뒤에 `back_to` 에 있어야 하고(fatal), `back_to` 는 오류가 나타난 화면이거나
-  그보다 앞이어야 한다(fatal). 새 글에 `notice_any` 단어가 없으면 warning 이다.
+  뒤에 `back_to` 에 있어야 하고(fatal), `back_to` 는 정답 경로(`steps`)에 있는
+  화면이고 완료 화면이 아니어야 한다(fatal) — 오류가 나타난 화면보다 뒤여도 된다
+  (계좌 화면에서 은행 오류를 알리고 은행 고르기 화면으로 보내기). 새 글에
+  `notice_any` 단어가 없으면 warning 이다.
   눌러 넣은 값이 화면에 되비친 것은 새 글로 세지 않는다.
 - 흐름에 오류 경로가 없으면 J 는 물러난다 — 옛 흐름(Run 1~4)의 판정은 그대로다.
   재구성 루프는 과제의 오류 경로를 모두 요구한다 (빠지면 형식 검사에서 떨어진다).
@@ -419,7 +421,7 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
     "no_truncated": true,
     "clean_tree": true,
     "not_mock": true,
-    "model": null
+    "model": "gpt-6.1-sol"
   },
   "ordering": [
     {"by": "representative", "metrics": {"screens": 1, "data_actions": 1, "changes": 1}},
@@ -438,7 +440,7 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
 | `no_truncated` | **마지막 시도** 의 답이 길이 제한에서 잘리지 않았다. 중간 시도의 잘림은 최종 시안과 상관없으므로 빼지 않고, 순위표의 '중간 잘림' 열에 횟수로만 보인다 |
 | `clean_tree` | `git.dirty == false`. 기록이 없는 옛 실행은 어긴 것으로 본다 |
 | `not_mock` | mock 실행이 아니다 |
-| `model` | `null` 이면 보지 않는다. 이름을 적으면 `summary.model` 이 그것과 같아야 한다 |
+| `model` | `null` 이면 보지 않는다. 이름을 적으면 `summary.model` 이 그것과 같아야 한다. 지금은 12번 본 실행의 모델 `gpt-6.1-sol` |
 
 **ordering** — 위에서부터 차례로 비교한다. 앞이 같을 때만 다음을 본다. 끝까지
 같으면 실행 이름순 (정해진 순서를 내기 위해서일 뿐 뜻은 없다). 순서를 바꾸려면

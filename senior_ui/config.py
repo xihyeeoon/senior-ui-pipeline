@@ -82,6 +82,23 @@ MODEL_ENV_VARS = ("RESTRUCTURE_MODEL", "DESIGNREPAIR_MODEL")
 # 않는다.
 DEFAULT_REASONING_EFFORT = "medium"
 
+# 재구성 루프의 검사 단계 (--stage). 루프가 만드는 것은 와이어프레임이고, 지금까지의
+# 자동 실행(Run 2~5)도 모두 --stage wireframe 을 손으로 주고 돌았다. 기본값이
+# styled 인 채로 남아 있어서 첫 실제 실행(gpt-6.1-sol · gpt-6-astra, 2026-10-06)이
+# 말없이 styled 로 돌았다 - styled 는 2026-09-30 --stage 를 처음 붙일 때(c297a52)
+# "기존 동작 그대로" 를 위해 고른 값이다. 보낸 값과 출처는 run.log 첫 줄과
+# summary.json 의 stage · stage_source 에 남는다 (restructure.loop.stage_choice).
+DEFAULT_STAGE = "wireframe"
+
+# 재시도 예산 (--format-attempts · --audit-attempts, 둘 다 한 번에는 --attempts).
+# 코드의 기본값은 처음부터 3 이었고, 형식 5 · 검사 6 은 2026-10-01 의 세 실행
+# (20261001-104938 · -125247 · -144134, docs/variance-notes.md)이 명령줄로 준
+# 값이다. 그 뒤 명령줄 없이 돈 첫 실제 실행이 3 · 3 으로 돌았다. 형식 실패를
+# 줄이는 고침(별칭 참조 · 완료 화면 키 · back_to)과 함께 그 값으로 되돌린다.
+# 값과 출처는 run.log 첫 줄과 summary.json 의 budget · budget_source 에 남는다
+# (restructure.loop.budget_choice).
+DEFAULT_BUDGET = {"format": 5, "audit": 6}
+
 # 모델별 100만 토큰당 가격 (USD). summary.json 의 cost 가 이 표로 시도별·전체
 # 예상 금액을 센다. None 이면 금액은 null 이다 - 0 이 아니라 "모른다".
 #

@@ -23,7 +23,7 @@
     "no_truncated": true,
     "clean_tree": true,
     "not_mock": true,
-    "model": null
+    "model": "gpt-6.1-sol"
   },
   "ordering": [
     {"by": "representative", "metrics": {"screens": 1, "data_actions": 1, "changes": 1}},

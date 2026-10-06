@@ -1,0 +1,791 @@
+```json
+{
+  "cause": "은행 다시 선택 버튼의 노출을 오류 문구 유무에만 연결해, 오류 안내가 초기화된 상태에서는 복구 조작에 필요한 버튼을 사용할 수 없었습니다.",
+  "plan_changes": [],
+  "keep": ["C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10", "C11", "C12", "C13", "C14"]
+}
+```
+
+```html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>돈 보내기</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;background:#e7ebf0;color:#17212f}
+body{font-family:"맑은 고딕",sans-serif;display:flex;justify-content:center;font-size:18px;line-height:1.5}
+#phone{width:390px;max-width:100vw;height:844px;position:relative;background:#fff;overflow:hidden}
+.screen{display:none;position:absolute;inset:0;overflow-y:auto;padding:18px;background:#fff;color:#17212f}
+.screen.on{display:block}
+h1{font-size:27px;line-height:1.35;margin:12px 0 16px;color:#17212f}
+h2{font-size:21px;margin:0 0 12px;color:#17212f}
+p{margin:10px 0;color:#17212f}
+label{display:block;font-size:20px;font-weight:700;margin:14px 0 6px;color:#17212f}
+strong,span{color:#17212f}
+button,input{font:inherit;color:#17212f}
+button{min-height:56px;padding:10px 12px;border:1px solid #788698;border-radius:10px;background:#fff;font-size:20px;cursor:pointer;touch-action:manipulation}
+button:focus-visible,input:focus-visible{outline:3px solid #9c4a00;outline-offset:3px}
+button:disabled{background:#e5e9ef;color:#475365;cursor:default}
+input{width:100%;min-height:58px;border:2px solid #64758a;border-radius:10px;padding:10px;font-size:24px;background:#fff}
+input::placeholder{color:#596579;opacity:1}
+.nav{display:flex;gap:12px;justify-content:space-between;margin-bottom:14px}
+.nav button{font-size:18px}
+.progress{font-size:18px;font-weight:700;color:#174d9a;margin:8px 0}
+.help{font-size:16px;color:#475365}
+.card{padding:16px;background:#f1f5fb;border:1px solid #b9c8dc;border-radius:12px;margin:16px 0;color:#17212f}
+.card p{margin:6px 0}
+.large{font-size:26px;font-weight:700;color:#17212f}
+.primary{display:block;width:100%;min-height:60px;background:#174fba;border-color:#174fba;color:#fff;font-size:21px;font-weight:700;margin:18px 0 8px}
+.wide{width:100%;margin:6px 0}
+.row{display:flex;gap:8px;margin:10px 0}
+.row button{flex:1;font-size:17px}
+.pad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0}
+.pad button{font-size:26px;min-height:56px;background:#f3f6fa;color:#17212f}
+.quick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}
+.quick button{font-size:17px;background:#eef4ff;color:#173e7a}
+.error{font-size:18px;color:#a22319;background:#fff2ee;border-left:4px solid #a22319;padding:10px;margin:8px 0}
+.error:empty{display:none}
+.tabs{display:flex;gap:8px;margin:14px 0}
+.tabs button{flex:1}
+.tabs button[aria-pressed="true"]{background:#174fba;color:#fff;border-color:#174fba}
+.banklist{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.banklist button{min-height:60px;text-align:left;font-size:20px;white-space:normal;overflow-wrap:anywhere;color:#17212f}
+.banklist button[aria-pressed="true"]{border:3px solid #174fba;background:#eef4ff;color:#143e80;font-weight:700}
+.bankfooter{border-top:2px solid #bdc9d8;margin-top:16px;padding-top:8px;color:#17212f}
+.summary{margin:16px 0;padding:16px;border:1px solid #b9c8dc;border-radius:12px;background:#f5f8fc;color:#17212f}
+.summary dt{font-size:17px;color:#475365;margin-top:10px}
+.summary dt:first-child{margin-top:0}
+.summary dd{font-size:22px;font-weight:700;margin:2px 0 0;color:#17212f;overflow-wrap:anywhere}
+.dots{font-size:32px;letter-spacing:10px;text-align:center;color:#174fba;margin:14px 0}
+.success{padding:10px 0;font-size:44px;color:#174fba}
+dialog{width:340px;max-width:90vw;padding:22px;border:2px solid #64758a;border-radius:14px;background:#fff;color:#17212f}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+[hidden]{display:none!important}
+@media(max-height:843px){#phone{height:100dvh}}
+</style>
+</head>
+<body>
+<div id="phone">
+<section class="screen on" data-screen="start">
+  <p class="progress">홍길동님의 돈 보내기</p>
+  <h1 tabindex="-1">어느 계좌에서 보낼까요?</h1>
+  <div class="card">
+    <h2>출금 계좌</h2>
+    <p>신한 주거래 우대통장</p>
+    <p class="help">금융거래한도계좌 · 저축예금</p>
+    <p>신한 110-000-000000</p>
+    <p>출금 가능 금액</p>
+    <p class="large">1,000,000원</p>
+  </div>
+  <p>다른 사람의 계좌로 돈을 보냅니다.</p>
+  <button class="primary" data-action="go-recipient">돈 보내기</button>
+  <p class="help">연습용 화면입니다. 실제 돈은 보내지 않습니다.</p>
+</section>
+
+<section class="screen" data-screen="recipient-details">
+  <div class="nav">
+    <button data-action="previous">이전</button>
+    <button data-action="cancel">이체 취소</button>
+  </div>
+  <p class="progress">1/4 받는 계좌</p>
+  <h1 tabindex="-1">받는 사람 계좌 입력</h1>
+  <p>받는 사람의 계좌번호와 은행을 입력해 주세요</p>
+  <label for="acc-input">계좌번호</label>
+  <input id="acc-input" type="text" inputmode="numeric" autocomplete="off" data-action="account-field" aria-describedby="acc-help acc-error">
+  <p id="acc-help" class="help">하이픈(-) 없이 숫자만 입력해 주세요.<br>최대 14자리까지 입력할 수 있습니다.</p>
+  <p id="acc-error" class="error" role="alert"></p>
+  <button id="acc-fix" class="wide" data-action="fix-account" hidden>계좌번호 수정</button>
+  <div class="row">
+    <button data-action="acc-del">한 글자 지우기</button>
+    <button data-action="acc-clear">전체 지우기</button>
+  </div>
+  <label id="bank-label" for="picked-bank">받는 은행 또는 증권사</label>
+  <button id="picked-bank" class="wide" data-action="open-bank" aria-describedby="bank-error">은행·증권사 선택</button>
+  <p id="bank-error" class="error" role="alert"></p>
+  <button id="bank-fix" class="wide" data-action="open-bank" aria-describedby="bank-error">은행 다시 선택</button>
+  <div id="acc-pad" class="pad" aria-label="계좌번호 숫자판"></div>
+  <button id="acc-next" class="primary" data-action="account-next">계좌 확인하고 다음</button>
+</section>
+
+<section class="screen" data-screen="bank-select">
+  <div class="nav">
+    <button data-action="previous">이전</button>
+    <button data-action="cancel">이체 취소</button>
+  </div>
+  <p class="progress">받는 계좌의 은행 선택</p>
+  <h1 tabindex="-1">은행·증권사를 찾아주세요</h1>
+  <label for="bank-search">기관명 검색</label>
+  <input id="bank-search" type="search" data-action="search-field" placeholder="이름을 입력해 주세요" autocomplete="off">
+  <div class="tabs">
+    <button id="tab-bank" data-action="tab-bank" aria-pressed="true">은행</button>
+    <button id="tab-sec" data-action="tab-sec" aria-pressed="false">증권사</button>
+  </div>
+  <p class="help">가나다순입니다. 기관을 누른 뒤 아래에서 선택을 적용해 주세요.</p>
+  <p id="search-status" class="help" aria-live="polite"></p>
+  <div id="grid-bank" class="banklist"></div>
+  <div id="grid-sec" class="banklist" hidden></div>
+  <div class="bankfooter">
+    <p id="bank-choice" aria-live="polite">아직 선택하지 않았습니다.</p>
+    <p id="bank-choice-error" class="error" role="alert"></p>
+    <button id="bank-apply" class="primary" data-action="apply-bank">이 은행으로 선택</button>
+  </div>
+</section>
+
+<section class="screen" data-screen="amount">
+  <div class="nav">
+    <button data-action="previous">이전</button>
+    <button data-action="cancel">이체 취소</button>
+  </div>
+  <p class="progress">2/4 금액</p>
+  <h1 tabindex="-1">얼마를 보낼까요?</h1>
+  <div class="card">
+    <p>받는 사람 <strong class="large" id="amt-name"></strong></p>
+    <p id="amt-bank"></p>
+    <p id="amt-account"></p>
+    <p class="help">시제품에 정해진 받는 사람 정보입니다.</p>
+  </div>
+  <label for="amt-input">보낼 금액 (원)</label>
+  <input id="amt-input" type="text" inputmode="numeric" data-action="amount-field" autocomplete="off" aria-describedby="amt-reading amt-error">
+  <p id="amt-reading" aria-live="polite">금액을 입력해 주세요.</p>
+  <p><strong>출금 가능 금액 1,000,000원</strong></p>
+  <p id="amt-error" class="error" role="alert"></p>
+  <div id="amt-quick" class="quick"></div>
+  <div id="amt-pad" class="pad" aria-label="금액 숫자판"></div>
+  <button class="wide" data-action="del">한 글자 지우기</button>
+  <p class="help">출금 계좌: 신한 주거래 우대통장<br>신한 110-000-000000</p>
+  <button id="amt-next" class="primary" data-action="amount-next">입력한 금액 확인</button>
+</section>
+
+<section class="screen" data-screen="review">
+  <div class="nav">
+    <button data-action="previous">이전</button>
+    <button data-action="cancel">이체 취소</button>
+  </div>
+  <p class="progress">3/4 내용 확인</p>
+  <h1 tabindex="-1">보낼 내용을 확인해 주세요</h1>
+  <p class="card"><strong>아직 돈을 보내지 않았습니다.</strong></p>
+  <dl class="summary">
+    <dt>받는 사람</dt><dd id="rv-name"></dd>
+    <dt>받는 은행</dt><dd id="rv-bank"></dd>
+    <dt>전체 계좌번호</dt><dd id="rv-account"></dd>
+    <dt>보낼 금액</dt><dd id="rv-amount"></dd>
+    <dt>수수료</dt><dd>0원 (무료)</dd>
+    <dt>출금 계좌</dt><dd>신한 110-000-000000</dd>
+  </dl>
+  <button class="wide" data-action="edit-account">받는 계좌 수정</button>
+  <button class="wide" data-action="edit-amount">금액 수정</button>
+  <button id="review-next" class="primary" data-action="send">확인했어요 · 본인 확인</button>
+</section>
+
+<section class="screen" data-screen="identity">
+  <div class="nav">
+    <button data-action="previous">이전</button>
+    <button data-action="cancel">이체 취소</button>
+  </div>
+  <p class="progress">4/4 본인 확인</p>
+  <h1 tabindex="-1">출금 계좌 비밀번호 4자리를 입력해 주세요</h1>
+  <p>신한 주거래 우대통장<br>신한 110-000-000000</p>
+  <p class="help">연습용 본인 확인입니다. 실제 비밀번호를 입력하지 마세요. 이 시제품에서는 숫자 4자리로 모의 확인합니다.</p>
+  <div id="pw-dots" class="dots" aria-hidden="true">○○○○</div>
+  <p id="pw-count" aria-live="polite">4자리 중 0자리 입력</p>
+  <p id="pw-error" class="error" role="alert"></p>
+  <div id="pwpad" class="pad" aria-label="비밀번호 숫자판"></div>
+  <button class="wide" data-action="pw-del">한 글자 지우기</button>
+  <button class="wide" data-action="back-review">내용 확인으로 돌아가기</button>
+  <button id="transfer" class="primary" data-action="execute">본인 확인하고 이체하기</button>
+  <p id="processing" aria-live="polite"></p>
+</section>
+
+<section class="screen" data-screen="complete">
+  <div class="success" aria-hidden="true">✓</div>
+  <h1 tabindex="-1">이체가 완료되었습니다</h1>
+  <p class="help">연습용 이체 결과입니다. 실제 출금은 없습니다.</p>
+  <dl class="summary">
+    <dt>받는 사람</dt><dd id="dn-name"></dd>
+    <dt>받는 은행</dt><dd id="dn-bank"></dd>
+    <dt>전체 계좌번호</dt><dd id="dn-account"></dd>
+    <dt>보낸 금액</dt><dd><span id="dn-amt"></span>원</dd>
+    <dt>수수료</dt><dd>0원 (무료)</dd>
+    <dt>출금 계좌</dt><dd>신한 110-000-000000</dd>
+  </dl>
+  <button class="primary" data-action="finish">홈으로 돌아가기</button>
+</section>
+
+<dialog id="ask" aria-labelledby="ask-title" aria-describedby="ask-description">
+  <h2 id="ask-title"></h2>
+  <p id="ask-description"></p>
+  <button class="wide" data-action="ask-no">아니요 · 그대로 두기</button>
+  <button id="ask-yes" class="primary" data-action="ask-yes">지우기</button>
+</dialog>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const $ = id => document.getElementById(id);
+  const phone = $('phone');
+  const ANSWER_ACCOUNT = '110234567890';
+  const ANSWER_BANK = '신한';
+  const RECIPIENT_NAME = '김철수';
+  const BALANCE = 1000000;
+  const ACC_MAX = 14;
+
+  const BANKS = window.PRESERVED.BANKS;
+  const SECS = window.PRESERVED.SECS;
+  const AMT_KEYS = window.PRESERVED.AMT_KEYS;
+  const ACC_KEYS = window.PRESERVED.ACC_KEYS;
+  const PW_KEYS = window.PRESERVED.PW_KEYS;
+  const QUICK = window.PRESERVED.QUICK;
+
+  let current = 'start', pending = '', pendingBank = '', tab = 'bank';
+  let completed = false, busy = false, transaction = null, timer = null;
+  let lastFocus = null;
+  const S = {account:'',bank:'',amount:0,pw:''};
+
+  window.__log = [];
+  window.__screen = () => current;
+  window.__dump = () => JSON.parse(JSON.stringify(window.__log));
+  const fmt = n => Number(n).toLocaleString('ko-KR');
+
+  function record(type, more){
+    window.__log.push(Object.assign({type:type}, more || {}));
+  }
+  function show(name){
+    current = name;
+    phone.querySelectorAll('.screen').forEach(s => {
+      s.classList.toggle('on', s.dataset.screen === name);
+      if(s.dataset.screen === name) s.scrollTop = 0;
+    });
+    record('screen_enter',{to:name});
+    const heading = phone.querySelector('.screen.on h1');
+    if(heading) heading.focus({preventScroll:true});
+  }
+  function text(id, value){ $(id).textContent = value; }
+  function accError(message){
+    text('acc-error',message);
+    $('acc-fix').hidden = !message;
+    $('acc-input').setAttribute('aria-invalid',message ? 'true' : 'false');
+  }
+  function bankError(message){
+    text('bank-error',message);
+    /* 은행 재선택은 오류 문구의 초기화 여부와 무관하게 항상 가능하다. */
+    $('bank-fix').hidden = false;
+    $('picked-bank').setAttribute('aria-invalid',message ? 'true' : 'false');
+  }
+  function renderAccount(){
+    $('acc-input').value = S.account;
+    text('picked-bank',S.bank || '은행·증권사 선택');
+  }
+  function korean(n){
+    if(!n) return '영';
+    const digits = ['', '일','이','삼','사','오','육','칠','팔','구'];
+    const units = ['', '십','백','천'];
+    function block(v){
+      return String(v).split('').map((d,i,a)=>{
+        const k = a.length-i-1;
+        return d === '0' ? '' : ((d === '1' && k > 0) ? '' : digits[Number(d)]) + units[k];
+      }).join('');
+    }
+    return (n >= 10000 ? block(Math.floor(n/10000))+'만 ' : '') +
+      (n%10000 ? block(n%10000) : '');
+  }
+  function renderAmount(){
+    $('amt-input').value = S.amount ? fmt(S.amount) : '';
+    text('amt-reading',S.amount ? korean(S.amount).trim()+' 원' : '금액을 입력해 주세요.');
+  }
+  function setAmount(value){
+    if(!Number.isFinite(value) || value > BALANCE){
+      text('amt-error','출금 가능 금액을 넘습니다. 더 적은 금액을 입력해 주세요.');
+      renderAmount();
+      return;
+    }
+    S.amount = Math.max(0,Math.floor(value));
+    text('amt-error','');
+    renderAmount();
+  }
+  function renderRecipient(prefix, data){
+    text(prefix+'-name',data.name || RECIPIENT_NAME);
+    text(prefix+'-bank',data.bank);
+    text(prefix+'-account',data.account);
+  }
+  function renderReview(){
+    renderRecipient('rv',S);
+    text('rv-amount',fmt(S.amount)+'원');
+  }
+  function renderPw(){
+    text('pw-dots','●'.repeat(S.pw.length)+'○'.repeat(4-S.pw.length));
+    text('pw-count','4자리 중 '+S.pw.length+'자리 입력');
+  }
+  function reset(){
+    clearTimeout(timer);
+    busy = false; completed = false; transaction = null;
+    Object.assign(S,{account:'',bank:'',amount:0,pw:''});
+    pendingBank = '';
+    accError(''); bankError('');
+    text('amt-error',''); text('pw-error',''); text('processing','');
+    $('transfer').disabled = false;
+    renderAccount(); renderAmount(); renderPw();
+    $('acc-input').setSelectionRange(0,0);
+  }
+  window.__startTask = function(){
+    if($('ask').open) $('ask').close();
+    reset();
+    window.__log.length = 0;
+    record('task_start');
+    show('start');
+  };
+
+  function keys(id, list, action){
+    list.forEach(v=>{
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.dataset.action = action;
+      b.dataset.v = String(v);
+      b.textContent = String(v);
+      $(id).appendChild(b);
+    });
+  }
+  keys('acc-pad',ACC_KEYS,'acc-num');
+  keys('amt-pad',AMT_KEYS,'num');
+  keys('pwpad',PW_KEYS,'pw');
+
+  QUICK.forEach(v=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.action = 'quick';
+    b.dataset.v = String(v);
+    b.textContent = String(v) === 'all' ? '출금 가능 금액 전체' : korean(Number(v)).trim()+' 원 더하기';
+    $('amt-quick').appendChild(b);
+  });
+
+  function institutions(id,list){
+    list.slice().sort((a,b)=>a.localeCompare(b,'ko')).forEach(name=>{
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.dataset.action = 'pick-bank';
+      b.dataset.bank = name;
+      b.textContent = name;
+      b.setAttribute('aria-pressed','false');
+      $(id).appendChild(b);
+    });
+  }
+  institutions('grid-bank',BANKS);
+  institutions('grid-sec',SECS);
+
+  function filterBanks(){
+    const query = $('bank-search').value.trim().toLocaleLowerCase();
+    let count = 0;
+    ['bank','sec'].forEach(group=>{
+      const container = $('grid-'+group);
+      container.hidden = query ? false : group !== tab;
+      container.querySelectorAll('button').forEach(b=>{
+        b.hidden = !b.dataset.bank.toLocaleLowerCase().includes(query);
+        if(!container.hidden && !b.hidden) count++;
+        const selected = b.dataset.bank === pendingBank;
+        b.setAttribute('aria-pressed',String(selected));
+        b.textContent = b.dataset.bank + (selected ? ' · 선택됨' : '');
+      });
+    });
+    $('tab-bank').setAttribute('aria-pressed',String(tab === 'bank'));
+    $('tab-sec').setAttribute('aria-pressed',String(tab === 'sec'));
+    text('search-status',query ? '전체 은행·증권사 검색 결과 '+count+'개' : '선택 가능한 기관 '+count+'개');
+    text('bank-choice',pendingBank ? '선택한 기관: '+pendingBank : '아직 선택하지 않았습니다.');
+  }
+  function openBank(){
+    pendingBank = S.bank;
+    tab = SECS.includes(S.bank) ? 'sec' : 'bank';
+    $('bank-search').value = '';
+    text('bank-choice-error','');
+    filterBanks();
+    show('bank-select');
+  }
+  function validate(){
+    accError(''); bankError('');
+    const accountMessage = !S.account
+      ? '계좌번호를 입력해 주세요.'
+      : S.account !== ANSWER_ACCOUNT
+        ? '계좌번호가 맞지 않습니다. 받는 사람에게 받은 번호를 확인하고 다시 입력해 주세요'
+        : '';
+    if(accountMessage){
+      if(current !== 'recipient-details') show('recipient-details');
+      accError(accountMessage);
+      if(!S.bank) bankError('받는 은행 또는 증권사를 선택해 주세요.');
+      $('acc-input').focus();
+      record('validation_error',{field:'account'});
+      return false;
+    }
+    if(!S.bank || S.bank !== ANSWER_BANK){
+      if(current !== 'recipient-details') show('recipient-details');
+      bankError(!S.bank ? '받는 은행 또는 증권사를 선택해 주세요.' :
+        '선택한 은행이 받는 계좌의 은행과 다릅니다. 받는 사람의 은행을 확인해 다시 선택해 주세요. 계좌번호는 그대로 두어도 됩니다');
+      $('picked-bank').focus();
+      record('validation_error',{field:'bank'});
+      return false;
+    }
+    return true;
+  }
+  function normalizeAccount(raw, caret){
+    const clean = raw.replace(/[-\s]/g,'');
+    if(!/^\d*$/.test(clean)){
+      accError('계좌번호에는 숫자만 입력해 주세요.');
+      renderAccount();
+      return;
+    }
+    if(clean.length > ACC_MAX){
+      accError('계좌번호는 최대 14자리까지 입력할 수 있습니다. 번호를 확인해 주세요.');
+      renderAccount();
+      return;
+    }
+    S.account = clean;
+    accError('');
+    renderAccount();
+    const pos = raw.slice(0,caret).replace(/[-\s]/g,'').length;
+    $('acc-input').setSelectionRange(pos,pos);
+  }
+  function editAccount(value, remove){
+    const input = $('acc-input');
+    let start = input.selectionStart == null ? S.account.length : input.selectionStart;
+    let end = input.selectionEnd == null ? start : input.selectionEnd;
+    if(remove && start === end && start > 0) start--;
+    const next = S.account.slice(0,start) + value + S.account.slice(end);
+    normalizeAccount(next,start+value.length);
+  }
+  $('acc-input').addEventListener('input',function(){
+    normalizeAccount(this.value,this.selectionStart || 0);
+  });
+  $('amt-input').addEventListener('input',function(){
+    const value = this.value.replace(/[,\s]/g,'');
+    if(!/^\d*$/.test(value)){
+      text('amt-error','금액에는 숫자만 입력해 주세요.');
+      renderAmount();
+      return;
+    }
+    setAmount(Number(value));
+  });
+  $('bank-search').addEventListener('input',filterBanks);
+
+  function ask(kind){
+    pending = kind;
+    lastFocus = document.activeElement;
+    text('ask-title',kind === 'cancel' ? '이체를 취소할까요?' : '계좌번호를 모두 지울까요?');
+    text('ask-description',kind === 'cancel' ?
+      '입력한 계좌번호, 은행, 금액이 모두 지워집니다.' :
+      '계좌번호만 지웁니다. 은행과 금액은 그대로 남습니다.');
+    text('ask-yes',kind === 'cancel' ? '입력 지우고 이체 취소' : '계좌번호 전체 지우기');
+    $('ask').showModal();
+  }
+  $('ask').addEventListener('close',function(){
+    if(lastFocus && lastFocus.closest('.screen.on')) lastFocus.focus();
+  });
+
+  phone.addEventListener('click',function(e){
+    const el = e.target.closest('[data-action]');
+    if(!el || !phone.contains(el) || el.disabled || busy) return;
+    const a = el.dataset.action;
+
+    if(a==='go-recipient'){
+      if(completed) reset();
+      renderAccount(); show('recipient-details');
+    } else if(a==='previous'){
+      const back = {
+        'recipient-details':'start','bank-select':'recipient-details',
+        'amount':'recipient-details','review':'amount','identity':'review'
+      };
+      if(current === 'identity'){ S.pw=''; renderPw(); }
+      if(back[current]) show(back[current]);
+    } else if(a==='cancel'){
+      ask('cancel');
+    } else if(a==='ask-no'){
+      $('ask').close();
+    } else if(a==='ask-yes'){
+      const kind = pending;
+      $('ask').close();
+      if(kind === 'cancel'){ reset(); show('start'); }
+      else {
+        S.account=''; accError(''); renderAccount();
+        $('acc-input').focus(); $('acc-input').setSelectionRange(0,0);
+      }
+    } else if(a==='account-field'){
+      $('acc-input').focus();
+    } else if(a==='amount-field'){
+      $('amt-input').focus();
+    } else if(a==='search-field'){
+      $('bank-search').focus();
+    } else if(a==='fix-account'){
+      $('acc-input').focus();
+    } else if(a==='acc-num'){
+      editAccount(el.dataset.v,false);
+    } else if(a==='acc-del'){
+      editAccount('',true);
+    } else if(a==='acc-clear'){
+      ask('clear');
+    } else if(a==='open-bank'){
+      openBank();
+    } else if(a==='tab-bank'){
+      tab='bank'; $('bank-search').value=''; filterBanks();
+    } else if(a==='tab-sec'){
+      tab='sec'; $('bank-search').value=''; filterBanks();
+    } else if(a==='pick-bank'){
+      pendingBank=el.dataset.bank;
+      text('bank-choice-error','');
+      filterBanks();
+      $('bank-apply').scrollIntoView({block:'nearest'});
+    } else if(a==='apply-bank'){
+      if(!pendingBank){
+        text('bank-choice-error','목록에서 은행 또는 증권사를 먼저 선택해 주세요.');
+      } else {
+        S.bank=pendingBank; bankError(''); renderAccount(); show('recipient-details');
+      }
+    } else if(a==='account-next'){
+      if(validate()){
+        renderRecipient('amt',S); renderAmount(); show('amount');
+      }
+    } else if(a==='num'){
+      setAmount(Number(String(S.amount)+el.dataset.v));
+    } else if(a==='del'){
+      setAmount(Math.floor(S.amount/10));
+    } else if(a==='quick'){
+      setAmount(el.dataset.v === 'all' ? BALANCE : S.amount+Number(el.dataset.v));
+    } else if(a==='amount-next'){
+      if(!S.amount){
+        text('amt-error','보낼 금액을 1원 이상 입력해 주세요.');
+        $('amt-input').focus();
+      } else {
+        renderReview(); show('review');
+      }
+    } else if(a==='edit-account'){
+      renderAccount(); show('recipient-details');
+    } else if(a==='edit-amount'){
+      renderAmount(); show('amount');
+    } else if(a==='send'){
+      if(validate()){
+        S.pw=''; renderPw(); text('pw-error',''); text('processing','');
+        show('identity');
+      }
+    } else if(a==='pw'){
+      if(S.pw.length<4){ S.pw+=el.dataset.v; text('pw-error',''); renderPw(); }
+    } else if(a==='pw-del'){
+      S.pw=S.pw.slice(0,-1); text('pw-error',''); renderPw();
+    } else if(a==='back-review'){
+      S.pw=''; renderPw(); renderReview(); show('review');
+    } else if(a==='execute'){
+      if(S.pw.length!==4){
+        text('pw-error','비밀번호 4자리를 모두 입력해 주세요.');
+      } else if(validate()){
+        busy=true;
+        $('transfer').disabled=true;
+        text('processing','모의 본인 확인 후 이체를 처리하고 있습니다.');
+        transaction=Object.freeze({bank:S.bank,account:S.account,amount:S.amount,name:RECIPIENT_NAME,fee:0});
+        /* 서버 없는 시제품의 모의 처리다.
+           실제 서비스에서는 인증과 이체 성공 응답을 받은 뒤에만 완료시켜야 한다. */
+        timer=setTimeout(function(){
+          renderRecipient('dn',transaction);
+          text('dn-amt',fmt(transaction.amount));
+          S.pw=''; renderPw();
+          completed=true; busy=false;
+          record('transfer_complete',{amount:transaction.amount});
+          show('complete');
+        },350);
+      }
+    } else if(a==='finish'){
+      record('task_end'); show('start');
+    }
+  });
+
+  renderAccount(); renderAmount(); renderPw(); filterBanks();
+  record('screen_enter',{to:'start'});
+});
+</script>
+</body>
+</html>
+```
+
+```json
+{
+  "name": "auto",
+  "note": "빈 계좌번호부터 직접 입력하고 은행 선택, 금액 확인, 모의 본인 확인을 거쳐 명시적으로 이체합니다.",
+  "derived_from_original": false,
+  "required_ids": [
+    "phone",
+    "acc-input",
+    "acc-next",
+    "picked-bank",
+    "bank-fix",
+    "bank-apply",
+    "amt-next",
+    "review-next",
+    "pwpad",
+    "transfer",
+    "ask-yes",
+    "dn-amt"
+  ],
+  "steps": [
+    {
+      "screen": "start"
+    },
+    {
+      "screen": "recipient-details",
+      "click": "[data-action='go-recipient']"
+    },
+    {
+      "screen": "bank-select",
+      "do": [
+        {
+          "type": "{ACCOUNT}",
+          "key": "[data-action='acc-num'][data-v='%s']"
+        },
+        {
+          "click": "#picked-bank"
+        }
+      ]
+    },
+    {
+      "screen": "recipient-details",
+      "do": [
+        {
+          "click": "[data-action='pick-bank'][data-bank='{BANK}']"
+        },
+        {
+          "click": "#bank-apply"
+        }
+      ]
+    },
+    {
+      "screen": "amount",
+      "click": "#acc-next"
+    },
+    {
+      "screen": "review",
+      "do": [
+        {
+          "type": "{AMOUNT}",
+          "key": "[data-action='num'][data-v='%s']"
+        },
+        {
+          "click": "#amt-next"
+        }
+      ]
+    },
+    {
+      "screen": "identity",
+      "click": "#review-next"
+    },
+    {
+      "screen": "complete",
+      "do": [
+        {
+          "repeat": 4,
+          "click": "#pwpad [data-action='pw'][data-v='1']",
+          "wait": 0.15
+        },
+        {
+          "click": "#transfer"
+        },
+        {
+          "wait": 0.5
+        }
+      ]
+    }
+  ],
+  "expect": {
+    "done": [
+      [
+        "#dn-amt",
+        "{AMOUNT_SHOWN}"
+      ]
+    ]
+  },
+  "done_amount": "#dn-amt",
+  "error_paths": [
+    {
+      "id": "wrong-account",
+      "from_step": "recipient-details",
+      "inputs": [
+        {
+          "click": "[data-action='acc-clear']"
+        },
+        {
+          "click": "#ask-yes"
+        },
+        {
+          "type": "{ACCOUNT_WRONG}",
+          "key": "[data-action='acc-num'][data-v='%s']"
+        },
+        {
+          "click": "#picked-bank"
+        },
+        {
+          "click": "[data-action='pick-bank'][data-bank='{BANK}']"
+        },
+        {
+          "click": "#bank-apply"
+        },
+        {
+          "click": "#acc-next"
+        }
+      ],
+      "expect_screen": "recipient-details",
+      "expect_text_any": [
+        "계좌번호가 맞지 않습니다",
+        "받는 사람에게 받은 번호"
+      ],
+      "recover": [
+        {
+          "click": "[data-action='fix-account']"
+        }
+      ],
+      "back_to": "recipient-details"
+    },
+    {
+      "id": "wrong-bank",
+      "from_step": "recipient-details",
+      "inputs": [
+        {
+          "click": "[data-action='acc-clear']"
+        },
+        {
+          "click": "#ask-yes"
+        },
+        {
+          "type": "{ACCOUNT}",
+          "key": "[data-action='acc-num'][data-v='%s']"
+        },
+        {
+          "click": "#picked-bank"
+        },
+        {
+          "click": "[data-action='pick-bank'][data-bank='{BANK_WRONG}']"
+        },
+        {
+          "click": "#bank-apply"
+        },
+        {
+          "click": "#acc-next"
+        }
+      ],
+      "expect_screen": "recipient-details",
+      "expect_text_any": [
+        "선택한 은행이 받는 계좌의 은행과 다릅니다",
+        "계좌번호는 그대로 두어도 됩니다"
+      ],
+      "recover": [
+        {
+          "click": "#bank-fix"
+        },
+        {
+          "click": "#tab-bank"
+        },
+        {
+          "click": "[data-action='pick-bank'][data-bank='{BANK}']"
+        },
+        {
+          "click": "#bank-apply"
+        }
+      ],
+      "back_to": "recipient-details"
+    }
+  ]
+}
+```
