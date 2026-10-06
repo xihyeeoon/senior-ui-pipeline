@@ -37,7 +37,7 @@ LLM 을 부르는 것은 재구성 루프 하나뿐이고, 키는 `.envs` 의 `O
 |---|---|---|
 | `senior_ui/` | 이 프로젝트에서 쓴 코드 전부 — 재구성 루프, 검사기, 뷰어 색인, 실험 서버. 모두 `python -m senior_ui.…` 로 실행한다. | yes |
 | `web/` | 브라우저에서 열리는 것 — `dashboard.html`(내부 확인용 4화면), `session.html`(HTML 실험 장치 - 본실험에 쓰지 않는다. `--session` 을 줄 때만 서빙된다). | yes |
-| `flows/` | 흐름 파일. 검사기가 화면을 어떤 순서로 어떻게 몰고 다니는지의 명세. `original.json` 과 재구성본별 `restructured`·`run2`·`run3`·`run4`. `allowed_removals.json` 은 그것들과 다르다 — 과제별로 "빼도 되는 선택지" 를 적는 곳이고, **연구자만** 손으로 고친다 (아래 참고). | yes |
+| `flows/` | 흐름 파일. 검사기가 화면을 어떤 순서로 어떻게 몰고 다니는지의 명세. `original.json` 과 재구성본별 `restructured`·`run2`·`run3`·`run4`. `allowed_removals.json` 은 그것들과 다르다 — 과제별로 "빼도 되는 선택지" 를 적는 곳이고, **연구자만** 손으로 고친다 (아래 참고). `selection_rule.json` 은 C 후보를 고르는 규칙이다 (아래 'C 후보 고르기'). | yes |
 | `inputs/` | 파이프라인이 읽는 것. `original_transfer.html` 이 8화면 이체 시제품이고 모든 갈래가 여기서 출발한다. `*.png` 는 실제 SOL 캡처라 추적하지 않는다 (실명이 보인다). | html 만 |
 | `kb/` | 재구성본 사후 대조용 규칙 46개. 생성에는 쓰지 않는다. | yes |
 | `results/` | 남겨야 할 증거. 재구성본 html, 그 검사 JSON, 스크린샷, 자동 실행 폴더 사본. `python -m senior_ui.collect_results` 가 `outputs/` 에서 복사해 온다. | **yes** |
@@ -341,6 +341,127 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
 지금은 비어 있다 (`{"transfer": {}}`). 무엇을 넣을지는 연구자가 정한다. 모양이
 틀린 파일은 조용히 무시되지 않고 실행이 멈춘다 — 적어 두었는데 무시되면
 연구자는 적었다고 믿고 결과는 다르게 나온다.
+
+## C 후보 고르기 (`python -m senior_ui.select`)
+
+12번 단계에서 과제마다 재구성을 여러 번 돌린 뒤, 실험에 쓸 하나(C 후보)를 고르는
+것을 돕는다. 도구는 **순위표와 비교 보고서** 를 만든다. 고르는 것은 연구자다.
+
+저장된 결과만 읽는다 — 실행 폴더의 `summary.json` 과 마지막 시도의
+`attempt_N.audit.json` · `attempt_N.plan.json`. 모델도 브라우저도 부르지 않는다.
+
+```powershell
+# 기본: outputs/restructure_auto/ 아래의 그 과제 실행 전부
+.\.venv\Scripts\python.exe -m senior_ui.select --task transfer
+
+# 볼 실행을 정한다 (폴더 · glob · 실행들을 담은 폴더)
+.\.venv\Scripts\python.exe -m senior_ui.select --task transfer --runs "outputs/restructure_auto/20261007-*"
+.\.venv\Scripts\python.exe -m senior_ui.select --task transfer --runs results/runs
+
+# 다른 규칙 파일
+.\.venv\Scripts\python.exe -m senior_ui.select --task bill --rule my_rule.json
+
+# 규칙을 바꾼 뒤 지난 결과와 나란히 / 지난 결과의 규칙을 그대로 다시 쓰기
+.\.venv\Scripts\python.exe -m senior_ui.select --task transfer --compare outputs/selection/transfer_20261007-150000.json
+.\.venv\Scripts\python.exe -m senior_ui.select --task transfer --rule outputs/selection/transfer_20261007-150000.json
+```
+
+- `results/runs/` 의 옛 실행은 `--runs` 로 줄 때만 본다.
+- 다른 과제의 실행은 넣지 않는다 (몇 개를 뺐는지는 보고서에 적는다). 과제 칸이
+  없는 옛 summary 는 이체다.
+- `summary.json` 이 없는 실행 폴더(도중에 죽은 것)도 순위표에 "summary.json 없음"
+  으로 남는다.
+- 종료 코드: 0 = 후보가 있다, 1 = 보고서는 썼지만 후보가 없다, 2 = 돌지 못했다
+  (규칙 파일이 틀렸다 · 실행 폴더가 없다).
+
+### 결과
+
+`outputs/selection/<과제>_<시각>.md` 와 같은 내용의 `.json`. 같은 초에 두 번 돌면
+뒤에 `-2` 가 붙는다.
+
+- **순위표** — 본 실행 전부. 후보는 순위로, 빠진 것은 빠진 이유와 함께.
+  칸: 통과 · 시도 수 (형식 실패/검사 실패) · 최종 fatal/warning · 화면 수 ·
+  data-action 수 · 진단 수/변경 수 (진단에 대응되지 않은 변경 수) · 대표성 거리 ·
+  도구가 고친 것(`final.preserved.redeclared`) · 잘림 · 작업 트리 dirty · 모델 ·
+  reasoning_effort · 커밋
+- **구조** — 선택지 그룹마다 `kept/selectable/원본`, 오류 경로마다 검사 J 결과
+- **비용** — 입력 · 출력(생각 포함) · 생각 토큰, 예상 금액 (`summary.cost`)
+- **대표성 계산** — 값마다 중앙값 · 최솟값 · 최댓값
+- 1등의 설명서(`designer_brief.md`) 링크
+- **쓴 규칙** — 전문, sha256, 저장소 HEAD, 규칙 파일의 마지막 커밋, 커밋하지 않은
+  수정이 있는지. 커밋 해시만으로는 부족하다 — 고쳐 놓고 돌렸으면 그 해시는 쓴
+  규칙을 가리키지 않는다.
+
+`.json` 의 `researcher_decision` 은 비워 둔다. 연구자가 채운다.
+
+```json
+"researcher_decision": {"chosen": "<실행 이름>", "same_as_rank1": true, "reason": ""}
+```
+
+1등이 아닌 것을 쓰면 `reason` 에 이유를 적는다. 채운 파일은 results/ 로 옮길 때
+함께 간다 (15번).
+
+모델이 만든 것과 도구가 고친 것을 가른다. 모델이 입력의 선택지 목록을 직접 다시
+선언해 도구가 그 선언을 입력 데이터로 바꿨으면(`final.preserved.redeclared` 가
+비어 있지 않음) 그 빌드는 모델 혼자 만든 것이 아니므로 기본 규칙에서 빠진다.
+
+### 규칙 파일 (`flows/selection_rule.json`)
+
+규칙은 코드가 아니라 이 파일에 있다. 모르는 칸 · 문지기 · 값 이름은 실행을
+멈춘다 (종료 2) — 오타 난 문지기를 조용히 넘기면 그 문지기는 없는 것과 같다.
+
+```json
+{
+  "gates": {
+    "passed": true,
+    "no_redeclared": true,
+    "no_truncated": true,
+    "clean_tree": true,
+    "not_mock": true,
+    "model": null
+  },
+  "ordering": [
+    {"by": "warning", "order": "asc"},
+    {"by": "representative", "metrics": {"screens": 1, "data_actions": 1, "changes": 1}},
+    {"by": "attempts", "order": "asc"}
+  ]
+}
+```
+
+**gates** — 하나라도 어기면 후보에서 뺀다. `true` 면 보고 `false` 면 보지 않는다.
+
+| 문지기 | 후보가 되려면 |
+|---|---|
+| `passed` | `summary.passed == true` |
+| `no_redeclared` | `final.preserved.redeclared` 가 비어 있다 (도구가 고친 흔적이 없다) |
+| `no_truncated` | 어느 시도의 답도 길이 제한에서 잘리지 않았다 |
+| `clean_tree` | `git.dirty == false`. 기록이 없는 옛 실행은 어긴 것으로 본다 |
+| `not_mock` | mock 실행이 아니다 |
+| `model` | `null` 이면 보지 않는다. 이름을 적으면 `summary.model` 이 그것과 같아야 한다 |
+
+**ordering** — 위에서부터 차례로 비교한다. 앞이 같을 때만 다음을 본다. 끝까지
+같으면 실행 이름순 (정해진 순서를 내기 위해서일 뿐 뜻은 없다). 순서를 바꾸려면
+목록의 순서를, 방향을 바꾸려면 `order` 를, 대표성의 무게를 바꾸려면 `metrics` 의
+가중치를 고친다.
+
+- `{"by": <값>, "order": "asc" | "desc"}` — 모은 값 하나로 줄 세운다. 값이 없는
+  실행은 맨 뒤. 값: `warning` `fatal` `attempts` `format_failures`
+  `audit_failures` `screens` `data_actions` `changes` `unmatched_changes`
+  `diagnoses` `input_tokens` `output_tokens` `reasoning_tokens` `cost_usd`
+- `{"by": "representative", "metrics": {<값>: 가중치}}` — 후보들 사이에서 그 값들이
+  중앙값에 가까운 것. 거리 = 합(가중치 × |값 − 중앙값| / (최댓값 − 최솟값)).
+  중앙값과 범위는 **문지기를 지난 후보들 사이에서** 잰다 — 떨어진 실행이 "보통" 을
+  끌어당기지 않게. 범위가 0 이면 그 값의 몫은 0, 값이 없는 후보는 1.
+
+`screens` 는 검사기가 센 빌드의 `data-screen` 수(`metrics.data-screen_repaired`,
+없으면 계획의 화면 수), `data_actions` 는 `metrics.data-action_repaired`,
+`changes` 는 마지막 시도가 따른 계획의 변경 수, `unmatched_changes` 는 그중
+`addresses` 가 빈 변경의 수다.
+
+규칙을 바꾸면 `--compare <지난 결과 JSON>` 으로 지난 고르기와 나란히 본다 — 바뀐
+문지기 · 순서, 1등이 어떻게 바뀌었는지, 실행마다 지난 순위와 지금 순위.
+`--rule <지난 결과 JSON>` 은 그 결과에 담긴 규칙 전문으로 다시 고른다 (규칙
+파일이 그 뒤에 바뀌었어도).
 
 ## The auditor
 
