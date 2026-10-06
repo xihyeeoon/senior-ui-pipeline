@@ -197,3 +197,61 @@ def test_both_real_first_attempts_send_the_bank_error_to_the_bank_screen():
         assert order.index(back) > order.index(wb["expect_screen"])
         probs = _api.validate_flow(flow, html)
         assert not any("back_to" in p for p in probs), (model, probs)
+
+
+# --------------------------------------------------------------------- #
+# 4. 기본값 - 검사 단계 wireframe, 예산 형식 5 · 검사 6
+# --------------------------------------------------------------------- #
+from test_restructure_bugs import (always_reply, fake_run_env,  # noqa: E402,F401
+                                   out_root, run_loop)
+
+from senior_ui import config  # noqa: E402
+
+
+def test_defaults_are_wireframe_and_five_six():
+    """명령줄에 아무것도 주지 않은 실행. 첫 실제 실행(sol · astra)은 styled ·
+    형식 3 · 검사 3 으로 돌았다 - 자동 Run 2~5 는 wireframe 을, 2026-10-01 의
+    세 실행은 형식 5 · 검사 6 을 명령줄로 주었다."""
+    args = _api.restructure_parser().parse_args([])
+    assert args.stage is None and args.attempts is None
+    assert loop.stage_choice(args) == ("wireframe", "config.DEFAULT_STAGE")
+    assert loop.budget_choice(args) == {"format": (5, "config.DEFAULT_BUDGET"),
+                                        "audit": (6, "config.DEFAULT_BUDGET")}
+    assert config.DEFAULT_STAGE == "wireframe"
+    assert config.DEFAULT_BUDGET == {"format": 5, "audit": 6}
+
+
+def test_the_command_line_still_wins():
+    p = _api.restructure_parser()
+    args = p.parse_args(["--stage", "styled", "--attempts", "2",
+                         "--audit-attempts", "4"])
+    assert loop.stage_choice(args) == ("styled", "--stage")
+    assert loop.budget_choice(args) == {"format": (2, "--attempts"),
+                                        "audit": (4, "--audit-attempts")}
+
+
+def test_stage_and_budget_are_on_the_first_line_and_in_the_summary(fake_run_env,
+                                                                   out_root):
+    _code, summary = run_loop(fake_run_env, out_root, always_reply,
+                              stage=None, attempts=None)
+    first = io.open(os.path.join(summary["run_dir"], "run.log"),
+                    encoding="utf-8").readline()
+    assert first.split(" ", 1)[1].startswith("model=")
+    assert "stage=wireframe (출처 config.DEFAULT_STAGE)" in first
+    assert "예산 형식 5 · 검사 6 (출처 config.DEFAULT_BUDGET)" in first
+    assert summary["stage"] == "wireframe"
+    assert summary["stage_source"] == "config.DEFAULT_STAGE"
+    assert summary["budget"]["format_budget"] == 5
+    assert summary["budget"]["audit_budget"] == 6
+    assert summary["budget_source"] == {"format": "config.DEFAULT_BUDGET",
+                                        "audit": "config.DEFAULT_BUDGET"}
+
+
+def test_mixed_sources_are_written_one_by_one(fake_run_env, out_root):
+    _code, summary = run_loop(fake_run_env, out_root, always_reply,
+                              stage="styled", attempts=None, format_attempts=1)
+    first = io.open(os.path.join(summary["run_dir"], "run.log"),
+                    encoding="utf-8").readline()
+    assert "stage=styled (출처 --stage)" in first
+    assert "예산 형식 1 (출처 --format-attempts) · 검사 6 (출처 config.DEFAULT_BUDGET)" \
+        in first

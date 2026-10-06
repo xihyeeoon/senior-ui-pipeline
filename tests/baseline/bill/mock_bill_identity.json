@@ -15,7 +15,12 @@
   },
   "mock": "bill-identity",
   "task": "bill",
-  "stage": "styled",
+  "stage": "wireframe",
+  "stage_source": "config.DEFAULT_STAGE",
+  "budget_source": {
+    "format": "--attempts",
+    "audit": "--attempts"
+  },
   "preserved": {
     "MENU_BANK": 79,
     "MENU_CARD": 77,
@@ -121,7 +126,7 @@
       "stage": "audit",
       "passed": true,
       "fatal": 0,
-      "warning": 29
+      "warning": 0
     }
   ],
   "passed": true,

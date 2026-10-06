@@ -64,7 +64,7 @@ LLM 이 쓴 것이라 다시 만들려면 API 비용이 들고 바이트까지 �
 되먹임, 통과하거나 예산이 끝날 때까지:
 
 ```powershell
-.\.venv\Scripts\python.exe -m senior_ui.restructure --stage wireframe
+.\.venv\Scripts\python.exe -m senior_ui.restructure    # 기본 --stage wireframe · 예산 형식 5 · 검사 6
 .\.venv\Scripts\python.exe -m senior_ui.restructure --mock pass    # API 없이 확인
 ```
 

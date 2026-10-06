@@ -15,7 +15,12 @@
   },
   "mock": "preserved-all",
   "task": "transfer",
-  "stage": "styled",
+  "stage": "wireframe",
+  "stage_source": "config.DEFAULT_STAGE",
+  "budget_source": {
+    "format": "--attempts",
+    "audit": "--attempts"
+  },
   "preserved": {
     "BANKS": 38,
     "SECS": 29,
@@ -106,7 +111,7 @@
       "stage": "audit",
       "passed": true,
       "fatal": 0,
-      "warning": 3
+      "warning": 0
     }
   ],
   "passed": true,
