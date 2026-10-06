@@ -27,6 +27,9 @@ import shutil
 import subprocess
 import sys
 import time
+import traceback
+
+from playwright.async_api import Error as PlaywrightError
 
 from senior_ui import audit as A
 from senior_ui import config
@@ -241,6 +244,15 @@ class Budget:
         return {"format_used": self.used["format"], "format_budget": self.budget["format"],
                 "audit_used": self.used["audit"], "audit_budget": self.budget["audit"],
                 "infra_used": self.used["infra"], "infra_budget": self.budget["infra"]}
+
+
+class Stopped(Exception):
+    """설계와 무관한 이유로 실행을 여기서 끝낸다 - 시도 안 깊은 곳(검사기 호출)
+    에서 run() 까지 곧장 올라간다. `reason` 이 summary.stopped_reason 이 된다."""
+
+    def __init__(self, reason):
+        Exception.__init__(self, reason)
+        self.reason = reason
 
 
 class Run:
@@ -699,14 +711,18 @@ def ask_model(r, n, p, prompt, max_tokens, mock, stage, images=None):
                                           "passed": False, "error": str(e),
                                           "calls": list(r.calls)})
             return None, STOP
-        except Exception as e:                       # 연결 실패·타임아웃·그 밖
+        except InfraFailed as e:                     # 연결 실패·타임아웃·5xx
             # 설계 실패가 아니므로 형식·검사 예산은 건드리지 않는다. 대신 인프라
             # 예산을 쓴다 - 다시 될 수도 있지만 무한히 기다리지는 않는다.
             #
             # 오류 문구는 프롬프트로 가지 않는다 (r.last 를 그대로 둔다). 모델이
             # 고칠 수 있는 것이 아니고, 직전에 검사받은 빌드의 실패 목록을
             # API 오류로 덮으면 다음 시도가 고칠 것을 잃는다.
-            kind = "InfraFailed" if isinstance(e, InfraFailed) else type(e).__name__
+            #
+            # 그 밖의 예외는 여기서 받지 않는다. 바깥 문제는 call_model 이 셋
+            # (RateLimited · ApiRejected · InfraFailed)으로 갈라 올리므로, 그 밖의
+            # 것은 도구의 버그다 - run() 이 실행을 멈추고 2 로 끝낸다 (D-6).
+            kind = "InfraFailed"
             r.budget.spend("infra")
             r.log("model: 호출 실패 (인프라 %d/%d) — %s: %s"
                   % (r.budget.infra_used, r.budget.budget["infra"], kind, e))
@@ -1015,7 +1031,7 @@ def audit_build(r, n, entry, build):
         r.budget.spend("format")
         return problems_report(problems)
 
-    report = _drive_audit(r, n, build)
+    report = _drive_audit(r, n, entry, build)
     # 펼치기(reveal) 규칙 위반은 흐름 명세의 형식 문제다 - 검사기가 걸어 봐야 알 수
     # 있어 검사 I 의 fatal 로 오지만, 형식 예산을 쓴다.
     violated = [f["detail"] for f in report.get("fatal") or [] if f.get("reveal_violation")]
@@ -1033,23 +1049,43 @@ def audit_build(r, n, entry, build):
     return report
 
 
-def _drive_audit(r, n, build):
-    """브라우저를 띄워 한 번 걷는다. 검사기가 흐름을 아예 실행하지 못하는 것도
-    결과이므로 리포트 모양으로 바꿔 돌려준다."""
+def _drive_audit(r, n, entry, build):
+    """브라우저를 띄워 한 번 걷는다.
+
+    설계가 걷기를 막는 것(선택자가 없다 · 화면이 켜지지 않는다)은 걷기가 리포트에
+    적는다 - 설계 실패다. 여기까지 올라오는 예외는 둘 중 하나다 (감사 D-6 (가)).
+
+      바깥 문제   브라우저(Playwright)가 실패했거나 시간 안에 답하지 않았다. 인프라
+                  예산 하나를 쓰고 **같은 빌드**를 다시 검사한다 - 모델과 무관하다.
+                  예산을 다 쓰면 실행을 멈춘다 (infra_exhausted, 종료 2).
+      도구 버그   그 밖의 예외. 잡지 않는다 - run() 이 멈추고 2 로 끝낸다. 전에는
+                  "검사기가 흐름 명세를 실행하지 못했다" 로 모델에게 가고 검사 예산을
+                  썼다 - 모델이 고칠 수 없는 것을 고치라고 했다.
+    """
     rel = os.path.relpath(build["html_path"], ROOT).replace(os.sep, "/")
     shots = os.path.join(r.run_dir, "shots", "attempt_%d" % n)
     os.makedirs(shots, exist_ok=True)
-    try:
-        return run_audit(r.orig_snapshot, r.original_html, build["html_path"],
-                         build["flow_path"], url_for(rel), shots, r.args.stage,
-                         original_url=r.original_url,
-                         allowed_removals=r.allowed_removals,
-                         task=r.task["id"],
-                         **({"see": True} if r.refine > 0 else {}))
-    except Exception as e:                           # a flow the audit cannot drive
-        r.log("audit: crashed: %s: %s" % (type(e).__name__, e))
-        return failure_report("AUDIT", "검사기가 흐름 명세를 실행하지 못했다: %s: %s"
-                              % (type(e).__name__, e))
+    while True:
+        try:
+            return run_audit(r.orig_snapshot, r.original_html, build["html_path"],
+                             build["flow_path"], url_for(rel), shots, r.args.stage,
+                             original_url=r.original_url,
+                             allowed_removals=r.allowed_removals,
+                             task=r.task["id"],
+                             **({"see": True} if r.refine > 0 else {}))
+        except PlaywrightError as e:
+            why = "%s: %s" % (type(e).__name__, one_line(str(e))[:300])
+            r.budget.spend("infra")
+            entry.setdefault("audit_infra_failures", []).append(why)
+            r.log("audit: 브라우저 실패 (인프라 %d/%d) — %s"
+                  % (r.budget.infra_used, r.budget.budget["infra"], why))
+            if r.budget.out_of("infra"):
+                r.log("인프라 재시도 예산 소진 (%d회) — 검사기를 돌리지 못했다"
+                      % r.budget.infra_used)
+                entry.update(stage="audit_infra", passed=False)
+                r.summary["attempts"].append(entry)
+                raise Stopped("infra_exhausted")
+            r.log("audit: 같은 빌드를 다시 검사한다")
 
 
 def _note_audit(r, n, report):
@@ -1473,14 +1509,30 @@ def _refine_passed(r, k, n, row, critique, finish):
 # 이 이유로 멈춘 실행은 "빌드가 떨어졌다" 가 아니라 "돌지 못했다" 다. 부르는
 # 쪽은 둘을 구분해야 한다 - 떨어진 빌드는 다시 만들고, 돌지 못한 실행은 다시
 # 만들 것이 없다. senior_ui.audit 의 종료 코드 규약과 같다 (docs/README.md).
-CANNOT_RUN = {"rate_limit", "api_rejected", "infra_exhausted", "cannot_start"}
+CANNOT_RUN = {"rate_limit", "api_rejected", "infra_exhausted", "cannot_start",
+              "internal_error"}
 
 
 def exit_code(summary):
-    """0 = 통과한 빌드가 있다, 1 = 전부 실패, 2 = 아예 돌지 못했다."""
+    """0 = 통과한 빌드가 있다, 1 = 전부 실패, 2 = 아예 돌지 못했다.
+
+    도구가 버그로 멈췄으면(internal_error) 통과한 빌드가 있어도 2 다. 0 이면
+    부르는 쪽은 그 실행이 끝까지 멀쩡히 돌았다고 믿는다 - 다듬기나 승격 도중에
+    멈췄어도."""
+    if summary.get("stopped_reason") == "internal_error":
+        return 2
     if summary.get("passed"):
         return 0
     return 2 if summary.get("stopped_reason") in CANNOT_RUN else 1
+
+
+def note_internal_error(r, e):
+    """도구의 버그로 멈췄다. 역추적은 run.log 에, 종류와 문구는 summary 에 남긴다.
+    설계 실패로 세지 않고(예산을 쓰지 않는다) 모델에게도 보내지 않는다."""
+    r.log("내부 오류 — 도구의 버그로 실행을 멈춘다 (설계 실패로 세지 않는다):\n%s"
+          % traceback.format_exc().rstrip())
+    r.summary["stopped_reason"] = "internal_error"
+    r.summary["error"] = "%s: %s" % (type(e).__name__, e)
 
 
 def run(args):
@@ -1656,6 +1708,13 @@ def run(args):
             if r.summary["stopped_reason"] is None:
                 r.summary["stopped_reason"] = "budget_exhausted"
         log_trend(r)
+    except Stopped as e:
+        # 설계와 무관한 이유로 멈췄다 (검사기의 인프라 예산 소진 등). 무엇 때문인지는
+        # 멈춘 곳이 run.log 에 이미 적었다.
+        r.summary["stopped_reason"] = e.reason
+    except Exception as e:
+        # 도구의 버그 (감사 D-6 (가)). 예산을 쓰는 실패로 바꾸지 않고 여기서 멈춘다.
+        note_internal_error(r, e)
     finally:
         if server:
             server.terminate()
