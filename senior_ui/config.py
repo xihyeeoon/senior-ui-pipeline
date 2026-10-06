@@ -82,8 +82,13 @@ MODEL_ENV_VARS = ("RESTRUCTURE_MODEL", "DESIGNREPAIR_MODEL")
 #   따로 더하지 않는다.
 #   캐시된 입력의 할인은 넣지 않았다. 그래서 금액은 상한 쪽 어림이다.
 #
-# gpt-4o 만 채워 두었다. 나머지는 연구자가 공식 가격표를 보고 채운다
+# 채운 것은 셋이다. 나머지는 연구자가 공식 가격표를 보고 채운다
 # (https://developers.openai.com/api/docs/pricing).
+#
+#   gpt-6.1-sol · gpt-6-astra: 2026-10-06 공식 가격표에서 확인. Standard 단계의
+#   "Short context" 값이다 (입력 272K 토큰 이하 - 이 도구의 프롬프트는 3만 안팎).
+#   입력이 272K 를 넘으면 값이 다르다 (sol 4.00 / 15.00, astra 20.00 / 75.00).
+#   Batch · Flex 단계의 할인 가격은 넣지 않았다 - 이 도구는 Standard 로 부른다.
 MODEL_PRICES = {
     "gpt-4o": {"input": 2.50, "output": 10.00},
     "gpt-4.1": None,
@@ -95,8 +100,8 @@ MODEL_PRICES = {
     "gpt-5.6-sol": None,
     "gpt-5.6-terra": None,
     "gpt-5.6-luna": None,
-    "gpt-6-astra": None,
-    "gpt-6.1-sol": None,
+    "gpt-6-astra": {"input": 10.00, "output": 50.00},   # 2026-10-06 확인
+    "gpt-6.1-sol": {"input": 2.00, "output": 10.00},    # 2026-10-06 확인
     "gpt-6-luna": None,
 }
 
