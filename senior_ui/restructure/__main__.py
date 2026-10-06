@@ -119,8 +119,10 @@ def build_parser():
     ap.add_argument("--audit-attempts", type=int, default=None,
                     help="검사 fatal 에 쓸 재시도 횟수 (기본: --attempts, 그다음 %d)"
                          % config.DEFAULT_BUDGET["audit"])
-    ap.add_argument("--infra-attempts", type=int, default=3,
-                    help="모델에 닿지 못했을 때(연결 실패) 쓸 재시도 횟수")
+    ap.add_argument("--infra-attempts", type=int, default=None,
+                    help="설계와 무관한 실패 - 모델에 닿지 못했다 · 브라우저가 시간 안에 "
+                         "답하지 않았다 - 에 쓸 재시도 횟수 (기본: config.DEFAULT_BUDGET "
+                         "의 %d)" % config.DEFAULT_BUDGET["infra"])
     ap.add_argument("--model", default=None,
                     help="부를 모델. 주지 않으면 환경 변수 RESTRUCTURE_MODEL · "
                          "DESIGNREPAIR_MODEL, 그다음 config.DEFAULT_MODEL (%s)"

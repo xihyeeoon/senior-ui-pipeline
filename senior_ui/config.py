@@ -97,7 +97,11 @@ DEFAULT_STAGE = "wireframe"
 # 줄이는 고침(별칭 참조 · 완료 화면 키 · back_to)과 함께 그 값으로 되돌린다.
 # 값과 출처는 run.log 첫 줄과 summary.json 의 budget · budget_source 에 남는다
 # (restructure.loop.budget_choice).
-DEFAULT_BUDGET = {"format": 5, "audit": 6}
+#
+# infra 는 설계와 무관한 실패(모델에 닿지 못했다 · 브라우저가 시간 안에 답하지
+# 않았다)에 쓰는 재시도다 (--infra-attempts). 전에는 3 이 loop.Budget · loop.Run ·
+# restructure.__main__ 세 곳에 따로 있었고, 출처가 어디에도 남지 않았다.
+DEFAULT_BUDGET = {"format": 5, "audit": 6, "infra": 3}
 
 # 모델별 100만 토큰당 가격 (USD). summary.json 의 cost 가 이 표로 시도별·전체
 # 예상 금액을 센다. None 이면 금액은 null 이다 - 0 이 아니라 "모른다".

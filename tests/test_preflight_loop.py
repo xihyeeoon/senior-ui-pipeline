@@ -216,9 +216,11 @@ def test_defaults_are_wireframe_and_five_six():
     assert args.stage is None and args.attempts is None
     assert loop.stage_choice(args) == ("wireframe", "config.DEFAULT_STAGE")
     assert loop.budget_choice(args) == {"format": (5, "config.DEFAULT_BUDGET"),
-                                        "audit": (6, "config.DEFAULT_BUDGET")}
+                                        "audit": (6, "config.DEFAULT_BUDGET"),
+                                        "infra": (3, "config.DEFAULT_BUDGET")}
     assert config.DEFAULT_STAGE == "wireframe"
-    assert config.DEFAULT_BUDGET == {"format": 5, "audit": 6}
+    # 인프라 예산도 config 에 있다 (11-6, 감사 B-33)
+    assert config.DEFAULT_BUDGET == {"format": 5, "audit": 6, "infra": 3}
 
 
 def test_the_command_line_still_wins():
@@ -227,7 +229,8 @@ def test_the_command_line_still_wins():
                          "--audit-attempts", "4"])
     assert loop.stage_choice(args) == ("styled", "--stage")
     assert loop.budget_choice(args) == {"format": (2, "--attempts"),
-                                        "audit": (4, "--audit-attempts")}
+                                        "audit": (4, "--audit-attempts"),
+                                        "infra": (3, "config.DEFAULT_BUDGET")}
 
 
 def test_stage_and_budget_are_on_the_first_line_and_in_the_summary(fake_run_env,
@@ -243,8 +246,10 @@ def test_stage_and_budget_are_on_the_first_line_and_in_the_summary(fake_run_env,
     assert summary["stage_source"] == "config.DEFAULT_STAGE"
     assert summary["budget"]["format_budget"] == 5
     assert summary["budget"]["audit_budget"] == 6
+    # make_args 는 --infra-attempts 3 을 준다
     assert summary["budget_source"] == {"format": "config.DEFAULT_BUDGET",
-                                        "audit": "config.DEFAULT_BUDGET"}
+                                        "audit": "config.DEFAULT_BUDGET",
+                                        "infra": "--infra-attempts"}
 
 
 def test_mixed_sources_are_written_one_by_one(fake_run_env, out_root):

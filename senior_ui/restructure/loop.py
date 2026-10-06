@@ -98,14 +98,15 @@ def stage_choice(args):
 
 
 def budget_choice(args):
-    """`{"format": (횟수, 출처), "audit": (횟수, 출처)}`.
+    """`{"format": (횟수, 출처), "audit": (횟수, 출처), "infra": (횟수, 출처)}`.
 
-    예산마다 --format-attempts · --audit-attempts, 그다음 둘을 한 번에 정하는
-    --attempts, 그다음 config.DEFAULT_BUDGET 순서다."""
+    예산마다 --format-attempts · --audit-attempts · --infra-attempts, 그다음 설계
+    예산 둘을 한 번에 정하는 --attempts (infra 에는 닿지 않는다), 그다음
+    config.DEFAULT_BUDGET 순서다."""
     out = {}
-    for kind in ("format", "audit"):
+    for kind in ("format", "audit", "infra"):
         own = getattr(args, kind + "_attempts", None)
-        both = getattr(args, "attempts", None)
+        both = getattr(args, "attempts", None) if kind != "infra" else None
         if own is not None:
             out[kind] = (own, "--%s-attempts" % kind)
         elif both is not None:
@@ -172,6 +173,8 @@ def describe_settings(stage, budget):
     (f, fs), (a, as_) = budget["format"], budget["audit"]
     money = ("예산 형식 %d · 검사 %d (출처 %s)" % (f, a, fs) if fs == as_
              else "예산 형식 %d (출처 %s) · 검사 %d (출처 %s)" % (f, fs, a, as_))
+    if "infra" in budget:
+        money += " · 인프라 %d (출처 %s)" % budget["infra"]
     return "stage=%s (출처 %s) · %s" % (stage[0], stage[1], money)
 
 
@@ -208,7 +211,7 @@ class Budget:
     쓰지 않아서, 키가 틀리면 루프가 끝나지 않았다.
     """
 
-    def __init__(self, fmt, aud, infra=3):
+    def __init__(self, fmt, aud, infra):
         self.budget = {"format": fmt, "audit": aud, "infra": infra}
         self.used = {"format": 0, "audit": 0, "infra": 0}
 
@@ -301,7 +304,7 @@ class Run:
         self.orig_snapshot = None
         budget = budget_choice(args)
         self.budget = Budget(budget["format"][0], budget["audit"][0],
-                             getattr(args, "infra_attempts", 3))
+                             budget["infra"][0])
         # 보기 (--see): 원본 그림을 진단·계획 호출에 넣는가. 원본 그림은 실행
         # 시작 때 한 번 찍는다 (run).
         self.see, see_source = see_choice(args)
