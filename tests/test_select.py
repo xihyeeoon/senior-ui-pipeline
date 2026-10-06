@@ -253,8 +253,23 @@ def test_model_gate_is_off_when_null(tmp_path):
     runs = tmp_path / "runs"
     runs.mkdir()
     make_run(str(runs), "20261007-100004-4o", model="gpt-4o")
-    _code, result, _md = select(tmp_path)
+    rule = write_rule(tmp_path, gates=dict(DEFAULT_RULE["gates"], model=None))
+    _code, result, _md = select(tmp_path, "--rule", rule)
     assert order(result) == ["20261007-100004-4o"]
+
+
+def test_the_shipped_rule_keeps_only_gpt_6_1_sol(tmp_path):
+    """12번 본 실행의 모델이 gpt-6.1-sol 이다 (11-4). 규칙 파일이 그것을 문지기로
+    적고, 다른 모델의 실행은 이유와 함께 빠진다."""
+    assert DEFAULT_RULE["gates"]["model"] == "gpt-6.1-sol"
+    runs = tmp_path / "runs"
+    runs.mkdir()
+    make_run(str(runs), "20261007-100000-sol", model="gpt-6.1-sol")
+    make_run(str(runs), "20261007-100001-astra", model="gpt-6-astra")
+    _code, result, _md = select(tmp_path)
+    assert order(result) == ["20261007-100000-sol"]
+    assert reasons(result) == {
+        "20261007-100001-astra": ["모델이 gpt-6.1-sol 아님 (gpt-6-astra)"]}
 
 
 def test_unknown_dirty_state_is_not_clean(tmp_path):
@@ -468,9 +483,9 @@ def test_select_runs_to_the_end_on_a_mock_run(tmp_path, task, args, mode):
     assert code == 1 and result["rank1"] is None
     assert "mock 실행 (%s)" % mode in result["ranking"][0]["excluded_because"]
 
-    # mock · 작업 트리 문지기를 끈 규칙 - 그 실행이 1등이고 값이 모두 읽힌다
+    # mock · 작업 트리 · 모델 문지기를 끈 규칙 - 그 실행이 1등이고 값이 모두 읽힌다
     rule = write_rule(tmp_path, gates=dict(DEFAULT_RULE["gates"], not_mock=False,
-                                           clean_tree=False))
+                                           clean_tree=False, model=None))
     code, result = go("--rule", rule)
     assert code == 0 and result["rank1"] == name
     row = result["ranking"][0]

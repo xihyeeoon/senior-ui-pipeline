@@ -421,7 +421,7 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
     "no_truncated": true,
     "clean_tree": true,
     "not_mock": true,
-    "model": null
+    "model": "gpt-6.1-sol"
   },
   "ordering": [
     {"by": "representative", "metrics": {"screens": 1, "data_actions": 1, "changes": 1}},
@@ -440,7 +440,7 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
 | `no_truncated` | **마지막 시도** 의 답이 길이 제한에서 잘리지 않았다. 중간 시도의 잘림은 최종 시안과 상관없으므로 빼지 않고, 순위표의 '중간 잘림' 열에 횟수로만 보인다 |
 | `clean_tree` | `git.dirty == false`. 기록이 없는 옛 실행은 어긴 것으로 본다 |
 | `not_mock` | mock 실행이 아니다 |
-| `model` | `null` 이면 보지 않는다. 이름을 적으면 `summary.model` 이 그것과 같아야 한다 |
+| `model` | `null` 이면 보지 않는다. 이름을 적으면 `summary.model` 이 그것과 같아야 한다. 지금은 12번 본 실행의 모델 `gpt-6.1-sol` |
 
 **ordering** — 위에서부터 차례로 비교한다. 앞이 같을 때만 다음을 본다. 끝까지
 같으면 실행 이름순 (정해진 순서를 내기 위해서일 뿐 뜻은 없다). 순서를 바꾸려면
