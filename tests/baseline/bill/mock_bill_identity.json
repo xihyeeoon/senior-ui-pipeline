@@ -19,7 +19,8 @@
   "stage_source": "config.DEFAULT_STAGE",
   "budget_source": {
     "format": "--attempts",
-    "audit": "--attempts"
+    "audit": "--attempts",
+    "infra": "config.DEFAULT_BUDGET"
   },
   "preserved": {
     "MENU_BANK": 79,

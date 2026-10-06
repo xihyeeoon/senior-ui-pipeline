@@ -19,7 +19,8 @@
   "stage_source": "config.DEFAULT_STAGE",
   "budget_source": {
     "format": "--attempts",
-    "audit": "--attempts"
+    "audit": "--attempts",
+    "infra": "config.DEFAULT_BUDGET"
   },
   "preserved": {
     "BANKS": 38,
@@ -101,6 +102,9 @@
         "usage": null,
         "seconds": 0.0
       },
+      "model_claims_dropped": [
+        "truth"
+      ],
       "preserved": {
         "injected": {
           "BANKS": 38,

@@ -41,6 +41,10 @@
 | `test_run_settings.py` | 12번 실행 설정 - 추론형의 출력 길이 · 호출 사이 대기(남은 토큰 확인) · reasoning_effort 를 늘 보내고 남기기. gpt-4o 는 그대로인지. 실제 API 는 부르지 않는다 |
 | `test_select.py` | C 후보 고르기 (`python -m senior_ui.select`) - 가짜 실행 폴더 다섯(통과 셋 · 실패 하나 · 도구가 고친 것 하나)으로 순위와 제외 이유, 규칙 파일의 문지기 · 순서 · 가중치, 결과에 남는 규칙과 커밋, 지난 결과와 나란히. `-m browser` 에서는 mock 실행(preserved-all · bill-identity)을 실제로 돌리고 그 폴더로 끝까지 돈다 |
 | `test_preflight_loop.py` | 최신 모델(gpt-6.1-sol · gpt-6-astra) 첫 실행의 형식 검사 거짓 실패 - 실제 답을 `fixtures/real_runs/` 에 복사해 두고 다시 넣는다. 모델도 브라우저도 부르지 않는다 |
+| `test_judge_inputs.py` | 판정 입력(`audit/inputs.judged_flow`) - 모델이 쓴 truth · 완료 화면 값 · done_amount · derived_from_original · task · stage 가 판정을 바꾸지 못하는지, 같은 빌드를 루프와 검사기 CLI 가 같게 판정하는지, 오류 경로에서 뜬 대화상자를 판정하는지. 걷기만 가짜다 |
+| `test_format_rules.py` | 형식 검사(`reply.py`)가 검사기의 규칙 함수(back_to · 화면 목록 · 방문 이름 · 조작부 이름)를 그대로 쓰는지 |
+| `test_tool_failures.py` | 도구 버그(종료 2 · internal_error) · 바깥 문제(인프라 예산) · 시작 실패(cannot_start) · CLI 의 `--out` · 인프라 예산의 출처 |
+| `test_real_runs_browser.py` | `fixtures/real_runs/` 의 첫 답을 루프의 길과 CLI 로 실제로 판정한다 (sol 통과 · astra J fatal 1). `-m browser` |
 | `fixtures/real_runs/` | 실제 실행의 답 그대로 (`sol` = `outputs/restructure_auto/20261006-124055`, `astra` = `20261006-124838`). `attempt_N.response.txt` · 첫 계획(`plan.json`) · 도구가 넣은 선택지 데이터(`preserved.json`, `attempt_1.html` 의 블록) |
 | `fake_openai.py` | `openai.OpenAI` 의 대역 (with_raw_response 의 헤더 · Responses · models.list · 429 · 400) |
 | `baseline/` | 기준값. 마지막 캡처 실행의 결과다 |
