@@ -90,11 +90,48 @@ BLOCK_COMMENT_LINE = re.compile(r"^[ \t]*/\*(?:(?!\*/).)*\*/[ \t]*\r?\n", re.S |
 BLOCK_COMMENT = re.compile(r"[ \t]*/\*(?:(?!\*/).)*\*/", re.S)
 STYLE_SCRIPT = re.compile(r"(<(style|script)\b[^>]*>)(.*?)(</\2>)", re.S | re.I)
 
+# 원본의 실험 장치 코드도 모델에 보내지 않는다 (11-7b, 연구자 결정 11번 (나)). 화면으로
+# 알 수 없고 검사기도 쓰지 않는다 - 옛 HTML 실험 장치(web/session.html)가 원본을 직접
+# 열어 읽던 기록이다. 원본 파일과 검사기가 보는 원본에는 그대로 있다.
+#
+#   탭 기록 장치  #phone 에 capture 로 붙인 click 처리기 (log('tap', …))
+#   .tempnote     마크업에서 쓰지 않는 CSS 규칙
+#   기록 배열     LOG · log() · window.__log · __startTask · __dump 와 log(…) 호출
+#
+# 검사기가 쓰는 window.__screen() 과 그것이 읽는 window.__task 는 남긴다. 기술 계약도
+# 이제 __screen() 만 요구한다.
+TAP_LOGGER = re.compile(
+    r"[^\n]*addEventListener\('click', function\(e\)\{(?:(?!\}, true\);).)*?"
+    r"log\('tap'(?:(?!\}, true\);).)*\}, true\);[ \t]*\n", re.S)
+UNUSED_CSS = re.compile(r"[ \t]*\.tempnote\{[^}]*\}[ \t]*\n")
+LOG_HOOKS = [re.compile(p, re.S) for p in (
+    r"const LOG = \[\];[ \t]*\n", r"window\.__log = LOG;[ \t]*\n",
+    r"function log\(type, data\)\{\n.*?\n\}\n",
+    r"window\.__startTask = function\(\)\{.*?\};[ \t]*\n",
+    r"window\.__dump = function\(\)\{.*?\};[ \t]*\n")]
+# 한 문장인 log(…) 호출. 줄 전체면 줄째, 다른 문장 앞이면 그 자리만.
+LOG_CALL_LINE = re.compile(r"^[ \t]*log\('[a-z_]+'(?:, ?\{[^;]*?\})?\);[ \t]*\n", re.M)
+LOG_CALL = re.compile(r"log\('[a-z_]+'(?:, ?\{[^;]*?\})?\); ?")
+BLANK_RUN = re.compile(r"\n{3,}")
+
+
+def strip_experiment_code(tag, body):
+    """<style> · <script> 본문 하나에서 실험 장치 코드를 뺀다."""
+    if tag.lower() == "style":
+        return UNUSED_CSS.sub("", body)
+    body = TAP_LOGGER.sub("", body)
+    for pat in LOG_HOOKS:
+        body = pat.sub("", body)
+    body = LOG_CALL.sub("", LOG_CALL_LINE.sub("", body))
+    # 지운 자리에 남은 빈 줄은 하나로
+    return BLANK_RUN.sub("\n\n", body)
+
 
 def model_input_html(html):
-    """모델에 보내는 원본 - 주석을 뺀 것. 검사기는 원본 그대로를 본다."""
+    """모델에 보내는 원본 - 주석과 실험 장치 코드를 뺀 것. 검사기는 원본 그대로를 본다."""
     def code(m):
         body = BLOCK_COMMENT.sub("", BLOCK_COMMENT_LINE.sub("", m.group(3)))
+        body = strip_experiment_code(m.group(2), body)
         return m.group(1) + body + m.group(4)
     html = STYLE_SCRIPT.sub(code, html or "")
     return HTML_COMMENT.sub("", HTML_COMMENT_LINE.sub("", html))

@@ -439,33 +439,11 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 </div>
 
 <script>
-const LOG = [];
-window.__log = LOG;
 window.__task = { startedAt: null, screen: 'home' };
-
-function log(type, data){
-  LOG.push(Object.assign({ t: Date.now(), screen: window.__task.screen, type }, data||{}));
-}
-window.__startTask = function(){ LOG.length = 0; window.__task.startedAt = Date.now(); log('task_start'); };
-window.__dump = function(){ return JSON.parse(JSON.stringify(LOG)); };
-
-document.getElementById('phone').addEventListener('click', function(e){
-  const hit = e.target.closest('[data-action]');
-  const r = hit ? hit.getBoundingClientRect() : null;
-  log('tap', {
-    x: Math.round(e.clientX), y: Math.round(e.clientY),
-    valid: !!hit,
-    action: hit ? hit.dataset.action : null,
-    text: (e.target.textContent||'').trim().slice(0,24),
-    tw: r ? Math.round(r.width) : null,
-    th: r ? Math.round(r.height) : null
-  });
-}, true);
 
 function show(name, keep){
   document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.dataset.screen===name));
   window.__task.screen = name;
-  log('screen_enter', { to: name });
   window.scrollTo(0,0);
   const b = document.querySelector('.screen.on .body'); if(b && !keep) b.scrollTop = 0;
 }
@@ -551,7 +529,6 @@ function renderSearch(){
 }
 document.getElementById('search-input').addEventListener('input', function(){
   S.query = this.value;
-  log('text_input', { field:'menu_search', value:S.query });
   renderSearch();
 });
 
@@ -612,7 +589,6 @@ document.getElementById('phone').addEventListener('click', function(e){
     if(S.pw.length>=4) return;
     S.pw += el.dataset.v; renderDots();
     if(S.pw.length===4){
-      log('submit', { bill:'전기요금', eno:'1700000000', amount:2160 });
       setTimeout(()=>show('done'), 180);
     }
   }
@@ -651,12 +627,11 @@ document.getElementById('phone').addEventListener('click', function(e){
           a==='oos-tab-stock' ||
           a==='oos-transfer' ||
           a==='oos-wallet'){ }
-  else if(a==='finish'){ log('task_end'); show('home'); }
+  else if(a==='finish'){ show('home'); }
 });
 
 renderSearch();
 buildPwPad();
-log('screen_enter', { to:'home' });
 </script>
 </body>
 </html>

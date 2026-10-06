@@ -309,7 +309,7 @@ def prompt_plan():
 
 
 def model_html(orig_html):
-    """루프가 모델에 보내는 원본 - 주석을 뺀 것 (prompt.model_input_html). 선택지
+    """루프가 모델에 보내는 원본 - 주석 · 실험 장치 코드를 뺀 것 (prompt.model_input_html). 선택지
     요약은 원본 그대로로 만든다 (루프와 같다)."""
     return _api.prompt_module.model_input_html(orig_html)
 

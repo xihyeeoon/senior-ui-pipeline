@@ -63,7 +63,7 @@
     "response_model": null,
     "system_fingerprint": null,
     "openai_sdk": "<sdk>",
-    "prompt_template_sha256": "247e588050106ada1ecdc87d62070eee6280c2be2b91f20916d3738b8e21ba72"
+    "prompt_template_sha256": "88a57297dd4e7916e610e99b280d5f32f81e8e4cbdaabede5fd85464ec901ea4"
   },
   "attempts": [
     {
@@ -76,13 +76,13 @@
         "response_model": null,
         "system_fingerprint": null,
         "openai_sdk": "<sdk>",
-        "prompt_template_sha256": "247e588050106ada1ecdc87d62070eee6280c2be2b91f20916d3738b8e21ba72"
+        "prompt_template_sha256": "88a57297dd4e7916e610e99b280d5f32f81e8e4cbdaabede5fd85464ec901ea4"
       },
       "plan": "<run>/attempt_1.plan.json",
       "calls": [
         {
           "stage": "plan",
-          "estimated_prompt": 20603,
+          "estimated_prompt": 20319,
           "method": "tiktoken:o200k_base(대체)",
           "max_tokens": 25000,
           "usage": null,
@@ -92,7 +92,7 @@
         },
         {
           "stage": "generate",
-          "estimated_prompt": 15477,
+          "estimated_prompt": 15143,
           "method": "tiktoken:o200k_base(대체)",
           "max_tokens": 32000,
           "usage": null,
@@ -211,7 +211,7 @@
     "by_stage": {
       "plan": {
         "calls": 1,
-        "estimated_prompt": 20603,
+        "estimated_prompt": 20319,
         "images": 15,
         "estimated_images": 6330,
         "max_tokens": 25000,
@@ -221,7 +221,7 @@
       },
       "generate": {
         "calls": 1,
-        "estimated_prompt": 15477,
+        "estimated_prompt": 15143,
         "images": 0,
         "estimated_images": 0,
         "max_tokens": 32000,
@@ -231,7 +231,7 @@
       },
       "refine": {
         "calls": 1,
-        "estimated_prompt": 20734,
+        "estimated_prompt": 20684,
         "images": 15,
         "estimated_images": 6330,
         "max_tokens": 32000,
@@ -242,7 +242,7 @@
     },
     "total": {
       "calls": 3,
-      "estimated_prompt": 56814,
+      "estimated_prompt": 56146,
       "images": 30,
       "estimated_images": 12660,
       "max_tokens": 89000,
@@ -252,7 +252,7 @@
     },
     "first_attempt": {
       "calls": 2,
-      "estimated_prompt": 36080,
+      "estimated_prompt": 35462,
       "images": 15,
       "estimated_images": 6330,
       "max_tokens": 57000,
@@ -311,7 +311,7 @@
         "audit_failures": 0,
         "tokens": {
           "calls": 1,
-          "estimated_prompt": 20734,
+          "estimated_prompt": 20684,
           "images": 15,
           "estimated_images": 6330,
           "max_tokens": 32000,

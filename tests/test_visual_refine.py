@@ -923,14 +923,69 @@ def test_one_comment_never_swallows_the_code_up_to_the_next():
     assert strip(html) == " <p>x</p> \n<script> go();</script>"
 
 
-@pytest.mark.parametrize("path", ["inputs/original_transfer.html",
-                                  "inputs/original_bill.html"])
-def test_the_originals_lose_only_their_comments(path):
+ORIGINALS = ["inputs/original_transfer.html", "inputs/original_bill.html"]
+
+# 화면으로 알 수 없는 실험 장치 코드 (11-7b, 연구자 결정 11번 (나)). 탭 기록 장치 ·
+# 쓰지 않는 .tempnote CSS · 기록 배열과 그것을 내보내는 훅. 검사기가 쓰는 것은
+# window.__screen() 과 그것이 읽는 window.__task 뿐이다.
+EXPERIMENT_CODE = ["log('tap'", ".tempnote", "__log", "__dump", "__startTask",
+                   "const LOG", "function log(", "log('"]
+
+
+@pytest.mark.parametrize("path", ORIGINALS)
+def test_the_originals_lose_their_comments_and_experiment_code(path):
     html = open(os.path.join(config.ROOT, path), encoding="utf-8").read()
     out = strip(html)
     assert "<!--" not in out and "/*" not in out
     assert _api.plan_module.screens_in(out) == _api.plan_module.screens_in(html)
     assert "기록 장치" in html and "기록 장치" not in out
+    assert [c for c in EXPERIMENT_CODE if c in out] == []
+    # 검사기가 쓰는 훅은 남는다
+    assert "window.__screen = " in out and "window.__task" in out
+
+
+@pytest.mark.parametrize("path", ORIGINALS)
+def test_the_original_file_keeps_its_experiment_code(path):
+    """원본 파일과 검사기가 보는 원본은 바꾸지 않는다 - 모델 입력에서만 뺀다."""
+    html = open(os.path.join(config.ROOT, path), encoding="utf-8").read()
+    assert "log('tap'" in html and "window.__dump" in html and "window.__startTask" in html
+
+
+def test_the_contract_no_longer_asks_for_the_log_hooks():
+    contract = _api.prompt_module.load_block("CONTRACT")
+    assert "__screen()" in contract
+    assert [h for h in ("__log", "__dump", "__startTask", "screen_enter")
+            if h in contract] == []
+
+
+def test_the_unreachable_screen_message_names_only_the_hook_the_auditor_reads():
+    src = open(os.path.join(config.ROOT, "senior_ui", "audit", "checks", "a_completion.py"),
+               encoding="utf-8").read()
+    assert "__startTask" not in src and "__dump" not in src
+
+
+@pytest.mark.browser
+@pytest.mark.parametrize("task", ["transfer", "bill"])
+def test_the_model_input_still_walks_the_task(server, task):
+    """모델에게 보내는 원본(주석 · 실험 장치 코드를 뺀 것)도 그대로 과제가 끝까지 걸린다 -
+    지운 코드가 화면 동작에 닿지 않았다는 확인."""
+    import asyncio
+    import io
+    t = _api.tasks_module.load_task(task)
+    html = io.open(_api.tasks_module.abs_path(t["original"]), encoding="utf-8").read()
+    rel = ".pytest-outputs/model_input_%s.html" % task
+    os.makedirs(os.path.join(config.ROOT, ".pytest-outputs"), exist_ok=True)
+    io.open(os.path.join(config.ROOT, rel), "w", encoding="utf-8").write(strip(html))
+    try:
+        f = _api.load_flow(None, task=task)
+        base = "http://localhost:%d" % config.PORT
+        orig = asyncio.run(_api.drive("%s/%s" % (base, t["original"]), f))
+        rep = asyncio.run(_api.drive("%s/%s" % (base, rel), f))
+        report = _api.audit(orig, rep, html, strip(html), f)
+    finally:
+        os.remove(os.path.join(config.ROOT, rel))
+    assert rep["js_errors"] == [] and rep["reached"] == orig["reached"]
+    assert report["fatal"] == [], report["fatal"]
 
 
 def test_the_prompts_carry_the_stripped_original_and_the_audit_the_full_one(

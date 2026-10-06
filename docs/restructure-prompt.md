@@ -30,7 +30,9 @@
 
 생성 프롬프트에서 도구가 채우는 치환 자리 다섯 (과제 파일이 채우는 `{{TASK}}` ·
 `{{TASK_<칸>}}` 과 `{{CONTRACT}}` 는 위에 적었다): `{{ORIGINAL_HTML}}` (원본 파일 —
-주석을 뺀 것, `prompt.model_input_html`), `{{RETRY_BLOCK}}`
+주석과 화면으로 알 수 없는 실험 장치 코드 — 탭 기록 장치 · 쓰지 않는 `.tempnote` · `LOG` ·
+`log()` · `__log` · `__startTask` · `__dump` — 를 뺀 것, `prompt.model_input_html`. 검사기가
+쓰는 `__screen` · `__task` 는 남긴다), `{{RETRY_BLOCK}}`
 (재시도일 때만 채워짐, 첫 시도는 빈 문자열), `{{CHOICES}}` (원본이 가진 선택지 요약 —
 검사 I 가 세는 바로 그 집합이다), `{{ERRORS}}` (원본의 오류 조건 — 검사 J 가 걷는
 바로 그 오류들이다), `{{PLAN}}` (첫 호출이 세운 계획, 재시도에서 고쳐진 것).
@@ -237,8 +239,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 - 원본의 과제 밖 입구(data-action 이 oos- 로 시작하는 요소)는 data-action 이름을 원본 그대로
   둔다. 글자 · 배치 · 묶음은 바꿔도 된다.
 - 숫자판은 버튼마다 `data-action` 과 `data-v="숫자"` 를 둔다.
-- 전역에 `window.__screen()` (현재 화면 이름 반환), `window.__log` (배열), `window.__startTask()`,
-  `window.__dump()` 를 둔다. 화면이 바뀔 때마다 `__log` 에 `{type:'screen_enter', to:이름}` 을 넣는다.
+- 전역에 `window.__screen()` (현재 화면 이름 반환)을 둔다.
 {{TASK_RULES}}
 - **원본에 있던 선택지는 하나도 빠뜨리지 마라.** 스크립트 배열로 그려지는 목록은 도구가
   `window.PRESERVED.<이름>` 으로 넣어 준다 (아래 "원본이 가진 선택지" 참고). 그 목록을

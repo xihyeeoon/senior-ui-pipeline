@@ -226,8 +226,6 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   .bk .bi{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;
     font-size:12px;color:#fff;font-weight:800;}
 
-  .tempnote{margin:0 20px 14px; background:#FFF6E5; border:1px solid #FFE0A3; border-radius:10px;
-    padding:10px 12px; font-size:12px; color:#8A6100; line-height:1.5;}
   .accfield{margin:0 20px 14px; border:2px solid var(--blue); border-radius:12px; padding:11px 15px;}
   .accfield .lab{font-size:13px; color:var(--blue); margin-bottom:3px;}
   .accfield .val{font-size:21px; font-weight:600; min-height:28px; color:var(--ink);}
@@ -532,33 +530,11 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 </div>
 
 <script>
-const LOG = [];
-window.__log = LOG;
 window.__task = { startedAt: null, screen: 'home' };
-
-function log(type, data){
-  LOG.push(Object.assign({ t: Date.now(), screen: window.__task.screen, type }, data||{}));
-}
-window.__startTask = function(){ LOG.length = 0; window.__task.startedAt = Date.now(); log('task_start'); };
-window.__dump = function(){ return JSON.parse(JSON.stringify(LOG)); };
-
-document.getElementById('phone').addEventListener('click', function(e){
-  const hit = e.target.closest('[data-action]');
-  const r = hit ? hit.getBoundingClientRect() : null;
-  log('tap', {
-    x: Math.round(e.clientX), y: Math.round(e.clientY),
-    valid: !!hit,
-    action: hit ? hit.dataset.action : null,
-    text: (e.target.textContent||'').trim().slice(0,24),
-    tw: r ? Math.round(r.width) : null,
-    th: r ? Math.round(r.height) : null
-  });
-}, true);
 
 function show(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.dataset.screen===name));
   window.__task.screen = name;
-  log('screen_enter', { to: name });
   window.scrollTo(0,0);
   const b = document.querySelector('.screen.on .body'); if(b) b.scrollTop = 0;
 }
@@ -656,7 +632,6 @@ document.getElementById('amt-balance').textContent = BALANCE.toLocaleString();
 function showError(name, from){
   S.errFrom = from;
   document.getElementById('err-acc-no').textContent = S.account;
-  log('error_popup', { code: name==='err-account' ? 'ELB00016' : 'ETA00325' });
   show(name);
 }
 
@@ -675,7 +650,6 @@ document.getElementById('phone').addEventListener('click', function(e){
   else if(a==='tab-sec') bankTab(true);
   else if(a==='pick-bank'){
     S.bank = el.dataset.bank;
-    log('pick_bank', { bank: S.bank });
     renderAccount();
     show('account');
   }
@@ -693,7 +667,6 @@ document.getElementById('phone').addEventListener('click', function(e){
     document.getElementById('cf-mark').textContent = S.bank[0];
     document.getElementById('cf-bank').textContent = S.bank;
     document.getElementById('cf-acc').textContent = S.account;
-    log('account_entered', { account: S.account, bank: S.bank });
     S.amount = 0; renderAmount();
     show('amount');
   }
@@ -724,7 +697,6 @@ document.getElementById('phone').addEventListener('click', function(e){
   else if(a==='pw'){
     if(S.pw.length<4){ S.pw += el.dataset.v; renderDots(); }
     if(S.pw.length===4){
-      log('submit', { bank:S.bank, account:S.account, amount:S.amount });
       setTimeout(()=>show('done'), 260);
     }
   }
@@ -761,13 +733,12 @@ document.getElementById('phone').addEventListener('click', function(e){
           a==='oos-tab-home' ||
           a==='oos-tab-stock' ||
           a==='oos-wallet'){ }
-  else if(a==='finish'){ log('task_end'); show('home'); }
+  else if(a==='finish'){ show('home'); }
 });
 
 renderAccount();
 renderAmount();
 buildPwPad();
-log('screen_enter', { to:'home' });
 </script>
 </body>
 </html>

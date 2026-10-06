@@ -156,8 +156,8 @@
 | 항목 | 뒤쪽의 어디가 쓰나 | 분류 | 비고 |
 |---|---|---|---|
 | `window.__screen()` | `drive.settle`, `collect_screen`, 검사 A | (다) | |
-| `window.__log`, `__startTask()`, `__dump()` | 프롬프트 2절, 검사 A 의 안내 문구; 실험 페이지 `web/session.html` | (다) | 검사기는 직접 읽지 않는다 |
-| `screen_enter` 기록 | 프롬프트 2절 | (다) | |
+| `window.__log`, `__startTask()`, `__dump()` | 실험 페이지 `web/session.html` (보관용) · `tests/test_original_bill.py` 만 원본에서 직접 읽는다 | (다) | 검사기는 읽지 않는다. 11-7b 부터 모델 입력에서 빼고 프롬프트도 요구하지 않는다 (`prompt.model_input_html`) — 원본 파일에는 그대로 있다 |
+| `screen_enter` 기록 | 위와 같다 | (다) | 모델 입력에서 뺀다 |
 | `submit` 기록 (과업 완료 신호) | `web/session.html` | (다) | 재구성 프롬프트에는 이 요구가 없다 — 뒤쪽 범위 밖이라 기록만 한다 |
 | 탭 기록 (`valid`, `tw`, `th`) | 실험 측정 | (다) | |
 | 숫자판 버튼마다 `data-v` | 흐름의 `type` 틀 `[data-v='%s']` | (다) | |
