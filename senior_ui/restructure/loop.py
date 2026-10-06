@@ -29,6 +29,7 @@ import sys
 import time
 
 from senior_ui import audit as A
+from senior_ui import config
 from senior_ui.audit.flow import required_errors
 from senior_ui.config import OUTPUTS_ENV, ROOT, inside_root, outputs_dir, url_for
 from senior_ui.devserver import ensure_server
@@ -37,8 +38,9 @@ from senior_ui.tasks import DEFAULT_TASK, abs_path, load_task
 from .audit_call import load_allowed_removals, run_audit
 from .brief import write_brief
 from .model import (MOCK_TASK, TEMPERATURE, SEED, ApiRejected, InfraFailed,
-                    RateLimited, call_model, estimate_tokens, load_env, mock_plan_reply,
-                    mock_reply, sdk_version)
+                    RateLimited, call_model, cost_usd, describe, describe_ratelimit,
+                    estimate_tokens, load_env, mock_plan_reply, mock_reply, price_for,
+                    profile_for, sdk_version)
 from .plan import (PlanProblems, apply_changes, match_problems, parse_plan,
                    parse_reflection, plan_report, screens_in, unaddressed)
 from .preserve import inject, names_read, preserved_data
@@ -113,7 +115,7 @@ class Run:
     """한 실행이 공유하는 것들. 단계 함수들은 이것만 주고받는다."""
 
     def __init__(self, args, log, run_dir, model, template, original_html,
-                 original_url=None, plan_template="", task=None):
+                 original_url=None, plan_template="", task=None, model_source=None):
         self.args = args
         # 프롬프트에 넣는 원본과 브라우저가 걷는 원본은 같은 문서다.
         self.original_url = original_url
@@ -144,6 +146,11 @@ class Run:
         # 기록에 남지 않는다 - 나중에 "그때 무엇이 달랐나" 를 물을 수 없다.
         self.temperature = getattr(args, "temperature", TEMPERATURE)
         self.seed = getattr(args, "seed", SEED)
+        # 모델마다 부르는 방식 (model.profile_for). 생각에 쓸 노력은 주지 않으면
+        # 보내지 않는다 - 모델마다 받는 값과 기본값이 다르다.
+        self.api = getattr(args, "api", None)
+        self.reasoning_effort = getattr(args, "reasoning_effort", None)
+        self.profile = profile_for(model, self.api)
         self.choices = ""
         # 입력이 가진 선택지 데이터. 실행마다 한 번 뽑아 시도마다 넣는다.
         # {배열 이름: [원소들]} (preserve.preserved_data).
@@ -163,14 +170,25 @@ class Run:
         # 길이 제한에 잘린 답이 연속 몇 번인지. 둘째 번부터는 안내가 달라진다.
         self.truncated = 0
         # 과제는 실행 기록 안에 있어야 한다 - 여러 실행을 모아 볼 때 과제를 가른다.
-        self.summary = {"run_dir": run_dir, "model": model, "mock": args.mock,
+        # model 은 보낸 이름, response_models 는 API 가 답한 이름들이다. 별칭
+        # (gpt-4o)은 날짜가 붙은 판으로 풀리고, 그 판은 말없이 바뀐다.
+        self.summary = {"run_dir": run_dir, "model": model, "model_source": model_source,
+                        "response_models": [],
+                        "model_call": dict(self.profile,
+                                           reasoning_effort=self.reasoning_effort
+                                           if self.profile["reasoning"] else None),
+                        "mock": args.mock,
                         "task": self.task["id"],
                         "stage": args.stage, "preserved": {}, "plan": None,
                         "repro": repro(template, temperature=self.temperature,
                                        seed=self.seed),
                         "attempts": [], "passed": False, "final": None,
                         "budget": {}, "stopped_reason": None, "trend": [],
-                        "git": None, "tokens": None}
+                        "git": None, "tokens": None,
+                        # 마지막 실제 호출이 받은 분당 한도 (호출마다는 calls[].ratelimit)
+                        "ratelimit": None,
+                        # 시도별·전체 예상 금액 (config.MODEL_PRICES, tally_cost)
+                        "cost": None}
 
 
 # --------------------------------------------------------------------------- #
@@ -204,9 +222,23 @@ def original_url(path):
     return url_for(rel.replace(os.sep, "/"))
 
 
+def model_choice(args):
+    """`(모델 이름, 어디서 왔나)`. --model, 환경 변수, config.DEFAULT_MODEL 순서다.
+
+    어디서 왔는지를 함께 돌려주는 이유는 환경 변수다. .envs 나 셸에 남아 있던
+    RESTRUCTURE_MODEL 하나가 기본값을 말없이 이기면, 실행 기록의 모델 이름만
+    보고는 그것이 의도한 것인지 알 수 없다.
+    """
+    if getattr(args, "model", None):
+        return args.model, "--model"
+    for name in config.MODEL_ENV_VARS:
+        if os.environ.get(name):
+            return os.environ[name], name
+    return config.DEFAULT_MODEL, "config.DEFAULT_MODEL"
+
+
 def pick_model(args):
-    return args.model or os.environ.get("RESTRUCTURE_MODEL") \
-        or os.environ.get("DESIGNREPAIR_MODEL") or "gpt-4o"
+    return model_choice(args)[0]
 
 
 def repro(template, reply=None, temperature=TEMPERATURE, seed=SEED):
@@ -256,7 +288,7 @@ def git_state():
 
 
 def dirty_warning(git):
-    """run.log 첫 줄에 쓰는 경고. 깨끗하면 None. 실행은 막지 않는다."""
+    """run.log 첫 줄(모델 다음)에 잇는 경고. 깨끗하면 None. 실행은 막지 않는다."""
     if not git or not git.get("dirty"):
         return None
     files = git.get("dirty_files") or []
@@ -274,11 +306,14 @@ def _sum(calls, key):
 
 
 def _tally(calls):
+    """completion 은 생각 토큰을 포함한다 (요금도 출력으로 매겨진다). reasoning 은
+    그중 생각에 쓴 몫 - 추론형이 아니면 None 이거나 0 이다."""
     return {"calls": len(calls),
             "estimated_prompt": sum(c["estimated_prompt"] for c in calls),
             "max_tokens": sum(c["max_tokens"] for c in calls),
             "prompt": _sum(calls, "prompt"),
-            "completion": _sum(calls, "completion")}
+            "completion": _sum(calls, "completion"),
+            "reasoning": _sum(calls, "reasoning")}
 
 
 def tally_tokens(r):
@@ -297,6 +332,45 @@ def tally_tokens(r):
             "by_stage": {k: _tally(v) for k, v in stages.items()},
             "total": _tally(calls),
             "first_attempt": _tally(first) if first else None}
+
+
+def _add(values):
+    """금액들의 합. 하나도 모르면 None - 0 과 "모른다" 는 다르다."""
+    values = [v for v in values if v is not None]
+    return round(sum(values), 6) if values else None
+
+
+def tally_cost(r):
+    """시도별 · 전체 예상 금액 (USD). 가격은 config.MODEL_PRICES 의 이 모델 값.
+
+    가격이 비었거나 usage 가 없으면(mock) 금액은 null 이다. 캐시된 입력의
+    할인은 넣지 않으므로 상한 쪽 어림이다."""
+    price = price_for(r.model)
+    attempts = []
+    for n in sorted({n for n, _c in r.all_calls}):
+        attempts.append({"attempt": n, "usd": _add(
+            cost_usd(c.get("usage"), price) for m, c in r.all_calls if m == n)})
+    return {"currency": "USD", "price_model": r.model, "per_million": price,
+            "by_attempt": attempts, "total_usd": _add(a["usd"] for a in attempts),
+            "note": "입력 x input + 출력(생각 포함) x output, 100만 토큰당. 캐시 할인 "
+                    "미반영 (상한)"}
+
+
+def log_cost(r):
+    c = r.summary.get("cost")
+    if not c or not c["by_attempt"]:
+        return
+    if c["per_million"] is None:
+        r.log("예상 금액: 가격표에 %s 가 비어 있다 — null (config.MODEL_PRICES)"
+              % c["price_model"])
+        return
+    def usd(v):
+        return "-" if v is None else "$%.4f" % v
+    r.log("예상 금액: %s · 전체 %s (가격표 %s %.2f / %.2f, 캐시 할인 미반영)"
+          % (" · ".join("시도 %d %s" % (a["attempt"], usd(a["usd"]))
+                        for a in c["by_attempt"]),
+             usd(c["total_usd"]), c["price_model"], c["per_million"]["input"],
+             c["per_million"]["output"]))
 
 
 # --------------------------------------------------------------------------- #
@@ -378,7 +452,7 @@ def ask_model(r, n, p, prompt, max_tokens, mock, stage):
 
     돌려주는 것은 (reply, outcome). reply 가 None 이면 이 시도가 모델 호출에서
     끝난 것이고 outcome 이 다음에 할 일이다."""
-    est, method = estimate_tokens(prompt)
+    est, method = estimate_tokens(prompt, r.model)
     call = {"stage": stage, "estimated_prompt": est, "method": method,
             "max_tokens": max_tokens, "usage": None}
     r.calls.append(call)
@@ -390,7 +464,8 @@ def ask_model(r, n, p, prompt, max_tokens, mock, stage):
     else:
         try:
             reply = call_model(r.model, prompt, max_tokens, r.log,
-                               temperature=r.temperature, seed=r.seed)
+                               temperature=r.temperature, seed=r.seed,
+                               reasoning_effort=r.reasoning_effort, api=r.api)
         except RateLimited as e:
             # 설계 실패가 아니다. 예산을 깎지 않고 여기서 멈춘다.
             r.log("중단: 인프라 한도 — 백오프를 다 쓰고도 429 (%s)" % e)
@@ -434,11 +509,22 @@ def ask_model(r, n, p, prompt, max_tokens, mock, stage):
                 return None, STOP
             return None, GO_ON
     call["usage"] = reply.get("usage")
+    if reply.get("dropped"):
+        # 모델이 거절해 빼고 보낸 인자 (model.DROPPABLE)
+        call["dropped"] = list(reply["dropped"])
+    if not r.args.mock:
+        # 분당 한도는 모델·계정마다 다르다. 실제 호출이 받은 값을 남긴다.
+        call["ratelimit"] = reply.get("ratelimit")
+        if call["ratelimit"]:
+            r.summary["ratelimit"] = call["ratelimit"]
+        r.log("분당 한도 (%s 응답 헤더): %s" % (stage, describe_ratelimit(call["ratelimit"])))
     if reply.get("max_tokens") not in (None, max_tokens):
         # 분당 한도에 맞추느라 줄여서 보냈다 (model.shrink_for_minute)
         call["max_tokens_sent"] = reply["max_tokens"]
+    if reply.get("model") and reply["model"] not in r.summary["response_models"]:
+        r.summary["response_models"].append(reply["model"])
     if reply.get("model") or reply.get("system_fingerprint"):
-        r.log("model: 응답 %s (fingerprint %s)"
+        r.log("model: 응답 모델 %s (fingerprint %s)"
               % (reply.get("model"), reply.get("system_fingerprint")))
     return reply, None
 
@@ -454,8 +540,20 @@ def note_truncated(r, entry, phase):
     call = r.calls[-1] if r.calls else {}
     cap = call.get("max_tokens_sent", call.get("max_tokens"))
     entry.update(stage="truncated", phase=phase, truncated=True, max_tokens=cap)
-    r.log("잘림: %s 답이 max_tokens %s 에서 잘렸다 (finish_reason=length) — 형식 "
-          "실패로 세고 다시 묻는다" % (phase, cap))
+    # 추론형은 생각 토큰도 같은 한도 안에서 쓴다. 생각이 한도를 거의 다 쓰면
+    # 보이는 답이 비어 오는데, 그때 "짧게 써라" 는 안내는 도움이 되지 않는다 -
+    # 한도를 늘리거나 생각에 쓸 노력을 낮춰야 한다. 그래서 그 몫을 함께 적는다.
+    usage = call.get("usage") or {}
+    thinking = ""
+    if usage.get("reasoning"):
+        entry["reasoning_tokens"] = usage["reasoning"]
+        thinking = " — 그중 생각 토큰 %d / 출력 %s" % (usage["reasoning"],
+                                                usage.get("completion"))
+        if usage.get("completion") and usage["reasoning"] >= 0.9 * usage["completion"]:
+            thinking += (" (생각이 한도를 거의 다 썼다 - --max-tokens 를 늘리거나 "
+                         "--reasoning-effort 를 낮춘다)")
+    r.log("잘림: %s 답이 max_tokens %s 에서 잘렸다 (finish_reason=length)%s — 형식 "
+          "실패로 세고 다시 묻는다" % (phase, cap, thinking))
 
 
 def request_reply(r, n, p):
@@ -819,15 +917,16 @@ def log_tokens(r):
     if not t:
         return
     r.log("")
-    r.log("토큰 (예상 입력 / 실측 입력 / 실측 출력, %s)" % t["method"])
+    r.log("토큰 (예상 입력 / 실측 입력 / 실측 출력 / 그중 생각, %s)" % t["method"])
     rows = [(k, v) for k, v in t["by_stage"].items()] + [("total", t["total"])]
     if t["first_attempt"]:
         rows.append(("첫 시도", t["first_attempt"]))
     for name, v in rows:
-        r.log("  %-8s 호출 %d | %6d | %6s | %6s"
+        r.log("  %-8s 호출 %d | %6d | %6s | %6s | %6s"
               % (name, v["calls"], v["estimated_prompt"],
                  "-" if v["prompt"] is None else v["prompt"],
-                 "-" if v["completion"] is None else v["completion"]))
+                 "-" if v["completion"] is None else v["completion"],
+                 "-" if v.get("reasoning") is None else v["reasoning"]))
 
 
 # outputs/ 안에서 "지금 쓰는 것" 을 가리키는 이름들. 실행 이름이 붙은 사본은
@@ -965,12 +1064,7 @@ def run(args):
                            + ("-mock-" + args.mock if args.mock else ""))
     os.makedirs(run_dir, exist_ok=True)
     log = make_logger(os.path.join(run_dir, "run.log"))
-    # 첫 줄. 작업 트리가 깨끗하지 않으면 그 사실이 run.log 를 여는 사람에게 가장
-    # 먼저 보여야 한다. 실행은 막지 않는다.
     git = git_state()
-    warning = dirty_warning(git)
-    if warning:
-        log(warning)
 
     try:
         load_env()
@@ -982,7 +1076,26 @@ def run(args):
               os.path.join(run_dir, "summary.json"))
         log("summary: %s" % os.path.join(run_dir, "summary.json"))
         return 2
-    model = pick_model(args)
+    # 첫 줄은 모델이다 - 어느 모델로 돌았는지가 run.log 를 여는 사람에게 가장 먼저
+    # 보여야 한다. 모델은 .envs 의 환경 변수로도 정해지므로 키를 읽은 뒤에 고른다.
+    # API 가 답한 실제 판 이름은 호출마다 "model: 응답 모델" 줄로, 실행 전체는
+    # summary.json 의 response_models 로 남는다.
+    #
+    # 작업 트리가 깨끗하지 않으면 그 경고도 같은 첫 줄에 잇는다 - 그 사실 역시
+    # run.log 를 여는 사람에게 가장 먼저 보여야 한다. 실행은 막지 않는다.
+    model, source = model_choice(args)
+    warning = dirty_warning(git)
+    log("model=%s (출처 %s) — API 가 답한 판 이름은 호출마다 '응답 모델' 줄에 남는다"
+        % (model, source) + (" | " + warning if warning else ""))
+    profile = profile_for(model, getattr(args, "api", None))
+    if not profile["known"]:
+        log("경고: 모르는 모델 %s — gpt-4o 처럼 부른다 (%s). 모델이 거절하는 인자는 "
+            "빼고 다시 보낸다. 처음이면 --probe %s 로 먼저 확인한다"
+            % (model, describe(profile), model))
+    effort = getattr(args, "reasoning_effort", None)
+    log("model: 부르는 방식 %s · 토큰 어림 %s · reasoning_effort %s"
+        % (describe(profile), profile["encoding"],
+           (effort or "보내지 않음(모델 기본값)") if profile["reasoning"] else "해당 없음"))
     if not args.mock and not os.environ.get("OPENAI_API_KEY"):
         print("no OPENAI_API_KEY in the environment or .envs", file=sys.stderr)
         return 2
@@ -1015,7 +1128,7 @@ def run(args):
         % (run_dir, model, args.attempts, args.stage, args.mock, orig_url)
         + ("" if task["id"] == DEFAULT_TASK else " | task=%s" % task["id"]))
     r = Run(args, log, run_dir, model, template, original_html, orig_url,
-            plan_template=plan_template, task=task)
+            plan_template=plan_template, task=task, model_source=source)
     r.summary["git"] = git
     r.allowed_removals = allowed
     if allowed:
@@ -1077,6 +1190,8 @@ def run(args):
         r.summary["budget"] = r.budget.as_dict()
         r.summary["tokens"] = tally_tokens(r)
         log_tokens(r)
+        r.summary["cost"] = tally_cost(r)
+        log_cost(r)
         copy_final(r)
         _dump(r.summary, os.path.join(run_dir, "summary.json"))
         log("summary: %s" % os.path.join(run_dir, "summary.json"))

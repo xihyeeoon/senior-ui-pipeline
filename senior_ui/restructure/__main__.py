@@ -31,7 +31,8 @@ Everything from a run lands in outputs/restructure_auto/<timestamp>/:
   attempt_N.reflection.json  반성 (재시도에만)
   shots/attempt_N/       one screenshot per screen reached
   designer_brief.md      디자이너용 변경 설명서 (통과한 실행에만)
-  run.log, summary.json  run.log 첫 줄 = 작업 트리 경고 (깨끗하지 않을 때)
+  run.log, summary.json  run.log 첫 줄 = 모델과 그 출처 (+ 작업 트리 경고,
+                         깨끗하지 않을 때)
                          summary.json 의 git · tokens = 커밋 · 단계별 토큰
 
 This file is the command line and nothing else. The work is split up:
@@ -50,6 +51,8 @@ Usage:
   python -m senior_ui.restructure --task bill     # 공과금 과제 (기본은 transfer)
   python -m senior_ui.restructure --mock pass     # no API: replays Run 1
   python -m senior_ui.restructure --mock fail     # no API: a broken flow, every attempt fails
+  python -m senior_ui.restructure --list-models   # 이 키로 쓸 수 있는 gpt- 모델 (요금 없음)
+  python -m senior_ui.restructure --probe gpt-5   # 아주 짧은 요청 하나: 분당 한도 · 실제 모델
 
 mock 모드는 일곱이고 Run 1 빌드를 되읽는다. 모드마다 은행 목록 한 줄과,
 원본에 있고 Run 1 에 없는 두 값(금액 숫자판의 00 · 빠른 금액의 전액)을 채우는
@@ -75,7 +78,9 @@ mock 모드는 일곱이고 Run 1 빌드를 되읽는다. 모드마다 은행 �
                   -> 검사 J 에서 실패 (틀린 값으로 다음 화면에 넘어간다)
 
 The key comes from .envs (OPENAI_API_KEY=...) or the environment. The model
-comes from --model, then RESTRUCTURE_MODEL, then DESIGNREPAIR_MODEL, then gpt-4o.
+comes from --model, then RESTRUCTURE_MODEL, then DESIGNREPAIR_MODEL, then
+config.DEFAULT_MODEL (지금 gpt-4o). 어디서 왔는지는 run.log 첫 줄과
+summary.json 의 model_source 에 남는다.
 Exit: 0 = a build passed, 1 = every attempt failed, 2 = could not run.
 
 "돌지 못했다"(2)에 들어가는 것은 넷이다 - 레이트 리밋으로 멈춤, API 가 요청을
@@ -87,11 +92,13 @@ import argparse
 import sys
 
 from senior_ui._cli import setup_stdout
+from senior_ui import config
 from senior_ui.audit.stage import STAGES
 from senior_ui.tasks import DEFAULT_TASK, task_names
 
 from .loop import PLAN_MAX_TOKENS, run
-from .model import ALL_MODES, SEED, TEMPERATURE
+from .model import ALL_MODES, APIS, REASONING_EFFORTS, SEED, TEMPERATURE
+from .probe import list_models, probe
 
 
 # --mock pass 가 무엇을 하는가. Run 1 빌드에는 원본 숫자판의 00 과 금액 버튼의
@@ -111,11 +118,22 @@ def build_parser():
                     help="검사 fatal 에 쓸 재시도 횟수 (기본: --attempts)")
     ap.add_argument("--infra-attempts", type=int, default=3,
                     help="모델에 닿지 못했을 때(연결 실패) 쓸 재시도 횟수")
-    ap.add_argument("--model", default=None)
+    ap.add_argument("--model", default=None,
+                    help="부를 모델. 주지 않으면 환경 변수 RESTRUCTURE_MODEL · "
+                         "DESIGNREPAIR_MODEL, 그다음 config.DEFAULT_MODEL (%s)"
+                         % config.DEFAULT_MODEL)
     ap.add_argument("--temperature", type=float, default=TEMPERATURE,
-                    help="못박아 보낸다. 기본 %s - 재현에 가장 가깝다" % TEMPERATURE)
+                    help="못박아 보낸다. 기본 %s - 재현에 가장 가깝다. 추론형 모델에는 "
+                         "보내지 않는다 (받지 않는다)" % TEMPERATURE)
     ap.add_argument("--seed", type=int, default=SEED,
-                    help="못박아 보낸다. 기본 %s" % SEED)
+                    help="못박아 보낸다. 기본 %s. Responses API 로 부를 때는 보내지 "
+                         "않는다 (인자가 없다)" % SEED)
+    ap.add_argument("--reasoning-effort", choices=REASONING_EFFORTS, default=None,
+                    help="추론형 모델이 생각에 쓸 노력. 주지 않으면 보내지 않고 모델의 "
+                         "기본값을 쓴다 (모델마다 받는 값과 기본값이 다르다)")
+    ap.add_argument("--api", choices=APIS, default="auto",
+                    help="auto 는 모델 이름으로 정한다 (model.profile_for). chat · "
+                         "responses 로 덮을 수 있다")
     ap.add_argument("--max-tokens", type=int, default=14000,
                     help="생성 호출의 completion cap. 분당 한도는 입력에 이것을 더해 "
                          "센다 - 생성 프롬프트(~15,000)에 16,000 을 붙이면 요청 하나가 "
@@ -132,6 +150,14 @@ def build_parser():
                     help="원본 HTML. 주지 않으면 과제 파일의 original")
     ap.add_argument("--stage", choices=sorted(STAGES), default="styled",
                     help="검사 단계. wireframe 은 A·B·C·F·I 만 본다")
+    ap.add_argument("--list-models", action="store_true",
+                    help="이 키로 쓸 수 있는 gpt- 모델을 보이고 끝난다 (models.list, 요금 "
+                         "없음). 실행 폴더를 만들지 않는다 - outputs/model-probe.log")
+    ap.add_argument("--probe", metavar="MODEL", default=None,
+                    help="그 모델에 아주 짧은 요청 하나를 실제 실행과 같은 방식으로 "
+                         "보내고, 분당 한도 · 실제 모델 이름 · 지원하지 않는 인자 오류를 "
+                         "보이고 끝난다. --api · --reasoning-effort · --temperature · "
+                         "--seed 를 따른다. 실행 폴더를 만들지 않는다")
     ap.add_argument("--delay", type=float, default=60.0,
                     help="모델 호출 사이 대기(초) - 진단·계획과 생성 사이, 시도와 "
                          "시도 사이. 원본 HTML 이 두 호출에 모두 들어가서 같은 1분 "
@@ -142,7 +168,14 @@ def build_parser():
 def main():
     # 무엇이든 찍기 전에 맞춘다 (senior_ui/_cli.py).
     setup_stdout()
-    return run(build_parser().parse_args())
+    args = build_parser().parse_args()
+    # 확인 명령은 루프를 돌리지 않는다 - 실행 폴더도 만들지 않는다 (probe.py).
+    if args.list_models:
+        return list_models()
+    if args.probe:
+        return probe(args.probe, temperature=args.temperature, seed=args.seed,
+                     reasoning_effort=args.reasoning_effort, api=args.api)
+    return run(args)
 
 
 if __name__ == "__main__":

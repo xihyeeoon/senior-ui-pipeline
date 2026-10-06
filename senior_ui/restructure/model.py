@@ -96,37 +96,147 @@ def sdk_version():
 
 
 # --------------------------------------------------------------------------- #
+# 모델마다 부르는 방식
+# --------------------------------------------------------------------------- #
+# gpt-4o 뒤의 모델(o 계열 · gpt-5 이후)은 대부분 "추론형" 이다. 부르는 방식에서
+# 달라지는 것은 넷이다 (출처는 docs/README.md 의 "모델 바꾸기").
+#
+#   길이 인자    Chat Completions 는 max_completion_tokens, Responses API 는
+#                max_output_tokens. 옛 max_tokens 는 추론형이 거절한다. 어느
+#                쪽이든 **생각(reasoning) 토큰을 포함한** 출력 상한이다.
+#   temperature  추론형은 보내면 400 이다 (값이 0 이면 unsupported_value, 아예
+#                못 받으면 unsupported_parameter). 추론형에는 보내지 않는다.
+#   seed         Chat Completions 에만 있다 (Responses 에는 인자가 없다).
+#   API          Chat Completions 에 없는 모델(…-pro · codex · deep-research)은
+#                Responses API 로만 부를 수 있다.
+#
+# 그 밖의 추론형은 Chat Completions 로 부른다. OpenAI 는 추론형에 Responses 를
+# 권하지만, 이 도구의 호출은 한 번 묻고 한 번 받는 것이라 Responses 가 이어 주는
+# 생각 항목을 쓸 일이 없고, Chat 으로 두면 gpt-4o 실행과 같은 모양(finish_reason ·
+# seed · system_fingerprint)으로 기록이 남는다. --api responses 로 바꿀 수 있다.
+#
+# 표에 없는 모델은 gpt-4o 처럼 부르고 run.log 에 경고를 쓴다. 거절된 인자는
+# 빼고 다시 보낸다 (DROPPABLE) - 400 은 요금이 없다.
+GPT_4O_WAY = {"api": "chat", "reasoning": False, "temperature": True, "seed": True}
+REASONING_CHAT = {"api": "chat", "reasoning": True, "temperature": False, "seed": True}
+REASONING_RESPONSES = {"api": "responses", "reasoning": True, "temperature": False,
+                       "seed": False}
+
+# (이름 정규식, 계열, 방식). 위에서부터 처음 맞는 것을 쓴다.
+FAMILIES = [
+    # Chat Completions: Not supported - Responses API 에만 있다.
+    (r"^o\d+(-mini)?-(pro|deep-research)", "o-responses-only", REASONING_RESPONSES),
+    (r"^gpt-\d+(\.\d+)?-pro", "gpt-pro", REASONING_RESPONSES),
+    (r"codex", "codex", REASONING_RESPONSES),
+    (r"^computer-use", "computer-use", REASONING_RESPONSES),
+    # 지금 쓰는 모델과 같은 방식
+    (r"^(gpt-4o|chatgpt-4o|gpt-4\.1)", "gpt-4o", GPT_4O_WAY),
+    # 추론형 (o1 · o3 · o4-mini · gpt-5 이후). gpt-5-chat-latest 처럼 이름에 -chat
+    # 이 붙은 것은 추론형인지 확인하지 못해 표에 넣지 않는다 (모르는 모델로 부른다).
+    (r"^o\d", "o-series", REASONING_CHAT),
+    (r"^gpt-([5-9]|\d\d)(?!.*-chat)", "gpt-5+", REASONING_CHAT),
+]
+
+# 추론형이 거절할 수 있는, 빼도 요청의 뜻이 바뀌지 않는 인자들. 이것 말고 다른
+# 인자를 거절하면 (messages · 길이 인자 등) 다시 보내도 같으므로 ApiRejected 다.
+DROPPABLE = ("temperature", "seed", "reasoning_effort", "reasoning", "top_p")
+UNSUPPORTED = ("unsupported_parameter", "unsupported_value")
+
+# 생각에 쓸 노력. SDK 의 ReasoningEffort 와 같은 값들이다. 모델마다 받는 값과
+# 기본값이 다르다 (gpt-5 는 minimal~high · 기본 medium, gpt-5.1 은 기본 none,
+# gpt-6.1-sol 은 none 이 없다). 그래서 주지 않으면 보내지 않고 모델의 기본값을
+# 쓴다 - 그 사실은 summary 의 model_call.reasoning_effort = null 로 남는다.
+REASONING_EFFORTS = ["none", "minimal", "low", "medium", "high", "xhigh", "max"]
+APIS = ["auto", "chat", "responses"]
+
+
+def profile_for(name, api=None):
+    """그 모델을 어떻게 부를지. 표(FAMILIES)에 없으면 gpt-4o 방식에 known=False.
+
+    api 를 주면("chat" · "responses") 표의 API 를 덮는다. Responses 에는 seed 가
+    없으므로 그때는 seed 를 보내지 않는다."""
+    family, way = None, GPT_4O_WAY
+    for pattern, fam, w in FAMILIES:
+        if re.search(pattern, name or ""):
+            family, way = fam, w
+            break
+    p = dict(way, family=family, known=family is not None)
+    if api and api != "auto":
+        p["api"] = api
+    if p["api"] == "responses":
+        p["seed"] = False
+    p["length_param"] = ("max_output_tokens" if p["api"] == "responses"
+                         else "max_completion_tokens")
+    enc, fallback = encoding_for(name)
+    p["encoding"] = (enc + "(대체)") if (enc and fallback) else enc
+    return p
+
+
+def describe(p):
+    """run.log 와 확인 명령에 쓰는 한 줄."""
+    return ("%s · %s · 길이 인자 %s · temperature %s · seed %s"
+            % (p["api"], "추론형" if p["reasoning"] else "추론형 아님",
+               p["length_param"], "보냄" if p["temperature"] else "안 보냄",
+               "보냄" if p["seed"] else "안 보냄"))
+
+
+# --------------------------------------------------------------------------- #
 # 토큰 어림과 분당 한도
 # --------------------------------------------------------------------------- #
 # tiktoken 이 없을 때의 대비. 이 저장소의 원본 HTML 에서 잰 비율이다 (글자
 # 30,966 / o200k 토큰 10,546 = 2.94). 한글이 많은 글일수록 정확하다.
 CHARS_PER_TOKEN = 2.9
 
+# tiktoken 이 모르는 모델(gpt-6 계열 등)에 쓰는 인코딩. gpt-4o 이후 OpenAI 모델이
+# 모두 이것이다 (tiktoken 0.14 의 표). 대체로 셌다는 사실은 method 에 남는다.
+FALLBACK_ENCODING = "o200k_base"
 
-def _encoder():
-    """gpt-4o 계열의 토크나이저. tiktoken 이 없거나 사전을 받지 못하면 None."""
+
+def encoding_for(model):
+    """`(인코딩 이름, 대체인가)`. tiktoken 이 없으면 (None, False)."""
     try:
         import tiktoken
-        return tiktoken.get_encoding("o200k_base")
+    except ImportError:
+        return None, False
+    if not model:
+        return FALLBACK_ENCODING, False
+    try:
+        return tiktoken.encoding_name_for_model(model), False
+    except KeyError:
+        return FALLBACK_ENCODING, True
+
+
+def _encoder(name=FALLBACK_ENCODING):
+    """그 인코딩의 토크나이저. tiktoken 이 없거나 사전을 받지 못하면 None."""
+    try:
+        import tiktoken
+        return tiktoken.get_encoding(name)
     except Exception:                                # 설치 안 됨 · 오프라인
         return None
 
 
-def estimate_tokens(text):
-    """`(토큰 수, 어떻게 셌는가)`. 보내기 전에 로그에 남기려는 것이다."""
-    enc = _encoder()
+def estimate_tokens(text, model=None):
+    """`(토큰 수, 어떻게 셌는가)`. 보내기 전에 로그에 남기려는 것이다.
+
+    인코딩은 그 모델의 것이다 (tiktoken.encoding_name_for_model). tiktoken 이
+    모르는 모델이면 o200k_base 로 세고 method 에 "(대체)" 를 붙인다."""
+    name, fallback = encoding_for(model)
+    enc = _encoder(name) if name else None
     if enc is not None:
-        return len(enc.encode(text or "", disallowed_special=())), "tiktoken:o200k_base"
+        return (len(enc.encode(text or "", disallowed_special=())),
+                "tiktoken:%s%s" % (name, "(대체)" if fallback else ""))
     return int(round(len(text or "") / CHARS_PER_TOKEN)), "chars/%s" % CHARS_PER_TOKEN
 
 
 # 요청 하나가 분당 한도보다 크면 429 의 문구가 "Request too large … Limit N,
 # Requested M" 이다. 분당 한도는 입력에 max_tokens 를 더해 세므로, 재시도처럼
 # 입력이 2만을 넘는 프롬프트에 14,000 을 붙이면 이렇게 된다. 기다려도 풀리지
-# 않는다 - 줄여서 보내야 한다.
+# 않는다 - 줄여서 보내야 한다. 길이 인자의 이름(max_completion_tokens ·
+# max_output_tokens)과 상관없이 같은 상한이다.
 TOO_LARGE = re.compile(r"Request too large.*?Limit (\d+), Requested (\d+)", re.S)
 # 줄여도 이보다 작으면 보내지 않는다. 답(HTML + 흐름 명세)이 이보다 짧은 적이
 # 없다 - 자동 Run 4·5 의 답이 3,300~3,500 토큰이었다. 더 줄이면 잘린 답만 온다.
+# 추론형은 생각 토큰도 이 안에서 쓰므로 실제로는 더 많이 필요하다.
 MIN_COMPLETION = 4000
 # 한도에 꼭 맞추지 않고 남겨 두는 몫. 서버가 세는 입력이 우리 어림과 조금 다르다.
 MARGIN = 500
@@ -157,8 +267,110 @@ def shrink_for_minute(message, cap, log=None):
     return smaller
 
 
+def price_for(model):
+    """그 모델의 100만 토큰당 가격 {"input", "output"}. 표에 없거나 비었으면 None."""
+    from senior_ui import config
+    return config.MODEL_PRICES.get(model) or None
+
+
+def cost_usd(usage, price):
+    """호출 하나의 예상 금액. 가격이나 usage 를 모르면 None."""
+    if not price or not usage or usage.get("prompt") is None \
+            or usage.get("completion") is None:
+        return None
+    return (usage["prompt"] * price["input"]
+            + usage["completion"] * price["output"]) / 1e6
+
+
+# 분당 한도를 알려 주는 응답 헤더 (https://developers.openai.com/api/docs/guides/rate-limits).
+# 모델마다 · 계정 등급마다 다르고 문서의 표가 실제와 다를 수 있으므로, 실제
+# 호출이 받은 값을 남긴다. 이 계정은 gpt-4o 에서 분당 30,000 토큰이었다.
+RATELIMIT_HEADERS = [("limit_tokens", "x-ratelimit-limit-tokens"),
+                     ("remaining_tokens", "x-ratelimit-remaining-tokens"),
+                     ("limit_requests", "x-ratelimit-limit-requests")]
+
+
+def read_ratelimit(headers):
+    """응답 헤더의 분당 한도. 셋 다 없으면 None (모른다)."""
+    out = {}
+    for key, name in RATELIMIT_HEADERS:
+        v = (headers or {}).get(name)
+        out[key] = int(v) if v is not None and str(v).isdigit() else v
+    return out if any(v is not None for v in out.values()) else None
+
+
+def describe_ratelimit(rl):
+    """run.log 와 확인 명령에 쓰는 한 줄."""
+    if not rl:
+        return "응답 헤더에 없음"
+    return ("토큰 %s (남은 %s) · 요청 %s"
+            % (rl.get("limit_tokens"), rl.get("remaining_tokens"),
+               rl.get("limit_requests")))
+
+
+def request_kwargs(model, prompt, cap, profile, temperature=None, seed=None,
+                   reasoning_effort=None):
+    """그 모델의 방식대로 만든 요청 인자."""
+    chat = profile["api"] == "chat"
+    kw = {"model": model}
+    if chat:
+        kw["messages"] = [{"role": "user", "content": prompt}]
+    else:
+        kw["input"] = prompt
+    kw[profile["length_param"]] = cap
+    if profile["temperature"] and temperature is not None:
+        kw["temperature"] = temperature
+    if profile["seed"] and seed is not None:
+        kw["seed"] = seed
+    if profile["reasoning"] and reasoning_effort:
+        if chat:
+            kw["reasoning_effort"] = reasoning_effort
+        else:
+            kw["reasoning"] = {"effort": reasoning_effort}
+    return kw
+
+
+def droppable(e, kw):
+    """400 이 "이 모델은 그 인자를 받지 않는다" 이고 빼도 되는 인자면 그 이름."""
+    param = (getattr(e, "param", None) or "").split(".")[0]
+    if getattr(e, "code", None) in UNSUPPORTED and param in DROPPABLE and param in kw:
+        return param
+    return None
+
+
+def read_reply(resp, api):
+    """SDK 의 응답을 `(text, finish_reason, status, usage, fingerprint)` 로.
+
+    잘림 판정은 API 마다 다르다. Chat 은 finish_reason == "length", Responses 는
+    status == "incomplete" 에 incomplete_details.reason == "max_output_tokens".
+    루프는 "length" 하나만 보므로 Responses 의 것을 거기에 맞춘다. 추론형은 생각이
+    한도를 다 쓰면 보이는 답이 빈 채로 잘려 온다."""
+    u = getattr(resp, "usage", None)
+    if api == "responses":
+        status = getattr(resp, "status", None)
+        reason = getattr(getattr(resp, "incomplete_details", None), "reason", None)
+        if status == "completed":
+            finish = "stop"
+        elif status == "incomplete":
+            finish = "length" if reason == "max_output_tokens" else (reason or status)
+        else:
+            finish = status
+        details = getattr(u, "output_tokens_details", None)
+        usage = {"prompt": getattr(u, "input_tokens", None),
+                 "completion": getattr(u, "output_tokens", None),
+                 "reasoning": getattr(details, "reasoning_tokens", None)} if u else None
+        return (getattr(resp, "output_text", "") or "", finish, status, usage, None)
+    choice = resp.choices[0]
+    details = getattr(u, "completion_tokens_details", None)
+    usage = {"prompt": getattr(u, "prompt_tokens", None),
+             "completion": getattr(u, "completion_tokens", None),
+             "reasoning": getattr(details, "reasoning_tokens", None)} if u else None
+    return (choice.message.content or "", choice.finish_reason, None, usage,
+            getattr(resp, "system_fingerprint", None))
+
+
 def call_model(model, prompt, max_tokens, log=None, backoff=(20, 45, 90, 180),
-               temperature=TEMPERATURE, seed=SEED):
+               temperature=TEMPERATURE, seed=SEED, reasoning_effort=None, api=None):
     """시도마다 직전 HTML 전체를 다시 보내므로 프롬프트가 크다. 이 계정은 전에
     TPM 30,000 한도에 걸린 적이 있으므로 429 를 지수적으로 기다렸다 다시 친다.
     그래도 안 되면 RateLimited 를 올려 설계 실패와 섞이지 않게 한다.
@@ -167,32 +379,41 @@ def call_model(model, prompt, max_tokens, log=None, backoff=(20, 45, 90, 180),
     max_tokens 를 줄여 바로 다시 보낸다 (shrink_for_minute). 둘 다 시도 실패로
     세지 않는다 - 루프는 RateLimited 를 받으면 예산을 깎지 않고 멈춘다.
 
+    모델마다 부르는 방식(profile_for)이 다르다. 모델이 "그 인자는 받지 않는다"
+    는 400 을 내면 그 인자를 빼고 바로 다시 보낸다 (DROPPABLE). 뺀 것은 로그와
+    돌려주는 dropped 에 남는다.
+
     429 가 아닌 실패는 ApiRejected 와 InfraFailed 로 갈라 올린다 - 어느 쪽인지는
     여기서만 알 수 있다 (openai 의 예외 종류). 루프는 그 종류만 보고 판단한다."""
     from openai import (OpenAI, APIConnectionError, AuthenticationError,
                         BadRequestError, NotFoundError, OpenAIError,
                         PermissionDeniedError, RateLimitError)
+    profile = profile_for(model, api)
     # 키가 아예 없으면 생성자부터 OpenAIError 다. 그것도 "다시 보내도 같다" 다.
     try:
         client = OpenAI()
     except OpenAIError as e:
         raise ApiRejected("%s: %s" % (type(e).__name__, e))
+    endpoint = (client.responses if profile["api"] == "responses"
+                else client.chat.completions)
+    kw = request_kwargs(model, prompt, max_tokens, profile, temperature, seed,
+                        reasoning_effort)
     t0 = time.time()
-    waits, cap = list(backoff), max_tokens
+    waits, dropped = list(backoff), []
     while True:
         try:
-            resp = client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                max_completion_tokens=cap,
-                temperature=temperature,
-                seed=seed,
-            )
+            # 응답 헤더(분당 한도)를 읽으려고 with_raw_response 로 부른다.
+            raw = endpoint.with_raw_response.create(**kw)
+            resp = raw.parse()
             break
         except RateLimitError as e:
-            smaller = shrink_for_minute(str(e), cap, log)
+            if log:
+                rl = read_ratelimit(getattr(getattr(e, "response", None), "headers", None))
+                if rl:
+                    log("429 — 분당 한도 %s" % describe_ratelimit(rl))
+            smaller = shrink_for_minute(str(e), kw[profile["length_param"]], log)
             if smaller is not None:
-                cap = smaller                    # 기다리지 않고 바로 다시 보낸다
+                kw[profile["length_param"]] = smaller   # 기다리지 않고 바로 다시 보낸다
                 continue
             if not waits:
                 raise RateLimited(str(e))
@@ -201,28 +422,42 @@ def call_model(model, prompt, max_tokens, log=None, backoff=(20, 45, 90, 180),
                 log("429 — %d초 기다렸다 다시 시도 (%d/%d)"
                     % (wait, len(backoff) - len(waits), len(backoff)))
             time.sleep(wait)
-        except (AuthenticationError, PermissionDeniedError, BadRequestError,
-                NotFoundError) as e:
+        except BadRequestError as e:
+            param = droppable(e, kw)
+            if param is None:
+                raise ApiRejected("%s: %s" % (type(e).__name__, e))
+            del kw[param]
+            dropped.append(param)
+            if log:
+                log("경고: %s 가 지원하지 않는 인자 %s 를 빼고 다시 보낸다 (%s: %s)"
+                    % (model, param, e.code, getattr(e, "message", e)))
+        except (AuthenticationError, PermissionDeniedError, NotFoundError) as e:
             raise ApiRejected("%s: %s" % (type(e).__name__, e))
         except APIConnectionError as e:          # APITimeoutError 도 이 아래다
             raise InfraFailed("%s: %s" % (type(e).__name__, e))
-    choice = resp.choices[0]
-    usage = getattr(resp, "usage", None)
+    text, finish, status, usage, fingerprint = read_reply(resp, profile["api"])
     return {
-        "text": choice.message.content or "",
-        "finish_reason": choice.finish_reason,
+        "text": text,
+        "finish_reason": finish,
         "seconds": round(time.time() - t0, 1),
-        "usage": {"prompt": getattr(usage, "prompt_tokens", None),
-                  "completion": getattr(usage, "completion_tokens", None)} if usage else None,
+        "usage": usage,
         # 보낸 것과 받은 것을 함께 적는다. --model gpt-4o 로 보내도 실제로
         # 답한 것은 그 별명이 가리키는 어느 판본이고, 그 판본이 바뀌면 같은
         # 프롬프트가 다른 답을 낸다. system_fingerprint 는 그 뒤의 구성이다.
-        "temperature": temperature,
-        "seed": seed,
+        # 보내지 않은 temperature · seed 는 None 이다 (모델의 기본값이 쓰였다).
+        "temperature": kw.get("temperature"),
+        "seed": kw.get("seed"),
         "model": getattr(resp, "model", None),
-        "system_fingerprint": getattr(resp, "system_fingerprint", None),
+        "system_fingerprint": fingerprint,
         # 실제로 보낸 길이 제한. 분당 한도에 맞추느라 줄였으면 요청한 값과 다르다.
-        "max_tokens": cap,
+        "max_tokens": kw[profile["length_param"]],
+        "api": profile["api"],
+        "status": status,
+        # 프롬프트를 뺀 실제 요청 인자, 그리고 모델이 거절해 뺀 인자
+        "sent": {k: v for k, v in kw.items() if k not in ("messages", "input")},
+        "dropped": dropped,
+        # 이 호출이 받은 응답 헤더의 분당 한도
+        "ratelimit": read_ratelimit(raw.headers),
     }
 
 

@@ -98,6 +98,7 @@ tasks_module = _tasks
 
 # ---- senior_ui/restructure/__main__.py (명령줄 기본값) ------------------ #
 restructure_parser = _restructure_cli.build_parser
+restructure_cli = _restructure_cli
 
 # ---- senior_ui/restructure/brief.py (디자이너용 설명서) ----------------- #
 brief_module = _brief

@@ -1,5 +1,18 @@
 {
   "model": "gpt-4o",
+  "model_source": "config.DEFAULT_MODEL",
+  "response_models": [],
+  "model_call": {
+    "api": "chat",
+    "reasoning": false,
+    "temperature": true,
+    "seed": true,
+    "family": "gpt-4o",
+    "known": true,
+    "length_param": "max_completion_tokens",
+    "encoding": "o200k_base",
+    "reasoning_effort": null
+  },
   "mock": "preserved-all",
   "task": "transfer",
   "stage": "styled",
@@ -157,14 +170,16 @@
         "estimated_prompt": 12831,
         "max_tokens": 6000,
         "prompt": null,
-        "completion": null
+        "completion": null,
+        "reasoning": null
       },
       "generate": {
         "calls": 1,
         "estimated_prompt": 15169,
         "max_tokens": 14000,
         "prompt": null,
-        "completion": null
+        "completion": null,
+        "reasoning": null
       }
     },
     "total": {
@@ -172,14 +187,33 @@
       "estimated_prompt": 28000,
       "max_tokens": 20000,
       "prompt": null,
-      "completion": null
+      "completion": null,
+      "reasoning": null
     },
     "first_attempt": {
       "calls": 2,
       "estimated_prompt": 28000,
       "max_tokens": 20000,
       "prompt": null,
-      "completion": null
+      "completion": null,
+      "reasoning": null
     }
+  },
+  "ratelimit": null,
+  "cost": {
+    "currency": "USD",
+    "price_model": "gpt-4o",
+    "per_million": {
+      "input": 2.5,
+      "output": 10.0
+    },
+    "by_attempt": [
+      {
+        "attempt": 1,
+        "usd": null
+      }
+    ],
+    "total_usd": null,
+    "note": "입력 x input + 출력(생각 포함) x output, 100만 토큰당. 캐시 할인 미반영 (상한)"
   }
 }

@@ -94,7 +94,8 @@ LLM 이 쓴 것이라 다시 만들려면 API 비용이 들고 바이트까지 �
 
 한 실행의 모든 것이 `outputs/restructure_auto/<타임스탬프>/` 에 남는다 — 보낸
 프롬프트 전문, 받은 답 전문, 시도별 html·흐름·검사 결과, 화면별 스크린샷,
-`run.log`, `summary.json`.
+`run.log`, `summary.json`. 모델을 바꾸는 법과 처음 쓰는 모델을 먼저 확인하는 명령 둘
+(`--list-models` · `--probe`)은 아래 "모델 바꾸기".
 
 검사기만 따로 돌리기:
 
@@ -114,6 +115,106 @@ LLM 이 쓴 것이라 다시 만들려면 API 비용이 들고 바이트까지 �
 .\.venv\Scripts\python.exe -m senior_ui.experiment.server             # 대시보드 서버 (또는 시작.bat)
 .\.venv\Scripts\python.exe -m senior_ui.experiment.report             # 세션 집계
 ```
+
+### 모델 바꾸기
+
+기본 모델은 `senior_ui/config.py` 의 `DEFAULT_MODEL` 한 곳에 있다 (지금 `gpt-4o`).
+한 번만 바꿔 돌리려면 `--model` 을 준다. 정하는 순서는 `--model` → 환경 변수
+`RESTRUCTURE_MODEL` → `DESIGNREPAIR_MODEL` → `config.DEFAULT_MODEL` 이다
+(`loop.model_choice`). `.envs` 에 남은 환경 변수가 기본값을 이길 수 있으므로,
+어디서 왔는지가 run.log 첫 줄(`model=… (출처 …)`)과 `summary.json` 의
+`model_source` 에 남는다. API 가 실제로 답한 판 이름(`gpt-4o` 는 날짜가 붙은
+판으로 풀린다)은 호출마다 `model: 응답 모델 …` 줄과 `summary.response_models` 에
+남는다.
+
+```powershell
+.\.venv\Scripts\python.exe -m senior_ui.restructure --model gpt-5 --reasoning-effort medium
+```
+
+**처음 쓰는 모델은 먼저 확인 명령 둘로 본다.** 둘 다 실행 폴더를 만들지 않고,
+결과를 화면과 `outputs/model-probe.log` (덧붙임) 에 쓴다. 키는 루프와 같이
+`.envs` 또는 환경에서 읽는다. 종료 코드 `0` = 확인함, `2` = 키 없음 · API 거절 ·
+연결 실패.
+
+```powershell
+# 이 키로 쓸 수 있는 gpt- 모델 (models.list, 요금 없음)
+.\.venv\Scripts\python.exe -m senior_ui.restructure --list-models
+
+# 아주 짧은 요청 하나 (출력 16 토큰) - 분당 한도 · 실제 모델 · 거절된 인자
+.\.venv\Scripts\python.exe -m senior_ui.restructure --probe gpt-5
+```
+
+- `--list-models` 는 `gpt-` 로 시작하는 것만 이름 순서(`gpt-5.2` < `gpt-5.10`)로
+  보이고, 옆에 도구가 그 모델을 어떻게 부를지(chat/responses · 추론형 여부, 표에
+  없으면 "모름")와 가격표가 채워졌는지를 적는다. o 계열(`o3` 등)은 개수만 센다.
+- `--probe <모델>` 은 **실제 실행과 같은 방식으로** 보낸다 (`model.call_model`,
+  `--api` · `--reasoning-effort` · `--temperature` · `--seed` 를 따른다). 보낸 인자,
+  지원하지 않는 인자 오류가 있었는지, 실제 모델 이름, 응답 헤더의 분당 토큰 한도
+  (남은 양) · 분당 요청 한도, 끝난 모양(출력 · 생각 토큰)을 보인다. 인자가
+  거절되면 그것을 빼고 한 번 더 보낸다 — 400 은 요금이 없으므로 요금이 드는
+  요청은 하나다. 추론형은 16 토큰을 생각에 다 쓰고 `length` 로 끝날 수 있는데,
+  확인 명령에서는 정상이다.
+
+**모델마다 부르는 방식** (`model.profile_for`, 표는 `model.FAMILIES`):
+
+| 모델 | API | 길이 인자 | temperature | seed | reasoning_effort |
+|---|---|---|---|---|---|
+| `gpt-4o*` · `gpt-4.1*` | Chat Completions | `max_completion_tokens` | 보냄 | 보냄 | — |
+| `o1` · `o3` · `o4-mini` · `gpt-5` 이후 | Chat Completions | `max_completion_tokens` | **안 보냄** | 보냄 | `--reasoning-effort` 를 줄 때만 |
+| `…-pro` · `codex` · `deep-research` | **Responses** | `max_output_tokens` | 안 보냄 | 없음 | `reasoning.effort` |
+| 표에 없는 모델 | gpt-4o 처럼 | `max_completion_tokens` | 보냄 | 보냄 | — (run.log 에 경고) |
+
+- 모델이 `unsupported_parameter` / `unsupported_value` 로 거절한 인자가 `temperature`
+  · `seed` · `reasoning_effort` 따위면 빼고 다시 보낸다. 뺀 것은 로그와
+  `calls[].dropped` 에 남는다. 보내지 않은 temperature · seed 는 재현 기록에
+  `null` 로 남는다 (모델의 기본값이 쓰였다).
+- `--api chat|responses` 로 표의 API 를 덮을 수 있다. OpenAI 는 추론형에
+  Responses 를 권하지만, 이 도구는 한 번 묻고 한 번 받으므로 Responses 가 이어 주는
+  생각 항목을 쓸 일이 없어 Chat 을 기본으로 둔다 — gpt-4o 실행과 같은 모양
+  (`finish_reason` · `seed` · `system_fingerprint`)으로 기록이 남는다.
+- `--reasoning-effort` 를 주지 않으면 보내지 않는다. 모델마다 받는 값과 기본값이
+  다르다 (`gpt-5` 는 minimal~high · 기본 medium, `gpt-5.1`·`5.2` 는 기본 none,
+  `gpt-6.1-sol` 은 none 이 없다). 보낸 값은 `summary.model_call.reasoning_effort`.
+- **생각(reasoning) 토큰은 출력 한도 안에서 쓰이고 출력 요금으로 매겨진다.**
+  `--max-tokens 14000` 은 gpt-4o 의 답(3,300~3,500 토큰)에 맞춘 값이라 추론형에는
+  모자랄 수 있다 — OpenAI 는 처음에 25,000 을 남겨 두라고 한다. 생각이 한도를 다
+  쓰면 보이는 답이 빈 채로 잘려 오고, 그 시도는 잘림(형식 실패)으로 센다. 잘림
+  줄에 생각 토큰이 적힌다. 분당 한도는 입력에 이 한도를 더해 세므로 한도를 늘리면
+  "요청 하나가 분당 한도보다 크다" 에 걸리기 쉽다 — `--probe` 로 그 모델의 분당
+  한도를 먼저 본다.
+- 잘림 판정: Chat 은 `finish_reason == "length"`, Responses 는 `status ==
+  "incomplete"` 이고 `incomplete_details.reason == "max_output_tokens"` (루프에서는
+  `length` 로 맞춘다).
+- 토큰 어림은 그 모델의 인코딩이다 (`tiktoken.encoding_name_for_model`). tiktoken
+  0.14 는 gpt-4o · gpt-4.1 · o 계열 · `gpt-5*` 를 모두 `o200k_base` 로 알고, gpt-6
+  계열은 모른다 — 그때는 `o200k_base` 로 세고 method 에 `(대체)` 를 붙인다.
+
+**기록되는 것** (`summary.json`):
+
+| 키 | 내용 |
+|---|---|
+| `model` · `model_source` | 보낸 모델 이름과 그 출처 |
+| `response_models` | API 가 답한 판 이름들 (mock 은 빈 목록) |
+| `model_call` | 이번 실행의 부르는 방식 (API · 길이 인자 · temperature/seed 를 보냈나 · 추론형 · 인코딩 · reasoning_effort) |
+| `tokens.*.reasoning` | 생각 토큰 (출력 `completion` 에 포함된 몫) |
+| `attempts[].calls[].ratelimit` · `ratelimit` | 호출마다의 응답 헤더 `x-ratelimit-limit-tokens` · `-remaining-tokens` · `-limit-requests`, 그리고 마지막 값 |
+| `cost` | 시도별·전체 예상 금액 (USD) |
+
+**가격 표**는 `senior_ui/config.py` 의 `MODEL_PRICES` 한 곳이다 — 100만 토큰당
+`{"input", "output"}`. `gpt-4o` (2.50 / 10.00) 만 채워 두었고 나머지는 `None` 이다.
+비어 있으면 금액은 `null` 이고 run.log 끝에 "가격표에 … 가 비어 있다" 가 남는다.
+이름은 `--model` 에 주는 그대로 찾는다 (날짜 붙은 판은 따로 적는다). 금액 = 입력 ×
+input + 출력 × output 이고, 출력은 생각 토큰을 포함하므로 따로 더하지 않는다.
+캐시된 입력의 할인은 넣지 않았다 — 상한 쪽 어림이다.
+
+출처 (2026-10 확인): [Reasoning models](https://developers.openai.com/api/docs/guides/reasoning)
+· [Using the latest model](https://developers.openai.com/api/docs/guides/latest-model)
+· [Rate limits](https://developers.openai.com/api/docs/guides/rate-limits)
+· [Migrate to Responses](https://developers.openai.com/api/docs/guides/migrate-to-responses)
+· [Models](https://developers.openai.com/api/docs/models)
+· [Pricing](https://developers.openai.com/api/docs/pricing)
+· 설치된 `openai` 3.8.0 의 `types/chat/completion_create_params.py` (`max_tokens` 는
+o 계열과 맞지 않는다) · `types/shared/reasoning_effort.py`.
 
 ### 입력의 선택지 데이터는 도구가 지킨다 (`window.PRESERVED`)
 
