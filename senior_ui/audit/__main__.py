@@ -54,16 +54,26 @@ from .inputs import judged_flow, read_flow, researcher_flow
 from .stage import STAGES, apply_stage
 
 
-def cannot_run(detail):
+def cannot_run(detail, out=None):
     """검사기 자체가 돌지 못했을 때. 리포트 모양 그대로 내보낸다 - 재생성 루프가
     이것도 다른 fatal 과 같은 방식으로 읽기 때문이다.
 
     종료 코드는 2 다. 1 은 "검사했고 빌드가 떨어졌다" 이므로, 검사기가 돌지
-    못한 것에 같은 코드를 쓰면 부르는 쪽이 둘을 구분할 수 없다."""
-    json.dump({"passed": False,
-               "fatal": [{"check": None, "screen": None, "detail": detail}],
-               "warning": [], "metrics": {}},
-              sys.stdout, ensure_ascii=False, indent=2)
+    못한 것에 같은 코드를 쓰면 부르는 쪽이 둘을 구분할 수 없다.
+
+    `out`(--out)에도 쓴다. 쓰지 않으면 그 자리에 지난 판정이 남고, 색인은 그것을
+    지금의 판정으로 보여 준다 (감사 B-15). 쓰지 못하면 stdout 으로만 낸다."""
+    report = {"passed": False,
+              "fatal": [{"check": None, "screen": None, "detail": detail}],
+              "warning": [], "metrics": {}}
+    if out:
+        try:
+            os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
+            with io.open(out, "w", encoding="utf-8", newline="\n") as f:
+                json.dump(report, f, ensure_ascii=False, indent=2)
+        except OSError as e:
+            print("--out 에 쓰지 못했다: %s" % e, file=sys.stderr)
+    json.dump(report, sys.stdout, ensure_ascii=False, indent=2)
     print()
     return 2
 
@@ -107,7 +117,7 @@ def main(argv=None):
             stage = flow["stage"]
         task = load_task(flow["task"])
     except (OSError, ValueError, RuntimeError) as e:
-        return cannot_run("cannot read the flow: %s" % e)
+        return cannot_run("cannot read the flow: %s" % e, args.out)
     args.original = args.original or url_for(task["original"])
     args.original_file = args.original_file or abs_path(task["original"])
 
@@ -115,7 +125,7 @@ def main(argv=None):
         orig_html = io.open(args.original_file, encoding="utf-8").read()
         rep_html = io.open(args.build_file, encoding="utf-8").read()
     except OSError as e:
-        return cannot_run("cannot read inputs: %s" % e)
+        return cannot_run("cannot read inputs: %s" % e, args.out)
 
     if stage not in STAGES:
         print("알 수 없는 단계: %s (가능: %s)" % (stage, ", ".join(sorted(STAGES))),
@@ -129,7 +139,7 @@ def main(argv=None):
         base_flow = load_flow(None, task=task["id"]) \
             if not flow.get("derived_from_original", True) else flow
     except (OSError, ValueError) as e:
-        return cannot_run("cannot read the flow: %s" % e)
+        return cannot_run("cannot read the flow: %s" % e, args.out)
 
     # 브라우저가 없다, 흐름 파일이 검사기가 모르는 모양이다, 쓸 수 없는 경로다 -
     # 전부 "빌드가 떨어졌다" 가 아니라 "검사하지 못했다" 다. 역추적만 남기고
@@ -155,7 +165,8 @@ def main(argv=None):
                 json.dump(report, f, ensure_ascii=False, indent=2)
     except Exception as e:
         traceback.print_exc()
-        return cannot_run("검사기 자체가 멈췄다: %s: %s" % (type(e).__name__, e))
+        return cannot_run("검사기 자체가 멈췄다: %s: %s" % (type(e).__name__, e),
+                          args.out)
 
     json.dump(report, sys.stdout, ensure_ascii=False, indent=2)
     print()

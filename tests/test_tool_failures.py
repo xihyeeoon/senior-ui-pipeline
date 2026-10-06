@@ -214,6 +214,46 @@ def test_an_internal_error_after_a_pass_still_exits_2(fake_run_env, out_root):  
 
 
 # --------------------------------------------------------------------- #
+# 4. 검사기 CLI - 돌지 못했으면 --out 에도 그렇게 적는다 (B-15)
+# --------------------------------------------------------------------- #
+def test_the_cli_overwrites_the_out_file_when_it_cannot_run(monkeypatch, tmp_path):
+    """고치기 전: 종료 2 의 리포트는 stdout 에만 갔다. --out 에는 지난 판정이
+    그대로 남아, 색인이 그것을 지금의 판정으로 보여 줬다."""
+    out = tmp_path / "audit.json"
+    out.write_text(json.dumps({"passed": True, "fatal": [], "warning": [],
+                               "metrics": {"old": True}}), encoding="utf-8")
+
+    def boom(*a, **kw):
+        raise RuntimeError("브라우저를 띄울 수 없다")
+    monkeypatch.setattr(_api.audit_cli_module, "drive", boom)
+    monkeypatch.setattr(sys, "stdout", io.StringIO())
+    root = _api.ROOT_DIR
+    code = _api.audit_cli_main([
+        "--build", "http://localhost:3003/results/restructured_transfer.html",
+        "--build-file", os.path.join(root, "results", "restructured_transfer.html"),
+        "--flow", os.path.join(root, "flows", "restructured.json"),
+        "--out", str(out)])
+    assert code == 2
+    report = json.load(io.open(str(out), encoding="utf-8"))
+    assert report["passed"] is False
+    assert "브라우저" in report["fatal"][0]["detail"]
+    assert "old" not in report["metrics"]
+
+
+def test_the_cli_writes_the_out_file_when_the_flow_cannot_be_read(monkeypatch, tmp_path):
+    out = tmp_path / "sub" / "audit.json"
+    monkeypatch.setattr(sys, "stdout", io.StringIO())
+    root = _api.ROOT_DIR
+    code = _api.audit_cli_main([
+        "--build", "http://localhost:3003/x.html",
+        "--build-file", os.path.join(root, "results", "restructured_transfer.html"),
+        "--flow", str(tmp_path / "없는-흐름.json"), "--out", str(out)])
+    assert code == 2
+    report = json.load(io.open(str(out), encoding="utf-8"))
+    assert "없는-흐름.json" in report["fatal"][0]["detail"]
+
+
+# --------------------------------------------------------------------- #
 # 5. 인프라 예산 3 은 config 에 하나 (B-33)
 # --------------------------------------------------------------------- #
 def test_the_infra_budget_lives_in_config():
