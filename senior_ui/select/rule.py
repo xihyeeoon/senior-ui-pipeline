@@ -148,7 +148,7 @@ def gate_reasons(row, gates):
     if gates.get("no_redeclared") and row.get("redeclared"):
         out.append("도구가 고침: redeclared %s" % ", ".join(row["redeclared"]))
     if gates.get("no_truncated") and row.get("truncated"):
-        out.append("답이 길이 제한에서 잘린 시도가 있음")
+        out.append("마지막 시도의 답이 길이 제한에서 잘림")
     if gates.get("clean_tree") and row.get("dirty") is not False:
         out.append("작업 트리가 깨끗하지 않음" if row.get("dirty")
                    else "작업 트리 기록 없음 (git.dirty)")

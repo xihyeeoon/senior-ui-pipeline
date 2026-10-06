@@ -48,6 +48,20 @@ def _final_entry(summary):
     return None
 
 
+def _truncation(attempts, final_n):
+    """(마지막 시도가 잘렸나, 중간 시도의 잘림 횟수).
+
+    마지막 시도만 최종 시안을 만든다. 중간 시도가 잘렸어도 그다음 시도가 다시
+    물어 시안을 냈으면 그 시안과는 상관없다 - 그래서 문지기는 마지막 것만 보고,
+    중간의 잘림은 횟수로만 남긴다."""
+    cut = [a.get("n") for a in attempts
+           if a.get("truncated") or a.get("stage") == "truncated"]
+    if final_n is None:
+        design = [a.get("n") for a in attempts if a.get("stage") in DESIGN_STAGES]
+        final_n = design[-1] if design else None
+    return final_n in cut and final_n is not None, sum(1 for n in cut if n != final_n)
+
+
 def _count(entry, report, key):
     if entry is not None and isinstance(entry.get(key), int):
         return entry[key]
@@ -151,6 +165,7 @@ def collect(run_dir):
     total = (s.get("tokens") or {}).get("total") or {}
     cost = s.get("cost") or {}
     unmatched = _unmatched_changes(plan)
+    truncated, truncated_middle = _truncation(attempts, final.get("attempt"))
     brief = local(run_dir, final.get("brief")) or local(run_dir, os.path.join(run_dir, BRIEF))
 
     screens = metrics.get("data-screen_repaired")
@@ -174,8 +189,8 @@ def collect(run_dir):
         "warning": _count(entry, report, "warning"),
         # 도구가 고친 흔적 · 재현 조건
         "redeclared": None if preserved is None else list(preserved.get("redeclared") or []),
-        "truncated": any(a.get("truncated") or a.get("stage") == "truncated"
-                         for a in attempts),
+        "truncated": truncated,
+        "truncated_middle": truncated_middle,
         "dirty": git.get("dirty"),
         "dirty_files": git.get("dirty_files") or [],
         "commit": git.get("commit"),

@@ -62,8 +62,11 @@ def make_run(root, name, passed=True, warning=0, fatal=0, screens=9, actions=30,
         e = {"n": i, "stage": "audit", "passed": passed and last,
              "fatal": fatal if last else 3, "warning": warning if last else 0,
              "finish_reason": "stop"}
-        if truncated and i == 1 and n > 1:
+        # truncated: "middle" = 첫 시도가 잘리고 마지막은 검사까지 갔다,
+        #            "final"  = 마지막 시도가 잘렸다 (통과할 수 없다)
+        if (truncated == "middle" and i == 1 and n > 1) or (truncated == "final" and last):
             e.update(stage="truncated", truncated=True, passed=False)
+            e.pop("warning")
         entries.append(e)
     final = {"attempt": n, "html": p("attempt_%d.html" % n),
              "audit": p("attempt_%d.audit.json" % n), "plan": p("attempt_%d.plan.json" % n),
@@ -181,7 +184,7 @@ def test_values_collected_from_summary_audit_and_plan(five):
     assert (b["passed"], b["attempts"], b["format_failures"], b["audit_failures"]) == \
         (True, 2, 0, 1)
     assert (b["fatal"], b["warning"]) == (0, 2)
-    assert (b["redeclared"], b["truncated"], b["dirty"]) == ([], False, False)
+    assert (b["redeclared"], b["truncated"], b["truncated_middle"], b["dirty"]) ==         ([], False, 0, False)
     assert (b["model"], b["reasoning_effort"], b["commit"]) == \
         ("gpt-6.1-sol", "medium", "abcdef1234567890")
     assert (b["screens"], b["data_actions"]) == (8, 25)
@@ -208,7 +211,6 @@ def test_every_gate_names_its_reason(tmp_path):
     runs.mkdir()
     make_run(str(runs), "20261007-100000-ok")
     make_run(str(runs), "20261007-100001-dirty", dirty=True)
-    make_run(str(runs), "20261007-100002-cut", truncated=True, attempts=2)
     make_run(str(runs), "20261007-100003-mock-pass", mock="pass")
     make_run(str(runs), "20261007-100004-4o", model="gpt-4o")
     rule = write_rule(tmp_path, gates=dict(DEFAULT_RULE["gates"], model="gpt-6.1-sol"))
@@ -216,9 +218,35 @@ def test_every_gate_names_its_reason(tmp_path):
     assert code == 0 and order(result) == ["20261007-100000-ok"]
     assert reasons(result) == {
         "20261007-100001-dirty": ["작업 트리가 깨끗하지 않음"],
-        "20261007-100002-cut": ["답이 길이 제한에서 잘린 시도가 있음"],
         "20261007-100003-mock-pass": ["mock 실행 (pass)"],
         "20261007-100004-4o": ["모델이 gpt-6.1-sol 아님 (gpt-4o)"]}
+
+
+def test_only_the_final_attempts_truncation_excludes(tmp_path):
+    """중간 시도의 잘림은 최종 시안과 상관없다 - 열로만 보인다. 마지막 시도가
+    잘렸을 때만 문지기가 뺀다."""
+    runs = tmp_path / "runs"
+    runs.mkdir()
+    make_run(str(runs), "20261007-100000-middle", truncated="middle", attempts=2)
+    make_run(str(runs), "20261007-100001-final", truncated="final", attempts=2,
+             passed=False)
+    rule = write_rule(tmp_path, gates=dict(DEFAULT_RULE["gates"], passed=False))
+    code, result, md = select(tmp_path, "--rule", rule)
+    assert code == 0 and order(result) == ["20261007-100000-middle"]
+    assert reasons(result) == {
+        "20261007-100001-final": ["마지막 시도의 답이 길이 제한에서 잘림"]}
+    rows = {r["name"]: r for r in result["ranking"]}
+    assert (rows["20261007-100000-middle"]["truncated"],
+            rows["20261007-100000-middle"]["truncated_middle"]) == (False, 1)
+    assert (rows["20261007-100001-final"]["truncated"],
+            rows["20261007-100001-final"]["truncated_middle"]) == (True, 0)
+    assert "중간 잘림" in md
+    line = [l for l in md.splitlines() if l.startswith("| 1 | `20261007-100000-middle`")][0]
+    cells = [c.strip() for c in line.strip("|").split("|")]
+    header = [l for l in md.splitlines() if l.startswith("| 순위 |")][0]
+    names = [c.strip() for c in header.strip("|").split("|")]
+    assert cells[names.index("중간 잘림")] == "1"
+    assert cells[names.index("잘림 (마지막)")] == "✗"
 
 
 def test_model_gate_is_off_when_null(tmp_path):

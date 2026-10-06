@@ -382,7 +382,8 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
 - **순위표** — 본 실행 전부. 후보는 순위로, 빠진 것은 빠진 이유와 함께.
   칸: 통과 · 시도 수 (형식 실패/검사 실패) · 최종 fatal/warning · 화면 수 ·
   data-action 수 · 진단 수/변경 수 (진단에 대응되지 않은 변경 수) · 대표성 거리 ·
-  도구가 고친 것(`final.preserved.redeclared`) · 잘림 · 작업 트리 dirty · 모델 ·
+  도구가 고친 것(`final.preserved.redeclared`) · 마지막 시도의 잘림 · 중간 시도의
+  잘림 횟수 · 작업 트리 dirty · 모델 ·
   reasoning_effort · 커밋
 - **구조** — 선택지 그룹마다 `kept/selectable/원본`, 오류 경로마다 검사 J 결과
 - **비용** — 입력 · 출력(생각 포함) · 생각 토큰, 예상 금액 (`summary.cost`)
@@ -434,7 +435,7 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
 |---|---|
 | `passed` | `summary.passed == true` |
 | `no_redeclared` | `final.preserved.redeclared` 가 비어 있다 (도구가 고친 흔적이 없다) |
-| `no_truncated` | 어느 시도의 답도 길이 제한에서 잘리지 않았다 |
+| `no_truncated` | **마지막 시도** 의 답이 길이 제한에서 잘리지 않았다. 중간 시도의 잘림은 최종 시안과 상관없으므로 빼지 않고, 순위표의 '중간 잘림' 열에 횟수로만 보인다 |
 | `clean_tree` | `git.dirty == false`. 기록이 없는 옛 실행은 어긴 것으로 본다 |
 | `not_mock` | mock 실행이 아니다 |
 | `model` | `null` 이면 보지 않는다. 이름을 적으면 `summary.model` 이 그것과 같아야 한다 |

@@ -178,23 +178,24 @@ def render(result, md_path):
 
     out += ["## 순위표", "",
             "| 순위 | 실행 | 통과 | 시도 (형식 실패/검사 실패) | fatal / warning | 화면 "
-            "| data-action | 진단 / 변경 (진단 없는 변경) | 대표성 거리 | 도구가 고침 | 잘림 "
-            "| dirty | 모델 · effort | 커밋 | 제외 이유 |",
-            "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+            "| data-action | 진단 / 변경 (진단 없는 변경) | 대표성 거리 | 도구가 고침 "
+            "| 잘림 (마지막) | 중간 잘림 | dirty | 모델 · effort | 커밋 | 제외 이유 |",
+            "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
         if r.get("error"):
-            out.append("| - | `%s` |%s %s |" % (r["name"], " |" * 12, _cell(r["error"])))
+            out.append("| - | `%s` |%s %s |" % (r["name"], " |" * 13, _cell(r["error"])))
             continue
         rep = (r.get("representative") or {}).get("distance")
         out.append("| %s | `%s` | %s | %s (%s/%s) | %s / %s | %s | %s | %s / %s (%s) | %s "
-                   "| %s | %s | %s | %s · %s | `%s` | %s |" % (
+                   "| %s | %s | %s | %s | %s · %s | `%s` | %s |" % (
                        r["rank"] or "-", r["name"], _f(r["passed"]), _f(r["attempts"]),
                        _f(r["format_failures"]), _f(r["audit_failures"]), _f(r["fatal"]),
                        _f(r["warning"]), _f(r["screens"]), _f(r["data_actions"]),
                        _f(r["diagnoses"]), _f(r["changes"]), _f(r["unmatched_changes"]),
                        _f(rep), _cell(", ".join(r["redeclared"])) if r["redeclared"]
                        else ("-" if r["redeclared"] is None else "없음"),
-                       _f(r["truncated"]), _f(r["dirty"]), _f(r["model"]),
+                       _f(r["truncated"]), _f(r.get("truncated_middle")), _f(r["dirty"]),
+                       _f(r["model"]),
                        _f(r["reasoning_effort"]), _short(r["commit"]),
                        _cell("; ".join(r["excluded_because"])) or "-"))
     out.append("")

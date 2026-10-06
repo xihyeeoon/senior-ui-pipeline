@@ -5,7 +5,7 @@
     "gates: 하나라도 어기면 후보에서 뺀다. true = 본다, false = 보지 않는다.",
     "  passed         summary.passed 가 true",
     "  no_redeclared  final.preserved.redeclared 가 비어 있음 (도구가 모델의 선언을 고치지 않았음)",
-    "  no_truncated   어느 시도의 답도 길이 제한에서 잘리지 않았음",
+    "  no_truncated   마지막 시도의 답이 길이 제한에서 잘리지 않았음 (중간 시도의 잘림은 순위표의 '중간 잘림' 열로만 보인다)",
     "  clean_tree     git.dirty 가 false (기록이 없으면 어긴 것으로 본다)",
     "  not_mock       mock 실행이 아님",
     "  model          null 이면 보지 않는다. 이름을 적으면 summary.model 이 그것과 같아야 한다",
