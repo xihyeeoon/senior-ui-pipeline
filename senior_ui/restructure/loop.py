@@ -1558,16 +1558,21 @@ def run(args):
     log = make_logger(os.path.join(run_dir, "run.log"))
     git = git_state()
 
-    try:
-        load_env()
-    except RuntimeError as e:
-        log("cannot start: %s" % e)
-        print("cannot start: %s" % e, file=sys.stderr)
+    def cannot_start(why):
+        """실행을 시작하지 못했다 (종료 2). Run 이 서기 전이라도 summary 를 남긴다 -
+        남기지 않으면 그 실행 폴더에는 run.log 조각만 있다 (감사 B-16)."""
+        log("cannot start: %s" % why)
+        print("cannot start: %s" % why, file=sys.stderr)
         _dump({"run_dir": run_dir, "task": task_name, "passed": False, "attempts": [],
-               "stopped_reason": "cannot_start", "error": str(e), "git": git},
+               "stopped_reason": "cannot_start", "error": str(why), "git": git},
               os.path.join(run_dir, "summary.json"))
         log("summary: %s" % os.path.join(run_dir, "summary.json"))
         return 2
+
+    try:
+        load_env()
+    except RuntimeError as e:
+        return cannot_start(e)
     # 첫 줄은 모델이다 - 어느 모델로 돌았는지가 run.log 를 여는 사람에게 가장 먼저
     # 보여야 한다. 모델은 .envs 의 환경 변수로도 정해지므로 키를 읽은 뒤에 고른다.
     # API 가 답한 실제 판 이름은 호출마다 "model: 응답 모델" 줄로, 실행 전체는
@@ -1606,8 +1611,7 @@ def run(args):
            call_delay(profile, args),
            " + 남은 토큰이 모자라면 더" if profile["reasoning"] else ""))
     if not args.mock and not os.environ.get("OPENAI_API_KEY"):
-        print("no OPENAI_API_KEY in the environment or .envs", file=sys.stderr)
-        return 2
+        return cannot_start("no OPENAI_API_KEY in the environment or .envs")
 
     try:
         # 과제가 프롬프트의 과제 설명과 기본 원본을 정한다. 과제를 주지 않은
@@ -1626,22 +1630,21 @@ def run(args):
         orig_url = original_url(args.original)
         allowed = load_allowed_removals(task["id"])
     except (OSError, RuntimeError, ValueError) as e:
-        log("cannot start: %s" % e)
-        print("cannot start: %s" % e, file=sys.stderr)
-        _dump({"run_dir": run_dir, "task": task_name, "passed": False, "attempts": [],
-               "stopped_reason": "cannot_start", "error": str(e), "git": git},
-              os.path.join(run_dir, "summary.json"))
-        log("summary: %s" % os.path.join(run_dir, "summary.json"))
-        return 2
+        return cannot_start(e)
 
     budget = budget_choice(args)
     log("run: %s | model=%s | 예산 형식 %d · 검사 %d | stage=%s | mock=%s | original=%s"
         % (run_dir, model, budget["format"][0], budget["audit"][0], args.stage,
            args.mock, orig_url)
         + ("" if task["id"] == DEFAULT_TASK else " | task=%s" % task["id"]))
-    r = Run(args, log, run_dir, model, template, original_html, orig_url,
-            plan_template=plan_template, task=task, model_source=source,
-            refine_template=refine_template)
+    try:
+        # 과제의 필수 오류 경로(required_errors)가 원본 흐름에 정의되지 않았으면
+        # 여기서 멈춘다 - 과제 파일의 문제이고 실행을 시작할 수 없다.
+        r = Run(args, log, run_dir, model, template, original_html, orig_url,
+                plan_template=plan_template, task=task, model_source=source,
+                refine_template=refine_template)
+    except (OSError, RuntimeError, ValueError) as e:
+        return cannot_start(e)
     r.summary["git"] = git
     r.allowed_removals = allowed
     if allowed:
@@ -1661,17 +1664,29 @@ def run(args):
         # 대비·언어 검사의 기준이 되는 원본 스냅샷. 실행마다 한 번만 걷는다.
         # 과제의 원본 흐름으로 걷는다 - 다른 과제의 흐름으로 걸으면 첫 화면에서
         # 멈추고, 선택지 요약 · 지킬 데이터가 빈다.
-        base_flow = A.load_flow(None, task=task["id"])
-        log("audit: driving the original once (baseline for contrast / language)")
         # 비교 기준으로만 쓰므로 원본의 오류 경로는 걷지 않는다 - 모델의 설계는
         # 원본과 화면이 다르고, 오류 경로는 생성물의 흐름으로 걷는다.
         #
         # 보기가 켜져 있으면(--see) 같은 걷기에서 원본 화면을 찍는다 - 진단·계획
         # 호출에 그림으로 들어간다. 오류 상태도 찍으려고 오류 경로까지 걷지만,
         # 그 결과는 스냅샷에서 떼어 둔다 - 비교 기준은 전과 같아야 한다.
+        #
+        # 원본 흐름을 읽지 못했거나 브라우저가 원본을 걷지 못했으면 비교 기준이
+        # 없다 - 시작하지 못한 것이다 (종료 2). 전에는 역추적과 함께 종료 1(= 전부
+        # 실패)이었다 (감사 B-16). 그 밖의 예외는 도구의 버그다 (아래 except).
         shots = os.path.join(run_dir, "shots", "original") if r.see else None
-        snap = asyncio.run(A.drive(r.original_url, base_flow, errors=r.see,
-                                   want_shots=shots, see=r.see))
+        try:
+            base_flow = A.load_flow(None, task=task["id"])
+            log("audit: driving the original once (baseline for contrast / language)")
+            snap = asyncio.run(A.drive(r.original_url, base_flow, errors=r.see,
+                                       want_shots=shots, see=r.see))
+        except (PlaywrightError, OSError, ValueError) as e:
+            why = "원본을 걷지 못했다: %s: %s" % (type(e).__name__, one_line(str(e)))
+            log("cannot start: %s" % why)
+            print("cannot start: %s" % why, file=sys.stderr)
+            r.summary["stopped_reason"] = "cannot_start"
+            r.summary["error"] = why
+            return exit_code(r.summary)
         snap.pop("error_paths", None)
         r.orig_snapshot = snap
         r.original_images = see_images(shots, ORIGINAL_LABELS,

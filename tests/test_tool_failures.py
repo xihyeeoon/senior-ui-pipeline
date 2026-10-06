@@ -143,6 +143,77 @@ def test_a_server_error_from_the_api_is_an_outside_problem(monkeypatch):
 
 
 # --------------------------------------------------------------------- #
+# 3. 시작하지 못한 실행도 summary 를 남기고 2 로 끝난다 (B-16)
+# --------------------------------------------------------------------- #
+def summary_of(out_root):
+    last = run_dirs(out_root)[-1]
+    path = os.path.join(last, "summary.json")
+    assert os.path.exists(path), os.listdir(last)
+    return json.load(io.open(path, encoding="utf-8"))
+
+
+def test_no_api_key_leaves_a_summary(fake_run_env, out_root):  # noqa: F811
+    """고치기 전: summary 없이 return 2 - 실행 폴더에 run.log 조각만 남았다."""
+    fake_run_env.delenv("OPENAI_API_KEY")
+    fake_run_env.setattr(loop, "load_env", lambda: None)
+    code = loop.run(make_args(out_root))
+    assert code == 2
+    s = summary_of(out_root)
+    assert s["stopped_reason"] == "cannot_start"
+    assert "OPENAI_API_KEY" in s["error"]
+
+
+def test_a_task_the_run_cannot_set_up_stops_with_2(fake_run_env, out_root):  # noqa: F811
+    """고치기 전: Run() 이 try 밖이라 required_errors 의 ValueError 가 역추적과 함께
+    올라왔다 (종료 1, summary 없음)."""
+    def bad(task=None):
+        raise ValueError("과제 transfer 의 required_error_paths 에 정의 없는 오류: x")
+    fake_run_env.setattr(loop, "required_errors", bad)
+    code = loop.run(make_args(out_root))
+    assert code == 2
+    s = summary_of(out_root)
+    assert s["stopped_reason"] == "cannot_start"
+    assert "required_error_paths" in s["error"]
+
+
+def test_the_original_that_cannot_be_walked_stops_with_2(fake_run_env, out_root):  # noqa: F811
+    """고치기 전: 원본을 걷다 브라우저가 실패하면 except 가 없어 역추적과 함께 종료
+    1(= "전부 실패") 이었고 stopped_reason 은 null 이었다."""
+    async def stuck(url, flow, **kw):
+        raise PlaywrightTimeout("Timeout 30000ms exceeded while loading the original")
+    fake_run_env.setattr(loop.A, "drive", stuck)
+    code = loop.run(make_args(out_root))
+    assert code == 2
+    s = summary_of(out_root)
+    assert s["stopped_reason"] == "cannot_start"
+    assert "TimeoutError" in s["error"]
+    assert s["attempts"] == []
+
+
+def test_a_bug_while_starting_is_an_internal_error(fake_run_env, out_root):  # noqa: F811
+    def broken(snapshot, html):
+        raise KeyError("screens")
+    fake_run_env.setattr(loop, "preserved_data", broken)
+    code = loop.run(make_args(out_root))
+    assert code == 2
+    s = summary_of(out_root)
+    assert s["stopped_reason"] == "internal_error"
+    assert "KeyError" in s["error"]
+
+
+def test_an_internal_error_after_a_pass_still_exits_2(fake_run_env, out_root):  # noqa: F811
+    """통과한 빌드가 있어도 도구가 버그로 멈췄으면 2 다 - 0 이면 부르는 쪽이 그
+    실행을 멀쩡한 것으로 믿는다."""
+    def broken(r):
+        raise KeyError("tokens")
+    fake_run_env.setattr(loop, "log_trend", broken)
+    code, summary = run_loop(fake_run_env, out_root, always_reply, attempts=1)
+    assert summary["passed"] is True
+    assert summary["stopped_reason"] == "internal_error"
+    assert code == 2
+
+
+# --------------------------------------------------------------------- #
 # 5. 인프라 예산 3 은 config 에 하나 (B-33)
 # --------------------------------------------------------------------- #
 def test_the_infra_budget_lives_in_config():
