@@ -128,8 +128,43 @@ LLM 이 쓴 것이라 다시 만들려면 API 비용이 들고 바이트까지 �
 남는다.
 
 ```powershell
-.\.venv\Scripts\python.exe -m senior_ui.restructure --model gpt-5 --reasoning-effort medium
+.\.venv\Scripts\python.exe -m senior_ui.restructure --model gpt-6.1-sol
+.\.venv\Scripts\python.exe -m senior_ui.restructure --model gpt-6-astra --task bill --reasoning-effort high
 ```
+
+**실행 설정 — 추론형이면 기본값이 다르다.** 아래 셋은 주지 않으면 부르는 방식이
+추론형인지(`model.profile_for`)로 고른다. 값은 모두 `senior_ui/config.py` 한 곳에
+있다. gpt-4o(와 표에 없는 모델)의 값과 동작은 전과 같다 — 이체 기준값이 그것으로
+뽑혀 있다.
+
+| 설정 | 인자 | gpt-4o | 추론형 (`gpt-6.1-sol` · `gpt-6-astra` …) | config |
+|---|---|---|---|---|
+| 생성 호출의 출력 길이 | `--max-tokens` | 14,000 | **32,000** | `OUTPUT_CAPS` |
+| 진단·계획 호출의 출력 길이 | `--plan-max-tokens` | 6,000 | **25,000** | `OUTPUT_CAPS` |
+| 호출 사이 대기 | `--delay` | 60초 | **5초** + 남은 토큰이 모자랄 때만 더 | `DELAY` |
+| 생각에 쓸 노력 | `--reasoning-effort` | 보내지 않음 | **`medium`** 을 늘 보냄 | `DEFAULT_REASONING_EFFORT` |
+
+- **출력 길이.** 추론형은 생각 토큰도 이 상한 안에서 쓴다. gpt-4o 의 답은
+  3,300~3,500 토큰이었고 14,000 · 6,000 은 분당 30,000 에 맞춰 낮춘 값이라, 추론형이
+  생각을 다 쓰면 보이는 답이 빈 채로 잘려 온다. OpenAI 는 "처음 실험할 때는 생각과
+  출력에 적어도 25,000 을 남겨 두라" 고 한다 — 진단·계획은 그 최소, 생성은 넉넉히
+  32,000. 상한은 쓴 만큼만 요금이 매겨진다. 쓴 값과 출처는 run.log 의 `model:
+  max_tokens …` 줄, 호출마다는 `calls[].max_tokens`.
+- **대기.** 60초는 gpt-4o 의 분당 30,000 때문이었다 (원본 HTML 이 두 호출에 다
+  들어간다). gpt-6.1-sol · gpt-6-astra 는 분당 500,000 이다 (2026-10-06 `--probe`).
+  추론형은 5초만 두고, 호출 직전에 직전 응답 헤더의 남은 토큰(그 뒤 지난 시간 동안
+  찬 몫, 초당 한도/60 을 더해)을 이번 요청(예상 입력 + max_tokens)과 견준다. 적을
+  때만 모자란 만큼 기다린다 (`model.wait_for_tokens`, 최대 60초). 기다리면 run.log
+  에 `대기 Ns — 남은 토큰 …` 줄과 `calls[].waited_for_tokens` 가 남는다. gpt-4o 는
+  헤더를 보지 않고 늘 60초다. `--delay` 를 주면 고정 대기만 그 값이 되고, 추론형의
+  남은 토큰 확인은 그대로 한다.
+- **reasoning_effort.** 주지 않았을 때 모델의 기본값에 맡기면 그 값이 어디에도 남지
+  않고, 모델이 기본값을 바꾸면 같은 명령이 다른 조건으로 돈다. 그래서 추론형이면
+  늘 보낸다 (`loop.effort_choice`). 보낸 값과 출처가 run.log **첫 줄**
+  (`model=gpt-6.1-sol (출처 --model) · reasoning_effort=medium (출처
+  config.DEFAULT_REASONING_EFFORT)`)과 `summary.model_call.reasoning_effort` 에
+  남는다. gpt-4o 의 첫 줄은 전과 같다. `--probe` 는 줄 때만 보낸다 (16 토큰짜리
+  확인 요청에 생각을 붙이지 않는다).
 
 **처음 쓰는 모델은 먼저 확인 명령 둘로 본다.** 둘 다 실행 폴더를 만들지 않고,
 결과를 화면과 `outputs/model-probe.log` (덧붙임) 에 쓴다. 키는 루프와 같이
@@ -160,8 +195,8 @@ LLM 이 쓴 것이라 다시 만들려면 API 비용이 들고 바이트까지 �
 | 모델 | API | 길이 인자 | temperature | seed | reasoning_effort |
 |---|---|---|---|---|---|
 | `gpt-4o*` · `gpt-4.1*` | Chat Completions | `max_completion_tokens` | 보냄 | 보냄 | — |
-| `o1` · `o3` · `o4-mini` · `gpt-5` 이후 | Chat Completions | `max_completion_tokens` | **안 보냄** | 보냄 | `--reasoning-effort` 를 줄 때만 |
-| `…-pro` · `codex` · `deep-research` | **Responses** | `max_output_tokens` | 안 보냄 | 없음 | `reasoning.effort` |
+| `o1` · `o3` · `o4-mini` · `gpt-5` 이후 | Chat Completions | `max_completion_tokens` | **안 보냄** | 보냄 | 늘 보냄 — 주지 않으면 `medium` |
+| `…-pro` · `codex` · `deep-research` | **Responses** | `max_output_tokens` | 안 보냄 | 없음 | `reasoning.effort` 로 늘 보냄 |
 | 표에 없는 모델 | gpt-4o 처럼 | `max_completion_tokens` | 보냄 | 보냄 | — (run.log 에 경고) |
 
 - 모델이 `unsupported_parameter` / `unsupported_value` 로 거절한 인자가 `temperature`
@@ -172,16 +207,16 @@ LLM 이 쓴 것이라 다시 만들려면 API 비용이 들고 바이트까지 �
   Responses 를 권하지만, 이 도구는 한 번 묻고 한 번 받으므로 Responses 가 이어 주는
   생각 항목을 쓸 일이 없어 Chat 을 기본으로 둔다 — gpt-4o 실행과 같은 모양
   (`finish_reason` · `seed` · `system_fingerprint`)으로 기록이 남는다.
-- `--reasoning-effort` 를 주지 않으면 보내지 않는다. 모델마다 받는 값과 기본값이
-  다르다 (`gpt-5` 는 minimal~high · 기본 medium, `gpt-5.1`·`5.2` 는 기본 none,
-  `gpt-6.1-sol` 은 none 이 없다). 보낸 값은 `summary.model_call.reasoning_effort`.
-- **생각(reasoning) 토큰은 출력 한도 안에서 쓰이고 출력 요금으로 매겨진다.**
-  `--max-tokens 14000` 은 gpt-4o 의 답(3,300~3,500 토큰)에 맞춘 값이라 추론형에는
-  모자랄 수 있다 — OpenAI 는 처음에 25,000 을 남겨 두라고 한다. 생각이 한도를 다
-  쓰면 보이는 답이 빈 채로 잘려 오고, 그 시도는 잘림(형식 실패)으로 센다. 잘림
-  줄에 생각 토큰이 적힌다. 분당 한도는 입력에 이 한도를 더해 세므로 한도를 늘리면
-  "요청 하나가 분당 한도보다 크다" 에 걸리기 쉽다 — `--probe` 로 그 모델의 분당
-  한도를 먼저 본다.
+- 모델마다 받는 reasoning_effort 값과 기본값이 다르다 (`gpt-5` 는 minimal~high ·
+  기본 medium, `gpt-5.1`·`5.2` 는 기본 none, `gpt-6.1-sol` · `gpt-6-astra` 는
+  low~max). 기본으로 보내는 `medium` 이 거절되면 위의 규칙대로 빼고 다시 보내고
+  `calls[].dropped` 에 남는다 — 그때는 다른 값을 `--reasoning-effort` 로 준다.
+- **생각(reasoning) 토큰은 출력 한도 안에서 쓰이고 출력 요금으로 매겨진다.** 생각이
+  한도를 다 쓰면 보이는 답이 빈 채로 잘려 오고, 그 시도는 잘림(형식 실패)으로 센다.
+  잘림 줄에 생각 토큰이 적힌다 (생각이 90% 이상이면 `--max-tokens` 를 늘리거나
+  `--reasoning-effort` 를 낮추라는 말도). 분당 한도는 입력에 이 한도를 더해 세므로,
+  한도가 작은 계정·모델이면 "요청 하나가 분당 한도보다 크다" 에 걸릴 수 있다 —
+  `--probe` 로 그 모델의 분당 한도를 먼저 본다.
 - 잘림 판정: Chat 은 `finish_reason == "length"`, Responses 는 `status ==
   "incomplete"` 이고 `incomplete_details.reason == "max_output_tokens"` (루프에서는
   `length` 로 맞춘다).
@@ -195,13 +230,17 @@ LLM 이 쓴 것이라 다시 만들려면 API 비용이 들고 바이트까지 �
 |---|---|
 | `model` · `model_source` | 보낸 모델 이름과 그 출처 |
 | `response_models` | API 가 답한 판 이름들 (mock 은 빈 목록) |
-| `model_call` | 이번 실행의 부르는 방식 (API · 길이 인자 · temperature/seed 를 보냈나 · 추론형 · 인코딩 · reasoning_effort) |
+| `model_call` | 이번 실행의 부르는 방식 (API · 길이 인자 · temperature/seed 를 보냈나 · 추론형 · 인코딩 · reasoning_effort — 추론형이면 늘 값이 있다, gpt-4o 는 `null`) |
 | `tokens.*.reasoning` | 생각 토큰 (출력 `completion` 에 포함된 몫) |
+| `attempts[].calls[].max_tokens` | 그 호출의 출력 길이 (분당 한도에 맞추느라 줄였으면 `max_tokens_sent` 도) |
 | `attempts[].calls[].ratelimit` · `ratelimit` | 호출마다의 응답 헤더 `x-ratelimit-limit-tokens` · `-remaining-tokens` · `-limit-requests`, 그리고 마지막 값 |
+| `attempts[].calls[].waited_for_tokens` | 남은 토큰이 모자라 그 호출 전에 더 기다린 초 (추론형, 기다렸을 때만) |
 | `cost` | 시도별·전체 예상 금액 (USD) |
 
 **가격 표**는 `senior_ui/config.py` 의 `MODEL_PRICES` 한 곳이다 — 100만 토큰당
-`{"input", "output"}`. `gpt-4o` (2.50 / 10.00) 만 채워 두었고 나머지는 `None` 이다.
+`{"input", "output"}`. 채운 것은 셋이다 — `gpt-4o` 2.50 / 10.00, `gpt-6.1-sol`
+2.00 / 10.00, `gpt-6-astra` 10.00 / 50.00. 뒤의 둘은 2026-10-06 공식 가격표의
+Standard 단계 "Short context"(입력 272K 이하) 값이다. 나머지는 `None` 이다.
 비어 있으면 금액은 `null` 이고 run.log 끝에 "가격표에 … 가 비어 있다" 가 남는다.
 이름은 `--model` 에 주는 그대로 찾는다 (날짜 붙은 판은 따로 적는다). 금액 = 입력 ×
 input + 출력 × output 이고, 출력은 생각 토큰을 포함하므로 따로 더하지 않는다.
