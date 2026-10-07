@@ -1,5 +1,5 @@
 {
-  "schema": 1,
+  "schema": 2,
   "generated": {
     "at": "<at>",
     "tool_commit": "<tool_commit>",
@@ -775,6 +775,1232 @@
       }
     ],
     "reveals": []
+  },
+  "original": {
+    "html": "inputs/original_transfer.html",
+    "steps": [
+      {
+        "visit": "home",
+        "lit": "home"
+      },
+      {
+        "visit": "recipient",
+        "lit": "recipient"
+      },
+      {
+        "visit": "account",
+        "lit": "account"
+      },
+      {
+        "visit": "bank",
+        "lit": "bank"
+      },
+      {
+        "visit": "amount",
+        "lit": "amount"
+      },
+      {
+        "visit": "confirm",
+        "lit": "confirm"
+      },
+      {
+        "visit": "password",
+        "lit": "password"
+      },
+      {
+        "visit": "done",
+        "lit": "done"
+      }
+    ],
+    "error": null,
+    "where": {
+      "oos-message": [
+        "home"
+      ],
+      "oos-wallet": [
+        "home"
+      ],
+      "oos-alarm": [
+        "home"
+      ],
+      "oos-menu": [
+        "home"
+      ],
+      "go-recipient": [
+        "home"
+      ],
+      "oos-irp": [
+        "home"
+      ],
+      "oos-appcard": [
+        "home"
+      ],
+      "oos-get-coupon": [
+        "home"
+      ],
+      "oos-event": [
+        "home"
+      ],
+      "oos-coupon": [
+        "home"
+      ],
+      "oos-point": [
+        "home"
+      ],
+      "oos-spend-detail": [
+        "home"
+      ],
+      "oos-my-point": [
+        "home"
+      ],
+      "oos-connect-event": [
+        "home"
+      ],
+      "oos-easy-home": [
+        "home"
+      ],
+      "oos-home-setting": [
+        "home"
+      ],
+      "oos-hide-amount": [
+        "home"
+      ],
+      "oos-tab-home": [
+        "home"
+      ],
+      "oos-tab-finance": [
+        "home"
+      ],
+      "oos-tab-goods": [
+        "home"
+      ],
+      "oos-tab-benefit": [
+        "home"
+      ],
+      "oos-tab-stock": [
+        "home"
+      ],
+      "back-home": [
+        "recipient",
+        "amount",
+        "confirm",
+        "password"
+      ],
+      "oos-multi-transfer": [
+        "recipient"
+      ],
+      "oos-payee-manage": [
+        "recipient"
+      ],
+      "oos-search": [
+        "recipient"
+      ],
+      "go-account": [
+        "recipient"
+      ],
+      "oos-frequent": [
+        "recipient"
+      ],
+      "oos-my-accounts": [
+        "recipient"
+      ],
+      "oos-recent": [
+        "recipient"
+      ],
+      "back-recipient": [
+        "account"
+      ],
+      "close-account": [
+        "account"
+      ],
+      "open-bank": [
+        "account"
+      ],
+      "acc-num": [
+        "account"
+      ],
+      "acc-del": [
+        "account"
+      ],
+      "account-next": [
+        "account"
+      ],
+      "close-bank": [
+        "bank"
+      ],
+      "tab-bank": [
+        "bank"
+      ],
+      "tab-sec": [
+        "bank"
+      ],
+      "pick-bank": [
+        "bank"
+      ],
+      "back-account": [
+        "amount"
+      ],
+      "oos-from-account": [
+        "amount"
+      ],
+      "quick": [
+        "amount"
+      ],
+      "num": [
+        "amount"
+      ],
+      "del": [
+        "amount"
+      ],
+      "amount-next": [
+        "amount"
+      ],
+      "back-amount": [
+        "confirm"
+      ],
+      "send": [
+        "confirm"
+      ],
+      "pw": [
+        "password"
+      ],
+      "pw-shuffle": [
+        "password"
+      ],
+      "pw-del": [
+        "password"
+      ],
+      "oos-more-transfer": [
+        "done"
+      ],
+      "oos-detail": [
+        "done"
+      ],
+      "oos-share": [
+        "done"
+      ],
+      "finish": [
+        "done"
+      ]
+    }
+  },
+  "features": {
+    "columns": [
+      "scr-home",
+      "scr-recipient",
+      "scr-account",
+      "scr-bank",
+      "scr-amount",
+      "scr-review",
+      "scr-verify",
+      "scr-done"
+    ],
+    "rows": [
+      {
+        "section": "steps",
+        "key": "step-1",
+        "step": 1,
+        "sheet": "scr-home",
+        "how": [],
+        "cells": {
+          "scr-home": {
+            "mark": "●",
+            "sheets": [
+              "scr-home"
+            ]
+          }
+        },
+        "original": [
+          "home"
+        ],
+        "original_from": "plan"
+      },
+      {
+        "section": "steps",
+        "key": "step-2",
+        "step": 2,
+        "sheet": "scr-recipient",
+        "how": [
+          {
+            "type": "click",
+            "selector": "[data-action='go-recipient']",
+            "item": "e7",
+            "text": "이체하기"
+          }
+        ],
+        "cells": {
+          "scr-recipient": {
+            "mark": "●",
+            "sheets": [
+              "scr-recipient"
+            ]
+          }
+        },
+        "original": [
+          "recipient"
+        ],
+        "original_from": "plan"
+      },
+      {
+        "section": "steps",
+        "key": "step-3",
+        "step": 3,
+        "sheet": "scr-account",
+        "how": [
+          {
+            "type": "click",
+            "selector": "[data-action='go-account']",
+            "item": "e3",
+            "text": "새 계좌번호 입력"
+          }
+        ],
+        "cells": {
+          "scr-account": {
+            "mark": "●",
+            "sheets": [
+              "scr-account"
+            ]
+          }
+        },
+        "original": [
+          "account",
+          "err-account"
+        ],
+        "original_from": "plan"
+      },
+      {
+        "section": "steps",
+        "key": "step-4",
+        "step": 4,
+        "sheet": "scr-bank",
+        "how": [
+          {
+            "type": "type",
+            "value": "{ACCOUNT}"
+          },
+          {
+            "type": "click",
+            "selector": "[data-action='open-bank']",
+            "item": "e3",
+            "text": "은행 또는 증권사 선택"
+          }
+        ],
+        "cells": {
+          "scr-bank": {
+            "mark": "●",
+            "sheets": [
+              "scr-bank"
+            ]
+          }
+        },
+        "original": [
+          "bank"
+        ],
+        "original_from": "plan"
+      },
+      {
+        "section": "steps",
+        "key": "step-5",
+        "step": 5,
+        "sheet": "scr-amount",
+        "how": [
+          {
+            "type": "click",
+            "selector": "[data-action='pick-bank'][data-bank='{BANK}']",
+            "item": "e7",
+            "text": "신한"
+          },
+          {
+            "type": "click",
+            "selector": "#acc-next"
+          }
+        ],
+        "cells": {
+          "scr-amount": {
+            "mark": "●",
+            "sheets": [
+              "scr-amount"
+            ]
+          }
+        },
+        "original": [
+          "amount"
+        ],
+        "original_from": "plan"
+      },
+      {
+        "section": "steps",
+        "key": "step-6",
+        "step": 6,
+        "sheet": "scr-review",
+        "how": [
+          {
+            "type": "type",
+            "value": "{AMOUNT}"
+          },
+          {
+            "type": "click",
+            "selector": "#amt-next",
+            "item": "e7",
+            "text": "입력한 금액 확인"
+          }
+        ],
+        "cells": {
+          "scr-review": {
+            "mark": "●",
+            "sheets": [
+              "scr-review"
+            ]
+          }
+        },
+        "original": [
+          "confirm",
+          "err-bank"
+        ],
+        "original_from": "plan"
+      },
+      {
+        "section": "steps",
+        "key": "step-7",
+        "step": 7,
+        "sheet": "scr-verify",
+        "how": [
+          {
+            "type": "click",
+            "selector": "[data-action='send']",
+            "item": "e7",
+            "text": "확인했어요 · 본인 확인으로"
+          }
+        ],
+        "cells": {
+          "scr-verify": {
+            "mark": "●",
+            "sheets": [
+              "scr-verify"
+            ]
+          }
+        },
+        "original": [
+          "password"
+        ],
+        "original_from": "plan"
+      },
+      {
+        "section": "steps",
+        "key": "step-8",
+        "step": 8,
+        "sheet": "scr-done",
+        "how": [
+          {
+            "type": "click",
+            "selector": "#pwpad [data-action='pw']",
+            "repeat": 4,
+            "item": "e3",
+            "text": "9"
+          },
+          {
+            "type": "click",
+            "selector": "#verify-send",
+            "item": "e6",
+            "text": "본인 확인하고 송금"
+          }
+        ],
+        "cells": {
+          "scr-done": {
+            "mark": "●",
+            "sheets": [
+              "scr-done"
+            ]
+          }
+        },
+        "original": [
+          "done"
+        ],
+        "original_from": "plan"
+      },
+      {
+        "key": "pick-bank",
+        "action": "pick-bank",
+        "count_original": 67,
+        "cells": {
+          "scr-bank": {
+            "mark": "●",
+            "count": 38,
+            "sheets": [
+              "scr-bank"
+            ]
+          }
+        },
+        "original": [
+          "bank"
+        ],
+        "original_from": "survey",
+        "section": "choices",
+        "kind": "group"
+      },
+      {
+        "key": "quick",
+        "action": "quick",
+        "count_original": 4,
+        "cells": {
+          "scr-amount": {
+            "mark": "●",
+            "count": 4,
+            "sheets": [
+              "scr-amount"
+            ]
+          }
+        },
+        "original": [
+          "amount"
+        ],
+        "original_from": "survey",
+        "section": "choices",
+        "kind": "group"
+      },
+      {
+        "key": "acc-num",
+        "action": "acc-num",
+        "count_original": 10,
+        "cells": {
+          "scr-account": {
+            "mark": "●",
+            "count": 10,
+            "sheets": [
+              "scr-account"
+            ]
+          }
+        },
+        "original": [
+          "account"
+        ],
+        "original_from": "survey",
+        "section": "inputs",
+        "kind": "keypad",
+        "keys": 10
+      },
+      {
+        "key": "num",
+        "action": "num",
+        "count_original": 11,
+        "cells": {
+          "scr-amount": {
+            "mark": "●",
+            "count": 11,
+            "sheets": [
+              "scr-amount"
+            ]
+          }
+        },
+        "original": [
+          "amount"
+        ],
+        "original_from": "survey",
+        "section": "inputs",
+        "kind": "keypad",
+        "keys": 11
+      },
+      {
+        "key": "pw",
+        "action": "pw",
+        "count_original": 10,
+        "cells": {
+          "scr-verify": {
+            "mark": "●",
+            "count": 10,
+            "sheets": [
+              "scr-verify"
+            ]
+          }
+        },
+        "original": [
+          "password"
+        ],
+        "original_from": "survey",
+        "section": "inputs",
+        "kind": "keypad",
+        "keys": 10
+      },
+      {
+        "section": "errors",
+        "key": "wrong-account",
+        "id": "wrong-account",
+        "about": "계좌번호가 틀렸다 (원본 오류 코드 ELB00016)",
+        "sheet": "scr-account--error-wrong-account",
+        "recover": [
+          {
+            "type": "click",
+            "selector": "[data-action='retry-account']",
+            "item": "e4",
+            "text": "계좌번호 다시 입력"
+          }
+        ],
+        "back_to_sheet": "scr-account",
+        "cells": {
+          "scr-account": {
+            "mark": "●",
+            "sheets": [
+              "scr-account--error-wrong-account"
+            ]
+          }
+        },
+        "original": [
+          "err-account"
+        ],
+        "original_back_to": "account",
+        "original_from": "task_flow"
+      },
+      {
+        "section": "errors",
+        "key": "wrong-bank",
+        "id": "wrong-bank",
+        "about": "계좌번호는 맞는데 은행이 틀렸다 (원본 오류 코드 ETA00325)",
+        "sheet": "scr-review--error-wrong-bank",
+        "recover": [
+          {
+            "type": "click",
+            "selector": "[data-action='retry-bank']",
+            "item": "e3",
+            "text": "은행 다시 선택"
+          }
+        ],
+        "back_to_sheet": "scr-bank",
+        "cells": {
+          "scr-review": {
+            "mark": "●",
+            "sheets": [
+              "scr-review--error-wrong-bank"
+            ]
+          }
+        },
+        "original": [
+          "err-bank"
+        ],
+        "original_back_to": "confirm",
+        "original_from": "task_flow"
+      },
+      {
+        "section": "entrances",
+        "key": "T1",
+        "id": "T1",
+        "action": "oos-message",
+        "label": "메시지",
+        "cells": {
+          "scr-home": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-home"
+            ]
+          }
+        },
+        "original": [
+          "home"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T2",
+        "id": "T2",
+        "action": "oos-wallet",
+        "label": "지갑",
+        "cells": {
+          "scr-home": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-home"
+            ]
+          }
+        },
+        "original": [
+          "home"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T3",
+        "id": "T3",
+        "action": "oos-alarm",
+        "label": "알림",
+        "cells": {
+          "scr-home": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-home"
+            ]
+          }
+        },
+        "original": [
+          "home"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T4",
+        "id": "T4",
+        "action": "oos-irp",
+        "label": "IRP 안내",
+        "cells": {
+          "scr-home": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-home"
+            ]
+          }
+        },
+        "original": [
+          "home"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T5",
+        "id": "T5",
+        "action": "oos-appcard",
+        "label": "앱카드 가입",
+        "cells": {
+          "scr-home": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-home"
+            ]
+          }
+        },
+        "original": [
+          "home"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T6",
+        "id": "T6",
+        "action": "oos-get-coupon",
+        "label": "바로받기",
+        "cells": {
+          "scr-home": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-home"
+            ]
+          }
+        },
+        "original": [
+          "home"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T7",
+        "id": "T7",
+        "action": "oos-event",
+        "label": "이벤트",
+        "cells": {
+          "scr-home": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-home"
+            ]
+          }
+        },
+        "original": [
+          "home"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T8",
+        "id": "T8",
+        "action": "oos-coupon",
+        "label": "쿠폰",
+        "cells": {
+          "scr-home": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-home"
+            ]
+          }
+        },
+        "original": [
+          "home"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T9",
+        "id": "T9",
+        "action": "oos-point",
+        "label": "포인트",
+        "cells": {
+          "scr-home": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-home"
+            ]
+          }
+        },
+        "original": [
+          "home"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T10",
+        "id": "T10",
+        "action": "oos-spend-detail",
+        "label": "소비 상세",
+        "cells": {
+          "scr-home": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-home"
+            ]
+          }
+        },
+        "original": [
+          "home"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T11",
+        "id": "T11",
+        "action": "oos-my-point",
+        "label": "마이신한포인트",
+        "cells": {
+          "scr-home": {
+            "mark": "●",
+            "count": 2,
+            "sheets": [
+              "scr-home"
+            ]
+          }
+        },
+        "original": [
+          "home"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T12",
+        "id": "T12",
+        "action": "oos-connect-event",
+        "label": "자산 연결 이벤트",
+        "cells": {
+          "scr-home": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-home"
+            ]
+          }
+        },
+        "original": [
+          "home"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T13",
+        "id": "T13",
+        "action": "oos-home-setting",
+        "label": "홈화면 설정",
+        "cells": {
+          "scr-home": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-home"
+            ]
+          }
+        },
+        "original": [
+          "home"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T14",
+        "id": "T14",
+        "action": "oos-hide-amount",
+        "label": "금액 숨기기",
+        "cells": {
+          "scr-home": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-home"
+            ]
+          }
+        },
+        "original": [
+          "home"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T15",
+        "id": "T15",
+        "action": "oos-tab-finance",
+        "label": "금융",
+        "cells": {
+          "scr-home": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-home"
+            ]
+          }
+        },
+        "original": [
+          "home"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T16",
+        "id": "T16",
+        "action": "oos-tab-goods",
+        "label": "상품",
+        "cells": {
+          "scr-home": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-home"
+            ]
+          }
+        },
+        "original": [
+          "home"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T17",
+        "id": "T17",
+        "action": "oos-tab-benefit",
+        "label": "혜택",
+        "cells": {
+          "scr-home": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-home"
+            ]
+          }
+        },
+        "original": [
+          "home"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T18",
+        "id": "T18",
+        "action": "oos-tab-stock",
+        "label": "주식",
+        "cells": {
+          "scr-home": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-home"
+            ]
+          }
+        },
+        "original": [
+          "home"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T19",
+        "id": "T19",
+        "action": "oos-multi-transfer",
+        "label": "다건이체",
+        "cells": {
+          "scr-recipient": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-recipient"
+            ]
+          }
+        },
+        "original": [
+          "recipient"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T20",
+        "id": "T20",
+        "action": "oos-payee-manage",
+        "label": "받는 사람 관리",
+        "cells": {
+          "scr-recipient": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-recipient"
+            ]
+          }
+        },
+        "original": [
+          "recipient"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T21",
+        "id": "T21",
+        "action": "oos-search",
+        "label": "검색",
+        "cells": {
+          "scr-recipient": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-recipient"
+            ]
+          }
+        },
+        "original": [
+          "recipient"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T22",
+        "id": "T22",
+        "action": "oos-frequent",
+        "label": "자주쓰는 계좌",
+        "cells": {
+          "scr-recipient": {
+            "mark": "●",
+            "count": 2,
+            "sheets": [
+              "scr-recipient"
+            ]
+          }
+        },
+        "original": [
+          "recipient"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T23",
+        "id": "T23",
+        "action": "oos-my-accounts",
+        "label": "내 계좌",
+        "cells": {
+          "scr-recipient": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-recipient"
+            ]
+          }
+        },
+        "original": [
+          "recipient"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T24",
+        "id": "T24",
+        "action": "oos-recent",
+        "label": "최근",
+        "cells": {
+          "scr-recipient": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-recipient"
+            ]
+          }
+        },
+        "original": [
+          "recipient"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T25",
+        "id": "T25",
+        "action": "oos-from-account",
+        "label": "출금계좌 변경",
+        "cells": {
+          "scr-amount": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-amount"
+            ]
+          }
+        },
+        "original": [
+          "amount"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T26",
+        "id": "T26",
+        "action": "oos-more-transfer",
+        "label": "추가이체",
+        "cells": {
+          "scr-done": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-done"
+            ]
+          }
+        },
+        "original": [
+          "done"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T27",
+        "id": "T27",
+        "action": "oos-detail",
+        "label": "상세보기",
+        "cells": {
+          "scr-done": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-done"
+            ]
+          }
+        },
+        "original": [
+          "done"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "T28",
+        "id": "T28",
+        "action": "oos-share",
+        "label": "공유",
+        "cells": {
+          "scr-done": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-done"
+            ]
+          }
+        },
+        "original": [
+          "done"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "R1",
+        "id": "R1",
+        "action": "oos-menu",
+        "label": "전체메뉴",
+        "cells": {
+          "scr-home": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-home"
+            ]
+          }
+        },
+        "original": [
+          "home"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "R3",
+        "id": "R3",
+        "action": "oos-easy-home",
+        "label": "쉬운홈",
+        "cells": {
+          "scr-home": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-home"
+            ]
+          }
+        },
+        "original": [
+          "home"
+        ],
+        "original_from": "task"
+      },
+      {
+        "section": "entrances",
+        "key": "R4",
+        "id": "R4",
+        "action": "oos-tab-home",
+        "label": "홈",
+        "cells": {
+          "scr-home": {
+            "mark": "●",
+            "count": 1,
+            "sheets": [
+              "scr-home"
+            ]
+          }
+        },
+        "original": [
+          "home"
+        ],
+        "original_from": "task"
+      }
+    ],
+    "missing": []
   },
   "choice_groups": [
     "acc-num",
@@ -1664,7 +2890,13 @@
       ],
       "conditions": [],
       "of": null,
-      "condition": null
+      "condition": null,
+      "path": [
+        "scr-home"
+      ],
+      "title": null,
+      "name": "출금 계좌를 확인하고 이체를 시작한다",
+      "name_source": "plan"
     },
     {
       "id": "scr-recipient",
@@ -1997,7 +3229,14 @@
       ],
       "conditions": [],
       "of": null,
-      "condition": null
+      "condition": null,
+      "path": [
+        "scr-home",
+        "scr-recipient"
+      ],
+      "title": null,
+      "name": "새 계좌로 보내기 또는 자주 쓰는…",
+      "name_source": "plan"
     },
     {
       "id": "scr-account",
@@ -2240,7 +3479,15 @@
         "scr-account--error-wrong-account"
       ],
       "of": null,
-      "condition": null
+      "condition": null,
+      "path": [
+        "scr-home",
+        "scr-recipient",
+        "scr-account"
+      ],
+      "title": null,
+      "name": "받는 계좌번호를 입력하고 은행 또는…",
+      "name_source": "plan"
     },
     {
       "id": "scr-account--error-wrong-account",
@@ -2481,7 +3728,16 @@
       ],
       "conditions": [],
       "of": "scr-account",
-      "condition": "오류 경로 'wrong-account' (계좌번호가 틀렸다 (원본 오류 코드 ELB00016)) — scr-account 에서 잘못된 값(ACCOUNT_WRONG)을 넣은 뒤 (흐름 명세 error_paths)"
+      "condition": "오류 경로 'wrong-account' (계좌번호가 틀렸다 (원본 오류 코드 ELB00016)) — scr-account 에서 잘못된 값(ACCOUNT_WRONG)을 넣은 뒤 (흐름 명세 error_paths)",
+      "path": [
+        "scr-home",
+        "scr-recipient",
+        "scr-account",
+        "scr-account--error-wrong-account"
+      ],
+      "title": null,
+      "name": "받는 계좌번호를 입력하고 은행 또는…",
+      "name_source": "plan"
     },
     {
       "id": "scr-bank",
@@ -2745,7 +4001,16 @@
       ],
       "conditions": [],
       "of": null,
-      "condition": null
+      "condition": null,
+      "path": [
+        "scr-home",
+        "scr-recipient",
+        "scr-account",
+        "scr-bank"
+      ],
+      "title": null,
+      "name": "기관 이름을 검색하거나 은행·증권사…",
+      "name_source": "plan"
     },
     {
       "id": "scr-amount",
@@ -3017,7 +4282,17 @@
       ],
       "conditions": [],
       "of": null,
-      "condition": null
+      "condition": null,
+      "path": [
+        "scr-home",
+        "scr-recipient",
+        "scr-account",
+        "scr-bank",
+        "scr-amount"
+      ],
+      "title": null,
+      "name": "출금 계좌와 받는 계좌를 확인하면서…",
+      "name_source": "plan"
     },
     {
       "id": "scr-review",
@@ -3300,7 +4575,18 @@
         "scr-review--error-wrong-bank"
       ],
       "of": null,
-      "condition": null
+      "condition": null,
+      "path": [
+        "scr-home",
+        "scr-recipient",
+        "scr-account",
+        "scr-bank",
+        "scr-amount",
+        "scr-review"
+      ],
+      "title": null,
+      "name": "받는 계좌·금액·수수료를 확인하고…",
+      "name_source": "plan"
     },
     {
       "id": "scr-review--error-wrong-bank",
@@ -3617,7 +4903,19 @@
       ],
       "conditions": [],
       "of": "scr-review",
-      "condition": "오류 경로 'wrong-bank' (계좌번호는 맞는데 은행이 틀렸다 (원본 오류 코드 ETA00325)) — scr-review 에서 잘못된 값(BANK_WRONG)을 넣은 뒤 (흐름 명세 error_paths)"
+      "condition": "오류 경로 'wrong-bank' (계좌번호는 맞는데 은행이 틀렸다 (원본 오류 코드 ETA00325)) — scr-review 에서 잘못된 값(BANK_WRONG)을 넣은 뒤 (흐름 명세 error_paths)",
+      "path": [
+        "scr-home",
+        "scr-recipient",
+        "scr-account",
+        "scr-bank",
+        "scr-amount",
+        "scr-review",
+        "scr-review--error-wrong-bank"
+      ],
+      "title": null,
+      "name": "받는 계좌·금액·수수료를 확인하고…",
+      "name_source": "plan"
     },
     {
       "id": "scr-verify",
@@ -3828,7 +5126,19 @@
       ],
       "conditions": [],
       "of": null,
-      "condition": null
+      "condition": null,
+      "path": [
+        "scr-home",
+        "scr-recipient",
+        "scr-account",
+        "scr-bank",
+        "scr-amount",
+        "scr-review",
+        "scr-verify"
+      ],
+      "title": null,
+      "name": "출금 계좌 비밀번호로 본인 확인을…",
+      "name_source": "plan"
     },
     {
       "id": "scr-done",
@@ -3981,7 +5291,20 @@
       ],
       "conditions": [],
       "of": null,
-      "condition": null
+      "condition": null,
+      "path": [
+        "scr-home",
+        "scr-recipient",
+        "scr-account",
+        "scr-bank",
+        "scr-amount",
+        "scr-review",
+        "scr-verify",
+        "scr-done"
+      ],
+      "title": null,
+      "name": "송금 완료와 실제 보낸 계좌·금액을…",
+      "name_source": "plan"
     }
   ],
   "regions_call": {
