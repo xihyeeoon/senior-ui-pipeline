@@ -1,7 +1,9 @@
 r"""storyboard.json 하나로 설계서(index.html)를 그린다. 그림 말고는 다른 것을 읽지 않는다.
 
-한 장 = 가로 A4. 맨 앞장(과제 · 화면 순서 · 변경 목록 · 진단 요약 · 실행 정보) 다음에
-화면마다 한 장 - 맨 위에 정보칸 한 줄(화면 ID · 화면 이름 · 경로 · 바탕이 된 원본 화면 ·
+한 장 = 가로 A4. 맨 앞장(과제 · 화면 순서 · 변경 목록 · 진단 요약 · 실행 정보), 와이어플로
+(모든 장을 작은 그림으로 늘어놓고 정답 경로를 번호 붙은 화살표로, 오류 경로를 점선 갈래와
+되돌아가는 화살표로, 펼치기를 점선으로 잇는다 - 넘치면 띠마다 장을 나눈다. 화살표는 흐름
+명세의 걸음 · 오류 경로 · 펼치기에서만 만든다) 다음에 화면마다 한 장 - 맨 위에 정보칸 한 줄(화면 ID · 화면 이름 · 경로 · 바탕이 된 원본 화면 ·
 조건), 왼쪽은 와이어프레임 그림 위에 영역 테두리와 번호(굵게)와 요소 번호(가늘게),
 오른쪽은 화면 목적 · 영역 표 · 조건별 화면 링크. 조건별 화면은 그 화면 뒤에 같은 모양으로
 오고, 장 제목에 [오류] · [펼침] · [다시 지남] 꼬리표가
@@ -232,6 +234,36 @@ th { background: var(--soft); font-weight: 600; white-space: nowrap; }
 .conds li { margin: 2px 0; }
 .legend td, .legend th { font-size: 10.5px; }
 .warn { color: #a61e4d; }
+/* 와이어플로 */
+.fm-head { position: absolute; left: 12px; right: 12px; top: 8px; }
+.fm-head h1 { font-size: 16px; }
+.fm-head .sub { margin: 0; font-size: 9.5px; }
+.fm-key { display: inline-flex; align-items: center; gap: 3px; margin-right: 10px; }
+.node { position: absolute; display: block; color: inherit; text-decoration: none; }
+.node .nt { height: 28px; overflow: hidden; font: 600 9px/1.25 sans-serif; display: flex;
+  align-items: flex-end; gap: 3px; padding-bottom: 2px; }
+.node .nt span.nm { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; }
+.node .num { flex: none; display: inline-block; min-width: 15px; height: 15px; border-radius: 8px;
+  background: var(--ink); color: #fff; font: 700 9px/15px sans-serif; text-align: center; }
+.node .tag { margin: 0; flex: none; }
+.node .thumb { position: relative; overflow: hidden; outline: 1px solid #999; background: #fff; }
+.node .thumb img { position: absolute; left: 0; top: 0; display: block; }
+.node .thumb .more { position: absolute; left: 0; right: 0; bottom: 0; font: 7px/10px sans-serif;
+  text-align: center; background: rgba(255,255,255,.9); color: var(--muted); }
+.node .nc { font: 7.5px/13px Consolas, monospace; color: var(--muted); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; }
+.node.branch .thumb { outline-style: dashed; }
+.node.error .thumb { outline-color: var(--err); }
+.edge-label { position: absolute; font: 7.5px/9px sans-serif; color: #333; overflow: hidden;
+  background: rgba(255,255,255,.88); }
+.edge-label.c { text-align: center; }
+.edge-label.b { display: flex; flex-direction: column; justify-content: flex-end; }
+.edge-label.r { text-align: right; }
+.edge-label.err { color: var(--err); }
+.edge-label.rev { color: #5f3dc4; }
+.flowsvg { position: absolute; left: 0; top: 0; overflow: visible; }
+.badge-n { font: 700 8px sans-serif; fill: #fff; }
 """
 
 
@@ -240,9 +272,21 @@ def _src(source):
     return '<span class="src %s">%s</span>' % (key, SOURCE_LABEL[key])
 
 
-def _tag(sh):
+def _tag(sh, short=False):
+    """장 제목의 꼬리표. short 는 와이어플로의 작은 그림 위 - [다시 지남] 을 [다시] 로."""
     t = sheet_tag(sh)
+    if t and short:
+        t = t.split()[0]
     return ('<span class="tag %s">[%s]</span>' % (esc(sh["kind"]), esc(t))) if t else ""
+
+
+def _how_text(a):
+    if a.get("type") == "type":
+        return "%s 입력" % a.get("value")
+    if a.get("item"):
+        return "%s '%s'%s" % (a["item"], a.get("text"),
+                              " ×%d" % a["repeat"] if a.get("repeat") else "")
+    return "%s 누름" % a.get("selector")
 
 
 def _how(how, flow_sheet_ids):
@@ -255,6 +299,14 @@ def _how(how, flow_sheet_ids):
                                            " ×%d" % a["repeat"] if a.get("repeat") else ""))
         else:
             parts.append("<span class=\"mono\">%s</span> 누름" % esc(a.get("selector")))
+    return " → ".join(parts)
+
+
+def short_how(how, keep=2, chars=16):
+    """화살표 옆에 적는 누른 것 - 조작이 많으면 처음과 끝만, 조각마다 chars 자에서 자른다."""
+    parts = [_clip(_how_text(a), chars) for a in how or []]
+    if len(parts) > keep:
+        parts = parts[:1] + ["…"] + parts[-(keep - 1):]
     return " → ".join(parts)
 
 
@@ -278,7 +330,7 @@ def render_cover(data, ids):
            "<h1>화면설계서 · %s</h1>" % esc(task.get("label")),
            '<div class="sub">실행 <span class="mono">%s</span> · 최종 %s (시도 %s) · '
            "검사를 통과한 HTML 에서 뽑았다. 색 · 모양은 디자이너의 몫이라 그림은 로우파이 "
-           "와이어프레임(회색 상자와 글자)이다.</div>" % (esc(run.get("id")), esc(run.get("final_label")),
+           "와이어프레임(회색 상자와 글자)이다. 다음 장이 와이어플로다.</div>" % (esc(run.get("id")), esc(run.get("final_label")),
                                      esc(run.get("final_attempt")))]
     out.append("<h2>과제</h2><p>%s</p>"
                % markdown_bold(esc(task.get("description"))).replace("\n", " "))
@@ -398,6 +450,296 @@ def render_cover(data, ids):
     return "\n".join(out)
 
 
+# --------------------------------------------------------------------------- #
+# 와이어플로
+# --------------------------------------------------------------------------- #
+# 가로 A4 한 장의 CSS 픽셀 (281 x 194mm). 장 안에 그 크기의 캔버스를 두고 그림 · 화살표를
+# 절대 위치로 놓는다.
+FLOW_W, FLOW_H = 1062, 733
+FLOW_PAD = 12
+FLOW_TOP = 84                   # 제목 · 설명 · 범례
+FLOW_COLS = 8                   # 한 줄의 걸음 수 (넘으면 다음 줄로 - 띠)
+FLOW_MIN_GAP = 44               # 그림 사이 (화살표 · 누른 것)
+FLOW_MAX_GAP = 90
+FLOW_VGAP = 66                  # 걸음 줄과 갈래 줄 사이 (오류 · 되돌아가기 · 펼침 글)
+FLOW_LANE_GAP = 16              # 갈래 줄이 둘 이상일 때 그 사이
+FLOW_BGAP = 34                  # 띠 사이 (다음 줄로 이어지는 화살표)
+NODE_TITLE, NODE_CAP = 28, 13
+THUMB_MAX_W = 132
+THUMB_MIN_W = 60                # 이보다 작아지면 띠마다 장을 나눈다
+PHONE_RATIO = 844 / 390.0       # 작은 그림은 폰 화면 한 개 비율로 위쪽만 보인다
+ERR, REV, INK = "#c92a2a", "#5f3dc4", "#333"
+
+
+def flow_graph(data):
+    """와이어플로의 마디와 잇기 - 흐름 명세(data["flow"])에서만.
+
+    마디: 걸음(정답 경로의 방문마다 그 장) · 갈래(오류 장 · 펼친 뒤 장).
+    잇기: step (걸음 i → i+1) · error (그 걸음의 장 → 오류 장) · return (오류 장 →
+    되돌아가는 장) · reveal (그 걸음의 장 → 펼친 뒤 장)."""
+    ids = {s["id"] for s in data["sheets"]}
+    flow = data["flow"]
+    steps = [st for st in flow.get("steps") or [] if st.get("sheet") in ids]
+    branches = []
+    for e in flow.get("errors") or []:
+        if e.get("sheet") in ids:
+            branches.append({"kind": "error", "sheet": e["sheet"], "from": e.get("from_sheet"),
+                             "how": e.get("inputs") or [], "id": e["id"],
+                             "back": e.get("back_to_sheet"), "recover": e.get("recover") or []})
+    for r in flow.get("reveals") or []:
+        if r.get("sheet") in ids:
+            branches.append({"kind": "reveal", "sheet": r["sheet"], "from": r.get("at_sheet"),
+                             "how": r.get("how") or [], "id": r["action"]})
+    return steps, branches
+
+
+def _bands(steps, branches, cols):
+    """걸음을 cols 개씩 띠로 나누고, 갈래를 그 출발 걸음의 띠 아래 갈래 줄에 놓는다.
+    `[{"steps": [(칸, 걸음)], "lanes": [[(칸, 갈래)]]}]`."""
+    pos = {}
+    for i, st in enumerate(steps):
+        pos.setdefault(st["sheet"], i)
+    bands = [{"steps": [(j, st) for j, st in enumerate(steps[i:i + cols])], "lanes": []}
+             for i in range(0, max(len(steps), 1), cols)]
+    order = sorted(range(len(branches)), key=lambda k: (pos.get(branches[k]["from"], 10 ** 6), k))
+    for k in order:
+        br = branches[k]
+        p = pos.get(br["from"])
+        b, c = divmod(p, cols) if p is not None else (len(bands) - 1, 0)
+        lanes = bands[b]["lanes"]
+        for lane in lanes:
+            slot = max(c, lane[-1][0] + 1)
+            if slot < cols:
+                lane.append((slot, br))
+                break
+        else:
+            lanes.append([(min(c, cols - 1), br)])
+    return bands
+
+
+def _band_height(band, h):
+    rows = 1 + len(band["lanes"])
+    node = NODE_TITLE + h + NODE_CAP
+    gaps = (FLOW_VGAP + FLOW_LANE_GAP * (len(band["lanes"]) - 1)) if band["lanes"] else 0
+    return rows * node + gaps
+
+
+def flow_pages(data):
+    """띠들을 장으로 나누고 그림 크기를 정한다. `[(띠들, 그림 폭)]`."""
+    steps, branches = flow_graph(data)
+    cols = max(1, min(len(steps), FLOW_COLS))
+    bands = _bands(steps, branches, cols)
+    width = FLOW_W - 2 * FLOW_PAD
+    room = FLOW_H - FLOW_TOP - FLOW_PAD
+    w_cols = min(THUMB_MAX_W, (width - (cols - 1) * FLOW_MIN_GAP) / float(cols))
+
+    def fit(group):
+        rows = sum(1 + len(b["lanes"]) for b in group)
+        fixed = sum(_band_height(b, 0) for b in group) + FLOW_BGAP * (len(group) - 1)
+        h = (room - fixed) / float(rows)
+        return min(w_cols, h / PHONE_RATIO)
+
+    w = fit(bands)
+    if w >= THUMB_MIN_W or len(bands) == 1:
+        return cols, [(bands, w)]
+    return cols, [([b], fit([b])) for b in bands]
+
+
+def _thumb(sh, w, h):
+    box = '<div class="thumb" style="width:%.1fpx;height:%.1fpx">%%s</div>' % (w, h)
+    if not sh.get("picture") or not sh.get("size"):
+        return box % '<span class="more">그림 없음</span>'
+    more = ('<span class="more">↓ 길이 %dpx</span>' % sh["size"][1]
+            if sh["size"][1] > 844 * 1.02 else "")
+    return box % ('<img src="%s" alt="" style="width:%.1fpx">%s'
+                  % (esc(sh["picture"]), w, more))
+
+
+def _node(sh, x, y, w, h, title, cls=""):
+    return ('<a class="node %s" href="#%s" style="left:%.1fpx;top:%.1fpx;width:%.1fpx">'
+            '<div class="nt">%s</div>%s<div class="nc">%s</div></a>'
+            % (cls, esc(sh["id"]), x, y, w, title, _thumb(sh, w, h), esc(sh["id"])))
+
+
+def _label(x, y, w, hgt, text, cls=""):
+    """화살표 옆 글. 칸(cls 의 b)이 있으면 그 높이의 아래쪽에 붙인다."""
+    return ('<div class="edge-label %s" style="left:%.1fpx;top:%.1fpx;width:%.1fpx;'
+            '%s:%.1fpx">%s</div>' % (cls, x, y, max(w, 10),
+                                      "height" if "b" in cls.split() else "max-height",
+                                      max(hgt, 9), text))
+
+
+def _badge(x, y, n):
+    return ('<circle cx="%.1f" cy="%.1f" r="7" fill="%s"/><text x="%.1f" y="%.1f" '
+            'class="badge-n" text-anchor="middle">%d</text>' % (x, y, INK, x, y + 3, n))
+
+
+def _path(d, color, dash=None, head=True):
+    return ('<path d="%s" fill="none" stroke="%s" stroke-width="1.3"%s%s/>'
+            % (d, color, ' stroke-dasharray="%s"' % dash if dash else "",
+               ' marker-end="url(#ah-%s)"' % color.lstrip("#") if head else ""))
+
+
+def render_flow_page(data, bands, cols, w, page_no, pages, by_id):
+    h = w * PHONE_RATIO
+    width = FLOW_W - 2 * FLOW_PAD
+    gap = min(FLOW_MAX_GAP, (width - cols * w) / float(cols - 1)) if cols > 1 else 0
+    x0 = FLOW_PAD + (width - (cols * w + (cols - 1) * gap)) / 2.0
+    colx = lambda c: x0 + c * (w + gap)
+    html, svg = [], []
+    where = {}                                  # 장 id → (띠 번호, 칸, 마디 위)
+    y = FLOW_TOP
+    tops = []
+    for bi, band in enumerate(bands):
+        tops.append(y)
+        for c, st in band["steps"]:
+            where.setdefault(st["sheet"], (bi, c, y))
+        y += NODE_TITLE + h + NODE_CAP
+        if band["lanes"]:
+            y += FLOW_VGAP
+            for li, lane in enumerate(band["lanes"]):
+                for c, br in lane:
+                    where.setdefault(br["sheet"], (bi, c, y))
+                y += NODE_TITLE + h + NODE_CAP + (FLOW_LANE_GAP if li < len(band["lanes"]) - 1
+                                                  else 0)
+        y += FLOW_BGAP
+
+    steps, _ = flow_graph(data)
+    first_step = bands[0]["steps"][0][1]["step"] if bands and bands[0]["steps"] else None
+    for band in bands:
+        for c, st in band["steps"]:
+            sh = by_id[st["sheet"]]
+            _, _, top = where[st["sheet"]]
+            title = ('<span class="num">%d</span>%s<span class="nm">%s</span>'
+                     % (st["step"], _tag(sh, True), esc(sh.get("name") or sh["id"])))
+            html.append(_node(sh, colx(c), top, w, h, title))
+        for lane in band["lanes"]:
+            for c, br in lane:
+                sh = by_id[br["sheet"]]
+                _, _, top = where[br["sheet"]]
+                title = "%s<span class=\"nm\">%s</span>" % (_tag(sh, True),
+                                                            esc(sh.get("name") or ""))
+                html.append(_node(sh, colx(c), top, w, h, title,
+                                  "branch %s" % br["kind"]))
+
+    # 걸음 → 다음 걸음 (정답 경로)
+    for i in range(len(steps) - 1):
+        a, b = steps[i], steps[i + 1]
+        wa, wb = where.get(a["sheet"]), where.get(b["sheet"])
+        label = esc(short_how(b.get("how"))) or "(조작 없음)"
+        if wa and wb and wa[0] == wb[0] and wb[1] == wa[1] + 1:
+            ya = wa[2] + NODE_TITLE + h * 0.42
+            x1, x2 = colx(wa[1]) + w + 2, colx(wb[1]) - 3
+            svg.append(_path("M%.1f %.1fH%.1f" % (x1, ya, x2), INK))
+            svg.append(_badge((x1 + x2) / 2.0, ya, b["step"]))
+            html.append(_label(x1 - 2, wa[2] + NODE_TITLE + 2, x2 - x1 + 4,
+                               h * 0.42 - 13, label, "c b"))
+        elif wa and wb and wb[0] == wa[0] + 1:
+            # 다음 띠로 - 오른쪽으로 나가 띠 사이로 돌아 들어온다
+            ya = wa[2] + NODE_TITLE + h * 0.42
+            xr = colx(wa[1]) + w + 7
+            yb = tops[wb[0]] - FLOW_BGAP / 2.0
+            xb = colx(wb[1]) + w / 2.0
+            svg.append(_path("M%.1f %.1fH%.1fV%.1fH%.1fV%.1f"
+                             % (colx(wa[1]) + w + 2, ya, xr, yb, xb, wb[2] + 1), INK))
+            svg.append(_badge(xb - 14, yb, b["step"]))
+            html.append(_label(xb - 6, yb - 12, 3 * (w + gap), 10,
+                               "← " + label, ""))
+        elif wa and not wb:
+            html.append(_label(colx(wa[1]), wa[2] + NODE_TITLE + h + NODE_CAP, w + gap, 20,
+                               "→ 다음 장 %d (%s)" % (b["step"], label), ""))
+        elif wb and not wa and b["step"] == first_step:
+            html.append(_label(colx(wb[1]), wb[2] - 12, 3 * (w + gap), 11,
+                               "앞 장 %d 에서 → %d (%s)" % (a["step"], b["step"], label), ""))
+
+    # 갈래 - 오류 · 펼침, 되돌아가기
+    into = {}
+    for bi, band in enumerate(bands):
+        for lane in band["lanes"]:
+            for c, br in lane:
+                src = where.get(br["from"])
+                _, _, top = where[br["sheet"]]
+                color = ERR if br["kind"] == "error" else REV
+                dash = "5 3" if br["kind"] == "error" else "1.5 2.5"
+                label = (("오류 %s · " % esc(br["id"])) if br["kind"] == "error"
+                         else "펼침 · ") + esc(short_how(br["how"]))
+                cls = "r err" if br["kind"] == "error" else "r rev"
+                xe = colx(c) + w / 2.0 - 8
+                if src and src[0] == bi:
+                    ys = src[2] + NODE_TITLE + h + NODE_CAP + 1
+                    xs = colx(src[1]) + w / 2.0 - 8
+                    if src[1] == c:
+                        svg.append(_path("M%.1f %.1fV%.1f" % (xs, ys, top - 1), color, dash))
+                        html.append(_label(xe - (w / 2.0 + gap / 2.0) + 2, ys + 2,
+                                           w / 2.0 + gap / 2.0 - 6, top - ys - 6, label, cls))
+                    else:
+                        ym = top - FLOW_VGAP / 2.0 + 6
+                        svg.append(_path("M%.1f %.1fV%.1fH%.1fV%.1f" % (xs, ys, ym, xe, top - 1),
+                                         color, dash))
+                        html.append(_label(xe - (w / 2.0 + gap / 2.0) + 2, ym + 3,
+                                           w / 2.0 + gap / 2.0 - 6, top - ym - 6, label, cls))
+                if br["kind"] != "error":
+                    continue
+                back = where.get(br.get("back"))
+                rlabel = "↩ " + esc(short_how(br.get("recover")) or "되돌아가기")
+                xr = colx(c) + w / 2.0 + 8
+                if back and back[0] == bi:
+                    k = into.get(br["back"], 0)
+                    into[br["back"]] = k + 1
+                    yt = back[2] + NODE_TITLE + h + NODE_CAP + 1
+                    xt = colx(back[1]) + w / 2.0 + 8 + 6 * k
+                    if back[1] == c and not k:
+                        svg.append(_path("M%.1f %.1fV%.1f" % (xr, top - 1, yt), ERR, "5 3"))
+                    else:
+                        ym = top - FLOW_VGAP / 2.0 - 6
+                        svg.append(_path("M%.1f %.1fV%.1fH%.1fV%.1f" % (xr, top - 1, ym, xt, yt),
+                                         ERR, "5 3"))
+                    html.append(_label(xr + 4, top - FLOW_VGAP / 2.0 + 3,
+                                       w / 2.0 + gap / 2.0 - 6, FLOW_VGAP / 2.0 - 6, rlabel,
+                                       "err"))
+                else:
+                    html.append(_label(colx(c), top + NODE_TITLE + h + NODE_CAP, w + gap, 20,
+                                       "%s → [%s]" % (rlabel, esc(br.get("back") or "-")),
+                                       "err"))
+
+    n_err = sum(1 for b in bands for l in b["lanes"] for _, br in l if br["kind"] == "error")
+    n_rev = sum(1 for b in bands for l in b["lanes"] for _, br in l if br["kind"] == "reveal")
+    key = ('<span class="fm-key"><svg width="26" height="8"><path d="M1 4H24" stroke="%s" '
+           'stroke-width="1.3"%s/></svg>%s</span>')
+    head = ('<div class="fm-head"><h1>와이어플로%s</h1><div class="sub">정답 경로 %s · 오류 '
+            "갈래 %d · 펼치기 %d — 화살표는 흐름 명세의 걸음 · 오류 경로 · 펼치기에서만 만들고, "
+            "화살표 옆은 앞 화면에서 누른 것, 이어지는 장은 도구가 그 상태까지 걸어 확인한 "
+            "화면이다. 작은 그림은 화면 위쪽(폰 한 화면)만 보인다.</div>"
+            "<div class=\"sub\">%s%s%s%s</div></div>" % (
+                " (%d/%d)" % (page_no, pages) if pages > 1 else "",
+                "①→%s" % (steps[-1]["step"] if steps else "-"), n_err, n_rev,
+                key % (INK, "", "정답 경로"), key % (ERR, ' stroke-dasharray="5 3"', "오류 갈래 · ↩ 되돌아가기"),
+                key % (REV, ' stroke-dasharray="1.5 2.5"', "펼침"),
+                '<span class="fm-key">점선 테두리 그림 = 조건별 장</span>'))
+    marker = ('<marker id="ah-%s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" '
+              'markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" '
+              'fill="%s"/></marker>')
+    defs = "<defs>%s</defs>" % "".join(marker % (c.lstrip("#"), c) for c in (INK, ERR, REV))
+    return ('<section class="sheet flowmap" id="%s">%s<svg class="flowsvg" width="%d" '
+            'height="%d" viewBox="0 0 %d %d">%s%s</svg>%s</section>'
+            % ("wireflow" if page_no == 1 else "wireflow-%d" % page_no, head, FLOW_W, FLOW_H,
+               FLOW_W, FLOW_H, defs, "".join(svg), "".join(html)))
+
+
+def render_wireflow(data):
+    by_id = {s["id"]: s for s in data["sheets"]}
+    steps, _ = flow_graph(data)
+    if not steps:
+        return ('<section class="sheet cover" id="wireflow"><h1>와이어플로</h1><p class="warn">'
+                "정답 경로의 장이 없어 그리지 못했다.</p></section>")
+    cols, pages = flow_pages(data)
+    return "\n".join(render_flow_page(data, bands, cols, w, i + 1, len(pages), by_id)
+                     for i, (bands, w) in enumerate(pages))
+
+
+# --------------------------------------------------------------------------- #
+# 화면마다 한 장
+# --------------------------------------------------------------------------- #
 def render_picture(sh):
     if not sh.get("picture") or not sh.get("size"):
         return ('<div class="pic"><p class="warn">그림 없음 - %s</p></div>'
@@ -529,7 +871,8 @@ def render(data):
     ids = {s["id"] for s in data["sheets"]}
     by_id = {s["id"]: s for s in data["sheets"]}
     title = "화면설계서 · %s · %s" % (data["task"].get("label"), data["run"].get("id"))
-    body = [render_cover(data, ids)] + [render_sheet(s, ids, by_id) for s in data["sheets"]]
+    body = ([render_cover(data, ids), render_wireflow(data)]
+            + [render_sheet(s, ids, by_id) for s in data["sheets"]])
     return ("<!doctype html>\n<html lang=\"ko\">\n<head>\n<meta charset=\"utf-8\">\n"
             "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
             "<title>%s</title>\n<style>%s</style>\n</head>\n<body>\n%s\n</body>\n</html>\n"

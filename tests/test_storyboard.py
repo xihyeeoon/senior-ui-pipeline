@@ -493,6 +493,103 @@ def test_each_sheet_starts_with_an_info_row():
     assert page.index('<table class="info">') < page.index('<div class="pic">')
 
 
+def click(no, text):
+    return {"type": "click", "selector": "[data-action='%s']" % no, "item": no, "text": text}
+
+
+def flow_data(n_steps=3, reveals=(("r", 1),), errors=(("x", 2, 1),)):
+    """와이어플로 시험용 storyboard.json - 걸음 n_steps, 펼치기 (이름, 걸음),
+    오류 (id, 출발 걸음, 되돌아가는 걸음)."""
+    sheets, steps = [], []
+    for i in range(1, n_steps + 1):
+        sid = "scr-s%d" % i
+        items = [ritem("e1", "다음", {"kind": "screen", "to": "zzz", "to_id": "scr-zzz"})]
+        sheets.append(rsheet(sid, name="화면 %d" % i, items=items, path=[sid]))
+        steps.append({"step": i, "visit": "s%d" % i, "sheet": sid, "screen": "s%d" % i,
+                      "how": [] if i == 1 else [click("e7", "%d로 가기" % i)]})
+    errs, revs = [], []
+    for eid, frm, back in errors:
+        sid = "scr-s%d--error-%s" % (frm, eid)
+        sheets.append(rsheet(sid, kind="error", main=False, of="scr-s%d" % frm, name="오류"))
+        errs.append({"id": eid, "about": "틀린 값", "from_sheet": "scr-s%d" % frm, "sheet": sid,
+                     "inputs": [{"type": "type", "value": "{WRONG}"}, click("e2", "다음")],
+                     "recover": [click("e4", "다시 입력")], "back_to": "s%d" % back,
+                     "back_to_sheet": "scr-s%d" % back})
+    for act, at in reveals:
+        sid = "scr-s%d--reveal-%s" % (at, act)
+        sheets.append(rsheet(sid, kind="reveal", main=False, of="scr-s%d" % at, name="펼침"))
+        revs.append({"action": act, "at_sheet": "scr-s%d" % at, "sheet": sid,
+                     "how": [click("e3", "펼치기")]})
+    return {"sheets": sheets, "flow": {"steps": steps, "errors": errs, "reveals": revs}}
+
+
+def test_the_wireflow_draws_only_what_the_flow_says():
+    """정답 경로는 번호 붙은 화살표, 오류는 점선 갈래와 되돌아가는 화살표, 펼치기는 점선.
+    화살표는 흐름 명세에서만 - 도구가 눌러 본 다른 결과(e1 → scr-zzz)는 그리지 않는다."""
+    data = flow_data()
+    page = RD.render_wireflow(data)
+    assert page.startswith('<section class="sheet flowmap" id="wireflow">')
+    assert page.count('<a class="node') == 5
+    for sid in ("scr-s1", "scr-s2", "scr-s3", "scr-s2--error-x", "scr-s1--reveal-r"):
+        assert 'href="#%s"' % sid in page
+    assert "scr-zzz" not in page
+    assert page.count('marker-end="url(#ah-333)"') == 2              # 걸음 1→2, 2→3
+    assert page.count('marker-end="url(#ah-c92a2a)"') == 2           # 오류 갈래 + 되돌아가기
+    assert page.count('marker-end="url(#ah-5f3dc4)"') == 1           # 펼침
+    assert 'class="badge-n" text-anchor="middle">2</text>' in page
+    assert 'class="badge-n" text-anchor="middle">3</text>' in page
+    assert "e7 &#x27;2로 가기&#x27;" in page                         # 화살표 옆에 누른 것
+    assert "오류 x · {WRONG} 입력 → e2 &#x27;다음&#x27;" in page
+    assert "↩ e4 &#x27;다시 입력&#x27;" in page
+    assert "펼침 · e3 &#x27;펼치기&#x27;" in page
+    assert '<span class="num">1</span>' in page and '[오류]' in page and '[펼침]' in page
+
+
+def test_short_how_keeps_the_first_and_last_actions():
+    how = [{"type": "type", "value": "{ACCOUNT}"}, click("e3", "은행 선택"),
+           click("e5", "신한"), click("e6", "계좌 확인하고 다음으로 넘어가기")]
+    assert RD.short_how(how) == "{ACCOUNT} 입력 → … → e6 '계좌 확인하고 다음으…"
+    assert RD.short_how(how[:2]) == "{ACCOUNT} 입력 → e3 '은행 선택'"
+    assert RD.short_how([]) == ""
+
+
+def _node_bottoms(page):
+    tops = [float(t) for t in re.findall(r'<a class="node[^"]*" href="[^"]+" style="left:'
+                                         r'[\d.]+px;top:([\d.]+)px', page)]
+    hs = [float(h) for h in re.findall(r'<div class="thumb" style="width:[\d.]+px;height:'
+                                       r'([\d.]+)px', page)]
+    return [t + RD.NODE_TITLE + h + RD.NODE_CAP for t, h in zip(tops, hs)]
+
+
+@pytest.mark.parametrize("n,reveals,pages", [
+    (8, (("r", 3),), 1),                                         # 이체 - 한 줄
+    (13, (("t", 2), ("c", 2), ("i", 2), ("h", 5), ("p", 6)), 1),  # 공과금 - 두 띠
+    (30, (), 4)])                                                # 넘치면 띠마다 한 장
+def test_the_wireflow_fits_one_page_or_splits_by_band(n, reveals, pages):
+    data = flow_data(n_steps=n, reveals=reveals, errors=(("x", 2, 2),))
+    cols, got = RD.flow_pages(data)
+    assert len(got) == pages
+    html = RD.render_wireflow(data)
+    sections = html.split('<section class="sheet flowmap"')[1:]
+    assert len(sections) == pages
+    for sec in sections:
+        bottoms = _node_bottoms(sec)
+        assert bottoms and max(bottoms) <= RD.FLOW_H - RD.FLOW_PAD + 0.5
+    assert all(w >= RD.THUMB_MIN_W for _, w in got)
+    assert html.count('<a class="node') == n + len(reveals) + 1
+
+
+def test_the_wireflow_comes_right_after_the_cover():
+    data = json.load(io.open(os.path.join(C.HERE, "baseline", "storyboard",
+                                          "refine_102041.json"), encoding="utf-8"))
+    data["generated"] = {"at": "-", "seconds": {}}        # 기준값은 이 칸을 자리만 남긴다
+    for sh in data["sheets"]:
+        sh.setdefault("name", sh["id"])
+        sh.setdefault("path", [sh["id"]])
+    page = RD.render(data)
+    assert page.index('id="cover"') < page.index('id="wireflow"') < page.index('id="scr-home"')
+
+
 def test_result_text_links_to_the_sheet():
     it = {"kind": "element", "result": {"kind": "screen", "to": "b", "to_id": "scr-b"}}
     assert RD.result_text(it, True, {"scr-b"}) == '클릭 시 → <a href="#scr-b">[scr-b]</a> 이동'
