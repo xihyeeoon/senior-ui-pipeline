@@ -1236,3 +1236,26 @@ def test_storyboard_redrawn_from_saved_regions(server, monkeypatch):
     log = io.open(os.path.join(out, "storyboard.log"), encoding="utf-8").read()
     assert "요소 번호가 이번 걷기와 다르다" in log and "scr-home 의 요소가 다르다" in log
     assert os.path.exists(os.path.join(out, B.REUSED_NAME))
+
+
+def test_the_cover_says_where_the_new_columns_come_from():
+    """맨 앞장의 출처 표 - 화면 이름 · 예외 · 와이어플로의 화살표 · 기능-화면 표, 그리고
+    실행 정보에 원본 걷기 (11-12b)."""
+    data = json.load(io.open(os.path.join(C.HERE, "baseline", "storyboard",
+                                          "refine_102041.json"), encoding="utf-8"))
+    data["generated"] = {"at": "-", "seconds": {}}
+    data["original"] = {"html": "inputs/original_transfer.html",
+                        "steps": [{"visit": "home", "lit": "home"}], "error": None, "where": {}}
+    cover = RD.render_cover(data, {s["id"] for s in data["sheets"]})
+    legend = cover.split("칸마다 어디서 왔나")[1]
+    for row in ("예외: 비활성", "화면 이름", "예외: 빈 화면", "와이어플로의 화살표",
+                "기능-화면 표의 표시"):
+        assert row in legend, row
+    assert "<th>원본 걷기</th><td>inputs/original_transfer.html - 걸음 1 (끝까지)</td>" in cover
+
+
+def test_the_page_style_defines_every_variable_it_uses():
+    used = set(re.findall(r"var\((--[a-z-]+)\)", RD.CSS))
+    defined = set(re.findall(r"(--[a-z-]+)\s*:", RD.CSS))
+    assert used <= defined, used - defined
+    assert re.search(r"\.sheet\.flowmap\s*\{[^}]*height:\s*194mm", RD.CSS)   # 와이어플로는 한 쪽

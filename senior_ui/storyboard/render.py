@@ -1,16 +1,20 @@
 r"""storyboard.json 하나로 설계서(index.html)를 그린다. 그림 말고는 다른 것을 읽지 않는다.
 
-한 장 = 가로 A4. 맨 앞장(과제 · 화면 순서 · 변경 목록 · 진단 요약 · 실행 정보), 와이어플로
-(모든 장을 작은 그림으로 늘어놓고 정답 경로를 번호 붙은 화살표로, 오류 경로를 점선 갈래와
-되돌아가는 화살표로, 펼치기를 점선으로 잇는다 - 넘치면 띠마다 장을 나눈다. 화살표는 흐름
-명세의 걸음 · 오류 경로 · 펼치기에서만 만든다), 기능-화면 표(줄은 기능 - 과제 단계 ·
-선택지 무리 · 입력 수단 · 오류 회복 · 과제 밖 입구, 칸은 화면. "기능은 줄이지 않는다" 의
-확인표 - features.py) 다음에 화면마다 한 장 - 맨 위에 정보칸 한 줄(화면 ID · 화면 이름 · 경로 · 바탕이 된 원본 화면 ·
-조건), 왼쪽은 와이어프레임 그림 위에 영역 테두리와 번호(굵게)와 요소 번호(가늘게),
-오른쪽은 화면 목적 · 영역 표 · 조건별 화면 링크. 조건별 화면은 그 화면 뒤에 같은 모양으로
-오고, 장 제목에 [오류] · [펼침] · [다시 지남] 꼬리표가
-붙는다. 예외 상황은 영역 표에 적는다 - 꺼진 버튼은 "예외: 비활성" (도구 확인), 빈 상태
-안내는 영역 묶기 답이 표시한 것만 "예외: 빈 화면" (모델 설명, 글자로 판정하지 않는다).
+한 장 = 가로 A4. 차례:
+
+  맨 앞장       과제 · 화면 순서 · 오류 경로 · 변경 목록 · 진단 요약 · 실행 정보
+  와이어플로    모든 장을 작은 그림으로 늘어놓고 정답 경로를 번호 붙은 화살표로, 오류
+                경로를 점선 갈래와 되돌아가는 화살표로, 펼치기를 점선으로 잇는다 (넘치면
+                띠마다 장을 나눈다). 화살표는 흐름 명세의 걸음 · 오류 경로 · 펼치기에서만
+                만든다.
+  기능-화면 표  줄은 기능(과제 단계 · 선택지 무리 · 입력 수단 · 오류 회복 · 과제 밖 입구),
+                칸은 화면. "기능은 줄이지 않는다" 의 확인표 (features.py)
+  화면마다      맨 위에 정보칸 한 줄(화면 ID · 화면 이름 · 경로 · 원본 화면 · 조건), 왼쪽은
+                와이어프레임 그림 위에 영역 테두리와 번호(굵게)와 요소 번호(가늘게), 오른쪽은
+                화면 목적 · 영역 표 · 조건별 화면 링크. 조건별 화면은 그 화면 뒤에 같은
+                모양으로 오고, 장 제목에 [오류] · [펼침] · [다시 지남] 꼬리표가 붙는다.
+                예외는 영역 표에 - 꺼진 버튼은 "예외: 비활성" (도구 확인), 빈 상태 안내는
+                영역 묶기 답이 표시한 것만 "예외: 빈 화면" (글자로 판정하지 않는다).
 
 스크롤되는 화면은 그림이 길다. 한 장에 들도록 그림을 여러 단으로 잘라 나란히 놓는다
 (layout - 가장 크게 보이는 단 수를 고른다). 영역 테두리는 단마다 잘려 그려지고 번호는
@@ -173,7 +177,7 @@ def result_text(it, link=True, sheet_ids=None):
 CSS = r"""
 @page { size: A4 landscape; margin: 8mm; }
 :root { --ink:#1f1f1f; --muted:#666; --line:#cfcfcf; --reg:#d9480f; --el:#1864ab;
-        --soft:#f4f4f2; }
+        --soft:#f4f4f2; --err:#c92a2a; }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: #e9e9e6; color: var(--ink);
   font: 11px/1.45 "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
@@ -182,6 +186,7 @@ html, body { margin: 0; background: #e9e9e6; color: var(--ink);
 .sheet.screen { display: grid; grid-template-columns: 560px 1fr; grid-template-rows: auto 1fr;
   column-gap: 16px; padding: 0; }
 .sheet.cover { padding: 6mm 8mm; }
+.sheet.flowmap { height: 194mm; overflow: hidden; }
 @media print {
   html, body { background: #fff; }
   .sheet { margin: 0; box-shadow: none; page-break-after: always; break-after: page; }
@@ -190,6 +195,7 @@ html, body { margin: 0; background: #e9e9e6; color: var(--ink);
 h1 { font-size: 20px; margin: 0 0 2px; }
 h2 { font-size: 13px; margin: 14px 0 6px; padding-bottom: 3px; border-bottom: 1.5px solid var(--ink); }
 .sub { color: var(--muted); margin-bottom: 8px; }
+.lead { margin: 4px 0 4px; font-weight: 600; }
 table { border-collapse: collapse; width: 100%; }
 th, td { border: 1px solid var(--line); padding: 3px 5px; vertical-align: top; text-align: left; }
 th { background: var(--soft); font-weight: 600; white-space: nowrap; }
@@ -201,7 +207,7 @@ th { background: var(--soft); font-weight: 600; white-space: nowrap; }
 .src.tool_group { color: #a61e4d; }
 .tag { display: inline-block; font: 700 10px/1.3 sans-serif; padding: 0 4px; margin-left: 4px;
   border: 1px solid currentColor; border-radius: 2px; vertical-align: 2px; white-space: nowrap; }
-.tag.error { color: #c92a2a; } .tag.reveal { color: #5f3dc4; } .tag.visit { color: #495057; }
+.tag.error { color: var(--err); } .tag.reveal { color: #5f3dc4; } .tag.visit { color: #495057; }
 .ex { display: inline-block; font-size: 9px; font-weight: 700; padding: 0 3px; margin-right: 3px;
   background: #fff4e6; color: #a6420e; border: 1px solid #f0b37e; white-space: nowrap; }
 .flow { margin: 0; padding-left: 18px; }
@@ -212,6 +218,7 @@ th { background: var(--soft); font-weight: 600; white-space: nowrap; }
 .info td { font-size: 10.5px; padding: 3px 5px; }
 .info .sid { font: 700 14px/1.25 Consolas, monospace; white-space: nowrap; }
 .info .path a { color: inherit; }
+.info .path b { font-weight: 700; }
 .src.plain { color: var(--muted); font-weight: 400; }
 .pic { padding: 6px 0 0 8px; }
 .slices { display: flex; gap: 10px; align-items: flex-start; }
@@ -446,6 +453,11 @@ def render_cover(data, ids):
             else "")),
         ("생성 비용", "$%.4f" % run["cost_usd"] if run.get("cost_usd") is not None else "-"),
         ("영역 묶기", regions_row),
+        ("원본 걷기", "%s - 걸음 %d%s" % (
+            esc((data.get("original") or {}).get("html")),
+            len((data.get("original") or {}).get("steps") or []),
+            ' · <span class="warn">%s</span>' % esc(data["original"]["error"])
+            if (data.get("original") or {}).get("error") else " (끝까지)")),
         ("설계서", "장 %d (화면 %d) · 항목 %d · 누르기 %d번 · 그림 %s초 · 누르기 %s초 · %s"
          % (data["counts"]["sheets"], data["counts"]["main_sheets"], data["counts"]["items"],
             data["counts"]["clicks"], esc((gen.get("seconds") or {}).get("pictures")),
@@ -456,20 +468,30 @@ def render_cover(data, ids):
 
     out.append("<h2>칸마다 어디서 왔나</h2><table class=\"legend\">"
                "<tr><th>칸</th><th>출처</th><th>어떻게</th></tr>"
-               "<tr><td>그림</td><td>%s</td><td>최종 HTML 의 로우파이 덮개 사본을 흐름 명세대로 "
-               "걸어 찍었다 (위치 · 크기 · 글자 크기 · 굵기는 그대로)</td></tr>"
-               "<tr><td>요소 번호 · 글자 · 위치</td><td>%s</td><td>그 상태에서 보이는 "
+               "<tr><td>그림</td><td>%(tool)s</td><td>최종 HTML 의 로우파이 덮개 사본을 흐름 "
+               "명세대로 걸어 찍었다 (위치 · 크기 · 글자 크기 · 굵기는 그대로)</td></tr>"
+               "<tr><td>요소 번호 · 글자 · 위치</td><td>%(tool)s</td><td>그 상태에서 보이는 "
                "data-action 요소를 모았다</td></tr>"
-               "<tr><td>동작 (클릭 시 → …)</td><td>%s</td><td>요소마다 새 페이지에서 그 "
+               "<tr><td>동작 (클릭 시 → …)</td><td>%(tool)s</td><td>요소마다 새 페이지에서 그 "
                "상태까지 다시 걸은 뒤 눌러 보았다. 선택지 무리는 대표 하나</td></tr>"
-               "<tr><td>영역 이름 · 설명</td><td>%s %s %s</td><td>모델이 그림과 요소 목록으로 "
-               "묶었다 (mock 은 정해진 답, 모델이 빠뜨린 요소는 도구가 \"기타\" 로)</td></tr>"
-               "<tr><td>화면 목적 · 변경 · 진단</td><td>계획 · 진단 (모델)</td><td>재구성 "
-               "실행의 계획 파일을 그대로 옮겼다</td></tr>"
+               "<tr><td>예외: 비활성</td><td>%(tool)s</td><td>눌러 보려 했을 때 꺼져 있던 "
+               "요소</td></tr>"
+               "<tr><td>영역 이름 · 설명 · 화면 이름 · 예외: 빈 화면</td><td>%(model)s "
+               "%(mock)s %(group)s</td><td>모델이 그림과 요소 목록으로 묶었다 (mock 은 정해진 "
+               "답, 모델이 빠뜨린 요소는 도구가 \"기타\" 로). 화면 이름이 없으면 계획의 화면 "
+               "목적 앞부분. 빈 화면은 모델이 표시한 것만 (글자로 판정하지 않는다)</td></tr>"
+               "<tr><td>와이어플로의 화살표 · 경로</td><td>흐름 명세 · %(tool)s</td><td>정답 "
+               "경로의 걸음 · 오류 경로 · 펼치기만. 이어지는 장은 도구가 그 상태까지 걸어 "
+               "확인한 화면</td></tr>"
+               "<tr><td>기능-화면 표의 표시</td><td>%(tool)s</td><td>장마다 보인 data-action "
+               "요소와 흐름 명세의 걸음 · 오류 경로. 원본 화면 칸은 줄마다 출처가 다르다 (그 "
+               "장에 적었다)</td></tr>"
+               "<tr><td>화면 목적 · 원본 화면 · 변경 · 진단</td><td>계획 · 진단 (모델)</td>"
+               "<td>재구성 실행의 계획 파일을 그대로 옮겼다</td></tr>"
                "<tr><td>조건</td><td>흐름 명세 · 과제</td><td>error_paths · reveal · 과제의 "
-               "오류 조건</td></tr></table>" % (
-                   _src("tool"), _src("tool"), _src("tool"), _src("model"), _src("mock"),
-                   _src("tool_group")))
+               "오류 조건</td></tr></table>" % {
+                   "tool": _src("tool"), "model": _src("model"), "mock": _src("mock"),
+                   "group": _src("tool_group")})
 
     out.append("<h2>장 목록</h2><ul class=\"flow\">")
     for s in data["sheets"]:
