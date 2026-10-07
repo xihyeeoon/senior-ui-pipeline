@@ -676,6 +676,120 @@
       "finish": [
         "done"
       ]
+    },
+    "choices": {
+      "acc-num": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "num": [
+        "0",
+        "00",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "pick-bank": [
+        "BNK투자증권",
+        "BNP파리바",
+        "BOA",
+        "DB증권",
+        "HSBC",
+        "IBK투자증권",
+        "JP모간",
+        "KB증권",
+        "LS증권",
+        "NH투자증권",
+        "SC",
+        "경남",
+        "관세",
+        "광주",
+        "교보증권",
+        "국고금",
+        "국민",
+        "국세",
+        "기업",
+        "농협",
+        "다올투자증권",
+        "대신증권",
+        "도이치",
+        "메리츠증권",
+        "미래에셋증권",
+        "부국증권",
+        "부산",
+        "산림조합",
+        "산업",
+        "삼성증권",
+        "상상인증권",
+        "새마을",
+        "수협",
+        "신영증권",
+        "신한",
+        "신한투자증권",
+        "신협",
+        "아이엠뱅크(대구)",
+        "아이엠증권",
+        "에스케이증권",
+        "우리",
+        "우리투자증권",
+        "우체국",
+        "유안타증권",
+        "유진투자증권",
+        "저축은행",
+        "전북",
+        "제주",
+        "중국",
+        "중국건설",
+        "중국공상",
+        "지방세",
+        "지역농.축협",
+        "카카오뱅크",
+        "카카오페이증권",
+        "케이뱅크",
+        "케이프투자증권",
+        "키움증권",
+        "토스뱅크",
+        "토스증권",
+        "하나",
+        "하나증권",
+        "한국씨티",
+        "한국투자증권",
+        "한화투자증권",
+        "현대차증권",
+        "회원수협"
+      ],
+      "pw": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "quick": [
+        "10000",
+        "100000",
+        "50000",
+        "all"
+      ]
     }
   },
   "features": {
@@ -930,38 +1044,18 @@
         "original_from": "plan"
       },
       {
-        "key": "num",
-        "action": "num",
-        "count_original": 11,
-        "cells": {},
-        "original": [
-          "amount"
-        ],
-        "original_from": "survey",
-        "section": "choices",
-        "kind": "group"
-      },
-      {
         "key": "pick-bank",
         "action": "pick-bank",
         "count_original": 67,
-        "cells": {},
         "original": [
           "bank"
         ],
         "original_from": "survey",
-        "section": "choices",
-        "kind": "group"
-      },
-      {
-        "key": "pw",
-        "action": "pw",
-        "count_original": 10,
+        "by": "value",
+        "values": 67,
+        "found": 0,
+        "actions": [],
         "cells": {},
-        "original": [
-          "password"
-        ],
-        "original_from": "survey",
         "section": "choices",
         "kind": "group"
       },
@@ -969,11 +1063,29 @@
         "key": "quick",
         "action": "quick",
         "count_original": 4,
-        "cells": {},
         "original": [
           "amount"
         ],
         "original_from": "survey",
+        "by": "value",
+        "values": 4,
+        "found": 4,
+        "actions": [
+          "amt-set"
+        ],
+        "cells": {
+          "scr-amount": {
+            "mark": "●",
+            "found": 4,
+            "of": 4,
+            "actions": [
+              "amt-set"
+            ],
+            "sheets": [
+              "scr-amount"
+            ]
+          }
+        },
         "section": "choices",
         "kind": "group"
       },
@@ -981,23 +1093,127 @@
         "key": "acc-num",
         "action": "acc-num",
         "count_original": 10,
-        "cells": {
-          "scr-accno": {
-            "mark": "●",
-            "count": 10,
-            "sheets": [
-              "scr-accno",
-              "scr-accno--error-wrong-account"
-            ]
-          }
-        },
         "original": [
           "account"
         ],
         "original_from": "survey",
+        "by": "value",
+        "values": 10,
+        "found": 10,
+        "actions": [
+          "acc-num",
+          "amt-num"
+        ],
+        "cells": {
+          "scr-accno": {
+            "mark": "●",
+            "found": 10,
+            "of": 10,
+            "actions": [
+              "acc-num"
+            ],
+            "sheets": [
+              "scr-accno"
+            ]
+          },
+          "scr-amount": {
+            "mark": "●",
+            "found": 10,
+            "of": 10,
+            "actions": [
+              "amt-num"
+            ],
+            "sheets": [
+              "scr-amount"
+            ]
+          }
+        },
         "section": "inputs",
-        "kind": "keypad",
-        "keys": 10
+        "kind": "keypad"
+      },
+      {
+        "key": "num",
+        "action": "num",
+        "count_original": 11,
+        "original": [
+          "amount"
+        ],
+        "original_from": "survey",
+        "by": "value",
+        "values": 11,
+        "found": 11,
+        "actions": [
+          "acc-num",
+          "amt-num"
+        ],
+        "cells": {
+          "scr-accno": {
+            "mark": "●",
+            "found": 10,
+            "of": 11,
+            "actions": [
+              "acc-num"
+            ],
+            "sheets": [
+              "scr-accno"
+            ]
+          },
+          "scr-amount": {
+            "mark": "●",
+            "found": 11,
+            "of": 11,
+            "actions": [
+              "amt-num"
+            ],
+            "sheets": [
+              "scr-amount"
+            ]
+          }
+        },
+        "section": "inputs",
+        "kind": "keypad"
+      },
+      {
+        "key": "pw",
+        "action": "pw",
+        "count_original": 10,
+        "original": [
+          "password"
+        ],
+        "original_from": "survey",
+        "by": "value",
+        "values": 10,
+        "found": 10,
+        "actions": [
+          "acc-num",
+          "amt-num"
+        ],
+        "cells": {
+          "scr-accno": {
+            "mark": "●",
+            "found": 10,
+            "of": 10,
+            "actions": [
+              "acc-num"
+            ],
+            "sheets": [
+              "scr-accno"
+            ]
+          },
+          "scr-amount": {
+            "mark": "●",
+            "found": 10,
+            "of": 10,
+            "actions": [
+              "amt-num"
+            ],
+            "sheets": [
+              "scr-amount"
+            ]
+          }
+        },
+        "section": "inputs",
+        "kind": "keypad"
       },
       {
         "section": "errors",
@@ -1679,10 +1895,7 @@
       }
     ],
     "missing": [
-      "choices:num",
-      "choices:pick-bank",
-      "choices:pw",
-      "choices:quick"
+      "choices:pick-bank"
     ]
   },
   "choice_groups": [

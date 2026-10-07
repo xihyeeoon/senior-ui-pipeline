@@ -38,7 +38,8 @@ JSON_NAME = "storyboard.json"
 # 지워지므로, 읽은 것을 그대로 남긴다)
 REUSED_NAME = "regions.from.json"
 # 2: 장마다 화면 이름(title · name · name_source)과 경로(path), 원본 걷기(original) ·
-#    기능-화면 표(features) (11-12b)
+#    기능-화면 표(features) (11-12b). 기능-화면 표의 선택지 · 숫자판을 값으로 찾으며
+#    original.choices 가 더해졌다 (11-12c)
 SCHEMA = 2
 # 화면 이름이 없을 때 쓰는 계획의 화면 목적 앞부분의 길이
 NAME_CHARS = 20
@@ -559,9 +560,11 @@ def make(run_dir, port=config.AUTO_PORT, model=None, mock=None, log_echo=True,
         name_sheets(sheets)
         survey = walked.get("original") or {}
         where = F.where_in_original(survey)
+        # 원본의 무리마다 값 - 기능-화면 표가 이 값으로 장을 찾는다 (이름이 아니라)
+        values = {a: (survey.get("choices") or {}).get(a) or [] for a in groups}
         table = F.matrix(sheets, flow_info, groups, metrics.get("choice_groups_original"),
                          (run["task_def"].get("entrances") or {}).get("items"),
-                         _task_errors(run["task"]), where)
+                         _task_errors(run["task"]), where, values)
         if table["missing"]:
             log("기능-화면 표: 어느 장에서도 보지 못한 줄 %d - %s"
                 % (len(table["missing"]), ", ".join(table["missing"])))
@@ -577,7 +580,8 @@ def make(run_dir, port=config.AUTO_PORT, model=None, mock=None, log_echo=True,
             "original": {"html": orig_rel,
                          "steps": [{"visit": st["visit"], "lit": st["lit"]}
                                    for st in survey.get("steps") or []],
-                         "error": survey.get("error"), "where": where},
+                         "error": survey.get("error"), "where": where,
+                         "choices": values},
             "features": table,
             "choice_groups": groups,
             "counts": {"sheets": len(sheets),

@@ -792,6 +792,23 @@ def render_wireflow(data):
 # --------------------------------------------------------------------------- #
 # 기능-화면 표
 # --------------------------------------------------------------------------- #
+def _found(row):
+    """값으로 찾은 무리의 꼬리 - 찾은 값 수와 빌드가 쓴 data-action 이름."""
+    if row.get("by") == "value":
+        if not row.get("found"):
+            return " — 보지 못함 (값 0/%d)" % row["values"]
+        names = ['<span class="mono">%s</span>' % esc(a) for a in row["actions"]]
+        return " — 값 %d/%d 찾음 (빌드: %s%s)" % (
+            row["found"], row["values"], ", ".join(names[:ACTIONS_SHOWN]),
+            " 외 %d" % (len(names) - ACTIONS_SHOWN) if len(names) > ACTIONS_SHOWN else "")
+    if row.get("by") == "name":
+        return " — 원본의 값을 모으지 못해 이름으로 찾음"
+    return ""
+
+
+ACTIONS_SHOWN = 4               # 줄에 적는 빌드의 data-action 이름 수 (나머지는 칸의 title)
+
+
 def _feature_label(row, by_id):
     sec = row["section"]
     if sec == "steps":
@@ -800,11 +817,11 @@ def _feature_label(row, by_id):
         return "%d. %s%s" % (row["step"], esc(sh.get("name") or row.get("sheet")),
                              ' <span class="how">← %s</span>' % esc(how) if how else "")
     if sec == "choices":
-        return '<span class="mono">%s</span> · 원본 %s개' % (
-            esc(row["action"]), esc(row.get("count_original") or "?"))
+        return '<span class="mono">%s</span> · 원본 %s개%s' % (
+            esc(row["action"]), esc(row.get("count_original") or "?"), _found(row))
     if sec == "inputs" and row.get("kind") == "keypad":
-        return '숫자판 <span class="mono">%s</span> · 키 %d개 (원본 %s개)' % (
-            esc(row["action"]), row.get("keys") or 0, esc(row.get("count_original") or "?"))
+        return '숫자판 <span class="mono">%s</span> · 원본 %s개%s' % (
+            esc(row["action"]), esc(row.get("count_original") or "?"), _found(row))
     if sec == "inputs":
         return '입력 칸 <span class="mono">%s</span>%s' % (
             esc(row["action"]), " '%s'" % esc(row.get("text") or row.get("aria"))
@@ -828,10 +845,13 @@ def render_features(data, ids):
            '<p class="lead">이 표는 "기능은 줄이지 않는다" 의 확인표다 — 줄마다 그 기능이 '
            "어느 화면에 있는지 표시하고, 표시가 하나도 없는 줄은 설계서의 어느 장에서도 보지 "
            "못한 기능이다.</p>",
-           '<div class="sub">%s 바로 보임 (본 장 · 다시 지나는 장 · 오류 장) · %s 펼쳐야 보임 '
-           "(펼친 뒤 장에만) · 작은 수는 그 화면에 보인 개수. 표시는 모두 %s - 장마다 보인 "
-           "data-action 요소와 흐름 명세의 걸음 · 오류 경로. 원본 화면 칸의 출처는 무리마다 "
-           "적었다.%s</div>" % (
+           '<div class="sub">%s 흐름이 머무는 상태(본 장 · 다시 지나는 장)에서 보임 · %s 조건별 '
+           "장(펼친 뒤 · 오류)에서만 보임 · 오류 회복 줄은 그 오류가 보이는 화면. 선택지 무리 · "
+           "숫자판은 원본의 값으로 찾는다 - 그 상태의 누를 수 있는 요소(이름이 무엇이든)의 "
+           "값에서, 검사 I 와 같은 경계 규칙으로. 작은 수는 그 화면에서 찾은 값 / 원본 값 "
+           "수 (○n 은 조건별 장에서 더 보이는 수), 빌드가 쓴 이름은 줄에. 과제 밖 입구는 "
+           "oos- 이름으로 찾는다. 표시는 모두 %s - 장마다 보인 data-action 요소와 흐름 명세의 "
+           "걸음 · 오류 경로. 원본 화면 칸의 출처는 무리마다 적었다.%s</div>" % (
                DIRECT, REVEALED, _src("tool"),
                ' <span class="warn">표시가 없는 줄 %d</span>' % len(missing) if missing else
                " 표시가 없는 줄은 없다.")]
@@ -859,12 +879,19 @@ def render_features(data, ids):
                     cells.append('<td class="m"></td>')
                     continue
                 count = cell.get("count")
+                small = ("<small>%d/%d%s</small>" % (
+                    cell["found"], cell["of"],
+                    " ○%d" % cell["found_conditional"] if cell.get("found_conditional") else "")
+                    if "of" in cell
+                    else "<small>%d</small>" % count if count and count > 1 else "")
                 cells.append('<td class="m" title="%s">%s%s</td>' % (
-                    esc(", ".join(cell.get("sheets") or [])), cell["mark"],
-                    "<small>%d</small>" % count if count and count > 1 else ""))
+                    esc(", ".join(cell.get("actions") or []) + " · " if cell.get("actions")
+                        else "") + esc(", ".join(cell.get("sheets") or [])),
+                    cell["mark"], small))
             out.append('<tr class="%s"><td class="f">%s%s</td><td>%s</td>%s</tr>' % (
                 "miss" if miss else "", _feature_label(r, by_id),
-                " · 장에서 보지 못함" if miss else "", esc(orig), "".join(cells)))
+                " · 장에서 보지 못함" if miss and r.get("by") != "value" else "", esc(orig),
+                "".join(cells)))
     out.append("</tbody></table></section>")
     return "\n".join(out)
 

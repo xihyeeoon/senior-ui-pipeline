@@ -602,22 +602,32 @@ def gitem(no, action, values, result=None):
 
 
 def feature_sheets():
-    """기능-화면 표 시험용 장들: 홈(입구 둘) · 은행(무리) · 금액(숫자판 · 입력 칸) ·
-    금액 다시 지남 · 금액 오류 · 홈 펼침(무리가 펼쳐야 보임)."""
+    """기능-화면 표 시험용 장들 (11-12c - 선택지 · 숫자판은 값으로 찾는다).
+
+      홈        입구 하나
+      홈 펼침   빠른 금액 둘 - 원본 이름(quick) 그대로, 펼친 뒤에만
+      은행      은행 무리 셋 - 원본 이름 그대로
+      금액      숫자판 - 원본은 num 인데 빌드는 amt-num 이라는 다른 이름, 입력 칸
+      금액 다시 지남   같은 숫자판
+      금액 오류 '기업은행으로 다시' (은행 값 '기업' 이 글자 앞에), '110000원' (빠른 금액
+                '10000' 은 숫자 경계로 맞지 않는다), 'small' ('all' 은 영문 경계로 맞지 않는다)
+    """
     home = rsheet("scr-home", items=[ritem("e1", "메시지", {"kind": "none"},
                                            action="oos-message", entrance=True)],
                   from_original=["home"])
     bank = rsheet("scr-bank", items=[gitem("e1", "pick-bank", ["국민", "신한", "우리"])],
                   from_original=["bank"])
-    amount = rsheet("scr-amount", items=[gitem("e1", "num", [str(i) for i in range(10)]),
+    amount = rsheet("scr-amount", items=[gitem("e1", "amt-num", [str(i) for i in range(10)]),
                                          ritem("e2", "메모", {"kind": "none"}, action="memo",
                                                tag="input")],
                     from_original=["amount"])
     again = rsheet("scr-amount--visit-2", main=False, of="scr-amount",
-                   items=[gitem("e1", "num", [str(i) for i in range(10)])])
+                   items=[gitem("e1", "amt-num", [str(i) for i in range(10)])])
     err = rsheet("scr-amount--error-x", kind="error", main=False, of="scr-amount",
-                 items=[ritem("e1", "다시", {"kind": "screen", "to": "amount"},
-                              action="retry")])
+                 items=[ritem("e1", "기업은행으로 다시", {"kind": "screen", "to": "amount"},
+                              action="retry"),
+                        ritem("e2", "110000원", {"kind": "none"}, action="amt-show"),
+                        ritem("e3", "small", {"kind": "none"}, action="size")])
     rev = rsheet("scr-home--reveal-quick", kind="reveal", main=False, of="scr-home",
                  items=[gitem("e1", "quick", ["10000", "50000"])])
     return [home, rev, bank, amount, again, err]
@@ -635,7 +645,13 @@ def feature_flow():
         "reveals": []}
 
 
-def feature_table():
+ORIGINAL_VALUES = {"num": [str(i) for i in range(10)] + ["00"],
+                   "pick-bank": ["국민", "기업", "신한", "우리"],
+                   "quick": ["10000", "100000", "50000", "all"],
+                   "wallet-pick": ["a1", "b2", "c3"]}
+
+
+def feature_table(values=ORIGINAL_VALUES):
     survey = {"steps": [
         {"visit": "home", "lit": "home", "actions": {"home": {"oos-message": 1, "go": 1}}},
         {"visit": "bank", "lit": "bank", "actions": {"bank": {"pick-bank": 67},
@@ -646,7 +662,8 @@ def feature_table():
                     {"num": 11, "pick-bank": 67, "quick": 4, "wallet-pick": 3},
                     [{"id": "T1", "screen": "home", "action": "oos-message", "label": "메시지"},
                      {"id": "T2", "screen": "home", "action": "oos-wallet", "label": "지갑"}],
-                    [{"id": "x", "expect_screen": "err-amount", "back_to": "amount"}], where)
+                    [{"id": "x", "expect_screen": "err-amount", "back_to": "amount"}], where,
+                    values)
 
 
 def test_where_in_the_original_lists_screens_in_walk_order():
@@ -656,8 +673,71 @@ def test_where_in_the_original_lists_screens_in_walk_order():
     assert where == {"a": ["home", "bank"], "b": ["menu"]}
 
 
+def test_choices_are_found_by_value_whatever_the_build_calls_them():
+    """선택지 무리 · 숫자판은 원본의 값으로 찾는다 (11-12c) - 장마다 누를 수 있는 요소
+    (data-action 이 무엇이든)의 값에서, 검사 I 와 같은 경계 규칙으로. ● 는 흐름이
+    머무는 상태(본 장 · 다시 지남), ○ 는 펼친 뒤 · 오류 장에서만. 찾은 값 수와 빌드가 쓴
+    data-action 이름을 적는다."""
+    t = feature_table()
+    rows = {(r["section"], r["key"]): r for r in t["rows"]}
+    marks = lambda r: {c: v["mark"] for c, v in r["cells"].items()}
+    # 숫자판 num - 빌드는 amt-num 으로 그렸다. 이름이 아니라 값으로 찾는다 (00 은 없다)
+    num = rows["inputs", "num"]
+    assert num["kind"] == "keypad" and num["by"] == "value"
+    assert marks(num) == {"scr-amount": "●"}
+    assert (num["found"], num["values"], num["actions"]) == (10, 11, ["amt-num"])
+    cell = num["cells"]["scr-amount"]
+    assert (cell["found"], cell["of"]) == (10, 11)
+    assert cell["sheets"] == ["scr-amount", "scr-amount--visit-2"]
+    # 은행 - 은행 장에서 바로 셋, 오류 장의 '기업은행으로 다시' 에서 '기업' (한글은 뒤에
+    # 말이 붙어도 같은 값) - 금액 칸은 오류 장에서만이라 ○
+    bank = rows["choices", "pick-bank"]
+    assert marks(bank) == {"scr-bank": "●", "scr-amount": "○"}
+    assert bank["cells"]["scr-bank"]["found"] == 3 and bank["cells"]["scr-amount"]["found"] == 1
+    assert (bank["found"], bank["values"]) == (4, 4)
+    assert bank["actions"] == ["pick-bank", "retry"]
+    assert bank["count_original"] == 67 and bank["original"] == ["bank"]
+    assert bank["original_from"] == "survey"
+    # 빠른 금액 - 펼친 뒤에만 둘. '110000원' 의 10000 · 'small' 의 all 은 경계로 맞지 않는다
+    quick = rows["choices", "quick"]
+    assert marks(quick) == {"scr-home": "○"} and quick["found"] == 2
+    assert quick["cells"]["scr-home"]["of"] == 4
+    # ● 칸에서 조건별 장이 더 많이 보이면 그 수도 남긴다 (펼치면 더 보인다)
+    shs = feature_sheets()
+    shs[1]["items"] = [gitem("e1", "pick-bank", ["국민", "기업", "신한", "우리"])]
+    shs[1]["of"] = "scr-bank"
+    shs[0]["items"].append(gitem("e2", "pick-bank", ["국민", "신한"]))
+    t3 = F.matrix(shs, feature_flow(), ["pick-bank"], {}, [], [], {}, ORIGINAL_VALUES)
+    cell = [r for r in t3["rows"] if r["key"] == "pick-bank"][0]["cells"]["scr-bank"]
+    assert (cell["mark"], cell["found"], cell["found_conditional"]) == ("●", 3, 4)
+    page = RD.render_features({"sheets": shs, "features": t3}, {x["id"] for x in shs})
+    assert ">●<small>3/4 ○4</small><" in page
+    # 값만 본다 - 글자가 '1만원' 인 단추의 값이 10000 이면 숫자판의 '1' 이 아니다
+    shs = feature_sheets()
+    shs[3]["items"] = [ritem("e1", "1만원", {"kind": "none"}, action="amt-set", value="10000")]
+    del shs[4]
+    t2 = F.matrix(shs, feature_flow(), ["num"], {}, [], [], {}, {"num": ORIGINAL_VALUES["num"]})
+    num2 = [r for r in t2["rows"] if r["key"] == "num"][0]
+    assert num2["cells"] == {} and num2["found"] == 0
+    # 어디서도 못 찾은 무리 - 표시가 없고 missing, 찾은 개수 0
+    wallet = rows["choices", "wallet-pick"]
+    assert wallet["cells"] == {} and (wallet["found"], wallet["values"]) == (0, 3)
+    assert rows["inputs", "memo"]["kind"] == "field"
+
+
+def test_a_group_without_original_values_falls_back_to_its_name():
+    """원본 걷기가 값을 못 모았으면 (원본을 열지 못한 경우) 지금처럼 이름으로 찾고 그렇다고
+    적는다."""
+    t = feature_table(values={})
+    rows = {(r["section"], r["key"]): r for r in t["rows"]}
+    bank = rows["choices", "pick-bank"]
+    assert bank["by"] == "name" and bank["found"] is None
+    assert {c: v["mark"] for c, v in bank["cells"].items()} == {"scr-bank": "●"}
+    assert rows["choices", "num"]["cells"] == {}            # 빌드는 amt-num - 이름으로는 없다
+
+
 def test_the_feature_table_marks_where_each_feature_is():
-    """● 바로 보임 (본 장 · 다시 지남 · 오류 장) / ○ 펼쳐야 보임 (펼친 뒤 장에만). 칸은
+    """● 흐름이 머무는 상태 (본 장 · 다시 지남) / ○ 조건별 장(펼친 뒤 · 오류)에서만. 칸은
     본 장의 화면 ID. 표시는 장마다 보인 요소와 흐름 명세에서만."""
     t = feature_table()
     assert t["columns"] == ["scr-home", "scr-bank", "scr-amount"]
@@ -668,30 +748,30 @@ def test_the_feature_table_marks_where_each_feature_is():
         {"scr-home": "●"}, {"scr-bank": "●"}, {"scr-amount": "●"}, {"scr-amount": "●"}]
     assert rows["steps", "step-2"]["original"] == ["bank"]
     assert rows["steps", "step-2"]["original_from"] == "plan"
-    # 선택지 무리 - 바로 보이면 ●, 펼친 뒤에만 보이면 ○, 원본은 원본을 걸어 본 화면
-    bank = rows["choices", "pick-bank"]
-    assert marks(bank) == {"scr-bank": "●"} and bank["cells"]["scr-bank"]["count"] == 3
-    assert bank["count_original"] == 67 and bank["original"] == ["bank"]
-    assert bank["original_from"] == "survey"
-    assert marks(rows["choices", "quick"]) == {"scr-home": "○"}
-    assert rows["choices", "quick"]["original"] == ["amount"]
-    # 입력 수단 - 값이 모두 숫자인 무리는 숫자판, data-action 이 붙은 input 은 입력 칸
-    num = rows["inputs", "num"]
-    assert num["kind"] == "keypad" and num["keys"] == 10 and marks(num) == {"scr-amount": "●"}
-    assert num["cells"]["scr-amount"]["sheets"] == ["scr-amount", "scr-amount--visit-2"]
-    assert rows["inputs", "memo"]["kind"] == "field"
-    # 오류 회복 - 오류 장의 화면, 원본은 과제의 원본 흐름
+    # 오류 회복 - 오류가 보이는 화면, 원본은 과제의 원본 흐름
     x = rows["errors", "x"]
     assert marks(x) == {"scr-amount": "●"}
     assert (x["original"], x["original_back_to"]) == (["err-amount"], "amount")
-    # 과제 밖 입구 - 이름은 과제 파일의 label (원본 aria-label), 원본은 과제 파일의 화면
+    # 과제 밖 입구 - 이름(oos-)으로 찾는다. 줄 이름은 과제 파일의 label (원본 aria-label)
     t1 = rows["entrances", "T1"]
     assert (t1["label"], marks(t1), t1["original"]) == ("메시지", {"scr-home": "●"}, ["home"])
     # 어느 장에서도 보지 못한 기능은 표시가 없고 missing 에 남는다
-    assert rows["entrances", "T2"]["cells"] == {} and rows["choices", "wallet-pick"]["cells"] == {}
+    assert rows["entrances", "T2"]["cells"] == {}
     assert t["missing"] == ["choices:wallet-pick", "entrances:T2"]
     assert [r["section"] for r in t["rows"]] == sorted(
         (r["section"] for r in t["rows"]), key=F.SECTIONS.index)
+
+
+def test_an_entrance_seen_only_in_a_conditional_sheet_is_hollow():
+    """입구도 같은 기호 - 오류 장에서만 보이면 ○."""
+    shs = feature_sheets()
+    shs[-1]["items"].append(ritem("e9", "지갑", {"kind": "none"}, action="oos-wallet",
+                                  entrance=True))
+    t = F.matrix(shs, feature_flow(), [], {},
+                 [{"id": "T2", "screen": "home", "action": "oos-wallet", "label": "지갑"}],
+                 [], {}, {})
+    row = [r for r in t["rows"] if r["section"] == "entrances"][0]
+    assert {c: v["mark"] for c, v in row["cells"].items()} == {"scr-amount": "○"}
 
 
 def test_the_feature_table_page():
@@ -706,7 +786,12 @@ def test_the_feature_table_page():
                                                                 "scr-amount"]
     for sec in ("과제 단계", "선택지 무리", "입력 수단", "오류 회복", "과제 밖 입구"):
         assert sec in page
-    assert ">●<small>3</small><" in page and ">○<small>2</small><" in page
+    assert ">●<small>3/4</small><" in page and ">○<small>1/4</small><" in page
+    assert ">○<small>2/4</small><" in page and ">●<small>10/11</small><" in page
+    assert '값 4/4 찾음 (빌드: <span class="mono">pick-bank</span>, ' \
+           '<span class="mono">retry</span>)' in page
+    assert '값 10/11 찾음 (빌드: <span class="mono">amt-num</span>)' in page
+    assert "보지 못함 (값 0/3)" in page
     assert page.count('<tr class="miss">') == 2 and "표시가 없는 줄 2" in page
     assert "숫자판" in page and "입력 칸" in page and "err-amount → amount" in page
 
@@ -1072,6 +1157,8 @@ def test_unit_the_original_is_walked_once_for_the_feature_table(server):
     assert list(first) == ["a"] and first["a"]["pick"] == 4 and "under" in first["a"]
     assert list(second) == ["b"] and second["b"] == {"back-a": 1, "err": 1}
     assert F.where_in_original(got)["pick"] == ["a"]
+    # 선택지 무리의 값 - 검사 I 가 원본을 걸으며 모으는 것과 같은 조각(CHOICE_GROUPS)으로
+    assert got["choices"]["pick"] == ["1", "2", "3", "4"]
 
 
 LOOK = r"""(sels) => sels.map(sel => {
@@ -1187,6 +1274,28 @@ def test_storyboard_of_the_mock_pass_run(server):
     assert code == 0
     data = make_and_compare(summary["run_dir"], "mock_pass")
     assert data["regions_call"]["mock"] == "regions"
+    # 기능-화면 표는 선택지 · 숫자판을 값으로 찾는다 (11-12c). 이 빌드는 금액 숫자판을
+    # amt-num, 빠른 금액을 amt-set 이라는 다른 이름으로 그렸다 - 이름으로 찾으면 둘 다
+    # "보지 못함" 이었다.
+    rows = {r["key"]: r for r in data["features"]["rows"]
+            if r["section"] in ("choices", "inputs")}
+    marks = lambda r: {c: v["mark"] for c, v in r["cells"].items()}
+    num = rows["num"]
+    assert (num["found"], num["values"]) == (11, 11) and "amt-num" in num["actions"]
+    assert num["cells"]["scr-amount"]["mark"] == "●"
+    assert num["cells"]["scr-amount"]["found"] == 11      # 00 까지 - 금액 숫자판
+    quick = rows["quick"]
+    assert (quick["found"], quick["values"], quick["actions"]) == (4, 4, ["amt-set"])
+    assert marks(quick) == {"scr-amount": "●"}       # 금액 화면에 바로 보인다
+    # 은행 목록은 "다른 은행이에요" 뒤에만 있고, 흐름은 그 상태에 머물지 않는다 (오류 경로도
+    # 은행을 고른 뒤의 확인 화면이 장이다) - 어느 장에서도 값을 찾지 못한다
+    bank = rows["pick-bank"]
+    assert bank["cells"] == {} and bank["found"] == 0 and "choices:pick-bank" in         data["features"]["missing"]
+    # 비밀번호 숫자판도 "비밀번호로 확인" 뒤에만 있다. 값(0~9)은 계좌번호 · 금액 숫자판의
+    # 값과 같아서, 무엇이든 data-action 의 값으로 보는 규칙으로는 그 둘에서 찾아진다
+    pw = rows["pw"]
+    assert pw["found"] == 10 and "pw" not in pw["actions"]
+    assert set(pw["actions"]) == {"acc-num", "amt-num"}
 
 
 @pytest.mark.browser

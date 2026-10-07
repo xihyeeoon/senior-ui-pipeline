@@ -35,7 +35,7 @@ from playwright.async_api import async_playwright
 
 from senior_ui.audit.drive import run_actions, settle
 from senior_ui.audit.flow import truth_of, visit_keys, fill
-from senior_ui.audit.probes import ENTRANCE_PREFIX
+from senior_ui.audit.probes import CHOICE_GROUPS, ENTRANCE_PREFIX
 
 VIEWPORT = {"width": 390, "height": 844}
 # 그림은 2배 해상도로 찍는다 - PDF 를 확대해 읽을 수 있게. 폭은 390px 화면 그대로다.
@@ -554,9 +554,14 @@ async def survey(browser, url, flow):
     (SURVEY). 기능-화면 표의 "원본 화면" 칸 - 선택지 무리 · 입력 수단이 원본에서 어느
     화면에 있었는가 - 에 쓴다. 판정은 하지 않는다.
 
-    돌려주는 것: `{"steps": [{"visit", "lit", "actions": {화면: {이름: 수}}}], "error"}`.
-    걷다가 막히면 거기까지와 error."""
-    out = {"steps": [], "error": None}
+    걸음마다 선택지 무리의 값도 모은다 - 검사 I 가 원본을 걸으며 쓰는 조각
+    (probes.CHOICE_GROUPS, 원본이므로 정해 둔 무리 없이)을 그대로 쓰고 걸음들을 합친다
+    (i_choices.original_choices 와 같다). 기능-화면 표가 그 값으로 빌드의 장을 찾는다.
+
+    돌려주는 것: `{"steps": [{"visit", "lit", "actions": {화면: {이름: 수}}}], "choices":
+    {이름: [값]}, "error"}`. 걷다가 막히면 거기까지와 error."""
+    out = {"steps": [], "choices": {}, "error": None}
+    choices = {}
     ctx, page = await new_page(browser)
     attach_dialogs(page, [])
     truth = truth_of(flow)
@@ -577,10 +582,13 @@ async def survey(browser, url, flow):
                 break
             got = await page.evaluate(SURVEY)
             out["steps"].append({"visit": visit, "lit": got["lit"], "actions": got["actions"]})
+            for action, vals in (await page.evaluate(CHOICE_GROUPS, [])).items():
+                choices.setdefault(action, set()).update(v for v in vals if v)
     except Exception as e:
         out["error"] = _short(e)
     finally:
         await ctx.close()
+    out["choices"] = {a: sorted(v) for a, v in sorted(choices.items())}
     return out
 
 
