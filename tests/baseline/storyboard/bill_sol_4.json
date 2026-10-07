@@ -1731,11 +1731,10 @@
           "oos-irp",
           "other-service",
           "payment-history",
-          "pick-bill",
           "search-group",
-          "search-hit",
-          "submit-payment"
+          "search-hit"
         ],
+        "tied": [],
         "cells": {
           "scr-home": {
             "mark": "●",
@@ -1775,29 +1774,6 @@
             ],
             "found_conditional": 83
           },
-          "scr-bill-start": {
-            "mark": "○",
-            "found": 1,
-            "of": 289,
-            "actions": [
-              "pick-bill"
-            ],
-            "sheets": [
-              "scr-bill-start--reveal-pick-bill"
-            ]
-          },
-          "scr-password": {
-            "mark": "●",
-            "found": 1,
-            "of": 289,
-            "actions": [
-              "submit-payment"
-            ],
-            "sheets": [
-              "scr-password",
-              "scr-password--visit-2"
-            ]
-          },
           "scr-done": {
             "mark": "●",
             "found": 1,
@@ -1827,6 +1803,7 @@
         "actions": [
           "pick-bill"
         ],
+        "tied": [],
         "cells": {
           "scr-bill-start": {
             "mark": "○",
@@ -1858,6 +1835,7 @@
           "pw",
           "submit-payment"
         ],
+        "tied": [],
         "cells": {
           "scr-password": {
             "mark": "●",

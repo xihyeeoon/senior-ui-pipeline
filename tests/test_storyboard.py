@@ -727,6 +727,66 @@ def test_choices_are_found_by_value_whatever_the_build_calls_them():
     assert rows["inputs", "memo"]["kind"] == "field"
 
 
+DIGITS = [str(i) for i in range(10)]
+
+
+def pad_table(action, base, values=None, keys=DIGITS):
+    """숫자판 하나만 있는 장 - 원본 무리 acc-num (원본 account 화면) · pw (원본 password
+    화면) 의 값이 같다 (0~9). 빌드의 이름은 action, 그 장의 바탕 원본 화면은 base."""
+    sh = rsheet("scr-pad", items=[gitem("e1", action, keys)], from_original=base)
+    flow = {"steps": [{"step": 1, "sheet": "scr-pad", "how": []}], "errors": [], "reveals": []}
+    values = values or {"acc-num": DIGITS, "pw": DIGITS}
+    where = {"acc-num": ["account"], "pw": ["password"], "num": ["amount"]}
+    return F.matrix([sh], flow, sorted(values), {}, [], [], where, values)
+
+
+def value_rows(t):
+    return {r["key"]: r for r in t["rows"] if r["section"] in ("choices", "inputs")}
+
+
+def test_a_build_action_counts_for_the_group_it_covers_most():
+    """생성물의 data-action 하나는 값을 가장 많이 덮는 원본 무리 하나에만 센다 (11-12d) -
+    00 까지 있는 숫자판은 num(11개)이지 pw(10개)가 아니다."""
+    t = pad_table("keys", ["other"], {"num": DIGITS + ["00"], "pw": DIGITS},
+                  keys=DIGITS + ["00"])
+    rows = value_rows(t)
+    assert {c: v["mark"] for c, v in rows["num"]["cells"].items()} == {"scr-pad": "●"}
+    assert rows["num"]["actions"] == ["keys"] and rows["num"]["found"] == 11
+    assert rows["pw"]["cells"] == {} and rows["pw"]["found"] == 0
+    assert "inputs:pw" in t["missing"]
+
+
+def test_a_tie_goes_to_the_group_on_the_base_original_screen():
+    """동점 가르기 (1) - 그 생성물 화면의 바탕 원본 화면(계획의 from)에 있던 무리."""
+    rows = value_rows(pad_table("keys", ["password"]))
+    assert {c: v["mark"] for c, v in rows["pw"]["cells"].items()} == {"scr-pad": "●"}
+    assert rows["acc-num"]["cells"] == {}
+
+
+def test_a_tie_off_the_base_screen_goes_to_the_group_with_the_same_name():
+    """동점 가르기 (2) - 바탕 원본 화면으로 가르지 못하면 이름이 같은 무리."""
+    rows = value_rows(pad_table("acc-num", ["other"]))
+    assert {c: v["mark"] for c, v in rows["acc-num"]["cells"].items()} == {"scr-pad": "●"}
+    assert rows["pw"]["cells"] == {}
+
+
+def test_a_tie_that_cannot_be_broken_is_marked_and_not_counted():
+    """동점 가르기 (3) - 그래도 같으면 "값이 같은 무리" 라고만 적는다. ● 도 ○ 도 아니고
+    찾은 수에도 넣지 않는다."""
+    t = pad_table("keys", ["other"])
+    rows = value_rows(t)
+    for g, other in (("acc-num", "pw"), ("pw", "acc-num")):
+        cell = rows[g]["cells"]["scr-pad"]
+        assert cell["mark"] == F.TIED and cell["tied"] == ["acc-num", "pw"]
+        assert rows[g]["found"] == 0 and rows[g]["tied"] == ["acc-num", "pw"]
+    assert t["missing"] == []                  # 값은 있다 - 어느 무리인지 모를 뿐
+    data = {"sheets": [rsheet("scr-pad", name="패드")], "features": t}
+    page = RD.render_features(data, {"scr-pad"})
+    row = [l for l in page.split("<tr") if "숫자판 <span class=\"mono\">pw</span>" in l][0]
+    assert "값이 같은 무리: acc-num, pw" in row
+    assert ">●<" not in row and ">○<" not in row and ">같은 값<" in row
+
+
 def test_a_group_without_original_values_falls_back_to_its_name():
     """원본 걷기가 값을 못 모았으면 (원본을 열지 못한 경우) 지금처럼 이름으로 찾고 그렇다고
     적는다."""
@@ -1283,9 +1343,10 @@ def test_storyboard_of_the_mock_pass_run(server):
             if r["section"] in ("choices", "inputs")}
     marks = lambda r: {c: v["mark"] for c, v in r["cells"].items()}
     num = rows["num"]
-    assert (num["found"], num["values"]) == (11, 11) and "amt-num" in num["actions"]
-    assert num["cells"]["scr-amount"]["mark"] == "●"
-    assert num["cells"]["scr-amount"]["found"] == 11      # 00 까지 - 금액 숫자판
+    assert (num["found"], num["values"], num["actions"]) == (11, 11, ["amt-num"])
+    assert marks(num) == {"scr-amount": "●"}              # 00 까지 - 금액 숫자판
+    assert marks(rows["acc-num"]) == {"scr-accno": "●"}    # 동점 - 바탕 원본 화면(account)
+    assert rows["acc-num"]["actions"] == ["acc-num"]
     quick = rows["quick"]
     assert (quick["found"], quick["values"], quick["actions"]) == (4, 4, ["amt-set"])
     assert marks(quick) == {"scr-amount": "●"}       # 금액 화면에 바로 보인다
@@ -1293,11 +1354,10 @@ def test_storyboard_of_the_mock_pass_run(server):
     # 은행을 고른 뒤의 확인 화면이 장이다) - 어느 장에서도 값을 찾지 못한다
     bank = rows["pick-bank"]
     assert bank["cells"] == {} and bank["found"] == 0 and "choices:pick-bank" in         data["features"]["missing"]
-    # 비밀번호 숫자판도 "비밀번호로 확인" 뒤에만 있다. 값(0~9)은 계좌번호 · 금액 숫자판의
-    # 값과 같아서, 무엇이든 data-action 의 값으로 보는 규칙으로는 그 둘에서 찾아진다
+    # 비밀번호 숫자판도 "비밀번호로 확인" 뒤에만 있다. 0~9 는 계좌번호 · 금액 숫자판의 값과
+    # 같지만, 생성물의 data-action 하나는 원본 무리 하나에만 센다 (11-12d) - 보지 못함
     pw = rows["pw"]
-    assert pw["found"] == 10 and "pw" not in pw["actions"]
-    assert set(pw["actions"]) == {"acc-num", "amt-num"}
+    assert pw["cells"] == {} and pw["found"] == 0 and "inputs:pw" in data["features"]["missing"]
 
 
 @pytest.mark.browser
@@ -1306,6 +1366,16 @@ def test_storyboard_of_a_saved_reply(server, name):
     import storyboard_fixture as SF
     d = SF.make_saved_run(name, C.BASE_URL)
     data = make_and_compare(d, name)
+    if name == "refine_102041":
+        # 값이 같은 숫자판 셋(0~9)이 각자 제 화면에만 ● - 생성물의 data-action 하나는 원본
+        # 무리 하나에만 센다, 동점은 그 화면의 바탕 원본 화면으로 가른다 (11-12d)
+        rows = {r["key"]: r for r in data["features"]["rows"]}
+        marks = lambda r: {c: v["mark"] for c, v in r["cells"].items()}
+        assert marks(rows["acc-num"]) == {"scr-account": "●"}
+        assert marks(rows["num"]) == {"scr-amount": "●"}
+        assert marks(rows["pw"]) == {"scr-verify": "●"}
+        assert [rows[k]["actions"] for k in ("acc-num", "num", "pw")] == [
+            ["acc-num"], ["num"], ["pw"]]
     # 모든 항목이 정확히 한 영역에 들어 있다
     for sh in data["sheets"]:
         nos = [e for r in sh["regions"] for e in r["elements"]]

@@ -1055,6 +1055,7 @@
         "values": 67,
         "found": 0,
         "actions": [],
+        "tied": [],
         "cells": {},
         "section": "choices",
         "kind": "group"
@@ -1073,6 +1074,7 @@
         "actions": [
           "amt-set"
         ],
+        "tied": [],
         "cells": {
           "scr-amount": {
             "mark": "●",
@@ -1101,9 +1103,9 @@
         "values": 10,
         "found": 10,
         "actions": [
-          "acc-num",
-          "amt-num"
+          "acc-num"
         ],
+        "tied": [],
         "cells": {
           "scr-accno": {
             "mark": "●",
@@ -1114,17 +1116,6 @@
             ],
             "sheets": [
               "scr-accno"
-            ]
-          },
-          "scr-amount": {
-            "mark": "●",
-            "found": 10,
-            "of": 10,
-            "actions": [
-              "amt-num"
-            ],
-            "sheets": [
-              "scr-amount"
             ]
           }
         },
@@ -1143,21 +1134,10 @@
         "values": 11,
         "found": 11,
         "actions": [
-          "acc-num",
           "amt-num"
         ],
+        "tied": [],
         "cells": {
-          "scr-accno": {
-            "mark": "●",
-            "found": 10,
-            "of": 11,
-            "actions": [
-              "acc-num"
-            ],
-            "sheets": [
-              "scr-accno"
-            ]
-          },
           "scr-amount": {
             "mark": "●",
             "found": 11,
@@ -1183,35 +1163,10 @@
         "original_from": "survey",
         "by": "value",
         "values": 10,
-        "found": 10,
-        "actions": [
-          "acc-num",
-          "amt-num"
-        ],
-        "cells": {
-          "scr-accno": {
-            "mark": "●",
-            "found": 10,
-            "of": 10,
-            "actions": [
-              "acc-num"
-            ],
-            "sheets": [
-              "scr-accno"
-            ]
-          },
-          "scr-amount": {
-            "mark": "●",
-            "found": 10,
-            "of": 10,
-            "actions": [
-              "amt-num"
-            ],
-            "sheets": [
-              "scr-amount"
-            ]
-          }
-        },
+        "found": 0,
+        "actions": [],
+        "tied": [],
+        "cells": {},
         "section": "inputs",
         "kind": "keypad"
       },
@@ -1895,7 +1850,8 @@
       }
     ],
     "missing": [
-      "choices:pick-bank"
+      "choices:pick-bank",
+      "inputs:pw"
     ]
   },
   "choice_groups": [

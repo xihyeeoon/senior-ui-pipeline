@@ -22,9 +22,14 @@ amt-num 으로) 찾고, 찾은 값 수("38/67")와 빌드가 쓴 data-action 이
 값을 모으지 못했으면(원본을 열지 못한 경우) 이름으로 찾고 그렇다고 적는다 (by: name).
 과제 밖 입구는 이름(oos-)으로 찾는다 - 계약상 이름이 보존된다.
 
-값으로 찾으므로 값이 같은 무리는 서로를 찾는다 - 0~9 숫자판 셋(계좌번호 · 금액 ·
-비밀번호)은 어느 하나만 보여도 셋 다 그 화면에서 찾아진다. 빌드가 쓴 이름이 옆에 있어
-읽는 사람이 가를 수 있다.
+생성물의 data-action 하나는 원본 무리 하나에만 센다 (11-12d). 값이 같은 무리(0~9 숫자판
+셋 - 계좌번호 · 금액 · 비밀번호)가 서로를 찾지 않도록, 장마다 생성물의 data-action 마다 그
+값들이 가장 많이 덮는 원본 무리 하나를 고른다. 동점이면 차례로 가른다:
+
+  (1) 그 생성물 화면의 바탕 원본 화면(계획의 screens[].from)에 있던 무리
+  (2) 이름이 같은 무리
+  (3) 그래도 같으면 그 칸에 "같은 값" 이라고만 적고 줄에 "값이 같은 무리: <이름들>" -
+      ● 도 ○ 도 아니고 찾은 수에도 넣지 않는다 (TIED)
 
 줄의 다섯 무리:
 
@@ -49,6 +54,8 @@ import re
 from senior_ui.audit.checks.i_choices import present
 
 DIRECT, REVEALED = "●", "○"
+# 값이 같은 무리라 어느 무리인지 가를 수 없는 칸 - ● · ○ 로 세지 않는다
+TIED = "="
 SECTIONS = ("steps", "choices", "inputs", "errors", "entrances")
 SECTION_LABEL = {"steps": "과제 단계", "choices": "선택지 무리", "inputs": "입력 수단",
                  "errors": "오류 회복", "entrances": "과제 밖 입구"}
@@ -107,49 +114,91 @@ def pressables(sheet):
     return out
 
 
-def find_values(sheet, values):
-    """원본 값들 중 그 상태의 누를 수 있는 요소에 있는 것. `(찾은 값 집합, {data-action})`.
-    경계 규칙은 검사 I 의 것 (i_choices.present) - 한글은 뒤에 말이 붙어도, 숫자 ·
-    영문은 앞뒤가 떨어져야 같은 값이다."""
-    els = pressables(sheet)
-    blob = "\n".join(t for _, t in els)
-    found, actions = set(), set()
-    for v in values:
-        if not present(v, blob):
+def assign(sheet, values, where):
+    """그 상태의 생성물 data-action 마다 원본 무리 하나를 고른다.
+
+    values 는 `{원본 무리: [값]}`, where 는 `{원본 이름: [원본 화면]}` (where_in_original).
+    data-action 마다 그 요소들의 값이 덮는 원본 값의 수를 무리마다 세고(검사 I 의 경계 규칙),
+    가장 많이 덮는 무리 하나에 붙인다. 동점이면 (1) 그 장의 바탕 원본 화면(from_original)에
+    있던 무리, (2) 이름이 같은 무리, (3) 그래도 같으면 가르지 않는다.
+
+    돌려주는 것: `(owned, tied)` - owned `{무리: {"found": 값 집합, "actions": 이름 집합}}`,
+    tied `{무리: {"tied": 무리 집합, "actions": 이름 집합}}`."""
+    by_action = {}
+    for a, v in pressables(sheet):
+        by_action.setdefault(a, []).append(v)
+    base = set(sheet.get("from_original") or [])
+    owned, tied = {}, {}
+    for a, vals in by_action.items():
+        blob = "\n".join(vals)
+        cover = {}
+        for g, vs in values.items():
+            hit = {v for v in vs if present(v, blob)}
+            if hit:
+                cover[g] = hit
+        if not cover:
             continue
-        found.add(v)
-        actions.update(a for a, t in els if present(v, t))
-    return found, actions
+        best = max(len(h) for h in cover.values())
+        top = sorted(g for g, h in cover.items() if len(h) == best)
+        if len(top) > 1:                                        # (1) 바탕 원본 화면
+            top = [g for g in top if base & set(where.get(g) or [])] or top
+        if len(top) > 1 and a in top:                           # (2) 같은 이름
+            top = [a]
+        if len(top) == 1:
+            o = owned.setdefault(top[0], {"found": set(), "actions": set()})
+            o["found"] |= cover[top[0]]
+            o["actions"].add(a)
+        else:                                                   # (3) 가르지 못함
+            for g in top:
+                t = tied.setdefault(g, {"tied": set(), "actions": set()})
+                t["tied"] |= set(top)
+                t["actions"].add(a)
+    return owned, tied
 
 
-def place_values(sheets, values):
-    """값으로 찾기. `(칸, 찾은 값 집합, 빌드의 data-action)` - 칸은 `{칸: {"mark", "found",
-    "of", "actions", "sheets", "found_conditional"?}}`. found 는 그 표시(● 면 흐름이 머무는
-    장)의 장 하나에서 찾은 가장 많은 수, found_conditional 은 ● 칸에서 조건별 장(펼친 뒤 ·
-    오류)이 더 많이 보일 때 그 수 - 펼치면 더 보인다는 것을 감추지 않는다."""
+def place_values(sheets, values, where):
+    """값으로 찾기 - 무리마다 `(칸, 찾은 값 집합, 빌드의 data-action, 값이 같은 무리)`.
+
+    칸은 `{칸: {"mark", "found", "of", "actions", "sheets", "found_conditional"?}}` 이거나
+    가르지 못한 칸 `{"mark": TIED, "tied", "actions", "sheets"}`. 표시는 ● > ○ > TIED 차례로
+    센다. found 는 그 표시(● 면 흐름이 머무는 장)의 장 하나에서 찾은 가장 많은 수,
+    found_conditional 은 ● 칸에서 조건별 장(펼친 뒤 · 오류)이 더 많이 보일 때 그 수 -
+    펼치면 더 보인다는 것을 감추지 않는다."""
     col = column_of(sheets)
-    cells, extra, total, names = {}, {}, set(), set()
-    for sh in sheets:
-        found, actions = find_values(sh, values)
-        if not found:
-            continue
-        total |= found
-        names |= actions
-        key = col[sh["id"]]
-        mark, c = mark_of(sh), cells.get(key)
-        if mark == REVEALED:
-            extra[key] = max(extra.get(key, 0), len(found))
-        if c is None or (c["mark"] == REVEALED and mark == DIRECT):
-            cells[key] = {"mark": mark, "found": len(found), "of": len(values),
-                          "actions": sorted(actions), "sheets": [sh["id"]]}
-        elif c["mark"] == mark:
-            c["found"] = max(c["found"], len(found))
-            c["actions"] = sorted(set(c["actions"]) | actions)
-            c["sheets"].append(sh["id"])
-    for key, c in cells.items():
-        if c["mark"] == DIRECT and extra.get(key, 0) > c["found"]:
-            c["found_conditional"] = extra[key]
-    return cells, total, names
+    per = [(sh,) + assign(sh, values, where) for sh in sheets]
+    out = {}
+    for g, vs in values.items():
+        cells, extra, total, names, tied_with = {}, {}, set(), set(), set()
+        for sh, owned, tied in per:
+            key, c = col[sh["id"]], cells.get(col[sh["id"]])
+            if g in owned:
+                found, actions = owned[g]["found"], owned[g]["actions"]
+                total |= found
+                names |= actions
+                mark = mark_of(sh)
+                if mark == REVEALED:
+                    extra[key] = max(extra.get(key, 0), len(found))
+                if c is None or c["mark"] == TIED or (c["mark"] == REVEALED and mark == DIRECT):
+                    cells[key] = {"mark": mark, "found": len(found), "of": len(vs),
+                                  "actions": sorted(actions), "sheets": [sh["id"]]}
+                elif c["mark"] == mark:
+                    c["found"] = max(c["found"], len(found))
+                    c["actions"] = sorted(set(c["actions"]) | actions)
+                    c["sheets"].append(sh["id"])
+            elif g in tied:
+                tied_with |= tied[g]["tied"]
+                if c is None:
+                    cells[key] = {"mark": TIED, "tied": sorted(tied[g]["tied"]),
+                                  "actions": sorted(tied[g]["actions"]), "sheets": [sh["id"]]}
+                elif c["mark"] == TIED:
+                    c["tied"] = sorted(set(c["tied"]) | tied[g]["tied"])
+                    c["actions"] = sorted(set(c["actions"]) | tied[g]["actions"])
+                    c["sheets"].append(sh["id"])
+        for key, c in cells.items():
+            if c["mark"] == DIRECT and extra.get(key, 0) > c["found"]:
+                c["found_conditional"] = extra[key]
+        out[g] = (cells, total, names, sorted(tied_with))
+    return out
 
 
 def where_in_original(survey):
@@ -175,7 +224,7 @@ def matrix(sheets, flow_info, groups, group_counts, entrances, task_errors, wher
 
     줄은 `{"section", "key", "cells", "original", "original_from", ...}` 에 무리마다
     그릴 때 쓸 칸이 더 있다 (steps: step · sheet · how / choices · 숫자판: action · kind ·
-    by (value · name) · count_original · values · found · actions / 입력 칸: action · text ·
+    by (value · name) · count_original · values · found · actions · tied / 입력 칸: action · text ·
     aria / errors: id · about · sheet · recover · back_to_sheet · original_back_to /
     entrances: id · action · label)."""
     by_id = {s["id"]: s for s in sheets}
@@ -196,14 +245,16 @@ def matrix(sheets, flow_info, groups, group_counts, entrances, task_errors, wher
             if it["kind"] == "group":
                 built.setdefault(it["action"], set()).update(it["group"]["values"])
     pads, picks = [], []
+    known = {a: sorted((original_values or {}).get(a) or []) for a in groups}
+    by_value = place_values(sheets, {a: v for a, v in known.items() if v}, where)
     for a in groups:
-        vals = sorted((original_values or {}).get(a) or [])
+        vals = known[a]
         row = {"key": a, "action": a, "count_original": (group_counts or {}).get(a),
                "original": list(where.get(a) or []), "original_from": "survey"}
         if vals:
-            cells, found, names = place_values(sheets, vals)
+            cells, found, names, tied = by_value[a]
             row.update(by="value", values=len(vals), found=len(found),
-                       actions=sorted(names), cells=cells)
+                       actions=sorted(names), tied=tied, cells=cells)
         else:
             row.update(by="name", values=None, found=None, actions=[a],
                        cells=place(sheets, lambda it, a=a: it["action"] == a))

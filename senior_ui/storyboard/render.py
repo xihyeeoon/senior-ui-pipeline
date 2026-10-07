@@ -31,7 +31,7 @@ import html as _html
 import math
 import re
 
-from .features import DIRECT, ORIGINAL_FROM, REVEALED, SECTION_LABEL, SECTIONS
+from .features import DIRECT, ORIGINAL_FROM, REVEALED, SECTION_LABEL, SECTIONS, TIED
 
 # 가로 A4 (297 x 210mm) - 여백 8mm. CSS 픽셀(1/96 인치)로 쓴 그림 칸.
 # 그림 칸의 높이는 장 맨 위의 정보칸 만큼 줄였다.
@@ -278,6 +278,7 @@ th { background: var(--soft); font-weight: 600; white-space: nowrap; }
 .fm th.v a { color: inherit; }
 .fm td.m { text-align: center; font-size: 11px; }
 .fm td.m small { font-size: 7.5px; color: var(--muted); }
+.fm td.m.t { font-size: 8px; color: #a6420e; }
 .fm tr.sec td { background: var(--soft); font-weight: 700; }
 .fm tr.sec td .how { font-weight: 400; }
 .fm tr.miss td.f { color: #a61e4d; }
@@ -795,12 +796,17 @@ def render_wireflow(data):
 def _found(row):
     """값으로 찾은 무리의 꼬리 - 찾은 값 수와 빌드가 쓴 data-action 이름."""
     if row.get("by") == "value":
+        tied = (" · 값이 같은 무리: %s" % esc(", ".join(row["tied"]))
+                if row.get("tied") else "")
         if not row.get("found"):
-            return " — 보지 못함 (값 0/%d)" % row["values"]
+            return (" — 값이 같은 무리: %s (어느 무리인지 가를 수 없음)"
+                    % esc(", ".join(row["tied"])) if row.get("tied")
+                    else " — 보지 못함 (값 0/%d)" % row["values"])
         names = ['<span class="mono">%s</span>' % esc(a) for a in row["actions"]]
-        return " — 값 %d/%d 찾음 (빌드: %s%s)" % (
+        return " — 값 %d/%d 찾음 (빌드: %s%s)%s" % (
             row["found"], row["values"], ", ".join(names[:ACTIONS_SHOWN]),
-            " 외 %d" % (len(names) - ACTIONS_SHOWN) if len(names) > ACTIONS_SHOWN else "")
+            " 외 %d" % (len(names) - ACTIONS_SHOWN) if len(names) > ACTIONS_SHOWN else "",
+            tied)
     if row.get("by") == "name":
         return " — 원본의 값을 모으지 못해 이름으로 찾음"
     return ""
@@ -848,7 +854,10 @@ def render_features(data, ids):
            '<div class="sub">%s 흐름이 머무는 상태(본 장 · 다시 지나는 장)에서 보임 · %s 조건별 '
            "장(펼친 뒤 · 오류)에서만 보임 · 오류 회복 줄은 그 오류가 보이는 화면. 선택지 무리 · "
            "숫자판은 원본의 값으로 찾는다 - 그 상태의 누를 수 있는 요소(이름이 무엇이든)의 "
-           "값에서, 검사 I 와 같은 경계 규칙으로. 작은 수는 그 화면에서 찾은 값 / 원본 값 "
+           "값에서, 검사 I 와 같은 경계 규칙으로. 생성물의 data-action 하나는 값을 가장 많이 "
+           "덮는 원본 무리 하나에만 센다 (동점이면 그 화면의 바탕 원본 화면에 있던 무리, 다음은 "
+           "이름이 같은 무리, 그래도 같으면 \"같은 값\" - ● · ○ 로 세지 않는다). "
+           "작은 수는 그 화면에서 찾은 값 / 원본 값 "
            "수 (○n 은 조건별 장에서 더 보이는 수), 빌드가 쓴 이름은 줄에. 과제 밖 입구는 "
            "oos- 이름으로 찾는다. 표시는 모두 %s - 장마다 보인 data-action 요소와 흐름 명세의 "
            "걸음 · 오류 경로. 원본 화면 칸의 출처는 무리마다 적었다.%s</div>" % (
@@ -877,6 +886,13 @@ def render_features(data, ids):
                 cell = r["cells"].get(c)
                 if not cell:
                     cells.append('<td class="m"></td>')
+                    continue
+                if cell["mark"] == TIED:
+                    cells.append('<td class="m t" title="값이 같은 무리: %s · 빌드: %s · %s">'
+                                 "같은 값</td>" % (
+                                     esc(", ".join(cell["tied"])),
+                                     esc(", ".join(cell["actions"])),
+                                     esc(", ".join(cell["sheets"]))))
                     continue
                 count = cell.get("count")
                 small = ("<small>%d/%d%s</small>" % (

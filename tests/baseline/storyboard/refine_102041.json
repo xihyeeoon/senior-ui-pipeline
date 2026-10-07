@@ -1348,6 +1348,7 @@
           "pick-bank",
           "service"
         ],
+        "tied": [],
         "cells": {
           "scr-home": {
             "mark": "●",
@@ -1400,6 +1401,7 @@
         "actions": [
           "quick"
         ],
+        "tied": [],
         "cells": {
           "scr-amount": {
             "mark": "●",
@@ -1428,10 +1430,9 @@
         "values": 10,
         "found": 10,
         "actions": [
-          "acc-num",
-          "num",
-          "pw"
+          "acc-num"
         ],
+        "tied": [],
         "cells": {
           "scr-account": {
             "mark": "●",
@@ -1442,28 +1443,6 @@
             ],
             "sheets": [
               "scr-account"
-            ]
-          },
-          "scr-amount": {
-            "mark": "●",
-            "found": 10,
-            "of": 10,
-            "actions": [
-              "num"
-            ],
-            "sheets": [
-              "scr-amount"
-            ]
-          },
-          "scr-verify": {
-            "mark": "●",
-            "found": 10,
-            "of": 10,
-            "actions": [
-              "pw"
-            ],
-            "sheets": [
-              "scr-verify"
             ]
           }
         },
@@ -1482,22 +1461,10 @@
         "values": 11,
         "found": 11,
         "actions": [
-          "acc-num",
-          "num",
-          "pw"
+          "num"
         ],
+        "tied": [],
         "cells": {
-          "scr-account": {
-            "mark": "●",
-            "found": 10,
-            "of": 11,
-            "actions": [
-              "acc-num"
-            ],
-            "sheets": [
-              "scr-account"
-            ]
-          },
           "scr-amount": {
             "mark": "●",
             "found": 11,
@@ -1507,17 +1474,6 @@
             ],
             "sheets": [
               "scr-amount"
-            ]
-          },
-          "scr-verify": {
-            "mark": "●",
-            "found": 10,
-            "of": 11,
-            "actions": [
-              "pw"
-            ],
-            "sheets": [
-              "scr-verify"
             ]
           }
         },
@@ -1536,33 +1492,10 @@
         "values": 10,
         "found": 10,
         "actions": [
-          "acc-num",
-          "num",
           "pw"
         ],
+        "tied": [],
         "cells": {
-          "scr-account": {
-            "mark": "●",
-            "found": 10,
-            "of": 10,
-            "actions": [
-              "acc-num"
-            ],
-            "sheets": [
-              "scr-account"
-            ]
-          },
-          "scr-amount": {
-            "mark": "●",
-            "found": 10,
-            "of": 10,
-            "actions": [
-              "num"
-            ],
-            "sheets": [
-              "scr-amount"
-            ]
-          },
           "scr-verify": {
             "mark": "●",
             "found": 10,
