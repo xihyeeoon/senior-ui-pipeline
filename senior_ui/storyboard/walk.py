@@ -68,7 +68,8 @@ CHANGE_LINES = 1
 # 배경 · 채우기 · 그림자 · 그라데이션 · 둥근 모서리를 없애고 글자는 진회색 하나로 한다.
 # 누를 수 있는 요소(data-action)와 입력 칸, 원래 디자인에서 상자로 보이던 묶음(카드 ·
 # 띠 · 패널)은 1px 회색 테두리 상자로, 꺼진 버튼은 점선 테두리로 그린다. 사진 · 아이콘 ·
-# 로고 자리는 X 가 그어진 회색 상자다.
+# 로고 자리는 X 가 그어진 회색 상자다. 이름 붙은 그림 자리(role="img" + aria-label)는 그
+# 상자 안에 "[X] 이름" 을 글로 보인다 - 덮개가 아니라 찍기 직전에 얹는 층이다 (NAMES_ON).
 #
 # 위치 · 크기 · 글자 크기 · 굵기는 그대로 둔다 - 위계와 크기는 설계 결정이므로 남긴다.
 # 그래서 이 덮개는 배치를 바꾸는 속성(크기 · 여백 · 테두리 두께 · 글꼴)을 하나도 쓰지
@@ -389,6 +390,79 @@ MARK_ON = r"""(items) => {
 }"""
 MARK_OFF = "() => { const l = document.getElementById('sb-mark-layer'); if (l) l.remove(); }"
 
+# 그림 자리의 이름 (11-11 1-2). 원본은 로고 · 아이콘을 이름 붙은 그림 자리(role="img" +
+# aria-label "신한 로고")로 둔다. 덮개는 그 자리를 X 상자로 그리고, 이 층이 상자 안에
+# "[X] 신한 로고" 를 글로 보인다 - 무슨 그림인지가 설계 정보다.
+#
+# 덮개 CSS 에 넣지 않는다 - 그 CSS 는 배치를 바꾸는 속성을 하나도 쓰지 않는다. 그래서 번호
+# 그림의 MARK_ON 처럼 깨끗한 그림을 찍기 직전에 얹고 찍은 뒤 걷어내는 겹침 층이다. 요소의
+# 스타일은 건드리지 않고(층은 문서 좌표에 따로 놓인다), 요소 목록(ELEMENTS)을 읽은 뒤에
+# 얹으므로 요소 값에 섞이지 않는다. 번호 그림(모델에게 보내는 것)에는 없다.
+#
+# 글자 크기는 상자에 들어가는 가장 큰 것(max_px 부터 min_px 까지)이고, 그래도 넘치면 상자
+# 안에서 자른다. 숨은 자리 · 이름 없는 자리 · min_box 보다 작게 보이는 자리는 건너뛰고,
+# 조상이 자른(overflow) 자리는 보이는 만큼만 덮는다. 돌려주는 것은 `[{label, box, px}]`.
+NAME_PREFIX = "[X] "
+NAME_OPTIONS = {"prefix": NAME_PREFIX, "max_px": 11, "min_px": 6, "min_box": 8}
+NAMES_ON = r"""(o) => {
+  const old = document.getElementById('sb-name-layer'); if (old) old.remove();
+  const layer = document.createElement('div');
+  layer.id = 'sb-name-layer';
+  layer.style.cssText = 'position:absolute;left:0;top:0;width:0;height:0;'
+    + 'pointer-events:none;z-index:2147483646';
+  const ctx = document.createElement('canvas').getContext('2d');
+  const shown = el => {
+    for (let p = el; p; p = p.parentElement) {
+      const cs = getComputedStyle(p);
+      if (+cs.opacity === 0 || cs.display === 'none') return false;
+      if (p === el && cs.visibility === 'hidden') return false;
+    }
+    return true;
+  };
+  const out = [];
+  document.querySelectorAll('[role="img"][aria-label]').forEach(el => {
+    const label = (el.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim();
+    if (!label || !shown(el)) return;
+    const r = el.getBoundingClientRect();
+    let x1 = r.left, y1 = r.top, x2 = r.right, y2 = r.bottom;
+    for (let p = el.parentElement; p && p !== document.documentElement; p = p.parentElement) {
+      const cs = getComputedStyle(p);
+      if (cs.overflowX === 'visible' && cs.overflowY === 'visible') continue;
+      const q = p.getBoundingClientRect();
+      x1 = Math.max(x1, q.left); y1 = Math.max(y1, q.top);
+      x2 = Math.min(x2, q.right); y2 = Math.min(y2, q.bottom);
+    }
+    const w = x2 - x1, h = y2 - y1;
+    if (w < o.min_box || h < o.min_box) return;
+    const text = o.prefix + label;
+    let px = o.max_px;
+    for (; px > o.min_px; px--) {
+      ctx.font = '600 ' + px + 'px sans-serif';
+      const lines = Math.ceil(ctx.measureText(text).width / Math.max(1, w - 2));
+      if (lines * px * 1.2 <= h - 2) break;
+    }
+    const box = document.createElement('div');
+    box.style.cssText = 'position:absolute;box-sizing:border-box;display:flex;'
+      + 'align-items:center;justify-content:center;overflow:hidden;padding:1px;'
+      + 'left:' + (x1 + scrollX) + 'px;top:' + (y1 + scrollY) + 'px;'
+      + 'width:' + w + 'px;height:' + h + 'px';
+    const t = document.createElement('span');
+    t.textContent = text;
+    t.style.cssText = 'font:600 ' + px + 'px/1.2 sans-serif;text-align:center;'
+      + 'word-break:keep-all;overflow-wrap:anywhere;max-width:100%';
+    // 덮개의 규칙(배경 투명 · 글자 진회색)이 모든 요소에 !important 로 걸려 있다
+    t.style.setProperty('background-color', '#eeeeee', 'important');
+    t.style.setProperty('color', '#333', 'important');
+    box.appendChild(t);
+    layer.appendChild(box);
+    out.push({label: label, px: px,
+              box: [Math.round(x1 + scrollX), Math.round(y1 + scrollY), Math.round(w), Math.round(h)]});
+  });
+  document.body.appendChild(layer);
+  return out;
+}"""
+NAMES_OFF = "() => { const l = document.getElementById('sb-name-layer'); if (l) l.remove(); }"
+
 # 누르기 전후에 보는 것. 켜진 화면 · 기록 · 보이는 글(켜진 화면 + 그 밖에 떠 있는 것) ·
 # 입력 칸 값 · 표시 상태(클래스와 aria 상태)의 지문 · 스크롤 위치.
 SEEN = r"""() => {
@@ -640,8 +714,10 @@ async def picture_state(browser, wire_url, flow, state, shots_dir, file_id, numb
     번호를 안 뒤에 같은 페이지에서 번호 그림(모델에게 보낼 것)을 찍는다.
     `selectors` 는 이 상태에서 요소 순번을 알아낼 흐름 명세의 선택자들이다.
 
+    깨끗한 그림에는 그림 자리의 이름("[X] 신한 로고")을 얹어 찍는다 (NAMES_ON).
+
     돌려주는 것: {"items", "covered", "dom_screen", "landed_on", "size", "clipped",
-    "picture", "marked", "selector_index", "dialogs", "error"}."""
+    "picture", "marked", "names", "selector_index", "dialogs", "error"}."""
     out = {"error": None, "dialogs": []}
     ctx, page = await new_page(browser, PICTURE_SCALE)
     attach_dialogs(page, out["dialogs"])
@@ -679,7 +755,10 @@ async def picture_state(browser, wire_url, flow, state, shots_dir, file_id, numb
                 selectors, await page.evaluate(SELECTOR_INDEX, list(selectors))))
         clip = {"x": ex["x"], "y": ex["y"], "width": ex["w"], "height": ex["h"]}
         pic = os.path.join(shots_dir, "%s.png" % file_id)
+        # 그림 자리의 이름은 깨끗한 그림에만 - 요소를 읽은 뒤 얹고 찍은 뒤 걷어낸다
+        out["names"] = await page.evaluate(NAMES_ON, NAME_OPTIONS)
         await page.screenshot(path=pic, clip=clip, scale="device")
+        await page.evaluate(NAMES_OFF)
         out["picture"] = pic
         marks = number(out["items"])
         await page.evaluate(MARK_ON, [{"no": no, "box": box} for no, box in marks])
