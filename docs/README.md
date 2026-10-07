@@ -356,9 +356,12 @@ o 계열과 맞지 않는다) · `types/shared/reasoning_effort.py`.
   요구하지 않는다 (아래 '선택지가 아닌 무리').
 - **검사 I** — 그 블록(`script#preserved-data`)은 "값이 있다" 의 증거로 세지
   않는다. 세면 모델이 하나도 그리지 않아도 통과한다. 대신 걷는 동안 렌더링된
-  DOM 에서 모은 선택지 값을 함께 본다. `choice_values_kept` 가 판정 기준이고
-  `choice_values_selectable` 는 그중 DOM 에서 고를 수 있던 수다 — 둘이 다르면
-  경고가 난다 (fatal 아님).
+  DOM 에서 모은 선택지 값을 함께 본다. **무리는 원본이 정하고, 생성물에서는 놓인
+  모양과 상관없이 센다** — 원본에서 무리였던 이름(`i_choices.original_groups`, 과제가
+  선택지가 아니라고 선언한 이름은 뺀다)의 요소는 생성물에서 형제가 없어도 모두 세고,
+  원본에서 무리가 아니던 이름은 형제 둘 이상일 때만 무리다 (11-9b).
+  `choice_values_kept` 가 판정 기준이고 `choice_values_selectable` 는 그중 DOM 에서
+  고를 수 있던 수다 — 둘이 다르면 경고가 난다 (fatal 아님).
 
 **모델이 만든 것과 도구가 고친 것은 파일로 갈라 둔다.** 검사기가 여는 파일과
 승격되는 산출물(`outputs/restructured_auto.html`)에는 데이터 블록이 들어 있다 —

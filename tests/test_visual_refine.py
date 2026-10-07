@@ -983,7 +983,8 @@ def test_the_model_input_still_walks_the_task(server, task):
         import capture_baseline as C
         base = C.BASE_URL                    # server fixture 가 띄운 포트
         orig = asyncio.run(_api.drive("%s/%s" % (base, t["original"]), f))
-        rep = asyncio.run(_api.drive("%s/%s" % (base, rel), f))
+        rep = asyncio.run(_api.drive("%s/%s" % (base, rel), f,
+                                     original_groups=C.original_groups(orig, f)))
         report = _api.audit(orig, rep, html, strip(html), f)
     finally:
         os.remove(os.path.join(config.ROOT, rel))

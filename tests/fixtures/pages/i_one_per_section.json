@@ -1,0 +1,13 @@
+{
+  "name": "i_one_per_section",
+  "truth": {"BANK": "카카오뱅크", "ACCOUNT": "3333000000000", "AMOUNT": "10000", "NAME": "김시현"},
+  "note": "검사 I 의 선택지 수집 - 원본에서 무리였던 menu-item 이 생성물에서는 분류마다 하나씩 따로 놓였다 (형제 없음). 일부는 [더 보기] 를 눌러야 그려진다 (reveal). 뒤로(back)는 화면마다 하나씩이고 원본에서도 무리가 아니다.",
+  "derived_from_original": false,
+  "required_ids": ["dn-amt"],
+  "steps": [
+    {"screen": "menu"},
+    {"screen": "done", "click": "[data-action='menu-item']"}
+  ],
+  "expect": {"done": [["#dn-amt", "{AMOUNT_SHOWN}"]]},
+  "reveal": {"menu-item": {"at": "menu", "do": [{"click": "#more"}]}}
+}

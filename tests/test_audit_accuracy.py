@@ -61,14 +61,18 @@ def drive_and_audit(flow_file, rep_page, orig_page=None, orig_flow_file=None,
     """
     flow = _api.load_flow(page_path(flow_file))
     rep_html = read_page(rep_page)
-    rep = asyncio.run(_api.drive(page_url(rep_page), flow))
     if orig_page is None:
+        rep = asyncio.run(_api.drive(page_url(rep_page), flow))
         orig, html_of_orig = rep, rep_html
     else:
+        # 검사기 CLI 와 같은 순서 - 원본을 먼저 걷고, 생성물은 원본에서 무리였던
+        # 이름으로 선택지를 모은다 (i_choices.original_groups).
         orig = asyncio.run(_api.drive(
             page_url(orig_page), _api.load_flow(page_path(orig_flow_file
                                                           or flow_file))))
         html_of_orig = read_page(orig_page)
+        rep = asyncio.run(_api.drive(page_url(rep_page), flow,
+                                     original_groups=C.original_groups(orig, flow)))
     report = _api.audit(orig, rep,
                         html_of_orig if orig_html is None else orig_html,
                         rep_html, flow)

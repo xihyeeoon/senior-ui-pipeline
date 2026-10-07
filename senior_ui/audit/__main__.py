@@ -49,6 +49,7 @@ import traceback
 from .._cli import setup_stdout
 from ..config import OUTPUTS_DIR, url_for
 from ..tasks import abs_path, load_task, task_names
+from .checks.i_choices import original_groups
 from .core import audit
 from .drive import drive
 from .flow import load_flow
@@ -161,7 +162,10 @@ def main(argv=None):
         # 않는다 - 오류 경로는 빌드의 흐름으로 빌드를 걷는다.
         orig = asyncio.run(drive(args.original, base_flow,
                                  errors=base_flow is flow))
-        rep = asyncio.run(drive(args.build, flow, want_shots=args.shots))
+        # 선택지 무리는 원본이 정한다 - 원본을 먼저 걸었으므로 그 결과에서 무리였던
+        # 이름을 넘긴다 (checks/i_choices.original_groups).
+        rep = asyncio.run(drive(args.build, flow, want_shots=args.shots,
+                                original_groups=original_groups(orig, flow)))
 
         report = audit(orig, rep, orig_html, rep_html, flow)
         report = apply_stage(report, stage)

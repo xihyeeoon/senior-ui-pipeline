@@ -342,7 +342,7 @@ def cli_drives(monkeypatch, tmp_path, extra, flow_path=None):
     CLI = _api.audit_cli_module
     seen = []
 
-    async def fake_drive(url, flow, want_shots=None, errors=True):
+    async def fake_drive(url, flow, want_shots=None, errors=True, **_kw):
         seen.append((url, flow["name"], flow["task"]))
         return {}
     monkeypatch.setattr(CLI, "drive", fake_drive)

@@ -234,9 +234,10 @@ def test_the_brief_says_none_when_nothing_is_declared(tmp_path):
 REAL = os.path.join(ROOT, "tests", "fixtures", "real_runs", "bill_sol")
 OUT = os.path.join(ROOT, ".pytest-outputs", "real_runs", "bill_sol")
 
-# 세 답 모두 메뉴 항목 6개가 남는다. 모델은 6개를 그렸다 - 항목이 하나뿐인 분류의
-# 항목이라 분류마다 따로 만든 목록 안에서 같은 data-action 형제가 없고, 걷기의 선택지
-# 수집(probes.CHOICE_GROUPS)은 형제가 둘 이상인 것만 센다. 글자 경계 규칙과는 무관하다.
+# 11-9 에서는 세 답 모두 메뉴 항목 6개가 남았다. 모델은 6개를 그렸다 - 항목이 하나뿐인
+# 분류의 항목이라 분류마다 따로 만든 목록 안에서 같은 data-action 형제가 없고, 그때의
+# 선택지 수집(probes.CHOICE_GROUPS)은 형제가 둘 이상인 것만 셌다. 11-9b 부터 원본에서
+# 무리였던 이름은 생성물에서 형제 수와 상관없이 센다 (test_group_source).
 SINGLE_ITEM_SECTIONS = ["나의 금융 이용현황", "보험상담신청", "보험상품안내",
                         "신한 슈퍼SOL 사용팁", "증권재발행", "진행중인 이벤트"]
 
@@ -283,18 +284,21 @@ def bill_verdicts(server):
 
 @pytest.mark.browser
 @pytest.mark.parametrize("n", [2, 3, 4])
-def test_saved_bill_replies_fail_only_on_the_single_item_sections(bill_verdicts, n):
-    """고치기 전: 시도 2 는 I 셋(menu-chip 60 · menu-item 6 · menu-tab 1), 시도 3 · 4 는
-    I 둘(menu-chip 60 · menu-item 6) 이었다."""
+def test_saved_bill_replies_keep_every_menu_item(bill_verdicts, n):
+    """처음: 시도 2 는 I 셋(menu-chip 60 · menu-item 6 · menu-tab 1), 시도 3 · 4 는 I 둘
+    (menu-chip 60 · menu-item 6). not_choices 뒤(11-9): 셋 다 I 하나 (menu-item 6 -
+    SINGLE_ITEM_SECTIONS). 무리를 원본이 정한 뒤(11-9b): fatal 이 없다."""
     v = bill_verdicts[n]
     assert v["problems"] == []
     report = v["report"]
-    assert [(f["check"], f.get("action"), f.get("missing")) for f in report["fatal"]] == \
-        [("I", "menu-item", SINGLE_ITEM_SECTIONS)]
+    assert report["fatal"] == [], [(f["check"], f.get("action"), f.get("missing"))
+                                   for f in report["fatal"]]
     m = report["metrics"]
+    assert m["choice_values_missing"] == {}
     assert set(m["choice_groups_original"]) == {"menu-item", "pick-bill", "pw"}
     assert m["choice_groups_not_choices"] == {
         "menu-chip": {"values": 60, "reason": BILL_DECLARED["menu-chip"]},
         "menu-tab": {"values": 7, "reason": BILL_DECLARED["menu-tab"]}}
-    assert m["choice_values_kept"]["menu-item"] == 283
+    assert m["choice_values_kept"]["menu-item"] == 289
+    assert m["choice_values_selectable"]["menu-item"] == 289
     assert not [w for w in report["warning"] if "menu-tab" in w["detail"]]

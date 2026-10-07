@@ -52,6 +52,12 @@ import _api                                                  # noqa: E402
 BASE_URL = _api.config_module.base_url()
 
 
+def original_groups(orig, flow):
+    """생성물을 걸을 때 넘기는 원본의 선택지 무리 이름 - 검사기 CLI · 루프와 같은 것
+    (i_choices.original_groups). 원본을 먼저 걷고 그 결과로 만든다."""
+    return _api.i_choices_module.original_groups(orig, flow)
+
+
 def use_port(port):
     """이 프로세스의 브라우저가 여는 서버의 포트를 정한다 (BASE_URL)."""
     global BASE_URL
@@ -165,7 +171,7 @@ def capture_cases(out):
         rep_html = read(os.path.join(ROOT, rel))
 
         # audit.py main() 과 같은 순서:
-        #   흐름 읽기 -> 원본 drive -> 빌드 drive -> audit() -> apply_stage
+        #   흐름 읽기 -> 원본 drive -> 빌드 drive (원본의 무리 이름) -> audit() -> apply_stage
         flow = _api.load_flow(flow_path)
         base_flow = _api.load_flow(None) \
             if not flow.get("derived_from_original", True) else flow
@@ -174,7 +180,8 @@ def capture_cases(out):
         orig = asyncio.run(_api.drive(orig_url, base_flow,
                                       errors=base_flow is flow))
         say("  %s: 빌드 drive (%s)" % (name, rel))
-        rep = asyncio.run(_api.drive(rep_url, flow))
+        rep = asyncio.run(_api.drive(rep_url, flow,
+                                     original_groups=original_groups(orig, flow)))
 
         report = _api.audit(orig, rep, orig_html, rep_html, flow)
         d = os.path.join(out, name)
@@ -765,7 +772,8 @@ def capture_bill(out):
         say("  bill/%s: 원본 drive" % name)
         orig = asyncio.run(_api.drive(orig_url, flow))
         say("  bill/%s: 빌드 drive (%s)" % (name, rel))
-        rep = asyncio.run(_api.drive("%s/%s" % (BASE_URL, rel), flow))
+        rep = asyncio.run(_api.drive("%s/%s" % (BASE_URL, rel), flow,
+                                     original_groups=original_groups(orig, flow)))
         report = _api.audit(orig, rep, orig_html, read(os.path.join(ROOT, rel)), flow)
         c = os.path.join(d, name)
         dump(os.path.join(c, "snapshots.json"), {"orig": orig, "rep": rep})

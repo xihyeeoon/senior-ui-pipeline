@@ -11,6 +11,7 @@ import io
 
 from senior_ui import audit as A
 from senior_ui.audit import stage as S
+from senior_ui.audit.checks.i_choices import original_groups
 from senior_ui.audit.inputs import judged_flow, read_flow
 
 
@@ -26,8 +27,10 @@ def run_audit(orig_snapshot, orig_html, html_path, flow_path, url, shots, stage,
                        allowed_removals=allowed_removals)
     rep_html = io.open(html_path, encoding="utf-8").read()
     # see 는 다듬기가 모델에게 보여 줄 그림을 더 찍는다 (shots/see/). 검사는
-    # 보지 않는다.
-    rep = asyncio.run(A.drive(url, flow, want_shots=shots, see=see))
+    # 보지 않는다. 선택지 무리는 원본이 정한다 - 실행 시작에 걸은 원본 스냅샷에서
+    # 무리였던 이름을 넘겨 생성물에서는 놓인 모양과 상관없이 센다.
+    rep = asyncio.run(A.drive(url, flow, want_shots=shots, see=see,
+                              original_groups=original_groups(orig_snapshot, flow)))
     report = A.audit(orig_snapshot, rep, orig_html, rep_html, flow)
     report = S.apply_stage(report, flow["stage"])
     # 비교 기준이 된 문서를 그대로 적는다. 부르는 쪽이 --original 로 바꿀 수

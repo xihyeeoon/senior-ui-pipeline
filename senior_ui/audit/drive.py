@@ -249,12 +249,14 @@ def merge_entrances(have, got):
             have[action] = row
 
 
-async def collect_screen(page, flow, visit, reached=None):
+async def collect_screen(page, flow, visit, reached=None, original_groups=()):
     """한 화면에 도착한 뒤의 상태를 전부 긁어 하나의 row 로 돌려준다.
 
     `reached` 를 주면 __screen() 의 답을 긁기 직전에 거기에 먼저 적는다. 걷는
     중에 뜬 dialog 는 `reached` 의 마지막 이름으로 기록되므로, 이 순서가 dialog
     가 어느 화면에 붙는지를 정한다.
+
+    `original_groups` 는 원본에서 선택지 무리였던 이름이다 (drive 참고).
 
     화면에 매인 값들(`inherited` · `overlap` · `overflow` · `wrapped` ·
     `shown`)은 켜진 화면이 없으면 null 이다 - 빈 목록이 아니다. probes.py 의
@@ -268,7 +270,7 @@ async def collect_screen(page, flow, visit, reached=None):
     row = {"landed_on": at,
            "dom_screen": await page.evaluate(P.DOM_SCREEN)}
     row.update(await page.evaluate(P.INVENTORY))
-    row["choices"] = await page.evaluate(P.CHOICE_GROUPS)
+    row["choices"] = await page.evaluate(P.CHOICE_GROUPS, list(original_groups))
     # CONTRAST 는 두 칸으로 돌려준다 - 잰 것과 잴 수 없었던 것. 한 칸으로
     # 합치면 그라디언트 위의 글자가 "저명암 아님" 과 구분되지 않는다.
     contrast = await page.evaluate(P.CONTRAST)
@@ -290,7 +292,7 @@ async def collect_screen(page, flow, visit, reached=None):
     return row
 
 
-async def drive(url, flow, want_shots=None, errors=True, see=False):
+async def drive(url, flow, want_shots=None, errors=True, see=False, original_groups=()):
     """Walk the task once and collect everything the checks need.
 
     흐름에 오류 경로(`error_paths`)가 있으면 정답 경로를 걸은 뒤 경로마다 새
@@ -301,7 +303,13 @@ async def drive(url, flow, want_shots=None, errors=True, see=False):
 
     `see` 를 주면 (want_shots 와 함께) 화면마다 맨 위부터 잘라 찍은 그림을
     `want_shots/see/` 에 더 남긴다 (capture_see). 모델에게 보여 줄 그림이고,
-    검사는 보지 않는다. 기본은 꺼짐 - 검사기 명령과 기준값은 그대로다."""
+    검사는 보지 않는다. 기본은 꺼짐 - 검사기 명령과 기준값은 그대로다.
+
+    `original_groups` 는 원본에서 선택지 무리였던 이름이다 (checks/i_choices.
+    original_groups). 생성물을 걸을 때 원본의 걷기 결과로 만들어 넘긴다 - 그 이름의
+    요소는 놓인 모양과 상관없이 모두 선택지 값으로 모은다 (probes.CHOICE_GROUPS).
+    걸음마다 모으는 곳과 reveal 을 따로 걸으며 모으는 곳이 같은 목록을 쓴다. 원본을
+    걸을 때는 빈 목록이다 - 무리를 정하는 쪽이므로."""
     data = {"screens": {}, "dialogs": [], "js_errors": [], "reached": [],
             "missing_ids": [], "state_pairs": [], "load_failed": None,
             "notes": [], "js_error_details": [], "flow": flow["name"],
@@ -319,14 +327,16 @@ async def drive(url, flow, want_shots=None, errors=True, see=False):
         try:
             page = await browser.new_page(viewport={"width": 390, "height": 844})
             tasks = attach_listeners(page, data)
-            await walk(page, flow, data, want_shots, url, see=see)
+            await walk(page, flow, data, want_shots, url, see=see,
+                       original_groups=original_groups)
             await drain_dialogs(tasks)
             reveal = flow.get("reveal")
             if isinstance(reveal, dict) and reveal:
                 data["revealed"] = {}
                 for action, spec in reveal.items():
                     data["revealed"][action] = await walk_reveal(
-                        browser, url, flow, spec if isinstance(spec, dict) else {})
+                        browser, url, flow, spec if isinstance(spec, dict) else {},
+                        original_groups)
             paths = [e for e in flow.get("error_paths") or []
                      if isinstance(e, dict) and e.get("id")] if errors else []
             if paths:
@@ -341,7 +351,7 @@ async def drive(url, flow, want_shots=None, errors=True, see=False):
     return data
 
 
-async def walk(page, flow, data, want_shots, url, see=False):
+async def walk(page, flow, data, want_shots, url, see=False, original_groups=()):
     """한 페이지를 흐름대로 걷는다. 브라우저의 생명은 drive() 가 쥐고 있다."""
     seen = []
     try:
@@ -379,7 +389,7 @@ async def walk(page, flow, data, want_shots, url, see=False):
                 % (name, SETTLE_TIMEOUT_MS))
 
         data["screens"][visit] = await collect_screen(
-            page, flow, visit, data["reached"])
+            page, flow, visit, data["reached"], original_groups)
         merge_entrances(data["entrances_seen"], await page.evaluate(P.ENTRANCES))
         if want_shots:
             await page.screenshot(path=os.path.join(
@@ -498,7 +508,7 @@ REVEAL_TARGET = r"""sel => {
 }"""
 
 
-async def walk_reveal(browser, url, flow, spec):
+async def walk_reveal(browser, url, flow, spec, original_groups=()):
     """펼치기 조작 하나를 새 페이지에서 걷는다. 판정은 하지 않는다 (검사 I).
 
       1. 정답 걸음을 `at` (방문 이름) 에 도착할 때까지 밟는다.
@@ -511,7 +521,8 @@ async def walk_reveal(browser, url, flow, spec):
     문제로 센다 (loop.audit_build).
 
     정답 경로의 걷기와 따로 걷는다 - 펼친 상태가 A~H 가 보는 화면을 바꾸지
-    않게. 돌려주는 것은 `{"at", "choices": {action: [값]}, "error"}`."""
+    않게. 선택지는 정답 경로와 같은 `original_groups` 로 모은다 (drive 참고).
+    돌려주는 것은 `{"at", "choices": {action: [값]}, "error"}`."""
     truth = truth_of(flow)
     row = {"at": spec.get("at"), "choices": {}, "error": None, "violations": [],
            "entrances_seen": {}}
@@ -558,7 +569,7 @@ async def walk_reveal(browser, url, flow, spec):
                 return row
             if visit == spec.get("at"):
                 break
-        merge(await page.evaluate(P.CHOICE_GROUPS))
+        merge(await page.evaluate(P.CHOICE_GROUPS, list(original_groups)))
         await merge_texts()
         actions = spec.get("do") or []
         for i, act in enumerate(actions if isinstance(actions, list) else [actions]):
@@ -585,7 +596,7 @@ async def walk_reveal(browser, url, flow, spec):
                     % (i, sel, before.get("dom_screen") or before.get("landed_on"),
                        after.get("dom_screen") or after.get("landed_on")))
                 return row
-            merge(await page.evaluate(P.CHOICE_GROUPS))
+            merge(await page.evaluate(P.CHOICE_GROUPS, list(original_groups)))
             await merge_texts()
         return row
     finally:
