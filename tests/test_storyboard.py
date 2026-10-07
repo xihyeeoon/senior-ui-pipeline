@@ -393,7 +393,9 @@ def test_an_empty_state_is_marked_only_when_the_region_answer_says_so():
         {"no": 1, "name": "빈 목록", "description": "", "box": [0, 0, 10, 10],
          "source": "model", "elements": ["e1"], "empty": True}])
     page = RD.render_sheet(flagged, {"scr-a"}, {"scr-a": flagged})
-    assert page.count("예외: 빈 화면") == 1 and "모델 설명" in page
+    assert page.count("예외: 빈 화면") == 1
+    # 연구자 표시는 받지 않는다 - 모델이 붙인 것만, 그 자리에 "모델 설명" 꼬리표 (11-12c)
+    assert '예외: 빈 화면</span><span class="src model">모델 설명</span>' in page
 
 
 def test_the_region_answer_may_flag_an_empty_state():

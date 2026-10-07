@@ -1007,7 +1007,9 @@ def render_sheet(sh, ids, sheets_by_id):
                       if (it.get("result") or {}).get("kind") == "disabled" else "")
                 lis.append('<li><span class="e">%s</span>%s — %s%s</li>' % (
                     esc(e), esc(item_label(it)), ex, result_text(it, True, ids)))
-            empty = '<span class="ex">예외: 빈 화면</span>' if r.get("empty") else ""
+            # 빈 상태는 영역 묶기 답이 붙인 것만 - 그 자리에 출처(모델 설명)를 붙인다
+            empty = ('<span class="ex">예외: 빈 화면</span>%s ' % _src("model")
+                     if r.get("empty") else "")
             out.append('<tr><td class="no">%d</td><td class="nm">%s<b>%s</b>'
                        '<span class="desc">%s</span> %s</td><td>%s<ul>%s</ul></td></tr>' % (
                            r["no"], empty, esc(r["name"]), esc(r.get("description")),
