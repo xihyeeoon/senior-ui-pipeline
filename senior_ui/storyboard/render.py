@@ -11,6 +11,7 @@ r"""storyboard.json 하나로 설계서(index.html)를 그린다. 그림 말고�
 
 칸마다 출처를 붙인다: 동작은 "도구 확인"(도구가 실제로 눌러 본 결과), 영역 이름 · 설명은
 "모델 설명" (mock 이면 "mock", 모델이 빠뜨려 도구가 모은 "기타" 는 "도구 묶음").
+동작 칸은 실무 주석 꼴로 적는다 ("클릭 시 → [scr-amount] 이동").
 
 PDF 는 이 페이지를 Chromium 으로 인쇄한 것이다 (print_pdf).
 """
@@ -58,30 +59,91 @@ def item_label(it):
     return "'%s'" % t
 
 
+# --------------------------------------------------------------------------- #
+# 동작 칸 - 실무 주석 꼴
+# --------------------------------------------------------------------------- #
+# 같은 화면에서 바뀐 것(walk.describe_change 의 detail)을 주석 꼴로. detail 은 " · " 로
+# 이은 조각들이다 - 조각마다 머리말이 정해져 있다.
+SAME_PREFIX = (("새로 보임: ", "같은 화면에서 %s 나타남"),
+               ("사라짐: ", "같은 화면에서 %s 사라짐"),
+               ("입력 칸 값이 바뀜: ", "입력 칸에 %s"),
+               ("알림창 ", "알림창 %s 뜸"))
+SAME_FIXED = {"입력 칸 값이 바뀜": "입력 칸 값이 바뀜",
+              "보이는 글의 순서가 바뀜": "같은 화면에서 글의 순서가 바뀜",
+              "표시 상태가 바뀜 (보이는 글은 그대로)": "같은 화면에서 표시 상태가 바뀜 (글은 그대로)",
+              "스크롤 위치가 바뀜": "같은 화면에서 스크롤 위치가 바뀜"}
+
+
+def _split_parts(detail):
+    """detail 을 " · " 로 나눈다 - 따옴표 안의 " · " 는 나누지 않는다."""
+    parts, cur, quoted, i = [], [], False, 0
+    while i < len(detail):
+        if detail[i] == "'":
+            quoted = not quoted
+        if not quoted and detail.startswith(" · ", i):
+            parts.append("".join(cur))
+            cur, i = [], i + 3
+            continue
+        cur.append(detail[i])
+        i += 1
+    parts.append("".join(cur))
+    return [p for p in parts if p]
+
+
+def same_phrase(detail):
+    out = []
+    for part in _split_parts(detail or ""):
+        if part in SAME_FIXED:
+            out.append(SAME_FIXED[part])
+            continue
+        for head, form in SAME_PREFIX:
+            if part.startswith(head):
+                out.append(form % part[len(head):])
+                break
+        else:
+            out.append("같은 화면에서 바뀜 — %s" % part)
+    return " · ".join(out) or "같은 화면에서 바뀜"
+
+
 def result_text(it, link=True, sheet_ids=None):
-    """항목의 동작 - 도구가 눌러 본 결과."""
+    """항목의 동작 - 도구가 눌러 본 결과를 실무 주석 꼴로.
+
+      클릭 시 → [scr-amount] 이동
+      클릭 시 → 같은 화면에서 '…' 나타남
+      클릭해도 변화 없음
+      비활성 (이 상태에서는 누를 수 없음)
+      38개 중 하나 선택 → [scr-account] 이동 (눌러 본 대표: '경남')
+    """
+    e = esc if link else (lambda x: "" if x is None else str(x))
     r = it.get("result") or {}
     kind = r.get("kind")
+    effect = None
     if kind == "screen":
         to = r.get("to_id") or "scr-%s" % r.get("to")
         ref = ('<a href="#%s">[%s]</a>' % (esc(to), esc(to))
-               if link and (sheet_ids is None or to in sheet_ids) else "[%s]" % to)
-        text = "선택 시 %s 로 이동" % ref
+               if link and (sheet_ids is None or to in sheet_ids)
+               else "[%s]" % (esc(to) if link else to))
+        effect = "%s 이동" % ref
     elif kind == "same":
-        text = "선택 시 같은 화면에서 바뀜 — %s" % (esc(r.get("detail")) if link
-                                                 else r.get("detail"))
+        effect = e(same_phrase(r.get("detail")))
     elif kind == "none":
-        text = "선택해도 바뀌는 것 없음"
-    elif kind == "disabled":
-        text = "꺼져 있음 (이 상태에서는 누를 수 없음)"
+        effect = "변화 없음"
     elif kind == "left":
-        text = "페이지를 떠남 — %s" % (esc(r.get("detail")) if link else r.get("detail"))
-    else:
-        d = r.get("detail") or "결과 없음"
-        text = "확인 못 함 — %s" % (esc(d) if link else d)
+        effect = "페이지를 떠남 — %s" % e(r.get("detail"))
+    unsure = "확인 못 함 — %s" % e(r.get("detail") or "결과 없음")
     if it["kind"] == "group":
-        text = "%d개 중 하나 선택 (대표 '%s' 를 눌러 봄: %s)" % (
-            it["group"]["count"], esc(it.get("value")) if link else it.get("value"), text)
+        n = it["group"]["count"]
+        if kind == "disabled":
+            text = "%d개 모두 비활성 (이 상태에서는 누를 수 없음)" % n
+        else:
+            text = "%d개 중 하나 선택 → %s (눌러 본 대표: '%s')" % (
+                n, effect or unsure, e(it.get("value")))
+    elif kind == "disabled":
+        text = "비활성 (이 상태에서는 누를 수 없음)"
+    elif kind == "none":
+        text = "클릭해도 변화 없음"
+    else:
+        text = "클릭 시 → %s" % effect if effect else unsure
     if it.get("entrance"):
         text += " · 과제 밖 입구"
     if r.get("js_errors"):
@@ -286,8 +348,8 @@ def render_cover(data, ids):
                "걸어 찍었다 (위치 · 크기 · 글자 크기 · 굵기는 그대로)</td></tr>"
                "<tr><td>요소 번호 · 글자 · 위치</td><td>%s</td><td>그 상태에서 보이는 "
                "data-action 요소를 모았다</td></tr>"
-               "<tr><td>동작</td><td>%s</td><td>요소마다 새 페이지에서 그 상태까지 다시 걸은 뒤 "
-               "눌러 보았다. 선택지 무리는 대표 하나</td></tr>"
+               "<tr><td>동작 (클릭 시 → …)</td><td>%s</td><td>요소마다 새 페이지에서 그 "
+               "상태까지 다시 걸은 뒤 눌러 보았다. 선택지 무리는 대표 하나</td></tr>"
                "<tr><td>영역 이름 · 설명</td><td>%s %s %s</td><td>모델이 그림과 요소 목록으로 "
                "묶었다 (mock 은 정해진 답, 모델이 빠뜨린 요소는 도구가 \"기타\" 로)</td></tr>"
                "<tr><td>화면 목적 · 변경 · 진단</td><td>계획 · 진단 (모델)</td><td>재구성 "

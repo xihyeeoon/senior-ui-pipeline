@@ -272,7 +272,7 @@ def test_the_prompt_asks_for_descriptions_only():
     assert "누르면 어디로 가는지는 쓰지 마세요" in p
     assert "평가 · 문제 지적 · 개선 제안은 쓰지 않습니다" in p
     assert "화면 목적 (계획): 목적" in p
-    assert "e1 · y 10 · \"버튼 0\" · 도구 확인: 선택해도 바뀌는 것 없음" in p
+    assert "e1 · y 10 · \"버튼 0\" · 도구 확인: 클릭해도 변화 없음" in p
     for word in ("고령", "글자 크기", "대비", "WCAG", "규칙 목록"):
         assert word not in p
     assert M.IMAGE_MARK in p
@@ -294,24 +294,50 @@ def test_layout_splits_a_long_screen_into_columns():
 
 @pytest.mark.parametrize("item,text", [
     ({"kind": "element", "result": {"kind": "screen", "to": "amount", "to_id": "scr-amount"}},
-     "선택 시 [scr-amount] 로 이동"),
+     "클릭 시 → [scr-amount] 이동"),
     ({"kind": "element", "result": {"kind": "same", "detail": "새로 보임: 'x'"}},
-     "선택 시 같은 화면에서 바뀜 — 새로 보임: 'x'"),
+     "클릭 시 → 같은 화면에서 'x' 나타남"),
     ({"kind": "element", "result": {"kind": "none"}, "entrance": True},
-     "선택해도 바뀌는 것 없음 · 과제 밖 입구"),
-    ({"kind": "element", "result": {"kind": "disabled"}}, "꺼져 있음 (이 상태에서는 누를 수 없음)"),
+     "클릭해도 변화 없음 · 과제 밖 입구"),
+    ({"kind": "element", "result": {"kind": "disabled"}}, "비활성 (이 상태에서는 누를 수 없음)"),
+    ({"kind": "element", "result": {"kind": "failed", "detail": "누르지 못했다 - 가려짐"}},
+     "확인 못 함 — 누르지 못했다 - 가려짐"),
     ({"kind": "group", "value": "신한", "group": {"count": 38, "values": []},
       "result": {"kind": "screen", "to": "account", "to_id": "scr-account"}},
-     "38개 중 하나 선택 (대표 '신한' 를 눌러 봄: 선택 시 [scr-account] 로 이동)"),
+     "38개 중 하나 선택 → [scr-account] 이동 (눌러 본 대표: '신한')"),
+    ({"kind": "group", "value": "1", "group": {"count": 11, "values": []},
+      "result": {"kind": "same", "detail": "새로 보임: '1원' 외 1줄"}},
+     "11개 중 하나 선택 → 같은 화면에서 '1원' 외 1줄 나타남 (눌러 본 대표: '1')"),
+    ({"kind": "group", "value": "1", "group": {"count": 4, "values": []},
+      "result": {"kind": "disabled"}}, "4개 모두 비활성 (이 상태에서는 누를 수 없음)"),
 ])
 def test_result_text(item, text):
+    """동작 칸은 실무 주석 꼴이다 (11-12b) - 출처는 그대로 도구가 눌러 본 결과."""
     assert RD.result_text(item, link=False) == text
+
+
+@pytest.mark.parametrize("detail,phrase", [
+    ("새로 보임: '메모가 보입니다' 외 1줄", "같은 화면에서 '메모가 보입니다' 외 1줄 나타남"),
+    ("사라짐: 'b'", "같은 화면에서 'b' 사라짐"),
+    ("입력 칸 값이 바뀜: '12'", "입력 칸에 '12'"),
+    ("입력 칸 값이 바뀜", "입력 칸 값이 바뀜"),
+    ("알림창 '확인하세요'", "알림창 '확인하세요' 뜸"),
+    ("보이는 글의 순서가 바뀜", "같은 화면에서 글의 순서가 바뀜"),
+    ("표시 상태가 바뀜 (보이는 글은 그대로)", "같은 화면에서 표시 상태가 바뀜 (글은 그대로)"),
+    ("스크롤 위치가 바뀜", "같은 화면에서 스크롤 위치가 바뀜"),
+    ("새로 보임: '1원' · 입력 칸 값이 바뀜: '1'", "같은 화면에서 '1원' 나타남 · 입력 칸에 '1'"),
+    # 따옴표 안의 " · " 는 나누지 않는다
+    ("새로 보임: '수수료 · 0원'", "같은 화면에서 '수수료 · 0원' 나타남"),
+])
+def test_same_screen_changes_read_as_annotations(detail, phrase):
+    """walk.describe_change 가 남긴 detail 의 조각마다 주석 꼴로 (기준값의 결과는 그대로)."""
+    assert RD.same_phrase(detail) == phrase
 
 
 def test_result_text_links_to_the_sheet():
     it = {"kind": "element", "result": {"kind": "screen", "to": "b", "to_id": "scr-b"}}
-    assert RD.result_text(it, True, {"scr-b"}) == '선택 시 <a href="#scr-b">[scr-b]</a> 로 이동'
-    assert RD.result_text(it, True, set()) == "선택 시 [scr-b] 로 이동"
+    assert RD.result_text(it, True, {"scr-b"}) == '클릭 시 → <a href="#scr-b">[scr-b]</a> 이동'
+    assert RD.result_text(it, True, set()) == "클릭 시 → [scr-b] 이동"
 
 
 # --------------------------------------------------------------------- #
