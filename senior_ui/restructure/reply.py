@@ -509,7 +509,7 @@ def validate_flow(flow, html, required_errors=None, done_expect=None):
 # --------------------------------------------------------------------------- #
 # 참조 검사 - 도구가 넣어 준 데이터를 읽는가
 # --------------------------------------------------------------------------- #
-def preserved_problems(html, data):
+def preserved_problems(html, data, optional=()):
     """도구가 넣어 줄 선택지 데이터를 스크립트가 읽지 않으면 형식 문제다.
 
     위의 검사들과 같은 성격이다 - 규칙으로 보고, 브라우저를 띄우지 않고, 메시지가
@@ -524,12 +524,16 @@ def preserved_problems(html, data):
     참조하든 않든 결과가 같은데, 요구하면 숫자판을 마크업에 적은 설계가 그것
     때문에 재시도를 한 번 쓴다 - 이 장치는 재시도를 아끼려고 만든 것이다.
     값이 "있다" 를 보는 눈은 검사 I 와 같은 것을 쓴다 (i_choices.present).
+
+    `optional` 은 넣어 주되 읽으라고 하지 않은 이름이다 - 과제가 선택지가 아니라고
+    선언한 무리만 받치는 배열 (preserve.optional_names). 읽지 않아도 문제가 아니다.
     """
     if not data:
         return []
     read = names_read(html, list(data))
     missed = [n for n, vals in data.items()
-              if n not in read and not all(present(v, html) for v in vals)]
+              if n not in optional and n not in read
+              and not all(present(v, html) for v in vals)]
     if not missed:
         return []
     return ["재설계 HTML 의 스크립트가 도구가 넣어 주는 선택지 데이터를 읽지 "

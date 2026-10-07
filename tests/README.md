@@ -54,7 +54,8 @@
 | `test_format_rules.py` | 형식 검사(`reply.py`)가 검사기의 규칙 함수(back_to · 화면 목록 · 방문 이름 · 조작부 이름)를 그대로 쓰는지 |
 | `test_tool_failures.py` | 도구 버그(종료 2 · internal_error) · 바깥 문제(인프라 예산) · 시작 실패(cannot_start) · CLI 의 `--out` · 인프라 예산의 출처 |
 | `test_real_runs_browser.py` | `fixtures/real_runs/` 의 첫 답을 루프의 길과 CLI 로 실제로 판정한다 (sol 은 K fatal 1 - 입구 31개 중 2개만 남았다 · astra 는 J 1 · K 1). `-m browser` |
-| `fixtures/real_runs/` | 실제 실행의 답 그대로 (`sol` = `outputs/restructure_auto/20261006-124055`, `astra` = `20261006-124838`). `attempt_N.response.txt` · 첫 계획(`plan.json`) · 도구가 넣은 선택지 데이터(`preserved.json`, `attempt_1.html` 의 블록) |
+| `test_choice_roles.py` | 선택지 아님 선언(과제 파일 `not_choices`, 11-9) - 과제 파일의 모양, 판정 입력이 붙이고 모델의 것은 버리는지, 검사 I 가 선언된 무리를 판정에서 빼고 `choice_groups_not_choices` 로 남기는지, 프롬프트 · 형식 검사가 그 무리만 받치는 `MENU_TABS` 의 참조를 요구하지 않는지, 설명서의 표. `-m browser` 에서는 저장된 공과금 답 셋(`fixtures/real_runs/bill_sol`)을 바뀐 검사기로 판정한다 (셋 다 I 하나 - 항목이 하나뿐인 분류의 메뉴 항목 6개) |
+| `fixtures/real_runs/` | 실제 실행의 답 그대로 (`sol` = `outputs/restructure_auto/20261006-124055`, `astra` = `20261006-124838`, `bill_sol` = `20261007-103023-bill` 의 시도 2 · 3 · 4). `attempt_N.response.txt` · 첫 계획(`plan.json`) · 도구가 넣은 선택지 데이터(`preserved.json`, `attempt_N.html` 의 블록) |
 | `fake_openai.py` | `openai.OpenAI` 의 대역 (with_raw_response 의 헤더 · Responses · models.list · 429 · 400) |
 | `baseline/` | 기준값. 마지막 캡처 실행의 결과다 |
 | `fixtures/sessions/` | `session_report` 용 가짜 세션 4건 |

@@ -20,6 +20,13 @@ r"""과제 정의 읽기. 과제 하나가 tasks/<이름>.json 하나다.
 그 밖에 `prompt` 칸이 재구성 프롬프트의 과제 문단을 담는다 - 문서의
 `{{TASK_<칸>}}` 슬롯 하나에 줄 목록 하나 (restructure/prompt.py 의 _with_task).
 
+`not_choices` 는 원본에서 같은 data-action 을 가진 형제 무리 가운데 **선택지가
+아닌 것** 과 그 이유다 - `{"menu-chip": "분류로 스크롤하는 표지판 — 찾아가는 수단"}`.
+검사 I 는 형제 무리를 선택지로 세는데, 누르면 스크롤만 하는 표지판 · 탭은 고르는
+대상이 아니다. 연구자가 정하는 칸이고(11-9), 판정 입력(audit.inputs.judged_flow ·
+flow.load_flow)이 흐름에 붙인다. 없으면 빈 선언이다. flows/allowed_removals.json
+(선택지인데 일부러 뺀 값)과는 다른 뜻이다.
+
 경로는 저장소 루트 기준이고 구분자는 '/' 다. 기본 과제는 이체다 - 과제를
 고르지 않은 실행은 전과 같아야 한다.
 """
@@ -61,6 +68,19 @@ def abs_path(rel):
     return os.path.join(ROOT, *str(rel).split("/"))
 
 
+def not_choices_of(task, path):
+    """과제의 선택지 아님 선언 `{data-action: 이유}`. 칸이 없으면 빈 선언.
+
+    이유가 없거나 모양이 틀린 선언은 멈춘다 - 무리 하나를 검사 I 에서 빼는 일이라,
+    조용히 받거나 버리면 연구자가 적은 것과 판정이 다르게 돈다."""
+    spec = task.get("not_choices", {})
+    if not isinstance(spec, dict) or not all(
+            isinstance(why, str) and why.strip() for why in spec.values()):
+        raise ValueError('%s 의 not_choices 는 {"<data-action>": "<이유>"} 여야 한다 '
+                         "(이유는 빈 글이 아니다)" % path)
+    return dict(spec)
+
+
 def load_task(name=None):
     """과제 정의 하나. `description` 은 줄을 이은 문자열로 돌려준다.
 
@@ -79,6 +99,7 @@ def load_task(name=None):
     if task["id"] != name:
         raise ValueError("%s 의 id 는 %r 이어야 한다 (지금은 %r)"
                          % (path, name, task["id"]))
+    task["not_choices"] = not_choices_of(task, path)
     desc = task["description"]
     task["description"] = "\n".join(desc) if isinstance(desc, list) else str(desc)
     return task

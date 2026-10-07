@@ -733,7 +733,8 @@ def bill_errors():
 
 def bill_prompts(orig_html, orig_snapshot):
     """(선택지 요약, 진단·계획 프롬프트, 첫 생성 프롬프트) 전문."""
-    choices = _api.choices_block(orig_snapshot, orig_html)
+    choices = _api.choices_block(orig_snapshot, orig_html,
+                                 not_choices=_api.load_task(BILL_TASK)["not_choices"])
     plan = _api.build_plan_prompt(_api.load_plan_template(BILL_TASK), model_html(orig_html),
                                   choices, _api.plan_module.screens_in(orig_html),
                                   errors=bill_errors())

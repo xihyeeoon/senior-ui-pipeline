@@ -183,6 +183,24 @@ def preserved_data(snapshot, html):
     return out
 
 
+def optional_names(snapshot, html, not_choices):
+    """넣어 주되 읽으라고 하지 않는 배열 이름. preserved_data 의 순서로.
+
+    과제가 선택지가 아니라고 선언한 무리(not_choices)**만** 받치는 배열이다 - 공과금의
+    MENU_TABS (menu-tab). 그 값은 블록에 그대로 들어간다(모델이 써도 되고 안 써도 되는
+    데이터). 선택지인 무리를 하나라도 받치는 배열은 여전히 읽어야 한다.
+    """
+    skip = set(not_choices or ())
+    if not skip:
+        return []
+    generated, _inline = split_groups(snapshot, html)
+    backs = {}
+    for action, _count, src in generated:
+        for name, _n in src:
+            backs.setdefault(name, set()).add(action)
+    return [n for n in preserved_data(snapshot, html) if backs.get(n) and backs[n] <= skip]
+
+
 def data_block(data):
     """데이터 블록 하나. 모델의 스크립트보다 앞에 놓인다."""
     body = json.dumps(data, ensure_ascii=False)

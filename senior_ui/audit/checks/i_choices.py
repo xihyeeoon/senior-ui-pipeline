@@ -33,6 +33,11 @@ DOM 을 더 보는 이유는 그 반대다. 블록을 빼면 "블록을 참조�
 
 흐름 파일이 "일부러 뺐다" 를 선언할 수 있다. 안전을 위해 뺀 선택지까지 누락으로
 세면 고칠 수 없는 fatal 이 재생성 루프에 계속 남는다 (declared() 참고).
+
+과제는 "이 무리는 선택지가 아니다" 를 선언할 수 있다 (not_choices() 참고). 같은
+data-action 의 형제 무리면 무엇이든 선택지로 세는 규칙은, 누르면 스크롤만 하는
+표지판 · 탭(공과금의 menu-chip · menu-tab)도 선택지로 센다. 선언된 무리는 판정에서
+빼고 지표 `choice_groups_not_choices` 에 이유와 함께 남긴다.
 """
 import re
 
@@ -115,6 +120,20 @@ def declared(flow):
     return out
 
 
+def not_choices(flow):
+    """과제가 선택지가 아니라고 선언한 무리. `{action: 이유}`.
+
+    판정 입력(audit.inputs.judged_flow · flow.load_flow)이 과제 파일의 not_choices 를
+    흐름에 붙인다 - 모델이 흐름 명세에 적은 것은 거기서 버려진다. 무리 전체를 뺀다는
+    점이 declared() 와 다르다: 그쪽은 선택지인데 일부러 뺀 **값** 이고, 이쪽은 처음부터
+    고르는 대상이 아닌 **무리** 다.
+    """
+    spec = flow.get("not_choices")
+    if not isinstance(spec, dict):
+        return {}
+    return {a: str(why or "") for a, why in spec.items()}
+
+
 def dom_values(rep):
     """빌드를 걷는 동안 렌더링된 DOM 에서 모은 선택지 값. 한 덩어리 글로.
 
@@ -175,9 +194,15 @@ def run(ctx):
     dom = dom_values(ctx.rep)
 
     decl = declared(ctx.flow)
+    skip = not_choices(ctx.flow)
     missing_by_action, kept, selectable, unreachable, by_design = {}, {}, {}, {}, {}
+    not_choice = {}
     for action, vals in orig_choices.items():
         if len(vals) < 2:
+            continue
+        if action in skip:
+            # 고르는 대상이 아니다 - 남았는지 세지 않는다. 원본에 있던 무리만 남긴다.
+            not_choice[action] = {"values": len(vals), "reason": skip[action]}
             continue
         gone = sorted(v for v in vals
                       if not present(v, text) and not present(v, dom))
@@ -199,7 +224,13 @@ def run(ctx):
             missing_by_action[action] = {"total": len(vals), "missing": missing}
 
     metrics["choice_groups_original"] = {a: len(v) for a, v in orig_choices.items()
-                                         if len(v) >= 2}
+                                         if len(v) >= 2 and a not in skip}
+    # 선택지가 아니라고 선언한 무리 - 판정에서 뺐다는 사실을 이유와 함께 남긴다.
+    # 사라지게 두면 "원본에 그 무리가 없었다" 와 "있었지만 세지 않았다" 를 가를 수 없다.
+    metrics["choice_groups_not_choices"] = not_choice
+    for action, d in sorted(not_choice.items()):
+        ctx.skipped.append("I/%s 선택지 무리 %d개 - 과제가 선택지가 아니라고 선언했다: %s"
+                           % (action, d["values"], d["reason"] or "이유가 적혀 있지 않다"))
     # 일부러 뺀 것은 fatal 로 세지 않는 대신 이유와 함께 남긴다. 조용히
     # 사라지면 "검사가 통과했다" 와 "검사를 내려놓았다" 를 구분할 수 없다.
     metrics["choice_values_removed_by_design"] = by_design

@@ -259,6 +259,7 @@
       "num": 11,
       "pw": 10
     },
+    "choice_groups_not_choices": {},
     "choice_values_removed_by_design": {},
     "choice_values_kept": {
       "pick-bank": 9,

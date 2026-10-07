@@ -51,7 +51,7 @@ from .model import (MOCK_TASK, TEMPERATURE, SEED, ApiRejected, InfraFailed,
 from .plan import (PlanProblems, apply_changes, critique_issues, evidence_kinds,
                    match_problems, parse_critique, parse_plan, parse_reflection,
                    plan_report, screens_in, unaddressed)
-from .preserve import inject, names_read, preserved_data
+from .preserve import inject, names_read, optional_names, preserved_data
 from .prompt import (BUILD_SHOTS_INTRO, build_plan_prompt, build_prompt,
                      build_refine_prompt, choices_block, errors_block,
                      load_plan_template, load_refine_template, load_template,
@@ -313,6 +313,9 @@ class Run:
         # 입력이 가진 선택지 데이터. 실행마다 한 번 뽑아 시도마다 넣는다.
         # {배열 이름: [원소들]} (preserve.preserved_data).
         self.preserved = {}
+        # 그중 읽으라고 하지 않는 이름 - 과제가 선택지가 아니라고 선언한 무리만
+        # 받치는 배열 (preserve.optional_names, 공과금의 MENU_TABS).
+        self.preserved_optional = []
         # 연구자가 관리하는 "빼도 되는 선택지" 목록. 검사 직전에 흐름에 합친다.
         self.allowed_removals = {}
         self.orig_snapshot = None
@@ -1022,7 +1025,7 @@ def check_reply(r, p, entry, reply, n=None):
     # 보면 무엇을 보내도 "읽었다" 가 된다 (reply.preserved_problems).
     names = list(r.preserved)
     read = names_read(html, names)
-    problems = problems + preserved_problems(html, r.preserved)
+    problems = problems + preserved_problems(html, r.preserved, r.preserved_optional)
     build_html, redeclared = inject(html, r.preserved)
     if names:
         entry["preserved"] = {"injected": {n: len(v) for n, v in r.preserved.items()},
@@ -1732,7 +1735,8 @@ def run(args):
         if r.see:
             log("보기: 원본 그림 %d장 (%s)" % (len(r.original_images),
                                           os.path.relpath(shots, run_dir)))
-        r.choices = choices_block(r.orig_snapshot, original_html)
+        r.choices = choices_block(r.orig_snapshot, original_html,
+                                  not_choices=task["not_choices"])
         if r.choices:
             log("선택지: %s" % " / ".join(
                 l.strip() for l in r.choices.splitlines() if l.startswith("  ")))
@@ -1740,9 +1744,13 @@ def run(args):
         # 도구가 들고 있다가 시도마다 재설계 HTML 에 넣는다.
         r.preserved = preserved_data(r.orig_snapshot, original_html)
         r.summary["preserved"] = {n: len(v) for n, v in r.preserved.items()}
+        r.preserved_optional = optional_names(r.orig_snapshot, original_html,
+                                              task["not_choices"])
         if r.preserved:
-            log("지킬 데이터: %s" % " / ".join(
-                "%s %d개" % (n, len(v)) for n, v in r.preserved.items()))
+            log("지킬 데이터: %s%s" % (" / ".join(
+                "%s %d개" % (n, len(v)) for n, v in r.preserved.items()),
+                (" — 읽지 않아도 되는 것(선택지가 아닌 무리의 것): %s"
+                 % ", ".join(r.preserved_optional)) if r.preserved_optional else ""))
 
         n = 0
         while True:

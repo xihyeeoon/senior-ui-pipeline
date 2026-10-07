@@ -1,0 +1,1014 @@
+```json
+{
+  "cause": "보존 데이터의 선택값과 생성한 버튼의 값을 일대일로 대조하지 않아 분류 버튼의 이름이 달라지고 일부 단일 항목의 접근성이 보장되지 않았습니다.",
+  "plan_changes": [],
+  "keep": ["C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10", "C11", "C12", "C13", "C14", "C15", "C16", "C17", "home", "menu", "search", "bill-start", "camera", "review", "password", "done", "service"]
+}
+```
+
+```html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>세금·공과금 납부</title>
+<style>
+:root{--blue:#1457c5;--ink:#172333;--sub:#526174;--line:#cbd4df;--bg:#f2f5f9}
+*{box-sizing:border-box}
+body{margin:0;background:#dfe5ec;color:var(--ink);font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;display:flex;justify-content:center}
+#phone{width:390px;height:844px;position:relative;overflow:hidden;background:white}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;background:white}
+.screen.on{display:flex}
+.status{height:30px;flex-shrink:0;display:flex;justify-content:space-between;padding:6px 20px;font-size:14px}
+.header{padding:10px 16px;border-bottom:1px solid var(--line);flex-shrink:0}
+.header h1{font-size:25px;margin:8px 0}
+.nav{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.body{flex:1;min-height:0;overflow-y:auto;padding:16px;overscroll-behavior:contain}
+button,input{font:inherit;font-size:19px}
+button{min-height:50px;padding:11px 14px;border:1px solid var(--line);background:white;color:var(--ink);border-radius:10px;cursor:pointer;text-align:center;line-height:1.4}
+button:focus-visible,input:focus-visible{outline:3px solid #d67b00;outline-offset:2px}
+button:disabled{background:#e1e6ee;color:#586578;cursor:default}
+h2{font-size:22px;margin:0 0 12px}
+h3{font-size:20px;margin:18px 0 10px}
+p{font-size:18px;line-height:1.55;margin:8px 0 14px}
+.small{font-size:16px;color:var(--sub);line-height:1.5}
+.primary{background:var(--blue);color:white;border-color:var(--blue);font-weight:700}
+.wide{display:block;width:100%;margin-top:10px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>button{flex:1}
+.card{padding:16px;border:1px solid var(--line);border-radius:14px;margin-bottom:16px;background:white}
+.soft{background:#edf4ff;border-color:#b6cdef}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid button{text-align:left}
+.entry{font-size:22px;min-height:76px;font-weight:700}
+.footer{padding:12px 16px 18px;border-top:1px solid var(--line);background:white;flex-shrink:0}
+.footer p{margin:0 0 8px;font-size:16px}
+.bottom{display:flex;border-top:1px solid var(--line);padding:8px 4px;gap:3px}
+.bottom button{flex:1;padding:8px 2px;font-size:17px;border:0}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 16px}
+.tabs button{flex:0 0 auto}
+.tabs button[aria-pressed="true"]{background:var(--blue);color:white;border-color:var(--blue)}
+.group{margin:10px 0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.group-title{width:100%;text-align:left;border:0;border-radius:0;background:var(--bg);font-weight:700}
+.group-title::after{content:" ＋";float:right}
+.group-title[aria-expanded="true"]::after{content:" −"}
+.group-list{padding:6px}
+.item{display:block;width:100%;border:0;border-bottom:1px solid #e1e7ef;border-radius:0;text-align:left;padding:14px 10px}
+.path{display:block;margin-top:4px;font-size:15px;color:var(--sub);font-weight:400}
+.field{display:block;width:100%;min-height:54px;padding:12px;border:2px solid #7e8fa4;border-radius:10px;margin:8px 0 10px}
+.label{display:block;font-size:18px;font-weight:700}
+.amount{font-size:32px;font-weight:800;color:var(--blue);margin:8px 0}
+.data{margin:14px 0}
+.data dt{font-size:16px;color:var(--sub);margin-bottom:5px}
+.data dd{font-size:20px;font-weight:700;margin:0;overflow-wrap:anywhere;line-height:1.5}
+.camera{background:#152235;color:white}
+.camera .header{border-color:#6f8199}
+.camera .body{text-align:center}
+.frame{height:320px;border:3px solid #e4edfc;border-radius:14px;margin:24px 0;display:flex;align-items:center;justify-content:center;padding:18px;color:#f3f6fc}
+.paper{background:white;color:var(--ink);width:100%;padding:24px 12px;border-radius:4px;line-height:1.8}
+.shutter{display:block;margin:16px auto;background:white;color:#152235;width:90px;height:90px;border:5px solid #aabbd1;border-radius:50%;font-size:23px;font-weight:700}
+.camera .footer{background:#152235;border-color:#6f8199}
+.check{width:100%;text-align:left}
+.check[aria-pressed="true"]{background:#eaf3ff;border:2px solid var(--blue);color:#103c88}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
+.pad button{font-size:27px;min-height:62px;background:#f5f8fd;border:1px solid #8293aa}
+.dots{text-align:center;font-size:33px;letter-spacing:14px;margin:12px 0;color:var(--blue)}
+.success{width:62px;height:62px;border-radius:50%;background:var(--blue);color:white;display:flex;justify-content:center;align-items:center;font-size:36px;margin:0 auto 12px}
+.center{text-align:center}
+.notice{border-left:4px solid var(--blue);padding:12px;background:var(--bg);font-size:18px;line-height:1.55}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div id="phone">
+<section class="screen on" data-screen="home">
+  <div class="status"><span>4:31</span><span>배터리 67%</span></div>
+  <header class="header"><h1>홍길동님, 안녕하세요</h1></header>
+  <div class="body">
+    <div class="grid">
+      <button class="entry primary" data-action="go-menu">☰ 전체메뉴</button>
+      <button class="entry" data-action="open-search">⌕ 메뉴 검색</button>
+    </div>
+    <p class="small">세금·공과금 납부는 전체메뉴나 메뉴 검색에서 찾을 수 있어요.</p>
+    <div class="row">
+      <button data-action="oos-message">메시지</button>
+      <button data-action="oos-wallet">지갑</button>
+      <button data-action="oos-alarm">알림</button>
+    </div>
+    <h3>홈 설정</h3>
+    <div class="grid">
+      <button data-action="oos-easy-home">쉬운홈</button>
+      <button data-action="oos-home-setting">홈화면 설정</button>
+      <button data-action="oos-hide-amount">금액 숨기기</button>
+    </div>
+    <h3>내 자산</h3>
+    <div class="card">
+      <h2>신한 주거래 우대통장</h2>
+      <p class="small">금융거래한도계좌2 · 저축예금</p><p>금액 숨김</p>
+      <button class="wide" data-action="oos-transfer">이체</button>
+      <button class="wide" data-action="oos-irp">개인형 퇴직연금 안내<br><span class="small">절세혜택과 안정적인 노후 준비</span></button>
+    </div>
+    <div class="card">
+      <h2>내 카드</h2><p>체크카드 캐릭터형 · 하리보</p><p>금액 숨김</p>
+      <button class="wide" data-action="oos-appcard">앱카드 가입</button>
+    </div>
+    <div class="card">
+      <h2>땡겨요</h2><p>치킨 할인쿠폰 최대 9,000원</p>
+      <button class="wide" data-action="oos-get-coupon">바로받기</button>
+      <div class="row">
+        <button data-action="oos-event">이벤트</button>
+        <button data-action="oos-coupon">쿠폰</button>
+        <button data-action="oos-point">포인트</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>7월 소비</h2><p>오늘 쓴 돈 0원</p>
+      <button class="wide" data-action="oos-spend-detail">소비 상세 보기</button>
+    </div>
+    <div class="card">
+      <h2>마이신한포인트</h2><p>카드 쓸 때마다 쌓이고 현금처럼 쓰는 포인트</p>
+      <button class="wide" data-action="oos-my-point">시작하기</button>
+    </div>
+    <div class="card">
+      <h2>추천서비스</h2>
+      <button class="wide" data-action="other-service" data-title="쏠패밀리">쏠패밀리 · 가족 금융생활</button>
+      <button class="wide" data-action="other-service" data-title="급여클럽+">급여클럽+ · 급여이체 혜택</button>
+      <button class="wide" data-action="other-service" data-title="내 카드 승인내역">내 카드 승인내역</button>
+    </div>
+    <button class="wide" data-action="oos-connect-event">자산 연결 이벤트<br>금융자산 연결하고 커피쿠폰 받기</button>
+    <h3>신한금융그룹</h3>
+    <button class="wide" data-action="other-service" data-title="신한카드">신한카드 · 나에게 맞는 카드</button>
+    <button class="wide" data-action="other-service" data-title="신한투자증권">신한투자증권 · 주식 정보</button>
+    <button class="wide" data-action="other-service" data-title="신한라이프">신한라이프 · 보험 보장분석</button>
+  </div>
+  <nav class="bottom" aria-label="하단 메뉴">
+    <button data-action="oos-tab-home">홈</button>
+    <button data-action="oos-tab-finance">금융</button>
+    <button data-action="oos-tab-goods">상품</button>
+    <button data-action="oos-tab-benefit">혜택</button>
+    <button data-action="oos-tab-stock">주식</button>
+  </nav>
+</section>
+
+<section class="screen" data-screen="menu">
+  <div class="status"><span>4:31</span><span>배터리 67%</span></div>
+  <header class="header">
+    <div class="nav"><button data-action="back-home">‹ 홈</button><button data-action="oos-chat">고객센터</button></div>
+    <h1>전체메뉴</h1>
+  </header>
+  <div class="body" id="menu-body">
+    <button class="wide" data-action="open-search">⌕ 메뉴 검색</button>
+    <div class="card soft">
+      <h2>세금·공과금 납부</h2>
+      <p class="small">은행 → 세금/공과금 → 납부하기</p>
+      <button id="menu-pay" class="wide primary" data-action="menu-item" data-pay="true">공과금 납부하기</button>
+    </div>
+    <h2 id="category-heading">분야 선택</h2>
+    <div class="tabs" id="menu-tabs"></div>
+    <p class="small">분류 이름을 누르면 업무 목록이 펼쳐집니다. 자동이체는 ‘이체’, 공과금 납부는 ‘세금/공과금’에서 찾으세요.</p>
+    <button class="wide" data-action="category-reset">분류 선택으로 돌아가기</button>
+    <button class="wide" data-action="menu-expand-all">모든 분야·분류 펼치기</button>
+    <div id="menu-groups"></div>
+    <h3>설정 및 이용 관리</h3>
+    <div class="row"><button id="menu-settings" data-action="oos-settings">설정</button><button data-action="oos-logout">로그아웃</button></div>
+  </div>
+</section>
+
+<section class="screen" data-screen="search">
+  <div class="status"><span>4:31</span><span>배터리 67%</span></div>
+  <header class="header">
+    <button data-action="back-menu">‹ 전체메뉴</button>
+    <h1>메뉴 검색</h1>
+    <label class="label" for="search-input">찾을 메뉴 이름</label>
+    <input class="field" id="search-input" data-action="search-input" type="search" placeholder="예: 공과금, 고지서" autocomplete="off">
+    <div class="row">
+      <button class="primary" data-action="oos-search-submit">검색</button>
+      <button data-action="search-clear">입력 지우기</button>
+    </div>
+  </header>
+  <div class="body" id="search-body">
+    <p id="search-status" aria-live="polite">이름을 입력하거나 아래 목록에서 골라주세요.</p>
+    <div class="card soft" id="search-shortcut">
+      <button id="search-pay" class="wide primary" data-action="search-hit" data-pay="true">공과금 납부하기</button>
+      <p class="small">은행 → 세금/공과금 → 납부하기</p>
+    </div>
+    <button class="wide" data-action="search-expand-all">전체 검색 목록 펼치기</button>
+    <div id="search-groups"></div>
+    <div id="search-empty" hidden>
+      <p>다른 말로 검색하거나 전체메뉴에서 찾아보세요.</p>
+      <button class="wide" data-action="search-clear">입력 지우기</button>
+      <button class="wide" data-action="back-menu">전체메뉴 보기</button>
+    </div>
+    <button class="wide" data-action="oos-ask-ai">인공지능에게 물어보기</button>
+  </div>
+</section>
+
+<section class="screen" data-screen="bill-start">
+  <div class="status"><span>4:31</span><span>배터리 67%</span></div>
+  <header class="header">
+    <div class="nav"><button data-action="back-bill-home">‹ 이전 메뉴</button><button data-action="oos-home">홈</button></div>
+    <h1>세금·공과금 납부</h1>
+  </header>
+  <div class="body">
+    <div class="card soft">
+      <h2>종이 고지서를 준비하세요</h2>
+      <button class="wide primary entry" data-action="pay-start">종이 고지서 촬영해서 납부</button>
+      <p>촬영 → 정보 확인 → 비밀번호 → 완료</p>
+      <p class="small">촬영만으로는 출금되지 않아요. 납부정보를 확인한 뒤 직접 납부합니다.</p>
+    </div>
+    <h2>조회·등록 업무</h2>
+    <button class="wide" data-action="oos-bill-inquiry">조회하기 · 전자고지서 확인</button>
+    <button class="wide" data-action="oos-giro-register">자주 쓰는 지로번호 등록</button>
+    <h3>종류별 업무 찾기</h3>
+    <p class="small">촬영해서 납부할 때는 종류를 먼저 고르지 않아도 돼요.</p>
+    <button class="wide" data-action="bill-toggle" aria-expanded="false" aria-controls="bill-options">공과금 종류 펼치기</button>
+    <div id="bill-options" hidden>
+      <label class="label" for="bill-query">공과금 종류 검색</label>
+      <input class="field" id="bill-query" data-action="bill-query" placeholder="종류 이름 입력">
+      <div id="bill-list"></div>
+      <p id="bill-empty" hidden>일치하는 종류가 없어요. 입력을 지우고 전체 목록을 확인하세요.</p>
+      <button class="wide" data-action="bill-clear">종류 검색 지우기</button>
+    </div>
+    <button class="wide" data-action="oos-support">고객센터</button>
+  </div>
+</section>
+
+<section class="screen camera" data-screen="camera">
+  <div class="status"><span>4:31</span><span>배터리 67%</span></div>
+  <header class="header"><h1>1단계 · 고지서 촬영</h1></header>
+  <div class="body">
+    <p id="camera-guide">고지서의 번호와 금액이 함께 보이도록 사각형 안에 맞춰주세요.</p>
+    <div class="frame">
+      <div id="camera-ready">고지서 전체가 들어오도록<br>반듯하게 놓아주세요.</div>
+      <div class="paper" id="camera-preview" hidden>
+        <strong>전기요금 고지서</strong><br>
+        고객명 홍길동<br>2026년 7월<br>
+        전자납부번호<br>1700000000<br>
+        납부금액 2,160원
+      </div>
+    </div>
+    <button class="shutter" id="camera-shutter" data-action="shutter">촬영</button>
+    <div id="camera-choices" hidden>
+      <p>번호와 금액이 잘 보이는지 확인하세요.</p>
+      <button class="wide primary" data-action="use-photo">이 사진 사용</button>
+      <button class="wide" data-action="retake">다시 촬영</button>
+    </div>
+  </div>
+  <div class="footer"><button class="wide" data-action="to-bill-home">촬영 취소</button></div>
+</section>
+
+<section class="screen" data-screen="review">
+  <div class="status"><span>4:31</span><span>배터리 67%</span></div>
+  <header class="header">
+    <div class="nav"><button data-action="to-bill-home">‹ 납부 시작</button><button data-action="oos-info-home">홈</button></div>
+    <h1>2단계 · 납부정보 확인</h1>
+  </header>
+  <div class="body">
+    <p>종이 고지서와 아래 정보를 대조해주세요.</p>
+    <div class="card soft">
+      <h2>전기요금</h2>
+      <dl class="data"><dt>고객명</dt><dd id="bi-name">홍길동</dd></dl>
+      <dl class="data"><dt>청구월</dt><dd>2026년 7월</dd></dl>
+      <dl class="data"><dt>전자납부번호 · 고객번호</dt><dd id="bi-eno">1700000000</dd></dl>
+      <div class="small">납부금액</div><div class="amount"><span id="bi-amt">2,160</span>원</div>
+    </div>
+    <div class="card">
+      <h2>돈이 나가는 출금계좌</h2>
+      <p id="bi-acc"><strong>신한 110-000-000000</strong></p>
+      <p>출금가능금액 <strong>1,000,000원</strong></p>
+      <p class="small">[금융거래한도계좌2] 신한 주거래 우대통장(저축예금)</p>
+      <button class="wide" data-action="account-open" aria-expanded="false" aria-controls="account-panel">출금계좌 선택</button>
+      <div id="account-panel" hidden>
+        <p class="small">현재 선택 가능한 계좌 1개</p>
+        <button class="wide" data-action="account-select">✓ 신한 110-000-000000 선택</button>
+      </div>
+    </div>
+    <button class="wide" data-action="review-detail" aria-expanded="false" aria-controls="review-details">고지서 상세정보 펼치기</button>
+    <div class="card" id="review-details" hidden>
+      <dl class="data"><dt>고객전용 지정 입금계좌</dt><dd>31500000000000</dd></dl>
+      <p class="small">고객전용 입금계좌는 요금 수납용입니다. 위의 출금계좌에서 돈이 나갑니다.</p>
+      <dl class="data"><dt>고객주소</dt><dd>○○동 ●●●-●</dd></dl>
+      <dl class="data"><dt>청구연월</dt><dd>202607 · 2026년 7월</dd></dl>
+    </div>
+    <button class="wide" data-action="review-retake">고지서 다시 촬영</button>
+    <button class="wide" data-action="oos-info-support">고객센터</button>
+  </div>
+  <div class="footer">
+    <button class="check" id="review-check" data-action="review-check" aria-pressed="false">□ 고지서 내용과 출금계좌를 확인했어요</button>
+    <p id="review-help">전자납부번호·고객명·금액·출금계좌를 확인해주세요.</p>
+    <button class="wide primary" id="review-next" data-action="pay" disabled>확인했어요 · 비밀번호 입력</button>
+  </div>
+</section>
+
+<section class="screen" data-screen="password">
+  <div class="status"><span>4:31</span><span>배터리 67%</span></div>
+  <header class="header">
+    <button data-action="close-password">‹ 정보 확인으로 돌아가기</button>
+    <h1>3단계 · 계좌 비밀번호</h1>
+  </header>
+  <div class="body">
+    <div class="card soft">
+      <p class="small">돈이 나가는 계좌</p>
+      <p><strong>신한 110-000-000000</strong></p>
+      <div class="amount">2,160원</div>
+    </div>
+    <p><strong>이 출금계좌의 비밀번호 4자리</strong>를 입력해주세요.</p>
+    <div class="dots" id="pw-dots" aria-label="비밀번호 입력 상태">○○○○</div>
+    <p class="small center" id="pw-count" aria-live="polite">0자리 입력됨 · 총 4자리</p>
+    <div class="pad" id="pwpad"></div>
+    <div class="row">
+      <button data-action="pw-shuffle">숫자 위치 바꾸기</button>
+      <button data-action="pw-del">한 자리 지우기</button>
+    </div>
+    <button class="wide" data-action="pw-clear">모두 지우기</button>
+  </div>
+  <div class="footer">
+    <p id="pw-help">4자리 입력 후 납부 버튼을 눌러주세요.</p>
+    <button class="wide primary" id="submit-payment" data-action="submit-payment" disabled>2,160원 납부하기</button>
+  </div>
+</section>
+
+<section class="screen" data-screen="done">
+  <div class="status"><span>4:31</span><span>배터리 67%</span></div>
+  <header class="header">
+    <div class="nav"><button data-action="finish">홈</button><button data-action="oos-done-support">고객센터</button></div>
+    <h1>납부 결과</h1>
+  </header>
+  <div class="body">
+    <div class="success">✓</div>
+    <h2 class="center">납부가 완료되었어요</h2>
+    <div class="card soft">
+      <h2>전기요금 · 홍길동</h2>
+      <div class="amount"><span id="dn-paid">2,160</span>원</div>
+      <dl class="data"><dt>출금계좌</dt><dd id="dn-acc">신한 110-000-000000</dd></dl>
+      <dl class="data"><dt>납부일</dt><dd>2026.08.07 10:11</dd></dl>
+      <dl class="data"><dt>전자납부번호 · 고객번호</dt><dd id="dn-eno">1700000000</dd></dl>
+    </div>
+    <button class="wide" data-action="done-detail" aria-expanded="false" aria-controls="done-details">납부 상세정보 펼치기</button>
+    <div class="card" id="done-details" hidden>
+      <dl class="data"><dt>고객명</dt><dd>홍길동</dd></dl>
+      <dl class="data"><dt>청구연월</dt><dd>202607 · 2026년 7월</dd></dl>
+      <dl class="data"><dt>고객전용 지정 입금계좌</dt><dd>31500000000000</dd></dl>
+      <dl class="data"><dt>고객주소</dt><dd>○○동 ●●●-●</dd></dl>
+    </div>
+    <p class="notice">입금할 수 없는 계좌인 경우 출금계좌로 재입금됩니다. 나중에 재입금되면 납부내역에서 상태를 확인하세요.</p>
+    <button class="wide" data-action="payment-history">납부내역 조회</button>
+  </div>
+  <div class="footer"><button class="wide primary" data-action="finish">홈으로 돌아가기</button></div>
+</section>
+
+<section class="screen" data-screen="service">
+  <div class="status"><span>4:31</span><span>배터리 67%</span></div>
+  <header class="header">
+    <button data-action="service-back">‹ 원래 화면으로 돌아가기</button>
+    <h1 id="service-title">서비스 안내</h1>
+  </header>
+  <div class="body">
+    <div class="card soft">
+      <h2 id="service-heading">이용 안내</h2>
+      <p id="service-message">현재 이 기능을 이용할 수 없습니다. 원래 화면으로 돌아가 다른 업무를 계속해주세요.</p>
+    </div>
+    <div id="logout-confirm" hidden>
+      <p>로그아웃하면 진행하던 납부가 중단됩니다.</p>
+      <button class="wide primary" data-action="logout-execute">로그아웃하기</button>
+      <button class="wide" data-action="service-back">취소 · 원래 화면으로</button>
+    </div>
+    <button class="wide" data-action="service-back">원래 화면으로 돌아가기</button>
+    <button class="wide" data-action="service-menu">전체메뉴 보기</button>
+    <button class="wide" data-action="service-support">고객센터 안내</button>
+    <div class="card" id="support-guide" hidden>
+      <h3>고객센터 이용 안내</h3>
+      <p>전체메뉴의 고객센터 분야에서 전화상담, 영업점 안내, 이용안내를 찾을 수 있어요.</p>
+      <button class="wide" data-action="support-menu">고객센터 메뉴 보기</button>
+    </div>
+  </div>
+</section>
+</div>
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const P = window.PRESERVED || {};
+  const tabs = P.MENU_TABS || [];
+  const lists = [
+    P.MENU_BANK || [], P.MENU_CARD || [], P.MENU_STOCK || [],
+    P.MENU_INSURE || [], P.MENU_BENEFIT || [], P.MENU_GOODS || [],
+    P.MENU_HELP || []
+  ];
+  const bills = P.BILL_ITEMS || [];
+  const keys = P.PW_KEYS || [];
+  const state = {
+    screen:'home',tab:0,from:'menu',serviceFrom:'home',
+    pw:'',checked:false,photo:false,busy:false
+  };
+  const normalize = v => String(v).replace(/\s/g,'').toLowerCase();
+
+  function button(label, action, dataset){
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = label;
+    b.dataset.action = action;
+    Object.entries(dataset || {}).forEach(([k,v]) => {
+      b.dataset[k] = String(v);
+    });
+    return b;
+  }
+
+  function groupList(values){
+    const groups = [];
+    let current = null;
+    Array.from(values).forEach(value => {
+      const text = String(value);
+      if(text.charAt(0) === '#'){
+        current = {name:text.slice(1),items:[]};
+        groups.push(current);
+      }else{
+        if(!current){
+          current = {name:'업무',items:[]};
+          groups.push(current);
+        }
+        current.items.push(text);
+      }
+    });
+    return groups;
+  }
+
+  function show(name){
+    if(state.screen==='password' && name!=='password'){
+      state.pw='';
+      renderPw();
+    }
+    document.querySelectorAll('#phone .screen').forEach(s=>{
+      s.classList.toggle('on',s.dataset.screen===name);
+    });
+    state.screen=name;
+  }
+  window.__screen=()=>state.screen;
+
+  function openService(title, logout){
+    if(state.screen!=='service') state.serviceFrom=state.screen;
+    $('service-title').textContent=title;
+    $('service-heading').textContent=logout?'로그아웃할까요?':title;
+    $('service-message').textContent=logout
+      ?'진행하던 업무를 중단하고 로그아웃할지 선택해주세요.'
+      :'현재 이 기능을 이용할 수 없습니다. 원래 화면으로 돌아가 다른 업무를 계속해주세요.';
+    $('logout-confirm').hidden=!logout;
+    $('support-guide').hidden=true;
+    show('service');
+  }
+
+  function setTab(index){
+    state.tab=index;
+    document.querySelectorAll('#menu-tabs button').forEach(b=>{
+      b.setAttribute('aria-pressed',String(Number(b.dataset.index)===index));
+    });
+    document.querySelectorAll('#menu-groups > div').forEach((d,i)=>{
+      d.hidden=i!==index;
+    });
+  }
+
+  function expandMenu(){
+    document.querySelectorAll('#menu-groups > div').forEach(d=>d.hidden=false);
+    document.querySelectorAll('#menu-groups .group-list').forEach(d=>d.hidden=false);
+    document.querySelectorAll('#menu-groups [data-action="menu-chip"]').forEach(b=>{
+      b.setAttribute('aria-expanded','true');
+    });
+  }
+
+  const payItem=lists[0].find(v=>normalize(v)==='납부하기')
+    || lists[0].find(v=>String(v).charAt(0)!=='#' && normalize(v).includes('납부하기'));
+
+  $('menu-pay').dataset.item=payItem===undefined?'':String(payItem);
+  $('search-pay').dataset.item=payItem===undefined?'':String(payItem);
+  $('search-pay').dataset.route=payItem===undefined?'':String(payItem);
+
+  tabs.forEach((tab,index)=>{
+    const tb=button(String(tab),'menu-tab',{tab:String(tab),index});
+    tb.setAttribute('aria-pressed',String(index===0));
+    $('menu-tabs').append(tb);
+  });
+
+  const searchGroups=[];
+  lists.forEach((values,index)=>{
+    const tab=String(tabs[index]===undefined?'':tabs[index]);
+    const field=document.createElement('div');
+    field.dataset.field=tab;
+    field.hidden=index!==0;
+    const heading=document.createElement('h3');
+    heading.textContent=tab+' · 분류 선택';
+    field.append(heading);
+
+    const groups=groupList(values);
+    groups.forEach((group,gi)=>{
+      const chip=tab+'::'+group.name;
+      const wrap=document.createElement('div');
+      wrap.className='group';
+
+      const toggle=button(group.name,'menu-chip',{
+        chip,tab,v:chip,target:'menu-list-'+index+'-'+gi
+      });
+      toggle.className='group-title';
+      toggle.setAttribute('aria-expanded','false');
+      toggle.setAttribute('aria-controls',toggle.dataset.target);
+      toggle.setAttribute('aria-label',group.name);
+
+      const list=document.createElement('div');
+      list.id=toggle.dataset.target;
+      list.className='group-list';
+      list.hidden=true;
+
+      group.items.forEach(item=>{
+        const b=button(item,'menu-item',{item,v:item,tab,chip});
+        b.className='item';
+        list.append(b);
+      });
+
+      if(!group.items.length){
+        const empty=document.createElement('p');
+        empty.className='small';
+        empty.textContent='이 분류의 업무 안내를 확인할 수 있어요.';
+        const guide=button(group.name,'category-service',{title:group.name});
+        guide.className='wide';
+        list.append(empty,guide);
+      }
+
+      wrap.append(toggle,list);
+      field.append(wrap);
+
+      const sw=document.createElement('div');
+      sw.className='group';
+      const st=button(tab+' · '+group.name,'search-group',{
+        chip,tab,target:'search-list-'+index+'-'+gi
+      });
+      st.className='group-title';
+      st.setAttribute('aria-expanded','false');
+      st.setAttribute('aria-controls',st.dataset.target);
+
+      const sl=document.createElement('div');
+      sl.id=st.dataset.target;
+      sl.className='group-list';
+      sl.hidden=true;
+      const entries=[];
+
+      group.items.forEach(item=>{
+        const b=button(item,'search-hit',{item,route:item,v:item,tab,chip});
+        b.className='item';
+        const path=document.createElement('span');
+        path.className='path';
+        path.textContent=tab+' → '+group.name;
+        b.append(path);
+        sl.append(b);
+        entries.push({b,text:item+' '+tab+' '+group.name,item});
+      });
+
+      if(!group.items.length){
+        const guide=button(group.name,'category-service',{title:group.name});
+        guide.className='item';
+        sl.append(guide);
+        entries.push({b:guide,text:tab+' '+group.name,item:group.name});
+      }
+
+      sw.append(st,sl);
+      $('search-groups').append(sw);
+      searchGroups.push({wrap:sw,toggle:st,list:sl,entries});
+    });
+
+    /*
+       항목의 존재 여부는 분류 제목과 비교하지 않는다.
+       제목과 이름이 같거나 분류 안에 항목이 하나뿐이어도 모두 유지한다.
+       각 원본 항목을 다시 대조하여 누락된 항목만 해당 분야에 추가한다.
+    */
+    const renderedItems=new Set(
+      Array.from(field.querySelectorAll('[data-action="menu-item"]'))
+        .map(b=>b.dataset.item)
+    );
+    const unplaced=Array.from(values).map(String)
+      .filter(v=>v.charAt(0)!=='#' && !renderedItems.has(v));
+
+    if(unplaced.length){
+      const extra=document.createElement('div');
+      extra.className='group-list';
+      unplaced.forEach(item=>{
+        const b=button(item,'menu-item',{item,v:item,tab});
+        b.className='item';
+        extra.append(b);
+      });
+      field.append(extra);
+    }
+    $('menu-groups').append(field);
+  });
+
+  function renderSearch(){
+    const raw=$('search-input').value;
+    const q=normalize(raw);
+    let hits=0;
+    const alias=!!q && ['공과금','공과','고지서','종이고지서','세금','납부'].some(s=>{
+      return normalize(s).includes(q)||q.includes(normalize(s));
+    });
+    searchGroups.forEach(g=>{
+      let count=0;
+      g.entries.forEach(e=>{
+        const match=!q || normalize(e.text).includes(q)
+          || (alias && e.item===String(payItem));
+        e.b.hidden=!match;
+        if(match)count++;
+      });
+      hits+=count;
+      g.wrap.hidden=!!q&&!count;
+      g.list.hidden=!q;
+      g.toggle.setAttribute('aria-expanded',String(!!q));
+    });
+    $('search-shortcut').hidden=!!q&&!alias;
+    $('search-empty').hidden=!q||hits>0||alias;
+    $('search-status').textContent=q
+      ?(hits?'“'+raw+'” 검색 결과 '+hits+'개'
+        :alias?'공과금 납부 메뉴를 선택해주세요.'
+        :'“'+raw+'” 검색 결과가 없어요.')
+      :'이름을 입력하거나 아래 목록에서 골라주세요.';
+  }
+
+  groupList(bills).forEach(group=>{
+    const wrap=document.createElement('div');
+    wrap.className='card';
+    const h=document.createElement('h3');
+    h.textContent=group.name;
+    wrap.append(h);
+    group.items.forEach(item=>{
+      const b=button(item,'pick-bill',{bill:item,v:item});
+      b.className='item';
+      wrap.append(b);
+    });
+    $('bill-list').append(wrap);
+  });
+
+  function filterBills(){
+    const q=normalize($('bill-query').value);
+    let count=0;
+    document.querySelectorAll('#bill-list .card').forEach(card=>{
+      let found=false;
+      card.querySelectorAll('button').forEach(b=>{
+        b.hidden=!normalize(b.dataset.bill).includes(q);
+        if(!b.hidden){found=true;count++;}
+      });
+      card.hidden=!found;
+    });
+    $('bill-empty').hidden=count>0;
+  }
+
+  function buildPad(values){
+    $('pwpad').replaceChildren();
+    values.forEach(v=>{
+      const b=button(String(v),'pw',{v:String(v)});
+      b.setAttribute('aria-label',String(v));
+      $('pwpad').append(b);
+    });
+  }
+
+  function renderPw(){
+    $('pw-dots').textContent='●'.repeat(state.pw.length)+'○'.repeat(4-state.pw.length);
+    $('pw-count').textContent=state.pw.length+'자리 입력됨 · 총 4자리';
+    $('submit-payment').disabled=state.pw.length!==4||state.busy;
+    $('pw-help').textContent=state.busy?'납부 처리 중입니다.'
+      :state.pw.length===4?'입력을 수정할 수 있어요. 확인 후 납부 버튼을 누르세요.'
+      :'4자리 입력 후 납부 버튼을 눌러주세요.';
+  }
+
+  function check(value){
+    state.checked=value;
+    $('review-check').setAttribute('aria-pressed',String(value));
+    $('review-check').textContent=(value?'✓':'□')+' 고지서 내용과 출금계좌를 확인했어요';
+    $('review-next').disabled=!value;
+    $('review-help').textContent=value
+      ?'다음 단계에서 계좌 비밀번호를 입력합니다.'
+      :'전자납부번호·고객명·금액·출금계좌를 확인해주세요.';
+  }
+
+  function cameraReset(){
+    state.photo=false;
+    $('camera-ready').hidden=false;
+    $('camera-preview').hidden=true;
+    $('camera-shutter').hidden=false;
+    $('camera-choices').hidden=true;
+    $('camera-guide').textContent='고지서의 번호와 금액이 함께 보이도록 사각형 안에 맞춰주세요.';
+  }
+
+  function togglePanel(el,id,closed,opened){
+    const panel=$(id);
+    panel.hidden=!panel.hidden;
+    el.setAttribute('aria-expanded',String(!panel.hidden));
+    if(closed)el.textContent=panel.hidden?closed:opened;
+  }
+
+  function selectMenu(item,source,shortcut){
+    if(shortcut || (payItem!==undefined && item===String(payItem))){
+      state.from=source;
+      show('bill-start');
+    }else openService(item);
+  }
+
+  $('search-input').addEventListener('input',renderSearch);
+  $('bill-query').addEventListener('input',filterBills);
+
+  $('phone').addEventListener('click',function(e){
+    const el=e.target.closest('[data-action]');
+    if(!el || !this.contains(el) || el.disabled)return;
+    const a = el.dataset.action;
+    if(a==='go-menu'){show('menu');}
+    else if(a==='back-home'){show('home');}
+    else if(a==='open-search'){show('search');}
+    else if(a==='back-menu'){show('menu');}
+    else if(a==='menu-tab'){
+      const index=tabs.findIndex(t=>String(t)===el.dataset.tab);
+      if(index>=0)setTab(index);
+    }
+    else if(a==='menu-chip'){togglePanel(el,el.dataset.target);}
+    else if(a==='menu-expand-all'){expandMenu();}
+    else if(a==='category-reset'){
+      setTab(state.tab);
+      document.querySelectorAll('#menu-groups .group-list').forEach(d=>d.hidden=true);
+      document.querySelectorAll('#menu-groups [data-action="menu-chip"]').forEach(b=>{
+        b.setAttribute('aria-expanded','false');
+      });
+      $('menu-body').scrollTop=$('category-heading').offsetTop-$('menu-body').offsetTop;
+    }
+    else if(a==='menu-item'){selectMenu(el.dataset.item,'menu',el.dataset.pay==='true');}
+    else if(a==='search-hit'){selectMenu(el.dataset.route||el.dataset.item,'search',el.dataset.pay==='true');}
+    else if(a==='category-service'){openService(el.dataset.title);}
+    else if(a==='search-group'){togglePanel(el,el.dataset.target);}
+    else if(a==='search-expand-all'){
+      searchGroups.forEach(g=>{
+        if(!g.wrap.hidden){
+          g.list.hidden=false;
+          g.toggle.setAttribute('aria-expanded','true');
+        }
+      });
+    }
+    else if(a==='search-input'){$('search-input').focus();}
+    else if(a==='search-clear'){$('search-input').value='';renderSearch();}
+    else if(a==='oos-search-submit'){renderSearch();$('search-input').blur();}
+    else if(a==='back-bill-home'){show(state.from);}
+    else if(a==='to-bill-home'){show('bill-start');}
+    else if(a==='pay-start'){cameraReset();show('camera');}
+    else if(a==='bill-toggle'){
+      togglePanel(el,'bill-options','공과금 종류 펼치기','공과금 종류 접기');
+    }
+    else if(a==='bill-query'){$('bill-query').focus();}
+    else if(a==='bill-clear'){$('bill-query').value='';filterBills();}
+    else if(a==='pick-bill'){openService(el.dataset.bill);}
+    else if(a==='shutter'){
+      state.photo=true;
+      $('camera-ready').hidden=true;
+      $('camera-preview').hidden=false;
+      $('camera-shutter').hidden=true;
+      $('camera-choices').hidden=false;
+      $('camera-guide').textContent='촬영한 고지서를 확인해주세요.';
+    }
+    else if(a==='retake'){cameraReset();}
+    else if(a==='use-photo'){
+      if(state.photo){check(false);show('review');}
+    }
+    else if(a==='review-retake'){check(false);cameraReset();show('camera');}
+    else if(a==='review-detail'){
+      togglePanel(el,'review-details','고지서 상세정보 펼치기','고지서 상세정보 접기');
+    }
+    else if(a==='account-open'){togglePanel(el,'account-panel');}
+    else if(a==='account-select'){
+      $('account-panel').hidden=true;
+      document.querySelector('[data-action="account-open"]').setAttribute('aria-expanded','false');
+      check(false);
+    }
+    else if(a==='review-check'){check(!state.checked);}
+    else if(a==='pay'){
+      if(state.checked){
+        state.pw='';
+        state.busy=false;
+        renderPw();
+        show('password');
+      }
+    }
+    else if(a==='close-password'){show('review');}
+    else if(a==='pw'){
+      if(!state.busy && state.pw.length<4){state.pw+=el.dataset.v;renderPw();}
+    }
+    else if(a==='pw-del'){
+      if(!state.busy){state.pw=state.pw.slice(0,-1);renderPw();}
+    }
+    else if(a==='pw-clear'){
+      if(!state.busy){state.pw='';renderPw();}
+    }
+    else if(a==='pw-shuffle'){
+      if(!state.busy){
+        const shuffled=Array.from(keys);
+        for(let i=shuffled.length-1;i>0;i--){
+          const j=Math.floor(Math.random()*(i+1));
+          [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];
+        }
+        buildPad(shuffled);
+      }
+    }
+    else if(a==='submit-payment'){
+      if(state.pw.length===4 && !state.busy){
+        state.busy=true;
+        renderPw();
+        show('done');
+        state.busy=false;
+      }
+    }
+    else if(a==='done-detail'){
+      togglePanel(el,'done-details','납부 상세정보 펼치기','납부 상세정보 접기');
+    }
+    else if(a==='payment-history'){openService('납부내역 조회');}
+    else if(a==='finish'){check(false);show('home');}
+    else if(a==='other-service'){openService(el.dataset.title);}
+    else if(a==='service-back'){show(state.serviceFrom);}
+    else if(a==='service-menu'){show('menu');}
+    else if(a==='service-support'){$('support-guide').hidden=false;}
+    else if(a==='support-menu'){
+      const i=tabs.findIndex(t=>String(t)==='고객센터');
+      if(i>=0)setTab(i);
+      show('menu');
+    }
+    else if(a==='logout-execute'){
+      state.pw='';
+      check(false);
+      cameraReset();
+      show('home');
+    }
+    else if(a==='oos-home' || a==='oos-info-home' || a==='oos-tab-home'){show('home');}
+    else if(a==='oos-logout'){openService('로그아웃',true);}
+    else if(a==='oos-message' ||
+            a==='oos-wallet' ||
+            a==='oos-alarm' ||
+            a==='oos-transfer' ||
+            a==='oos-irp' ||
+            a==='oos-appcard' ||
+            a==='oos-get-coupon' ||
+            a==='oos-event' ||
+            a==='oos-coupon' ||
+            a==='oos-point' ||
+            a==='oos-spend-detail' ||
+            a==='oos-my-point' ||
+            a==='oos-connect-event' ||
+            a==='oos-easy-home' ||
+            a==='oos-home-setting' ||
+            a==='oos-hide-amount' ||
+            a==='oos-tab-finance' ||
+            a==='oos-tab-goods' ||
+            a==='oos-tab-benefit' ||
+            a==='oos-tab-stock' ||
+            a==='oos-chat' ||
+            a==='oos-settings' ||
+            a==='oos-ask-ai' ||
+            a==='oos-support' ||
+            a==='oos-bill-inquiry' ||
+            a==='oos-giro-register' ||
+            a==='oos-info-support' ||
+            a==='oos-done-support'){
+      openService(el.textContent.trim());
+    }
+  });
+
+  buildPad(keys);
+  renderPw();
+  renderSearch();
+})();
+</script>
+</body>
+</html>
+```
+
+```json
+{
+  "name": "auto",
+  "note": "전체메뉴와 보조 기능을 확인하고 돌아온 뒤 메뉴 검색에서 고지서 납부를 찾아 촬영, 정보 확인, 비밀번호 입력과 납부를 완료합니다.",
+  "derived_from_original": false,
+  "required_ids": [
+    "phone",
+    "menu-settings",
+    "search-input",
+    "search-pay",
+    "camera-shutter",
+    "review-check",
+    "review-next",
+    "pwpad",
+    "submit-payment",
+    "dn-paid",
+    "dn-eno"
+  ],
+  "steps": [
+    {
+      "screen": "home"
+    },
+    {
+      "screen": "menu",
+      "click": "[data-screen='home'] [data-action='go-menu']"
+    },
+    {
+      "screen": "service",
+      "click": "#menu-settings"
+    },
+    {
+      "screen": "menu",
+      "click": "[data-screen='service'] [data-action='service-back']"
+    },
+    {
+      "screen": "search",
+      "click": "[data-screen='menu'] [data-action='open-search']"
+    },
+    {
+      "screen": "bill-start",
+      "click": "#search-pay"
+    },
+    {
+      "screen": "camera",
+      "click": "[data-action='pay-start']"
+    },
+    {
+      "screen": "camera",
+      "click": "#camera-shutter"
+    },
+    {
+      "screen": "review",
+      "click": "[data-action='use-photo']"
+    },
+    {
+      "screen": "review",
+      "do": [
+        {
+          "click": "[data-action='account-open']"
+        },
+        {
+          "click": "[data-action='account-select']"
+        },
+        {
+          "click": "[data-action='review-detail']"
+        },
+        {
+          "click": "#review-check"
+        }
+      ]
+    },
+    {
+      "screen": "password",
+      "click": "#review-next"
+    },
+    {
+      "screen": "password",
+      "do": [
+        {
+          "repeat": 4,
+          "click": "#pwpad [data-action='pw']",
+          "wait": 0.15
+        }
+      ]
+    },
+    {
+      "screen": "done",
+      "click": "#submit-payment"
+    }
+  ],
+  "reveal": {
+    "menu-tab": {
+      "at": "menu",
+      "do": [
+        {
+          "click": "[data-action='menu-expand-all']"
+        }
+      ]
+    },
+    "menu-chip": {
+      "at": "menu",
+      "do": [
+        {
+          "click": "[data-action='menu-expand-all']"
+        }
+      ]
+    },
+    "menu-item": {
+      "at": "menu",
+      "do": [
+        {
+          "click": "[data-action='menu-expand-all']"
+        }
+      ]
+    },
+    "search-hit": {
+      "at": "search",
+      "do": [
+        {
+          "click": "[data-action='search-expand-all']"
+        }
+      ]
+    },
+    "pick-bill": {
+      "at": "bill-start",
+      "do": [
+        {
+          "click": "[data-action='bill-toggle']"
+        }
+      ]
+    }
+  },
+  "expect": {}
+}
+```

@@ -27,7 +27,7 @@ from senior_ui.preserved import GLOBAL_NAME
 from senior_ui.tasks import load_task
 
 from .model import IMAGE_MARK
-from .preserve import preserved_data, split_groups
+from .preserve import optional_names, preserved_data, split_groups
 from .reply import read_forms
 
 PROMPT_FILE = os.path.join(ROOT, "docs", "restructure-prompt.md")
@@ -264,7 +264,7 @@ def plan_retry_block(problems):
                      + ["- " + one_line(x) for x in problems] + [""])
 
 
-def choices_block(orig_snapshot, original_html):
+def choices_block(orig_snapshot, original_html, not_choices=None):
     """원본이 가진 반복 선택지를 요약하고, 데이터를 어디서 읽는지 알린다.
 
     검사 I 가 렌더링된 DOM 에서 수집하는 바로 그 집합을 쓴다 (preserve.py 의
@@ -281,11 +281,22 @@ def choices_block(orig_snapshot, original_html):
     알리는 글이 되었다.
 
     은행이나 금융에 묶이지 않은 일반 규칙이다 - 이름도 개수도 입력에서 나온다.
+
+    과제가 선택지가 아니라고 선언한 무리(`not_choices`, {data-action: 이유})는 따로
+    이유와 함께 적는다 - 검사 I 가 그 무리를 세지 않는다. 그 무리만 받치는 배열
+    (preserve.optional_names - 공과금의 MENU_TABS)은 넣어 주되 "빠뜨리지 말고
+    참조하라" 에서 뺀다. 형식 검사(reply.preserved_problems)도 같은 이름을 뺀다.
     """
+    skip = not_choices or {}
     generated, inline = split_groups(orig_snapshot, original_html)
     if not generated and not inline:
         return ""
-    data = preserved_data(orig_snapshot, original_html)
+    declared = [g for g in generated + inline if g[0] in skip]
+    generated = [g for g in generated if g[0] not in skip]
+    inline = [g for g in inline if g[0] not in skip]
+    preserved = preserved_data(orig_snapshot, original_html)
+    optional = optional_names(orig_snapshot, original_html, skip)
+    data = {n: v for n, v in preserved.items() if n not in optional}
 
     out = ["## 원본이 가진 선택지", ""]
     if generated:
@@ -317,6 +328,17 @@ def choices_block(orig_snapshot, original_html):
         out.append("마크업에 직접 있는 것 (그대로 두면 된다):")
         for action, count, _src in inline:
             out.append("  %s — %d개" % (action, count))
+        out.append("")
+    if declared:
+        out.append("선택지가 아니라고 과제가 정한 반복 요소 (검사가 선택지로 세지 않는다):")
+        for action, count, src in declared:
+            where = (" (%s)" % " + ".join("%s %d" % (n, c) for n, c in src)) if src else ""
+            out.append("  %s — %d개%s: %s" % (action, count, where, skip[action]))
+        if optional:
+            out += ["그 값도 도구가 넣어 준다: "
+                    + " · ".join("window.%s.%s (%d개)" % (GLOBAL_NAME, n, len(preserved[n]))
+                                 for n in optional) + ".",
+                    "써도 되고 쓰지 않아도 된다 - 읽지 않아도 형식 오류가 아니다."]
         out.append("")
     return "\n".join(out)
 

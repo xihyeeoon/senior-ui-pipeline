@@ -230,6 +230,9 @@ def load_flow(path, task=None):
     # 일부러 뺀 선택지의 선언 (checks/i_choices.declared 참고). 없으면 빈
     # 선언이고, 그때 검사 I 는 모든 누락을 fatal 로 센다.
     flow.setdefault("choices_removed", {})
+    # 선택지가 아닌 무리의 선언 (checks/i_choices.not_choices 참고). 과제가 정한다 -
+    # 연구자의 흐름도 그 과제의 선언으로 판정한다 (모델 흐름은 judged_flow 가 붙인다).
+    flow["not_choices"] = dict(T.load_task(task)["not_choices"])
     # 잘못된 입력에서 오류를 보이고 되돌아가는 경로 (checks/j_errors.py).
     # 없으면 정답 경로만 걷고, 검사 J 는 물러난다 - 옛 흐름이 그렇다.
     flow.setdefault("error_paths", [])
