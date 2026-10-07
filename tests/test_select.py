@@ -30,12 +30,19 @@ DEFAULT_RULE = json.load(io.open(_api.DEFAULT_SELECTION_RULE, encoding="utf-8"))
 ELSEWHERE = "C:\\gone\\outputs\\restructure_auto\\%s\\%s"
 
 
+def current_original(task="transfer"):
+    """그 과제의 지금 원본 파일(과제 파일의 original)의 지문."""
+    return _api.tasks_module.original_sha256(task)
+
+
 def make_run(root, name, passed=True, warning=0, fatal=0, screens=9, actions=30,
              changes=7, attempts=1, redeclared=(), dirty=False, truncated=False,
              mock=None, model="gpt-6.1-sol", task="transfer", unaddressed_changes=0,
              effort="medium", brief=True, stage="wireframe", fmt_budget=5, audit_budget=6,
              refine_budget=2, reverted=None, commit="abcdef1234567890",
-             stopped_reason=None):
+             stopped_reason=None, original="current"):
+    """가짜 실행 폴더 하나. `original` 은 summary.original_sha256 - "current" 면 그 과제의
+    지금 원본 파일의 지문, None 이면 칸을 쓰지 않는다 (지문을 남기기 전의 옛 실행)."""
     d = os.path.join(root, name)
     os.makedirs(d)
     n = attempts
@@ -93,6 +100,10 @@ def make_run(root, name, passed=True, warning=0, fatal=0, screens=9, actions=30,
                              "reasoning": 15000 * n}},
         "cost": {"total_usd": round(0.1 * n, 4)},
     }
+    if original == "current":
+        summary["original_sha256"] = current_original(task)
+    elif original is not None:
+        summary["original_sha256"] = original
     # 다듬기 기록은 다듬기가 생긴 뒤(11-5)의 실행에만 있다. refine_budget=None 이면 옛 실행.
     if refine_budget is not None:
         summary["refine"] = {"budget": refine_budget, "reverted": reverted,
@@ -302,6 +313,9 @@ def test_the_shipped_rule_names_the_run_conditions():
     assert g["commit"] is None
     assert g["reverted"] == "allow"
     assert g["no_internal_error"] is True
+    # 지금 inputs 의 원본으로 만든 실행만 (11-11). 규칙의 판도 그래서 올렸다
+    assert g["original"] == "current"
+    assert DEFAULT_RULE["version"] == 3
 
 
 def test_a_run_in_another_stage_is_excluded(tmp_path):
@@ -329,6 +343,72 @@ def test_a_run_with_another_budget_is_excluded(tmp_path):
         "20261007-100001-3x3": ["예산이 규칙과 다름: 형식 3 (규칙 5) · 검사 3 (규칙 6)"],
         "20261007-100002-refine0": ["예산이 규칙과 다름: 다듬기 0 (규칙 2)"],
         "20261007-100003-norefine": ["예산이 규칙과 다름: 다듬기 기록 없음 (규칙 2)"]}
+
+
+OTHER_ORIGINAL = "0" * 64
+
+
+def test_a_run_made_from_another_original_is_excluded(tmp_path):
+    """original: "current" - 실행의 original_sha256 이 지금 inputs 의 원본 파일과 다르면
+    "다른 원본으로 만든 실행" 으로 뺀다. 값이 없는 옛 실행도 같은 이유로 뺀다 (11-11)."""
+    runs = runs_dir(tmp_path)
+    make_run(str(runs), "20261007-100000-now")
+    make_run(str(runs), "20261007-100001-other", original=OTHER_ORIGINAL)
+    make_run(str(runs), "20261007-100002-old", original=None)
+    _code, result, md = select(tmp_path)
+    assert order(result) == ["20261007-100000-now"]
+    now = current_original("transfer")
+    assert reasons(result) == {
+        "20261007-100001-other": [
+            "다른 원본으로 만든 실행 (original_sha256 %s, 지금 inputs/original_transfer.html "
+            "%s)" % (OTHER_ORIGINAL[:12], now[:12])],
+        "20261007-100002-old": [
+            "다른 원본으로 만든 실행 (original_sha256 기록 없음 - 원본 지문을 남기기 전의 "
+            "실행, 지금 inputs/original_transfer.html %s)" % now[:12]]}
+    assert result["original_basis"] == {"task": "transfer",
+                                        "path": "inputs/original_transfer.html",
+                                        "sha256": now}
+    assert "- 원본 기준: `inputs/original_transfer.html` sha256 `%s`" % now[:12] in md
+
+
+def test_the_original_gate_follows_the_task_file(tmp_path):
+    """공과금도 같다 - 원본 파일은 과제 파일(tasks/bill.json 의 original)이 정한다.
+    이체 원본의 지문으로 만든 공과금 실행은 다른 원본으로 만든 것이다."""
+    runs = runs_dir(tmp_path)
+    make_run(str(runs), "20261007-100000-bill-now", task="bill")
+    make_run(str(runs), "20261007-100001-bill-transfer", task="bill",
+             original=current_original("transfer"))
+    out = str(tmp_path / "sel")
+    code = _api.select_main(["--task", "bill", "--out", out,
+                             "--runs", str(tmp_path / "runs" / "*")])
+    assert code == 0
+    js = [f for f in os.listdir(out) if f.endswith(".json")][0]
+    result = json.load(io.open(os.path.join(out, js), encoding="utf-8"))
+    assert current_original("bill") != current_original("transfer")
+    assert order(result) == ["20261007-100000-bill-now"]
+    assert reasons(result)["20261007-100001-bill-transfer"][0].startswith(
+        "다른 원본으로 만든 실행 (original_sha256 %s, 지금 inputs/original_bill.html "
+        % current_original("transfer")[:12])
+    assert result["original_basis"]["path"] == "inputs/original_bill.html"
+
+
+def test_the_original_gate_is_off_when_null(tmp_path):
+    runs = runs_dir(tmp_path)
+    make_run(str(runs), "20261007-100000-old", original=None)
+    gates = dict(DEFAULT_RULE["gates"], original=None)
+    _code, result, _md = select(tmp_path, "--rule", write_rule(tmp_path, gates=gates))
+    assert order(result) == ["20261007-100000-old"]
+    assert result["original_basis"] is None
+
+
+def test_the_original_fingerprint_ignores_line_endings(tmp_path):
+    """Windows 작업 트리의 CRLF 와 저장소의 LF 가 같은 원본으로 잰다 (설계서의 원본 지문과
+    같은 함수)."""
+    T = _api.tasks_module
+    (tmp_path / "crlf.html").write_bytes(b"<p>\r\n</p>\r\n")
+    (tmp_path / "lf.html").write_bytes(b"<p>\n</p>\n")
+    assert T.file_sha256(str(tmp_path / "crlf.html")) == T.file_sha256(str(tmp_path / "lf.html"))
+    assert _api.storyboard_run.fingerprint is T.fingerprint
 
 
 def test_an_internal_error_run_is_excluded_even_with_a_passing_build(tmp_path):
@@ -418,6 +498,8 @@ def test_reverted_runs_follow_the_rule_switch(tmp_path, switch, want_order, want
     ({"commit": "xyz"}, "gates.commit"),
     ({"reverted": "keep"}, "gates.reverted"),
     ({"no_internal_error": "yes"}, "true/false"),
+    ({"original": "now"}, "gates.original"),
+    ({"original": True}, "gates.original"),
 ])
 def test_a_malformed_condition_gate_stops_the_command(five, capsys, gates, needle):
     rule = write_rule(five, gates=dict(DEFAULT_RULE["gates"], **gates))

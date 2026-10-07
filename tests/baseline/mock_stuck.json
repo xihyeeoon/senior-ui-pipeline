@@ -330,6 +330,8 @@
     "format_failures": 0,
     "audit_failures": 0
   },
+  "original": "inputs/original_transfer.html",
+  "original_sha256": "bc3dd029351bd45c8ab14f921f120325f8ef9377c33c8459febd5b7c71ccec0b",
   "stuck": {
     "attempt": 2,
     "same_as": 1,

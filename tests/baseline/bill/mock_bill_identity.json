@@ -327,5 +327,7 @@
     "reverted": null,
     "format_failures": 0,
     "audit_failures": 0
-  }
+  },
+  "original": "inputs/original_bill.html",
+  "original_sha256": "45d3de27aa032b72c6a9ad00224de16ad3f755a67dbdac437bc4752ddc458565"
 }

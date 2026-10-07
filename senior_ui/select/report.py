@@ -45,6 +45,8 @@ def build(task, rule, source, ranked, rows_source, created=None):
                    "candidates": len(cands), "excluded": len(ranked["excluded"])},
         # 후보들이 맞춘 커밋 (규칙의 gates.commit, 비었으면 가장 많은 커밋)
         "commit_basis": ranked.get("commit_basis"),
+        # 후보들이 맞춘 원본 - 그 과제의 지금 원본 파일 (gates.original, 꺼져 있으면 None)
+        "original_basis": ranked.get("original_basis"),
         "representative": ranked["representative"],
         "ranking": [_row_out(r) for r in cands + ranked["excluded"]],
         "researcher_decision": dict(DECISION),
@@ -184,6 +186,11 @@ def render(result, md_path):
                       "규칙의 gates.commit" if basis["source"] == "rule" else
                       "문지기를 지난 실행 %d개 중 가장 많은 %d개"
                       % (sum(basis["counts"].values()), basis["counts"][basis["commit"]])))
+    obasis = result.get("original_basis")
+    if obasis:
+        out.append("- 원본 기준: `%s` sha256 `%s` (지금 파일) - 이 원본으로 만들지 않았거나 "
+                   "지문(original_sha256)이 없는 실행은 뺐다"
+                   % (obasis["path"], obasis["sha256"][:12]))
     if top:
         link = _link(top.get("brief"), md_dir)
         out.append("- **1등: `%s`** - 설명서: %s" % (

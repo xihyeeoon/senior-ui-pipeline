@@ -6,7 +6,6 @@ r"""실행 폴더 읽기. 쓰지 않는다.
 summary.json 의 경로는 그 실행을 돌린 PC 의 절대 경로다. 실행 폴더를 옮겼을 수
 있으므로(results/runs/ 사본) 같은 이름의 파일이 실행 폴더 안에 있으면 그것을 쓴다.
 """
-import hashlib
 import io
 import json
 import os
@@ -89,10 +88,8 @@ def git(*args):
         return None
 
 
-def fingerprint(data):
-    """줄끝을 LF 로 맞춘 내용의 sha256. Windows 작업 트리는 CRLF 로 체크아웃되고
-    (core.autocrlf) 저장소의 파일은 LF 라, 그대로 재면 같은 원본이 둘로 보인다."""
-    return hashlib.sha256(data.replace(b"\r\n", b"\n")).hexdigest()
+# 원본 지문은 재구성 실행이 남기는 original_sha256 과 같은 함수로 잰다 (tasks.fingerprint).
+fingerprint = T.fingerprint
 
 
 def original_fingerprint(task_def, commit=None):

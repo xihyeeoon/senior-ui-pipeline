@@ -255,6 +255,8 @@ def collect(run_dir):
         "dirty_files": git.get("dirty_files") or [],
         "commit": git.get("commit"),
         "branch": git.get("branch"),
+        # 어느 원본으로 만든 실행인가 (gates.original). 11-11 전의 실행에는 없다 - None
+        "original_sha256": s.get("original_sha256"),
         "model": s.get("model"),
         "response_models": s.get("response_models") or [],
         "reasoning_effort": (s.get("model_call") or {}).get("reasoning_effort"),

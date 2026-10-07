@@ -333,6 +333,7 @@ API 없이: `--mock pass --mock-refine improve` (1회차에 다듬은 빌드가 
 | `attempts[].calls[].ratelimit` · `ratelimit` | 호출마다의 응답 헤더 `x-ratelimit-limit-tokens` · `-remaining-tokens` · `-limit-requests`, 그리고 마지막 값 |
 | `attempts[].calls[].waited_for_tokens` | 남은 토큰이 모자라 그 호출 전에 더 기다린 초 (추론형, 기다렸을 때만) |
 | `cost` | 시도별·전체 예상 금액 (USD) |
+| `original` · `original_sha256` | 이 실행이 쓴 원본 HTML (루트 기준 경로)과 그 지문 — 줄끝을 LF 로 맞춘 sha256 (`tasks.fingerprint`). `run.log` 첫 줄에도 `original_sha256=… (경로)` 로 남는다. 시작하지 못한 실행에도 있다. 고르기의 문지기 `original` 이 지금 원본과 견준다 (11-11) |
 
 **가격 표**는 `senior_ui/config.py` 의 `MODEL_PRICES` 한 곳이다 — 100만 토큰당
 `{"input", "output"}`. 채운 것은 셋이다 — `gpt-4o` 2.50 / 10.00, `gpt-6.1-sol`
@@ -564,6 +565,7 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
   reasoning_effort · 실행 조건(검사 단계 · 예산 형식/검사/다듬기) · 되돌림(다듬기가
   떨어져 직전 통과 빌드가 최종이면 그 회차) · 커밋
 - **커밋 기준** — 후보들이 맞춘 커밋과 그것이 어디서 왔는지 (규칙 / 가장 많은 커밋)
+- **원본 기준** — 후보들이 맞춘 원본 파일과 그 지문 (`original_basis`, 문지기 `original`)
 - **구조** — 선택지 그룹마다 `kept/selectable/원본`, 오류 경로마다 검사 J 결과
 - **비용** — 입력 · 출력(생각 포함) · 생각 토큰, 예상 금액 (`summary.cost`)
 - **대표성 계산** — 값마다 중앙값 · 최솟값 · 최댓값
@@ -604,7 +606,8 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
     "budget": {"format": 5, "audit": 6, "refine": 2},
     "commit": null,
     "reverted": "allow",
-    "no_internal_error": true
+    "no_internal_error": true,
+    "original": "current"
   },
   "ordering": [
     {"by": "representative", "metrics": {"screens": 1, "data_actions": 1, "changes": 1}},
@@ -630,8 +633,9 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
 | `commit` | `null` 이면 다른 문지기를 지난 실행들 중 **가장 많은 커밋** 이 기준이다 (같은 수면 가장 나중 실행의 커밋). 해시를 적으면 그 커밋(앞자리 일치)만. 기준과 다른 커밋의 실행은 이유와 함께 빠진다 |
 | `reverted` | 다듬기가 떨어져 직전 통과 빌드가 최종인 실행: `"allow"` (기본) 후보로 인정하고 순위표 '되돌림' 열로 보인다 · `"last"` 되돌리지 않은 실행 뒤로 미룬다 · `"exclude"` 뺀다. 예비 실행을 본 뒤 12번 전에 확정한다 |
 | `no_internal_error` | 도구 내부 오류로 끝난 실행(`stopped_reason: internal_error`, 종료 2)은 통과한 빌드가 있어도 뺀다 |
+| `original` | `"current"` 면 실행의 `original_sha256` 이 그 과제의 **지금** 원본 파일(과제 파일의 `original` — 이체 `inputs/original_transfer.html`, 공과금 `inputs/original_bill.html`)의 지문과 같아야 한다. 다르면 "다른 원본으로 만든 실행" 으로 빠지고, 지문이 없는 옛 실행(11-11 전)도 같은 이유로 빠진다. `null` 이면 보지 않는다. 지문은 줄끝을 LF 로 맞춘 sha256 이다 (`tasks.fingerprint` — 설계서의 원본 지문과 같은 함수). 규칙 version 3 (11-11) |
 
-조건 문지기(`stage` · `budget` · `commit` · `reverted` · `no_internal_error`)는 칸이
+조건 문지기(`stage` · `budget` · `commit` · `reverted` · `no_internal_error` · `original`)는 칸이
 없으면 보지 않는다 — 칸이 생기기 전의 지난 결과 JSON 을 `--rule` 로 다시 쓰면 그때
 규칙 그대로 돈다.
 
