@@ -298,6 +298,8 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   .accclear.on{display:block;}
   .accwarn{display:none; margin:-6px 22px 12px; font-size:14px; color:#D93A32;}
   .accwarn.on{display:block;}
+  #acc-pad{display:none;}
+  #acc-pad.on{display:grid;}
   .dimmer{position:absolute; inset:0; background:rgba(0,0,0,.45);}
   .dialog{position:absolute; left:28px; right:28px; top:50%; transform:translateY(-50%);
     background:#fff; border-radius:18px; padding:24px 22px 18px;}
@@ -435,7 +437,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   <div class="navbar"><span class="ico" data-action="back-recipient">‹</span><span></span><span class="ico" data-action="close-account">✕</span></div>
   <div class="body">
     <div class="h1">누구에게 보낼까요?</div>
-    <div class="accfield" id="acc-field">
+    <div class="accfield" id="acc-field" data-action="acc-field">
       <div class="lab">계좌번호</div>
       <div class="accrow">
         <div id="acc-input" class="val" data-empty="없이 숫자만 입력"></div>
@@ -545,7 +547,7 @@ const ANSWER_ACCOUNT = '110234567890';
 const BALANCE = 1000000;
 const ACC_MAX = 14;
 
-const S = { bank:null, account:'', amount:0, pw:'', errFrom:null };
+const S = { bank:null, account:'', amount:0, pw:'', errFrom:null, accPad:false };
 
 const ACC_KEYS = ['1','2','3','4','5','6','7','8','9','0'];
 const AMT_KEYS = ['1','2','3','4','5','6','7','8','9','00','0'];
@@ -602,6 +604,7 @@ function renderAccount(){
   document.getElementById('acc-field').classList.toggle('max', atMax);
   document.getElementById('acc-warn').classList.toggle('on', atMax);
   document.getElementById('acc-clear').classList.toggle('on', S.account.length>0);
+  document.getElementById('acc-pad').classList.toggle('on', S.accPad);
   const pb = document.getElementById('picked-bank');
   pb.textContent = S.bank || '은행 또는 증권사 선택';
   pb.classList.toggle('set', !!S.bank);
@@ -641,7 +644,7 @@ document.getElementById('phone').addEventListener('click', function(e){
 
   if(a==='go-recipient') show('recipient');
   else if(a==='back-home') show('home');
-  else if(a==='go-account'){ S.account=''; S.bank=null; renderAccount(); show('account'); }
+  else if(a==='go-account'){ S.account=''; S.bank=null; S.accPad=false; renderAccount(); show('account'); }
   else if(a==='back-recipient') show('recipient');
   else if(a==='close-account') show('recipient');
   else if(a==='open-bank'){ bankTab(false); show('bank'); }
@@ -653,6 +656,7 @@ document.getElementById('phone').addEventListener('click', function(e){
     renderAccount();
     show('account');
   }
+  else if(a==='acc-field'){ S.accPad = true; renderAccount(); }
   else if(a==='acc-num'){
     if(S.account.length<ACC_MAX) S.account += el.dataset.v;
     renderAccount();

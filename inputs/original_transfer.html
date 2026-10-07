@@ -188,6 +188,9 @@
   .accclear.on{display:block;}
   .accwarn{display:none; margin:-6px 22px 12px; font-size:14px; color:#D93A32;}
   .accwarn.on{display:block;}
+  /* 계좌 숫자판은 입력란을 눌러야 열린다 (Flutter A1 4cd2179, 2026-10-07) */
+  #acc-pad{display:none;}
+  #acc-pad.on{display:grid;}
   .dimmer{position:absolute; inset:0; background:rgba(0,0,0,.45);}
   .dialog{position:absolute; left:28px; right:28px; top:50%; transform:translateY(-50%);
     background:#fff; border-radius:18px; padding:24px 22px 18px;}
@@ -335,7 +338,7 @@
   <div class="navbar"><span class="ico" data-action="back-recipient">‹</span><span></span><span class="ico" data-action="close-account">✕</span></div>
   <div class="body">
     <div class="h1">누구에게 보낼까요?</div>
-    <div class="accfield" id="acc-field">
+    <div class="accfield" id="acc-field" data-action="acc-field">
       <div class="lab">계좌번호</div>
       <div class="accrow">
         <div id="acc-input" class="val" data-empty="없이 숫자만 입력"></div>
@@ -484,7 +487,7 @@ const BALANCE = 1000000;
 const ACC_MAX = 14;
 
 /* ============ 상태 ============ */
-const S = { bank:null, account:'', amount:0, pw:'', errFrom:null };
+const S = { bank:null, account:'', amount:0, pw:'', errFrom:null, accPad:false };
 
 /* ============ 고르는 버튼 묶음 ============
    숫자판·빠른 금액은 마크업에 쓰지 않고 이 배열로 그린다. 그리는 줄에 배열
@@ -548,6 +551,7 @@ function renderAccount(){
   document.getElementById('acc-field').classList.toggle('max', atMax);
   document.getElementById('acc-warn').classList.toggle('on', atMax);
   document.getElementById('acc-clear').classList.toggle('on', S.account.length>0);
+  document.getElementById('acc-pad').classList.toggle('on', S.accPad);
   const pb = document.getElementById('picked-bank');
   pb.textContent = S.bank || '은행 또는 증권사 선택';
   pb.classList.toggle('set', !!S.bank);
@@ -592,7 +596,7 @@ document.getElementById('phone').addEventListener('click', function(e){
 
   if(a==='go-recipient') show('recipient');
   else if(a==='back-home') show('home');
-  else if(a==='go-account'){ S.account=''; S.bank=null; renderAccount(); show('account'); }
+  else if(a==='go-account'){ S.account=''; S.bank=null; S.accPad=false; renderAccount(); show('account'); }
   else if(a==='back-recipient') show('recipient');
   /* Flutter A1 의 계좌 화면 ✕ 는 홈이 아니라 받는 사람으로 돌아간다 (maybePop) */
   else if(a==='close-account') show('recipient');
@@ -606,6 +610,9 @@ document.getElementById('phone').addEventListener('click', function(e){
     renderAccount();
     show('account');
   }
+  /* 한 번 열리면 이 화면에 있는 동안 열려 있다 - 은행 시트 · 오류 팝업 · 금액 화면 ‹ 뒤에도.
+     받는 사람에서 다시 들어오면(go-account) 닫힌 채로 시작한다 */
+  else if(a==='acc-field'){ S.accPad = true; renderAccount(); }
   else if(a==='acc-num'){
     if(S.account.length<ACC_MAX) S.account += el.dataset.v;
     renderAccount();

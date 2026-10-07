@@ -2,16 +2,18 @@
   "name": "original",
   "truth": {"BANK": "신한", "ACCOUNT": "110234567890", "AMOUNT": "32000", "NAME": "김철수",
             "ACCOUNT_WRONG": "110234567891", "BANK_WRONG": "국민"},
-  "note": "The SOL transfer prototype - 8 task screens, aligned to the Flutter dummy app A1 transfer (2026-10-05); the two error popups (err-account, err-bank) are reached by the error_paths, not by the happy path. ACCOUNT_WRONG / BANK_WRONG are the wrong inputs the error paths type in - they are never shown to the model. derived_from_original means the build under test is a repair of this same document, so structural preservation can be asserted.",
+  "note": "The SOL transfer prototype - 8 task screens, aligned to the Flutter dummy app A1 transfer (2026-10-05); the two error popups (err-account, err-bank) are reached by the error_paths, not by the happy path. The account screen is walked twice: as it opens (keypad closed) and after tapping the account field (account#2, keypad open) - A1 opens the keypad only on that tap (dummy app 4cd2179, 11-11). A step's state names that state in words; the tool does not guess transitions, the researcher writes them here. Both error paths tap the field before typing digits too. ACCOUNT_WRONG / BANK_WRONG are the wrong inputs the error paths type in - they are never shown to the model. derived_from_original means the build under test is a repair of this same document, so structural preservation can be asserted.",
   "derived_from_original": true,
   "required_ids": ["phone", "grid-bank", "grid-sec", "tab-bank", "tab-sec",
                    "picked-bank", "acc-input", "acc-next", "amt-acc",
                    "amt-display", "amt-next", "cf-amt", "cf-acc",
-                   "dn-amt", "pw-dots", "pwpad", "amt-bank", "cf-bank"],
+                   "dn-amt", "pw-dots", "pwpad", "amt-bank", "cf-bank",
+                   "acc-field", "acc-pad"],
   "steps": [
     {"screen": "home"},
     {"screen": "recipient", "click": "[data-action='go-recipient']"},
     {"screen": "account", "click": "[data-action='go-account']"},
+    {"screen": "account", "click": "[data-action='acc-field']", "state": "키패드 열림 — 계좌번호 입력란을 누른 뒤"},
     {"screen": "bank", "click": "[data-action='open-bank']"},
     {"screen": "amount", "do": [
       {"click": "[data-action='pick-bank'][data-bank='{BANK}']"},
@@ -44,6 +46,7 @@
      "inputs": [
        {"click": "[data-action='pick-bank'][data-bank='{BANK}']"},
        {"wait": 0.3},
+       {"click": "[data-action='acc-field']"},
        {"type": "{ACCOUNT_WRONG}", "key": "[data-action='acc-num'][data-v='%s']"},
        {"click": "#acc-next"}
      ],
@@ -59,6 +62,7 @@
      "inputs": [
        {"click": "[data-action='pick-bank'][data-bank='{BANK_WRONG}']"},
        {"wait": 0.3},
+       {"click": "[data-action='acc-field']"},
        {"type": "{ACCOUNT}", "key": "[data-action='acc-num'][data-v='%s']"},
        {"click": "#acc-next"},
        {"type": "{AMOUNT}", "key": "[data-action='num'][data-v='%s']"},

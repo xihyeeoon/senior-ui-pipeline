@@ -16,6 +16,7 @@
       "home",
       "recipient",
       "account",
+      "account#2",
       "bank",
       "amount",
       "confirm",
@@ -26,14 +27,15 @@
       "home",
       "recipient",
       "account",
+      "account#2",
       "bank",
       "amount",
       "confirm",
       "password",
       "done"
     ],
-    "screens_expected": 8,
-    "screens_reached": 8,
+    "screens_expected": 9,
+    "screens_reached": 9,
     "screens_unlit": [],
     "screens_landed_on": {
       "home": {
@@ -45,6 +47,10 @@
         "dom": "recipient"
       },
       "account": {
+        "hook": "account",
+        "dom": "account"
+      },
+      "account#2": {
         "hook": "account",
         "dom": "account"
       },
@@ -73,20 +79,20 @@
     "done_amount": "32,000",
     "data-screen_original": 10,
     "data-screen_repaired": 10,
-    "data-action_original": 56,
-    "data-action_repaired": 56,
+    "data-action_original": 57,
+    "data-action_repaired": 57,
     "id_original": 25,
     "id_repaired": 25,
     "per_screen_attr_loss": {},
     "injected_dialog_calls": 0,
     "onclick_added": 0,
     "dialogs_during_task": 0,
-    "handled_actions": 57,
+    "handled_actions": 58,
     "dead_controls_unverifiable": [],
     "dead_controls_new": 0,
     "dead_controls_pre_existing": [],
-    "low_contrast_after": 57,
-    "low_contrast_before": 57,
+    "low_contrast_after": 60,
+    "low_contrast_before": 60,
     "low_contrast_by_screen": {
       "home": {
         "before": 21,
@@ -97,6 +103,10 @@
         "after": 2
       },
       "account": {
+        "before": 3,
+        "after": 3
+      },
+      "account#2": {
         "before": 3,
         "after": 3
       },

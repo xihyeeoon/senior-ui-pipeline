@@ -79,17 +79,17 @@
       "calls": [
         {
           "stage": "plan",
-          "estimated_prompt": 18845,
+          "estimated_prompt": 19352,
           "method": "tiktoken:o200k_base(대체)",
           "max_tokens": 25000,
           "usage": null,
-          "images": 14,
-          "estimated_images": 5908,
+          "images": 15,
+          "estimated_images": 6330,
           "image_method": "patch x1.2"
         },
         {
           "stage": "generate",
-          "estimated_prompt": 15108,
+          "estimated_prompt": 15178,
           "method": "tiktoken:o200k_base(대체)",
           "max_tokens": 32000,
           "usage": null,
@@ -172,9 +172,9 @@
     "by_stage": {
       "plan": {
         "calls": 1,
-        "estimated_prompt": 18845,
-        "images": 14,
-        "estimated_images": 5908,
+        "estimated_prompt": 19352,
+        "images": 15,
+        "estimated_images": 6330,
         "max_tokens": 25000,
         "prompt": null,
         "completion": null,
@@ -182,7 +182,7 @@
       },
       "generate": {
         "calls": 1,
-        "estimated_prompt": 15108,
+        "estimated_prompt": 15178,
         "images": 0,
         "estimated_images": 0,
         "max_tokens": 32000,
@@ -193,9 +193,9 @@
     },
     "total": {
       "calls": 2,
-      "estimated_prompt": 33953,
-      "images": 14,
-      "estimated_images": 5908,
+      "estimated_prompt": 34530,
+      "images": 15,
+      "estimated_images": 6330,
       "max_tokens": 57000,
       "prompt": null,
       "completion": null,
@@ -203,9 +203,9 @@
     },
     "first_attempt": {
       "calls": 2,
-      "estimated_prompt": 33953,
-      "images": 14,
-      "estimated_images": 5908,
+      "estimated_prompt": 34530,
+      "images": 15,
+      "estimated_images": 6330,
       "max_tokens": 57000,
       "prompt": null,
       "completion": null,
@@ -232,7 +232,7 @@
   "see": {
     "on": true,
     "source": "기본값 (켜짐)",
-    "original_images": 14
+    "original_images": 15
   },
   "refine": {
     "budget": 2,
