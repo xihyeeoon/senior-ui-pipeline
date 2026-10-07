@@ -25,11 +25,15 @@
 
 건수는 적지 않는다 — 늘 바뀐다 (`pytest --co -q` 로 본다).
 
-`:3003` 에 이미 서버가 있으면 그것이 **이 작업 트리를** 서빙할 때만 그대로 쓰고
-(`senior_ui/devserver.py` 의 확인 파일 `/.devserver-id`), 아니면 캡처는 멈춘다. 기준값은
-그 포트가 서빙하는 내용에 전적으로 달려 있어서, 다른 worktree · 다른 폴더의 서버를
-그대로 쓰면 기준값이 무엇을 기준으로 한 것인지 알 수 없어진다. 브라우저 테스트도
-같은 판단을 쓰는 `conftest.py` 의 `server` fixture 하나를 함께 쓴다.
+브라우저 테스트(`conftest.py` 의 `server` fixture 하나를 함께 쓴다) · 기준값 캡처 · 그
+안의 mock 실행은 저마다 빈 포트에 제 서버를 띄운다 (`config.AUTO_PORT`, 11-9). 그래서
+**같은 포트를 명시하지 않으면 동시에 돌려도 된다** — 전에는 모두 `:3003` 하나를 써서
+먼저 끝난 쪽이 다른 쪽이 쓰던 서버를 껐다. 테스트가 여는 주소는 fixture 가 실제 포트로
+맞춘다 (`capture_baseline.BASE_URL`). `--port N` 을 주면 (`pytest -m browser --port
+3010`, `capture_baseline.py --port 3010`) 그 포트에 이미 있는 서버가 **이 작업 트리를**
+서빙할 때만 그대로 쓰고 (`senior_ui/devserver.py` 의 확인 파일 `/.devserver-id`), 아니면
+멈춘다. 기준값은 그 포트가 서빙하는 내용에 전적으로 달려 있어서, 다른 worktree · 다른
+폴더의 서버를 그대로 쓰면 기준값이 무엇을 기준으로 한 것인지 알 수 없어진다.
 
 기준값을 다시 뽑을 때는 차이를 전부 보고 설명되는 파일만 바꾼다. 전체를 다시 뽑으면
 원본의 비밀번호 숫자판이 다시 섞여 스냅샷이 바이트 단위로 달라진다 — 그 차이뿐인
@@ -54,6 +58,7 @@
 | `test_format_rules.py` | 형식 검사(`reply.py`)가 검사기의 규칙 함수(back_to · 화면 목록 · 방문 이름 · 조작부 이름)를 그대로 쓰는지 |
 | `test_tool_failures.py` | 도구 버그(종료 2 · internal_error) · 바깥 문제(인프라 예산) · 시작 실패(cannot_start) · CLI 의 `--out` · 인프라 예산의 출처 |
 | `test_real_runs_browser.py` | `fixtures/real_runs/` 의 첫 답을 루프의 길과 CLI 로 실제로 판정한다 (sol 은 K fatal 1 - 입구 31개 중 2개만 남았다 · astra 는 J 1 · K 1). `-m browser` |
+| `test_ports.py` | 자동 실행의 포트 (11-9) - 루프 · pytest · 캡처는 빈 포트, 사람이 띄우는 서버는 3003, 둘이 같이 떠도 서로 끄지 않음, 루프백만, `--port` 일 때는 확인 파일로 재사용, 루프가 실제 포트로 원본 · 빌드를 여는지, 문서의 동시 실행 규칙. 서버는 띄우지만 브라우저는 부르지 않는다 |
 | `test_stuck.py` | 같은 실패의 되풀이 = 막힘(stuck, 11-9) - fatal 의 (검사 · 대상 · 개수), 같은 실패 두 번이면 남은 예산을 쓰지 않고 멈춤, 바뀐 실패 · 개수만 다른 실패 · 사이에 낀 형식 실패는 계속, 통과한 실행은 막히지 않음, 고르기 도구가 stuck 을 통과 못 한 실행으로 봄. 모델도 브라우저도 부르지 않는다 (mock 은 `test_drive` 의 `mock_stuck`) |
 | `test_refine_reveal.py` | 다듬기의 reveal 형식 (11-9) - 생성 · 다듬기 프롬프트가 같은 reveal 모양 블록을 쓰는지, 형식 검사가 배열로 온 reveal 을 (원소마다 action 이 있으면) 한 번 객체로 바꿔 받고 그 사실을 남기는지, 예비 실행 두 번의 다듬기 답(`fixtures/real_runs/refine_*`)이 형식 검사를 지나는지. 모델도 브라우저도 부르지 않는다 |
 | `test_choice_roles.py` | 선택지 아님 선언(과제 파일 `not_choices`, 11-9) - 과제 파일의 모양, 판정 입력이 붙이고 모델의 것은 버리는지, 검사 I 가 선언된 무리를 판정에서 빼고 `choice_groups_not_choices` 로 남기는지, 프롬프트 · 형식 검사가 그 무리만 받치는 `MENU_TABS` 의 참조를 요구하지 않는지, 설명서의 표. `-m browser` 에서는 저장된 공과금 답 셋(`fixtures/real_runs/bill_sol`)을 바뀐 검사기로 판정한다 (셋 다 I 하나 - 항목이 하나뿐인 분류의 메뉴 항목 6개) |

@@ -4,7 +4,9 @@ audit it with senior_ui.audit, feed the fatal findings back, up to N attempts.
 What used to be three manual steps - paste a prompt into a chat, save the HTML
 it returns, run audit.py, read the JSON, ask again - is one command:
 
-  1. serve the project root on :3003 (only if nothing is listening already)
+  1. serve the project root on a free port (--port N: that port, reusing a server
+     there only if it serves this work tree) - 같은 포트를 명시하지 않으면 실행
+     여럿을 동시에 돌려도 된다
   2. up to --attempts times:
        a. 진단·계획 (처음 한 번): 원본을 주고 {diagnosis, plan} JSON 하나를
           받는다 - 규칙으로 모양을 보고, --delay 만큼 기다린다
@@ -201,6 +203,11 @@ def build_parser():
                     help="--probe 와 함께: 같은 글에 화면 그림 한 장을 더해 한 번 더 보내 "
                          "그 모델이 그림을 받는지, 그림 한 장이 입력 토큰 몇 개인지 잰다 "
                          "(config.IMAGE_TOKENS 를 고칠 값). 요금이 드는 요청이 둘이다")
+    ap.add_argument("--port", type=int, default=None,
+                    help="검사기가 빌드를 여는 서버의 포트. 주지 않으면 빈 포트를 잡아 이 "
+                         "실행만의 서버를 띄운다 (config.AUTO_PORT) - 같은 포트를 명시하지 "
+                         "않으면 실행 · 테스트를 동시에 돌려도 된다. 주면 그 포트에 떠 있는 "
+                         "서버를 이 작업 트리를 서빙할 때만 재사용한다")
     ap.add_argument("--delay", type=float, default=None,
                     help="모델 호출 사이 대기(초) - 진단·계획과 생성 사이, 시도와 "
                          "시도 사이. 주지 않으면 gpt-4o %(g4)g, 추론형 %(rs)g "

@@ -74,7 +74,10 @@ def verdicts(server):
         cli_out = os.path.join(OUT, model, "audit.cli.json")
         saved, sys.stdout = sys.stdout, io.StringIO()
         try:
+            # 원본도 이 테스트의 서버에서 연다 - CLI 의 기본 원본 URL 은 사람이 띄우는
+            # :3003 이고, 테스트 서버는 빈 포트다 (11-9).
             code = _api.audit_cli_main(["--build", url, "--build-file", html_path,
+                                        "--original", orig_url,
                                         "--flow", flow_path, "--out", cli_out,
                                         "--task", "transfer"])
         finally:

@@ -13,11 +13,21 @@ import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# 개발용 서버(devserver: 작업 트리 전체)와 대시보드 서버(experiment.server: 허용 목록만)
-# 가 이 포트를 쓴다. 검사기 · 재구성 루프는 devserver 만 재사용한다 - 대시보드
-# 서버는 .mock-outputs/ 등의 빌드를 404 로 막으므로 (devserver.serves_this_tree).
+# 사람이 직접 띄우는 개발용 서버(python -m senior_ui.devserver: 작업 트리 전체)와
+# 대시보드 서버(experiment.server: 허용 목록만)가 이 포트를 쓴다. 검사기 CLI 의 기본
+# URL 도 여기다.
 PORT = 3003
 BASE_URL = "http://localhost:%d" % PORT
+
+# 자동 실행(재구성 루프 · pytest · 기준값 캡처)이 쓰는 포트. 0 은 "빈 포트를 잡는다" 다 -
+# 실행마다 제 서버를 띄우고 제 것만 끈다. 전에는 모두 PORT 하나를 써서, 둘을 같이
+# 돌리면 먼저 끝난 쪽이 다른 쪽이 쓰던 서버를 껐다 (11-9). --port 를 주면 그 포트를
+# 쓰고, 떠 있는 서버는 이 작업 트리를 서빙할 때만 재사용한다 (devserver.ensure_server).
+AUTO_PORT = 0
+
+
+def base_url(port=PORT):
+    return "http://localhost:%d" % port
 
 FLOWS_DIR = os.path.join(ROOT, "flows")
 TASKS_DIR = os.path.join(ROOT, "tasks")          # 과제 정의 (senior_ui/tasks.py)
@@ -45,7 +55,7 @@ def outputs_dir(mock=False):
     자리에서 매번 읽는다.
 
     옮길 자리는 저장소 루트 아래여야 한다. 검사기는 빌드를 file:// 이 아니라
-    :3003 이 서빙하는 http:// 로 열고, 그 서버는 ROOT 만 서빙한다. 밖에 두면
+    devserver 가 서빙하는 http:// 로 열고, 그 서버는 ROOT 만 서빙한다. 밖에 두면
     검사기가 빌드를 열지 못해 첫 화면에서 멈추고, 그것이 설계 실패처럼 보인다.
     """
     return os.environ.get(OUTPUTS_ENV) or (MOCK_OUTPUTS_DIR if mock else OUTPUTS_DIR)
@@ -61,9 +71,10 @@ ORIGINAL_FILE = os.path.join(ROOT, "inputs", "original_transfer.html")
 ORIGINAL_REL = "inputs/original_transfer.html"
 
 
-def url_for(path):
-    """루트 기준 경로를 서버가 서빙하는 URL 로. 구분자는 항상 '/' 다."""
-    return "%s/%s" % (BASE_URL, str(path).replace(os.sep, "/").lstrip("/"))
+def url_for(path, port=PORT):
+    """루트 기준 경로를 서버가 서빙하는 URL 로. 구분자는 항상 '/' 다. 자동 실행은
+    실제로 띄운 서버의 포트를 준다."""
+    return "%s/%s" % (base_url(port), str(path).replace(os.sep, "/").lstrip("/"))
 
 
 ORIGINAL_URL = url_for(ORIGINAL_REL)

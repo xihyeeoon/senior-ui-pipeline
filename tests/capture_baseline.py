@@ -46,8 +46,16 @@ if HERE not in sys.path:
 
 import _api                                                  # noqa: E402
 
-PORT = _api.PORT
-BASE_URL = "http://localhost:%d" % PORT
+# 브라우저가 여는 서버의 주소. 서버를 띄운 뒤 use_port 가 실제 포트로 맞춘다 - 기본은
+# 빈 포트라 실행마다 다르다 (config.AUTO_PORT). 테스트의 server fixture 도 같다. 아래
+# 값은 서버를 띄우기 전의 자리 채움이다.
+BASE_URL = _api.config_module.base_url()
+
+
+def use_port(port):
+    """이 프로세스의 브라우저가 여는 서버의 포트를 정한다 (BASE_URL)."""
+    global BASE_URL
+    BASE_URL = _api.config_module.base_url(port)
 
 # (이름, 빌드 파일의 루트 기준 경로, 흐름 파일 이름 - None 이면 원본 흐름)
 CASES = [
@@ -100,16 +108,18 @@ class _Reused(object):
         pass
 
 
-def start_server():
-    """이 작업 트리를 :3003 에 띄운다 (devserver.ensure_server).
+def start_server(port=_api.config_module.AUTO_PORT):
+    """이 작업 트리를 띄운다 (devserver.ensure_server). 기본은 빈 포트에 이 캡처만의
+    서버다 - 같은 포트를 명시하지 않으면 다른 실행 · 테스트와 동시에 돌려도 된다.
 
-    이미 떠 있으면 그것이 **이 작업 트리를** 서빙하는지 확인 파일로 보고 재사용한다 -
-    기준값은 서빙 내용에 전적으로 달려 있으므로, 다른 worktree · 다른 폴더 · 대시보드
-    서버면 멈춘다. 전에는 무엇이 떠 있든 멈췄다 (무엇을 서빙하는지 알 수 없었으므로)."""
+    --port 로 포트를 주면 이미 떠 있는 서버가 **이 작업 트리를** 서빙하는지 확인 파일로
+    보고 재사용한다 - 기준값은 서빙 내용에 전적으로 달려 있으므로, 다른 worktree · 다른
+    폴더 · 대시보드 서버면 멈춘다."""
     try:
-        proc = _api.ensure_server(say)
+        proc = _api.ensure_server(say, port=port)
     except RuntimeError as e:
         raise SystemExit("멈췄습니다: %s" % e)
+    use_port(getattr(proc, "port", None) or port)
     return proc or _Reused()
 
 
@@ -435,7 +445,7 @@ MOCK_RUNS = [
 # 그 이름은 뷰어와 실험 조건이 "지금 쓰는 재구성본" 으로 읽는 것인데,
 # preserved-all 모드는 실제로 통과하므로 기준값을 뽑거나 테스트를 돌릴
 # 때마다 그 파일이 mock 결과로 덮인다. 저장소 루트 **안** 에 두는 이유는
-# 검사기가 빌드를 :3003 이 서빙하는 http:// 로 열기 때문이다.
+# 검사기가 빌드를 devserver 가 서빙하는 http:// 로 열기 때문이다.
 MOCK_OUTPUTS = os.path.join(ROOT, ".mock-outputs")
 
 
@@ -790,6 +800,8 @@ def main():
                     default=os.path.join(HERE, "fixtures", "sessions"))
     ap.add_argument("--only", choices=["all", BILL], default="all",
                     help="bill: baseline/bill/ 만 다시 뽑는다 (이체 기준값은 그대로)")
+    ap.add_argument("--port", type=int, default=_api.config_module.AUTO_PORT,
+                    help="서버 포트. 주지 않으면 빈 포트 (mock 실행은 저마다 빈 포트를 잡는다)")
     args = ap.parse_args()
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -800,7 +812,7 @@ def main():
         if os.path.isdir(d):
             shutil.rmtree(d)
         say("공과금 기준값 -> %s" % d)
-        server = start_server()
+        server = start_server(args.port)
         try:
             capture_bill(out)
         finally:
@@ -815,7 +827,7 @@ def main():
     os.makedirs(out)
 
     say("기준값 -> %s" % out)
-    server = start_server()
+    server = start_server(args.port)
     copied = False
     try:
         say("[1/7] audit.py main() 과 같은 순서로 4가지 경우")

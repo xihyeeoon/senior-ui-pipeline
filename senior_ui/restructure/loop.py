@@ -36,7 +36,7 @@ from senior_ui import config
 from senior_ui.audit.drive import SHOT_SAFE
 from senior_ui.audit.flow import required_errors
 from senior_ui.audit.inputs import load_allowed_removals, model_claims
-from senior_ui.config import OUTPUTS_ENV, ROOT, inside_root, outputs_dir, url_for
+from senior_ui.config import AUTO_PORT, OUTPUTS_ENV, ROOT, inside_root, outputs_dir, url_for
 from senior_ui.devserver import ensure_server
 from senior_ui.tasks import DEFAULT_TASK, abs_path, load_task
 
@@ -263,8 +263,11 @@ class Run:
                  refine_template=""):
         self.args = args
         self.refine_template = refine_template
-        # 프롬프트에 넣는 원본과 브라우저가 걷는 원본은 같은 문서다.
+        # 프롬프트에 넣는 원본과 브라우저가 걷는 원본은 같은 문서다. URL 은 서버를
+        # 띄운 뒤에 정해진다 (자동 실행은 빈 포트 - run 이 채운다).
         self.original_url = original_url
+        # 검사기가 빌드를 여는 서버의 포트. run 이 서버를 띄운 뒤 채운다.
+        self.port = config.PORT
         self.log = log
         self.run_dir = run_dir
         self.model = model
@@ -379,8 +382,8 @@ def make_logger(log_path):
     return log
 
 
-def original_url(path):
-    """원본 파일을 서버가 서빙하는 URL 로.
+def original_rel(path):
+    """원본 파일의 저장소 루트 기준 경로 ('/' 구분). URL 은 서버를 띄운 뒤 url_for 로.
 
     프롬프트에 넣는 HTML 과 브라우저로 걷는 문서는 같아야 한다. 걷는 쪽만
     config.ORIGINAL_URL 로 못박혀 있으면, --original 로 다른 파일을 줬을 때
@@ -388,13 +391,25 @@ def original_url(path):
     경고 없이.
 
     서버는 저장소 루트만 서빙하므로 그 밖의 파일은 URL 이 없다. 열 수 없는
-    것을 연 척하는 대신 RuntimeError 로 멈춘다.
+    것을 연 척하는 대신 RuntimeError 로 멈춘다 - 서버를 띄우기 전에.
     """
     rel = os.path.relpath(os.path.abspath(path), ROOT)
     if rel.startswith(os.pardir) or os.path.isabs(rel):
         raise RuntimeError("--original 은 저장소 안의 파일이어야 한다 (서버가 "
                            "서빙하는 범위 밖이다): %s" % path)
-    return url_for(rel.replace(os.sep, "/"))
+    return rel.replace(os.sep, "/")
+
+
+def port_choice(args):
+    """`(포트, 어디서 왔나)`. --port 를 주면 그 포트, 아니면 빈 포트(config.AUTO_PORT).
+
+    빈 포트면 실행마다 제 서버를 띄우고 제 것만 끈다 - 같은 포트를 명시하지 않으면
+    실행 · 테스트를 동시에 돌려도 된다. --port 를 주면 전처럼 그 포트에 떠 있는 서버를
+    (이 작업 트리를 서빙할 때만) 재사용한다."""
+    given = getattr(args, "port", None)
+    if given is not None:
+        return given, "--port"
+    return AUTO_PORT, "config.AUTO_PORT"
 
 
 def model_choice(args):
@@ -1120,7 +1135,7 @@ def _drive_audit(r, n, entry, build):
     while True:
         try:
             return run_audit(r.orig_snapshot, r.original_html, build["html_path"],
-                             build["flow_path"], url_for(rel), shots, r.args.stage,
+                             build["flow_path"], url_for(rel, r.port), shots, r.args.stage,
                              original_url=r.original_url,
                              allowed_removals=r.allowed_removals,
                              task=r.task["id"],
@@ -1650,14 +1665,14 @@ def note_internal_error(r, e):
 
 def run(args):
     """한 실행 전체. 돌려주는 것이 프로세스의 종료 코드다 - exit_code 참고."""
-    # 검사기는 빌드를 :3003 이 서빙하는 http:// 로 연다. 그 서버는 저장소
+    # 검사기는 빌드를 devserver 가 서빙하는 http:// 로 연다. 그 서버는 저장소
     # 루트만 서빙하므로, 산출물 폴더가 밖에 있으면 검사기가 빌드를 열지 못해
     # 첫 화면에서 멈춘다 - 그것이 설계 실패처럼 보인다.
     # mock 실행은 기본으로 .mock-outputs/ 에 쓴다 (config.outputs_dir).
     mock = bool(args.mock)
     if not inside_root(outputs_dir(mock)):
         print("cannot start: %s 가 저장소 루트 밖을 가리킨다 (%s). 검사기는 "
-              ":3003 이 서빙하는 %s 안의 파일만 열 수 있다."
+              "devserver 가 서빙하는 %s 안의 파일만 열 수 있다."
               % (OUTPUTS_ENV, outputs_dir(mock), ROOT), file=sys.stderr)
         return 2
 
@@ -1745,20 +1760,22 @@ def run(args):
         plan_template = load_plan_template(task["id"])
         refine_template = load_refine_template(task["id"])
         original_html = io.open(args.original, encoding="utf-8").read()
-        orig_url = original_url(args.original)
+        orig_rel = original_rel(args.original)
         allowed = load_allowed_removals(task["id"])
     except (OSError, RuntimeError, ValueError) as e:
         return cannot_start(e)
 
     budget = budget_choice(args)
+    port, port_source = port_choice(args)
     log("run: %s | model=%s | 예산 형식 %d · 검사 %d | stage=%s | mock=%s | original=%s"
+        " | port=%s (출처 %s)"
         % (run_dir, model, budget["format"][0], budget["audit"][0], args.stage,
-           args.mock, orig_url)
+           args.mock, orig_rel, port or "빈 포트", port_source)
         + ("" if task["id"] == DEFAULT_TASK else " | task=%s" % task["id"]))
     try:
         # 과제의 필수 오류 경로(required_errors)가 원본 흐름에 정의되지 않았으면
         # 여기서 멈춘다 - 과제 파일의 문제이고 실행을 시작할 수 없다.
-        r = Run(args, log, run_dir, model, template, original_html, orig_url,
+        r = Run(args, log, run_dir, model, template, original_html, None,
                 plan_template=plan_template, task=task, model_source=source,
                 refine_template=refine_template)
     except (OSError, RuntimeError, ValueError) as e:
@@ -1772,13 +1789,16 @@ def run(args):
         # 띄우지 못했거나, 떠 있는 것이 이 저장소를 서빙하지 않는다. 둘 다
         # "빌드가 떨어졌다" 가 아니라 "돌지 못했다" 다.
         try:
-            server = ensure_server(log)
+            server = ensure_server(log, port=port)
         except RuntimeError as e:
             log("cannot start: %s" % e)
             print("cannot start: %s" % e, file=sys.stderr)
             r.summary["stopped_reason"] = "cannot_start"
             r.summary["error"] = str(e)
             return exit_code(r.summary)
+        # 띄운 서버의 포트 (빈 포트면 지금 잡힌 것). 재사용했으면 준 포트다.
+        r.port = getattr(server, "port", None) or port
+        r.original_url = url_for(orig_rel, r.port)
         # 대비·언어 검사의 기준이 되는 원본 스냅샷. 실행마다 한 번만 걷는다.
         # 과제의 원본 흐름으로 걷는다 - 다른 과제의 흐름으로 걸으면 첫 화면에서
         # 멈추고, 선택지 요약 · 지킬 데이터가 빈다.
@@ -1856,7 +1876,7 @@ def run(args):
     finally:
         if server:
             server.terminate()
-            log("server: stopped (pid %d)" % server.pid)
+            log("server: stopped (:%s, pid %d)" % (getattr(server, "port", "?"), server.pid))
         # 요약은 이 실행의 기록이다. 루프가 터져도(흐름 명세가 검사기를 터뜨린다,
         # 사용자가 끊는다) 남아야 한다 - 밖에 두면 그런 실행은 run.log 조각
         # 말고는 아무것도 남기지 않는다.

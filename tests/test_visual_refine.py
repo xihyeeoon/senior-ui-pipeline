@@ -980,7 +980,8 @@ def test_the_model_input_still_walks_the_task(server, task):
     io.open(os.path.join(config.ROOT, rel), "w", encoding="utf-8").write(strip(html))
     try:
         f = _api.load_flow(None, task=task)
-        base = "http://localhost:%d" % config.PORT
+        import capture_baseline as C
+        base = C.BASE_URL                    # server fixture 가 띄운 포트
         orig = asyncio.run(_api.drive("%s/%s" % (base, t["original"]), f))
         rep = asyncio.run(_api.drive("%s/%s" % (base, rel), f))
         report = _api.audit(orig, rep, html, strip(html), f)

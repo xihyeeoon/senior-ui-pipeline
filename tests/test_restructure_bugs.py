@@ -71,7 +71,7 @@ def passing_report():
 def out_root(request):
     """테스트가 쓰는 산출물 폴더. 저장소 루트 **아래** 에 둔다.
 
-    검사기는 빌드를 :3003 이 서빙하는 http:// 로 열고 그 서버는 ROOT 만
+    검사기는 빌드를 devserver 가 서빙하는 http:// 로 열고 그 서버는 ROOT 만
     서빙하므로, 산출물이 밖에 있으면 실제 실행에서는 빌드를 열지 못한다.
     tmp_path 를 쓰면 그 사실이 테스트에서 드러나지 않는다.
     """
@@ -97,7 +97,7 @@ def fake_run_env(monkeypatch, out_root):
 
     monkeypatch.setenv("SENIOR_UI_OUTPUTS", out_root)
     monkeypatch.setenv("OPENAI_API_KEY", "test-key-not-used")
-    monkeypatch.setattr(loop, "ensure_server", lambda log: None)
+    monkeypatch.setattr(loop, "ensure_server", lambda log, port=None: None)
     monkeypatch.setattr(loop.A, "drive", fake_drive)
     monkeypatch.setattr(loop.A, "load_flow",
                         lambda p, task=None: {"name": "original", "steps": []})
