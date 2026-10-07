@@ -49,7 +49,7 @@ LLM 을 부르는 것은 재구성 루프 하나뿐이고, 키는 `.envs` 의 `O
 | `senior_ui/` | 이 프로젝트에서 쓴 코드 전부 — 재구성 루프, 검사기, 고르기, 화면설계서, 뷰어 색인, 실험 서버. 모두 `python -m senior_ui.…` 로 실행한다. | yes |
 | `web/` | 브라우저에서 열리는 것 — `dashboard.html`(내부 확인용 4화면), `session.html`(HTML 실험 장치 - 본실험에 쓰지 않는다. `--session` 을 줄 때만 서빙된다). | yes |
 | `flows/` | 흐름 파일. 검사기가 화면을 어떤 순서로 어떻게 몰고 다니는지의 명세. `original.json` 과 재구성본별 `restructured`·`run2`·`run3`·`run4`. `allowed_removals.json` 은 그것들과 다르다 — 과제별로 "빼도 되는 선택지" 를 적는 곳이고, **연구자만** 손으로 고친다 (아래 참고). `selection_rule.json` 은 C 후보를 고르는 규칙이다 (아래 'C 후보 고르기'). | yes |
-| `tasks/` | 과제 정의 — `transfer.json`(이체) · `bill.json`(공과금). 프롬프트의 과제 문단, 원본 HTML · 원본 흐름, 완료 화면 값, 필수 오류 경로, 과제 밖 입구(`entrances`, 검사 K)가 과제마다 여기 있다 (`senior_ui/tasks.py`). | yes |
+| `tasks/` | 과제 정의 — `transfer.json`(이체) · `bill.json`(공과금). 프롬프트의 과제 문단과 대상 문구(`audience`), 원본 HTML · 원본 흐름, 완료 화면 값, 필수 오류 경로, 과제 밖 입구(`entrances`, 검사 K)가 과제마다 여기 있다 (`senior_ui/tasks.py`). | yes |
 | `inputs/` | 파이프라인이 읽는 것. `original_transfer.html`(8화면 이체) · `original_bill.html`(8화면 공과금)이 원본 시제품이고 그 과제의 모든 갈래가 여기서 출발한다. `*.png` 는 실제 SOL 캡처라 추적하지 않는다 (실명이 보인다). | html 만 |
 | `kb/` | 재구성본 사후 대조용 규칙 46개. 생성에는 쓰지 않는다. | yes |
 | `results/` | 남겨야 할 증거. 재구성본 html, 그 검사 JSON, 스크린샷, 자동 실행 폴더 사본. `python -m senior_ui.collect_results` 가 `outputs/` 에서 복사해 온다. | **yes** |
@@ -154,11 +154,12 @@ fatal 을 (검사 · 대상 · 개수)로 줄여 — 대상은 fatal 의 `action
   못하므로 상태 사이의 전환은 원본 흐름에 적고, 이 이름표가 모델에게 가는 전환 정보다
   (`see/index.json` 의 `state`, [`input-contract.md`](input-contract.md) 의 "입력
   약속"). 모델이 쓴 흐름 명세의 `state` 는 쓰지 않는다 — 형식 검사도 그 칸을 보지 않는다.
-- **보고 다듬기** (`--refine N`, 기본 2, 0 이면 끔). 시도가 검사를 통과하면 그 빌드의
+- **보고 다듬기** (`--refine N`, 기본 0 = 끔 — 2026-10-07 예비 실행 두 번에서 다듬기 전후 화면이 거의 같아 기본으로 껐다 (20261006-215902: 비평 3건 중 1건 반영, 20261007-102041: 시도 1 과 3 이 같음). 고르기 규칙 version 4 도 refine 0). 시도가 검사를 통과하면 그 빌드의
   스크린샷과 계획 · HTML · 흐름 명세를 주고 다듬게 한다. 답은 비평(json) → html → 흐름
   명세. 다듬은 빌드는 검사를 다시 통과해야 최종이 되고, 떨어지면 한 번 고치게 한 뒤
   그래도 떨어지면 직전에 통과한 빌드로 되돌린다. 기록은 `attempt_N.critique.json` ·
-  `summary.refine` · 설명서의 "보고 다듬기" 절과 맨 위 "최종:" 줄.
+  `summary.refine` · 설명서의 "보고 다듬기" 절과 맨 위 "최종:" 줄. 다듬기를 끈 실행의
+  설명서는 그 절이 "다듬기 안 함 (refine 0)" 한 줄이다.
   흐름 명세의 `reveal` 모양은 생성 · 다듬기 프롬프트가 같은 블록(`<!-- REVEAL -->`)을
   쓴다. 형식 검사는 배열로 온 `reveal` 을 원소마다 `action` 이 있으면
   `{action: {"at", "do"}}` 로 한 번 바꿔 받고(빈 배열은 빈 객체), 그 사실을 시도 기록의
@@ -333,7 +334,9 @@ API 없이: `--mock pass --mock-refine improve` (1회차에 다듬은 빌드가 
 | `attempts[].calls[].ratelimit` · `ratelimit` | 호출마다의 응답 헤더 `x-ratelimit-limit-tokens` · `-remaining-tokens` · `-limit-requests`, 그리고 마지막 값 |
 | `attempts[].calls[].waited_for_tokens` | 남은 토큰이 모자라 그 호출 전에 더 기다린 초 (추론형, 기다렸을 때만) |
 | `cost` | 시도별·전체 예상 금액 (USD) |
+| `audience` | 프롬프트가 말한 대상 — 과제 파일의 `audience` (지금 "60대 이상 고령 사용자"). 과제 설명과 다듬기 프롬프트의 `{{AUDIENCE}}` 자리에 들어간다. 값을 바꾸는 것은 연구자 결정이다 (11-8) |
 | `original` · `original_sha256` | 이 실행이 쓴 원본 HTML (루트 기준 경로)과 그 지문 — 줄끝을 LF 로 맞춘 sha256 (`tasks.fingerprint`). `run.log` 첫 줄에도 `original_sha256=… (경로)` 로 남는다. 시작하지 못한 실행에도 있다. 고르기의 문지기 `original` 이 지금 원본과 견준다 (11-11) |
+| `entrance_distance` | 최종 빌드의 과제 밖 입구마다 원본 · 생성물에서 처음 누를 수 있게 보인 방문(`visit`), 그 입구를 보려고 누른 펼치기 횟수(`reveal`, 바로 보이면 0, 펼치기로 보였으면 그 reveal 이름 `via`), 그 화면 맨 위에서 입구 전체가 창 안에 들어오기까지의 스크롤 거리(`scroll_px`, 첫 화면 안이면 0). 보이지 않았으면 `null`. 검사 K 의 지표를 옮긴 것이고 **기록만** 한다 — 판정 · 고르기 문지기에 쓰지 않고 기준선 · 합격선도 없다. 남아 있는 것과 찾을 수 있는 것은 다르다 (Findlater, McGrenere 2007). 설명서의 "과제 밖 입구" 표가 같은 값이다 (11-8) |
 
 **가격 표**는 `senior_ui/config.py` 의 `MODEL_PRICES` 한 곳이다 — 100만 토큰당
 `{"input", "output"}`. 채운 것은 셋이다 — `gpt-4o` 2.50 / 10.00, `gpt-6.1-sol`
@@ -378,8 +381,17 @@ o 계열과 맞지 않는다) · `types/shared/reasoning_effort.py`.
   모양과 상관없이 센다** — 원본에서 무리였던 이름(`i_choices.original_groups`, 과제가
   선택지가 아니라고 선언한 이름은 뺀다)의 요소는 생성물에서 형제가 없어도 모두 세고,
   원본에서 무리가 아니던 이름은 형제 둘 이상일 때만 무리다 (11-9b).
-  `choice_values_kept` 가 판정 기준이고 `choice_values_selectable` 는 그중 DOM 에서
-  고를 수 있던 수다 — 둘이 다르면 경고가 난다 (fatal 아님).
+  `choice_values_kept` 는 남아 있는 값의 수이고, `choice_values_selectable` 는 그중 걷는
+  동안(정답 걸음 · reveal 뒤) 어느 상태에서 **누를 수 있게 보인** 값의 수다 — 그려져 있고
+  크기 > 0, 자신이나 조상이 display · visibility · opacity 로 숨지 않았고 disabled 가
+  아니다 (`probes.CHOICE_SHOWN`, 스냅샷의 `choices_shown`). 원본을 걷는 동안 원본에서
+  보이던 값이 생성물에서 어느 상태에서도 보이지 않으면 fatal 이다 (11-8 2-3,
+  `choice_values_not_selectable`). 전에는 문서 안에만 있으면 통과했다 — 공과금 실행
+  20261007-201603-bill 의 전체메뉴는 분야 칸을 눌러도 닫힌 분류 제목만 보였다. 원본도
+  걷는 동안 보이지 않던 값(이체 원본의 [증권사] 탭 29개 — 원본 흐름이 그 탭을 누르지
+  않는다)은 검사 K 와 같은 규칙으로 요구하지 않는다 (`choice_values_shown_in_original` 이
+  요구한 수, 차이는 경고). 그 값까지 요구하려면 원본 흐름에 탭을 여는 `reveal` 을 적는다.
+  보이는 값의 수집이 없는 옛 스냅샷은 전처럼 DOM 에 있으면 고를 수 있다고 본다.
 
 **모델이 만든 것과 도구가 고친 것은 파일로 갈라 둔다.** 검사기가 여는 파일과
 승격되는 산출물(`outputs/restructured_auto.html`)에는 데이터 블록이 들어 있다 —
@@ -603,7 +615,7 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
     "model": "gpt-6.1-sol",
     "no_warning_checks": ["J"],
     "stage": "wireframe",
-    "budget": {"format": 5, "audit": 6, "refine": 2},
+    "budget": {"format": 5, "audit": 6, "refine": 0},
     "commit": null,
     "reverted": "allow",
     "no_internal_error": true,
@@ -629,9 +641,9 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
 | `model` | `null` 이면 보지 않는다. 이름을 적으면 `summary.model` 이 그것과 같아야 한다. 지금은 12번 본 실행의 모델 `gpt-6.1-sol` (= `config.DEFAULT_MODEL`) |
 | `no_warning_checks` | 최종 검사에 그 검사들의 경고가 하나도 없다. 기본 `["J"]` (오류 알림 글에 과제 단어가 없음) |
 | `stage` | `summary.stage` 가 그 단계다 (기본 `wireframe`). 기록이 없으면 어긴 것 |
-| `budget` | 적은 칸(`format` · `audit` · `refine`)이 `summary.budget.format_budget` · `audit_budget` · `summary.refine.budget` 과 같다. 기본은 `config` 의 기본값 5 · 6 · 2 |
+| `budget` | 적은 칸(`format` · `audit` · `refine`)이 `summary.budget.format_budget` · `audit_budget` · `summary.refine.budget` 과 같다. 기본은 `config` 의 기본값 5 · 6 · 0 (다듬기는 version 4 (11-8) 부터 0 — 다듬기를 켜고 돈 실행은 빠진다) |
 | `commit` | `null` 이면 다른 문지기를 지난 실행들 중 **가장 많은 커밋** 이 기준이다 (같은 수면 가장 나중 실행의 커밋). 해시를 적으면 그 커밋(앞자리 일치)만. 기준과 다른 커밋의 실행은 이유와 함께 빠진다 |
-| `reverted` | 다듬기가 떨어져 직전 통과 빌드가 최종인 실행: `"allow"` (기본) 후보로 인정하고 순위표 '되돌림' 열로 보인다 · `"last"` 되돌리지 않은 실행 뒤로 미룬다 · `"exclude"` 뺀다. 예비 실행을 본 뒤 12번 전에 확정한다 |
+| `reverted` | 다듬기가 떨어져 직전 통과 빌드가 최종인 실행: `"allow"` (기본) 후보로 인정하고 순위표 '되돌림' 열로 보인다 · `"last"` 되돌리지 않은 실행 뒤로 미룬다 · `"exclude"` 뺀다. 다듬기를 끈 실행(refine 0)에는 되돌림이 없다 |
 | `no_internal_error` | 도구 내부 오류로 끝난 실행(`stopped_reason: internal_error`, 종료 2)은 통과한 빌드가 있어도 뺀다 |
 | `original` | `"current"` 면 실행의 `original_sha256` 이 그 과제의 **지금** 원본 파일(과제 파일의 `original` — 이체 `inputs/original_transfer.html`, 공과금 `inputs/original_bill.html`)의 지문과 같아야 한다. 다르면 "다른 원본으로 만든 실행" 으로 빠지고, 지문이 없는 옛 실행(11-11 전)도 같은 이유로 빠진다. `null` 이면 보지 않는다. 지문은 줄끝을 LF 로 맞춘 sha256 이다 (`tasks.fingerprint` — 설계서의 원본 지문과 같은 함수). 규칙 version 3 (11-11) |
 
@@ -729,9 +741,9 @@ in `metrics.flow_notes`. It does not silently accept the mismatch.
 | F | English words the original did not have (runtime and markup-only) | warning |
 | G | `.x` and `.x.on` must still render differently | warning |
 | H | classes the markup uses that no stylesheet defines | warning |
-| I | values the original offered as choices must still exist somewhere in the build | fatal |
+| I | values the original offered as choices must still exist somewhere in the build; values the original showed on its walk must be pressable-visible in some state of the build's walk (a step or after a `reveal`) — 문서 안에만 있으면 fatal (11-8) | fatal |
 | J | each required wrong input (the task's `required_error_paths`) brings up an error state with new text and `recover` leads back to a screen where it can be fixed; warns when the text has none of the task's words | fatal |
-| K | 과제 밖 입구 — 과제 파일 `entrances` 의 메뉴 · 버튼 (더미앱 A1 의 OutOfScope 탭 대상, 연구자 확정)이 빌드 어딘가에 남아 있다. 원본의 `data-action` 이름(`oos-*`)을 그대로 가진 요소가 걷는 동안(reveal 포함) 누를 수 있게 보이면 있다 (그려져 있고 disabled 가 아니다, 같은 화면이 아니어도 된다). 원본을 걷는 동안 보인 입구만 센다. 글자 · `aria-label` 은 기록만 한다 (`entrances_shown_as`) | fatal |
+| K | 과제 밖 입구 — 과제 파일 `entrances` 의 메뉴 · 버튼 (더미앱 A1 의 OutOfScope 탭 대상, 연구자 확정)이 빌드 어딘가에 남아 있다. 원본의 `data-action` 이름(`oos-*`)을 그대로 가진 요소가 걷는 동안(reveal 포함) 누를 수 있게 보이면 있다 (그려져 있고 disabled 가 아니다, 같은 화면이 아니어도 된다). 원본을 걷는 동안 보인 입구만 센다. 글자 · `aria-label` 은 기록만 한다 (`entrances_shown_as`). 처음 보인 방문 · 펼치기 횟수 · 스크롤 거리도 기록만 한다 (`entrance_distance`, 11-8) | fatal |
 
 H is not in the original brief. It was added because it is the shared root cause
 of two rendering failures: example1's `bg-primary`/`text-primary` and the
@@ -886,6 +898,12 @@ flags as optimistic.
 - **B-21** 정답 값이 과제 파일의 프롬프트 글(`flow_values`)에 두 번째로 적혀 있다.
 - **B-22** `test_a_mock_run_survives_a_cp949_console` 가 기본 묶음에서 실제 mock 실행
   (서버 · Chromium)을 돌린다 (D-10 결정 대기).
+- **11-8** 기술 계약(`docs/restructure-prompt.md` 의 `CONTRACT`)은 아직 "선택 화면이 열렸을
+  때 모든 값이 DOM 안에 있어야 한다 (숨김·접힘은 괜찮다)" 라고 말한다. 검사 I 는 이제 원본에서
+  보이던 값이 걷는 동안(reveal 포함) 누를 수 있게 보여야 통과한다 — 접어 둔 목록은 펼치는
+  조작을 `reveal` 에 적어야 한다. 프롬프트를 바꾸면 생성 · 다듬기 프롬프트의 글자가 달라지므로
+  연구자 결정으로 남겨 두었다 (그 전까지는 떨어진 시도의 재시도 블록이 reveal 을 적으라고
+  알린다).
 
 ## 다른 문서
 

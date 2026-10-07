@@ -4,6 +4,23 @@
     {
       "check": "I",
       "screen": null,
+      "detail": "원본의 pick-bank 선택지 67개 중 9개가 생성물 문서 안에는 있지만 걷는 동안 어느 상태에서도 누를 수 있게 보이지 않았다 (예: 국민, 기업, 농협, 신한, 우리 …). 원본에서는 걷는 동안 보이던 값이다. 숨기거나 접어 둔 값은 사용자가 고를 수 없다 - 눌러야 보이는 목록이면 그 조작을 흐름 명세의 reveal 에 적어라 (검사기는 정답 걸음과 reveal 뒤에 보이는 값만 센다).",
+      "action": "pick-bank",
+      "not_selectable": [
+        "국민",
+        "기업",
+        "농협",
+        "신한",
+        "우리",
+        "카카오뱅크",
+        "케이뱅크",
+        "토스뱅크",
+        "하나"
+      ]
+    },
+    {
+      "check": "I",
+      "screen": null,
       "detail": "원본의 num 선택지 11개 중 1개가 생성물에 없다 (예: 00). 화면에 모두 보일 필요는 없지만 값 자체는 모두 접근 가능해야 한다. 모든 값을 고를 수 있게 포함하라.",
       "action": "num",
       "missing": [
@@ -124,17 +141,7 @@
       ]
     }
   ],
-  "warning": [
-    {
-      "check": "I",
-      "screen": null,
-      "detail": "원본의 pick-bank 선택지 67개 중 1개는 생성물 문서 안에는 있지만 검사기가 걷는 동안 DOM 에서는 고를 수 없었다 (예: 케이뱅크). \"전체 보기\" 뒤나 검색 결과로만 나오는 목록이면 정상이다 - 판정에는 넣지 않는다. 그 길을 걷게 하려면 흐름 명세의 reveal 에 펼치는 조작을 적어라.",
-      "action": "pick-bank",
-      "not_selectable": [
-        "케이뱅크"
-      ]
-    }
-  ],
+  "warning": [],
   "metrics": {
     "flow": "run2",
     "derived_from_original": false,
@@ -260,11 +267,31 @@
       "pw": 10
     },
     "choice_values_selectable": {
-      "pick-bank": 8,
+      "pick-bank": 0,
       "acc-num": 10,
       "quick": 3,
       "num": 10,
       "pw": 10
+    },
+    "choice_values_shown_in_original": {
+      "pick-bank": 38,
+      "acc-num": 10,
+      "quick": 4,
+      "num": 11,
+      "pw": 10
+    },
+    "choice_values_not_selectable": {
+      "pick-bank": [
+        "국민",
+        "기업",
+        "농협",
+        "신한",
+        "우리",
+        "카카오뱅크",
+        "케이뱅크",
+        "토스뱅크",
+        "하나"
+      ]
     },
     "choice_values_missing": {
       "pick-bank": [
@@ -372,10 +399,353 @@
     "entrances_hidden": [],
     "entrances_not_in_original": [],
     "entrances_shown_as": {},
+    "entrance_distance": [
+      {
+        "id": "T1",
+        "label": "메시지",
+        "action": "oos-message",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T2",
+        "label": "지갑",
+        "action": "oos-wallet",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T3",
+        "label": "알림",
+        "action": "oos-alarm",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T4",
+        "label": "IRP 안내",
+        "action": "oos-irp",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T5",
+        "label": "앱카드 가입",
+        "action": "oos-appcard",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T6",
+        "label": "바로받기",
+        "action": "oos-get-coupon",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T7",
+        "label": "이벤트",
+        "action": "oos-event",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T8",
+        "label": "쿠폰",
+        "action": "oos-coupon",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T9",
+        "label": "포인트",
+        "action": "oos-point",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T10",
+        "label": "소비 상세",
+        "action": "oos-spend-detail",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T11",
+        "label": "마이신한포인트",
+        "action": "oos-my-point",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 87
+        },
+        "build": null
+      },
+      {
+        "id": "T12",
+        "label": "자산 연결 이벤트",
+        "action": "oos-connect-event",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 471
+        },
+        "build": null
+      },
+      {
+        "id": "T13",
+        "label": "홈화면 설정",
+        "action": "oos-home-setting",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 782
+        },
+        "build": null
+      },
+      {
+        "id": "T14",
+        "label": "금액 숨기기",
+        "action": "oos-hide-amount",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 782
+        },
+        "build": null
+      },
+      {
+        "id": "T15",
+        "label": "금융",
+        "action": "oos-tab-finance",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T16",
+        "label": "상품",
+        "action": "oos-tab-goods",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T17",
+        "label": "혜택",
+        "action": "oos-tab-benefit",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T18",
+        "label": "주식",
+        "action": "oos-tab-stock",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T19",
+        "label": "다건이체",
+        "action": "oos-multi-transfer",
+        "original": {
+          "visit": "recipient",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T20",
+        "label": "받는 사람 관리",
+        "action": "oos-payee-manage",
+        "original": {
+          "visit": "recipient",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T21",
+        "label": "검색",
+        "action": "oos-search",
+        "original": {
+          "visit": "recipient",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T22",
+        "label": "자주쓰는 계좌",
+        "action": "oos-frequent",
+        "original": {
+          "visit": "recipient",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T23",
+        "label": "내 계좌",
+        "action": "oos-my-accounts",
+        "original": {
+          "visit": "recipient",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T24",
+        "label": "최근",
+        "action": "oos-recent",
+        "original": {
+          "visit": "recipient",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T25",
+        "label": "출금계좌 변경",
+        "action": "oos-from-account",
+        "original": {
+          "visit": "amount",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T26",
+        "label": "추가이체",
+        "action": "oos-more-transfer",
+        "original": {
+          "visit": "done",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T27",
+        "label": "상세보기",
+        "action": "oos-detail",
+        "original": {
+          "visit": "done",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "T28",
+        "label": "공유",
+        "action": "oos-share",
+        "original": {
+          "visit": "done",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "R1",
+        "label": "전체메뉴",
+        "action": "oos-menu",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      },
+      {
+        "id": "R3",
+        "label": "쉬운홈",
+        "action": "oos-easy-home",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 782
+        },
+        "build": null
+      },
+      {
+        "id": "R4",
+        "label": "홈",
+        "action": "oos-tab-home",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": null
+      }
+    ],
     "fatal_duplicates_removed": 0,
-    "fatal_total": 4,
+    "fatal_total": 5,
     "fatal_derived": 0,
-    "fatal_root": 4,
+    "fatal_root": 5,
     "stopped_at": null,
     "js_error_details": [],
     "flow_notes": [],

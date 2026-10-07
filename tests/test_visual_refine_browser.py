@@ -169,8 +169,9 @@ def test_walk_reveal_stops_at_a_rule_violation(server, sel, why):
 def test_the_improve_mock_changes_what_the_screens_look_like(server):
     """--mock-refine improve 의 다듬은 빌드는 눈에 보이게 달라야 한다 - 설명서의 전후
     표가 그 차이를 보이는지 확인하는 mock 이다."""
+    # 다듬기는 기본으로 꺼져 있다 (11-8 1) - 켜서 돌린다 (전의 기본값 2)
     summary, code = C.run_mock(["--mock", "pass", "--mock-refine", "improve",
-                                "--delay", "0"])
+                                "--refine", "2", "--delay", "0"])
     assert code == 0 and summary["refine"]["final_label"] == "다듬기 1회차"
     brief = open(summary["final"]["brief"], encoding="utf-8").read()
     assert "최종: 다듬기 1회차 (시도 2)" in brief
@@ -179,7 +180,7 @@ def test_the_improve_mock_changes_what_the_screens_look_like(server):
 
 def test_the_break_mock_reverts_to_the_passed_build(server):
     summary, code = C.run_mock(["--mock", "pass", "--mock-refine", "break",
-                                "--delay", "0"])
+                                "--refine", "2", "--delay", "0"])
     assert code == 0 and summary["passed"] and summary["final"]["attempt"] == 1
     assert summary["refine"]["reverted"]["failed_attempts"] == [2, 3]
     brief = open(summary["final"]["brief"], encoding="utf-8").read()

@@ -510,6 +510,25 @@ STATE_PAIRS = "() => {" + EACH_RULE + r"""
 """
 
 
+# --- 누를 수 있게 보이는가 (검사 K 의 입구 · 검사 I 의 보이는 선택지가 함께 쓴다) -------
+# 그려져 있고(크기 >= 1x1), 자신이나 조상이 display · visibility · opacity 로 숨지 않았고,
+# disabled 가 아니다. 브라우저의 checkVisibility() 를 쓴다 - 닫힌 <details> 안의 요소는
+# display 도 크기도 멀쩡하지만(Chromium 은 그 안을 content-visibility 로 숨긴다) 보이지 않고,
+# 조상의 opacity:0 도 요소 자신의 계산값에는 나타나지 않는다. 그 둘을 놓치면 접어 둔
+# 입구가 펼치는 조작 없이 "보인다" 로 세였다 (11-8 - mock entrances-folded 가 reveal 없이도
+# 통과했다). checkVisibility 가 없는 브라우저는 요소 자신의 계산값만 본다 (전의 규칙).
+PRESSABLE = r"""
+  const pressable = e => {
+    if (e.disabled || e.getAttribute('aria-disabled') === 'true') return false;
+    const r = e.getBoundingClientRect();
+    if (r.width < 1 || r.height < 1) return false;
+    if (typeof e.checkVisibility === 'function')
+      return e.checkVisibility({checkOpacity: true, checkVisibilityCSS: true});
+    const cs = getComputedStyle(e);
+    return cs.display !== 'none' && cs.visibility !== 'hidden' && +cs.opacity !== 0;
+  };
+"""
+
 # --- I: 반복 선택지의 식별값 --------------------------------------------------
 # 같은 data-action 을 공유하는 요소가 둘 이상이면 그것은 "고르는 것들" 이다 -
 # 은행 목록이든 숫자판이든 받는 사람 목록이든. 각 요소를 가리키는 값은
@@ -520,7 +539,13 @@ STATE_PAIRS = "() => {" + EACH_RULE + r"""
 # 원본이 정한다 - 그 이름의 요소는 생성물이 분류마다 하나씩 따로 놓았든 한곳에
 # 모았든 형제 수와 상관없이 모두 센다. 원본을 걸을 때는 빈 목록이고, 목록에 없는
 # 이름은 형제 둘 이상일 때만 무리다 (뒤로가기 같은 버튼이 무리가 되지 않게).
-CHOICE_GROUPS = r"""
+#
+# CHOICE_SHOWN (11-8 2-3) 은 같은 무리 가운데 **지금 누를 수 있게 보이는** 요소의 값만
+# 모은다 - 검사 K 의 입구와 같은 PRESSABLE (그려져 있고 크기 > 0, 자신이나 조상이 숨기지
+# 않았고 - 닫힌 <details> 안 포함 - disabled 가 아니다). 무리를 정하는 규칙은 CHOICE_GROUPS 와 한 글자도 다르지 않게
+# 같은 글에서 만든다 (아래 _CHOICES). 보이는 값이 하나뿐이어도 그 무리의 값이다. 검사 I 가
+# "문서 안에만 있고 어느 상태에서도 보이지 않는 값" 을 이것으로 가른다.
+_CHOICES = r"""
 (known) => {
   const fixed = new Set(known || []);
   const groups = {};
@@ -550,6 +575,7 @@ CHOICE_GROUPS = r"""
       byParent.forEach(sibs => { if (sibs.length >= 2) els = els.concat(sibs); });
       if (els.length < 2) continue;          // 형제가 둘 이상이어야 선택지다
     }
+    __FILTER__
     const vals = [];
     els.forEach(el => {
       let v = null;
@@ -563,31 +589,72 @@ CHOICE_GROUPS = r"""
     });
     const uniq = Array.from(new Set(vals));
     // 원본의 무리는 값이 하나만 보여도 그 무리의 값이다.
-    if (uniq.length >= (fixed.has(action) ? 1 : 2)) out[action] = uniq;
+    if (uniq.length >= __AT_LEAST__) out[action] = uniq;
   }
   return out;
 }
 """
+CHOICE_GROUPS = (_CHOICES.replace("    __FILTER__\n", "")
+                 .replace("__AT_LEAST__", "(fixed.has(action) ? 1 : 2)"))
+CHOICE_SHOWN = (_CHOICES.replace("__FILTER__", PRESSABLE.strip()
+                                 + "\n    els = els.filter(pressable);")
+                .replace("__AT_LEAST__", "1"))
 
 
 # --- K: 과제 밖 입구 ------------------------------------------------------------
 # 과제 밖 입구(과제 파일의 entrances)는 원본의 data-action 이름(oos-*)으로 찾는다.
-# 이름마다 지금 누를 수 있게 보이는가(그려져 있고 disabled 가 아니다)와, 기록용으로
+# 이름마다 지금 누를 수 있게 보이는가(PRESSABLE - 아래)와, 기록용으로
 # 그 요소의 글자 · aria-label 을 모은다 - 글자는 판정에 쓰지 않는다 (11-7b).
 # 같은 이름이 여럿이면 보이는 것 하나를 고른다. 문서 전체를 보지만 숨은 화면 안의
 # 요소는 크기가 0 이라 보이지 않는 것이 된다 - 그 화면에 도착한 걸음에서 보인다.
+#
+# 보이는 요소에는 `scroll_px` 도 잰다 (11-8, 기록만 - 검사 K 의 entrance_distance). 그
+# 화면 맨 위에서(모든 스크롤을 0 으로 되돌린 자리에서) 요소 전체가 창 안에 들어오기까지
+# 내려야 하는 거리다. 첫 화면 안이면 0. 실제로 스크롤하지 않는다 - 지금 위치에 조상들의
+# scrollTop 을 더해 셈한다 (걷기가 버튼을 누르느라 내려가 있어도 같은 값). 고정(fixed ·
+# sticky)된 것은 스크롤과 함께 움직이지 않으므로 0 이다. 세로만 잰다 - 옆으로 넘기는
+# 띠 안의 위치와 덮개에 가려진 것은 재지 않는다. 같은 이름이 여럿 보이면 덜 내려도 되는
+# 것을 고른다. 보이지 않는 요소는 null 이다.
 ENTRANCE_PREFIX = "oos-"
+
 ENTRANCES = r"""
 () => {
   const out = {};
   const clean = s => (s || '').replace(/\s+/g, ' ').trim();
-  const shown = e => {
-    const cs = getComputedStyle(e);
-    if (cs.display === 'none' || cs.visibility === 'hidden') return false;
-    if (+cs.opacity === 0) return false;
-    if (e.disabled || e.getAttribute('aria-disabled') === 'true') return false;
-    const r = e.getBoundingClientRect();
-    return r.width >= 1 && r.height >= 1;
+  __PRESSABLE__
+  const shown = pressable;
+  const docY = () => (document.scrollingElement || document.documentElement).scrollTop;
+  /* el 을 담은, 지금 스크롤할 수 있는 조상들 */
+  const scrollers = el => {
+    const got = [];
+    for (let n = el.parentElement; n && n !== document.body
+         && n !== document.documentElement; n = n.parentElement) {
+      if (/(auto|scroll|overlay)/.test(getComputedStyle(n).overflowY)
+          && n.scrollHeight > n.clientHeight + 1) got.push(n);
+    }
+    return got;
+  };
+  const pinned = el => {
+    for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
+      if (/^(fixed|sticky)$/.test(getComputedStyle(n).position)) return true;
+    }
+    return false;
+  };
+  /* 모든 스크롤이 0 일 때의 세로 위치로 옮기는 값 */
+  const shift = el => scrollers(el).reduce((s, n) => s + n.scrollTop, 0) + docY();
+  const scrollPx = el => {
+    if (pinned(el)) return 0;
+    const r = el.getBoundingClientRect(), d = shift(el);
+    const top = r.top + d, bottom = r.bottom + d;
+    let viewTop = 0, viewBottom = window.innerHeight;
+    for (const n of scrollers(el)) {
+      const nr = n.getBoundingClientRect();
+      const nt = nr.top + shift(n) + n.clientTop;
+      viewTop = Math.max(viewTop, nt);
+      viewBottom = Math.min(viewBottom, nt + n.clientHeight);
+    }
+    /* 아래 끝이 창 아래 끝에 닿을 때까지. 창보다 큰 요소는 위 끝이 창 위 끝에 올 때까지 */
+    return Math.max(0, Math.round(Math.min(bottom - viewBottom, top - viewTop)));
   };
   document.querySelectorAll('[data-action^="__PREFIX__"]').forEach(el => {
     const a = el.getAttribute('data-action');
@@ -597,10 +664,14 @@ ENTRANCES = r"""
       const t = clean(n.nodeValue);
       if (t) parts.push(t);
     }
-    const row = {visible: shown(el), text: parts.join(' '),
-                 aria: clean(el.getAttribute('aria-label'))};
-    if (!out[a] || (row.visible && !out[a].visible)) out[a] = row;
+    const visible = shown(el);
+    const row = {visible: visible, text: parts.join(' '),
+                 aria: clean(el.getAttribute('aria-label')),
+                 scroll_px: visible ? scrollPx(el) : null};
+    const old = out[a];
+    if (!old || (row.visible && !old.visible)
+        || (row.visible && old.visible && row.scroll_px < old.scroll_px)) out[a] = row;
   });
   return out;
 }
-""".replace("__PREFIX__", ENTRANCE_PREFIX)
+""".replace("__PREFIX__", ENTRANCE_PREFIX).replace("__PRESSABLE__", PRESSABLE.strip())

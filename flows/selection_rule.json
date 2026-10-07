@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "note": [
     "C 후보 고르기 규칙 (python -m senior_ui.select). 코드가 아니라 이 파일이 규칙이다.",
     "gates: 하나라도 어기면 후보에서 뺀다. true = 본다, false = 보지 않는다.",
@@ -13,8 +13,9 @@
     "                     J = 오류 알림 글에 과제 단어가 없음 (예비 실행 gpt-6-astra 가 은행 오류에 계좌번호 문구를 띄운 채 통과)",
     "  stage          null 이면 보지 않는다. 적으면 summary.stage 가 그것과 같아야 한다 (기록이 없으면 어긴 것)",
     "  budget         {format, audit, refine} 중 적은 칸이 summary.budget.format_budget · audit_budget · summary.refine.budget 과 같아야 한다. null 이면 보지 않는다",
+    "                 refine 0 = 보고 다듬기를 끈 실행만 (config.DEFAULT_REFINE 0). 2026-10-07 예비 실행 두 번에서 다듬기 전후 화면이 거의 같아 기본으로 껐다 (20261006-215902: 비평 3건 중 1건 반영, 20261007-102041: 시도 1 과 3 이 같음). version 4 (11-8) 에서 2 → 0",
     "  commit         null = 다른 문지기를 지난 실행들 중 가장 많은 커밋이 기준 (같은 수면 가장 나중 실행의 커밋). 해시를 적으면 그 커밋(앞자리 일치)만. 기준과 다른 커밋의 실행은 이유와 함께 뺀다",
-    "  reverted       다듬기가 떨어져 직전 통과 빌드가 최종인 실행. allow = 후보로 인정하고 순위표 '되돌림' 열로 보인다 · last = 되돌리지 않은 실행 뒤로 미룬다 · exclude = 뺀다. 예비 실행을 본 뒤 12번 전에 확정한다",
+    "  reverted       다듬기가 떨어져 직전 통과 빌드가 최종인 실행. allow = 후보로 인정하고 순위표 '되돌림' 열로 보인다 · last = 되돌리지 않은 실행 뒤로 미룬다 · exclude = 뺀다. 다듬기를 끈 실행(refine 0)에는 되돌림이 없다",
     "  no_internal_error  도구 내부 오류로 끝난 실행(stopped_reason internal_error, 종료 2)은 통과한 빌드가 있어도 뺀다",
     "  original       \"current\" = 실행의 original_sha256 이 그 과제의 지금 원본 파일(과제 파일의 original, 줄끝을 LF 로 맞춘 sha256)과 같아야 한다. 다르면 '다른 원본으로 만든 실행' 으로 뺀다. 값이 없는 옛 실행(11-11 전)도 같은 이유로 뺀다. null 이면 보지 않는다. version 3 (11-11) 에서 더함",
     "ordering: 위에서부터 차례로 비교한다 (앞이 같을 때만 다음을 본다). 끝까지 같으면 실행 이름순.",
@@ -34,7 +35,7 @@
     "model": "gpt-6.1-sol",
     "no_warning_checks": ["J"],
     "stage": "wireframe",
-    "budget": {"format": 5, "audit": 6, "refine": 2},
+    "budget": {"format": 5, "audit": 6, "refine": 0},
     "commit": null,
     "reverted": "allow",
     "no_internal_error": true,

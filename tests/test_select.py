@@ -39,7 +39,7 @@ def make_run(root, name, passed=True, warning=0, fatal=0, screens=9, actions=30,
              changes=7, attempts=1, redeclared=(), dirty=False, truncated=False,
              mock=None, model="gpt-6.1-sol", task="transfer", unaddressed_changes=0,
              effort="medium", brief=True, stage="wireframe", fmt_budget=5, audit_budget=6,
-             refine_budget=2, reverted=None, commit="abcdef1234567890",
+             refine_budget=0, reverted=None, commit="abcdef1234567890",
              stopped_reason=None, original="current"):
     """가짜 실행 폴더 하나. `original` 은 summary.original_sha256 - "current" 면 그 과제의
     지금 원본 파일의 지문, None 이면 칸을 쓰지 않는다 (지문을 남기기 전의 옛 실행)."""
@@ -315,7 +315,11 @@ def test_the_shipped_rule_names_the_run_conditions():
     assert g["no_internal_error"] is True
     # 지금 inputs 의 원본으로 만든 실행만 (11-11). 규칙의 판도 그래서 올렸다
     assert g["original"] == "current"
-    assert DEFAULT_RULE["version"] == 3
+    # 다듬기는 기본으로 끈다 (11-8) - 규칙도 refine 0 을 요구한다. 그래서 판을 올렸다
+    assert g["budget"]["refine"] == config.DEFAULT_REFINE == 0
+    assert DEFAULT_RULE["version"] == 4
+    note = " ".join(DEFAULT_RULE["note"])
+    assert "version 4 (11-8)" in note and "refine 0" in note
 
 
 def test_a_run_in_another_stage_is_excluded(tmp_path):
@@ -335,14 +339,15 @@ def test_a_run_with_another_budget_is_excluded(tmp_path):
     runs = runs_dir(tmp_path)
     make_run(str(runs), "20261007-100000-ok")
     make_run(str(runs), "20261007-100001-3x3", fmt_budget=3, audit_budget=3)
-    make_run(str(runs), "20261007-100002-refine0", refine_budget=0)
+    # 다듬기를 켜고 돈 실행(11-8 전의 기본 2)은 이제 규칙과 다른 조건이다
+    make_run(str(runs), "20261007-100002-refine2", refine_budget=2)
     make_run(str(runs), "20261007-100003-norefine", refine_budget=None)
     _code, result, _md = select(tmp_path)
     assert order(result) == ["20261007-100000-ok"]
     assert reasons(result) == {
         "20261007-100001-3x3": ["예산이 규칙과 다름: 형식 3 (규칙 5) · 검사 3 (규칙 6)"],
-        "20261007-100002-refine0": ["예산이 규칙과 다름: 다듬기 0 (규칙 2)"],
-        "20261007-100003-norefine": ["예산이 규칙과 다름: 다듬기 기록 없음 (규칙 2)"]}
+        "20261007-100002-refine2": ["예산이 규칙과 다름: 다듬기 2 (규칙 0)"],
+        "20261007-100003-norefine": ["예산이 규칙과 다름: 다듬기 기록 없음 (규칙 0)"]}
 
 
 OTHER_ORIGINAL = "0" * 64
@@ -736,7 +741,7 @@ def test_select_runs_to_the_end_on_a_mock_run(tmp_path, task, args, mode):
     assert row["commit"] == summary["git"]["commit"]
     # 실행 조건도 실제 summary 에서 읽힌다 (gates.stage · budget · reverted)
     assert row["stage"] == "wireframe"
-    assert row["budget"] == {"format": 1, "audit": 1, "refine": 2}
+    assert row["budget"] == {"format": 1, "audit": 1, "refine": 0}
     assert row["internal_error"] is False
     if task == "transfer":
         assert all(p["ok"] for p in row["error_paths"].values())

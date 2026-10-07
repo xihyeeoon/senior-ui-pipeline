@@ -8,6 +8,8 @@ docs/restructure-prompt.md 에 프롬프트 블록이 둘 있다.
 두 블록의 `{{TASK}}` 에는 과제 파일(tasks/<과제>.json, senior_ui/tasks.py)의
 `description` 이 들어간다. 과제 설명을 한 곳에 두는 이유는 과제를 바꾸는 날 한
 곳만 고치게 하려는 것이다 - 두 프롬프트에 따로 적으면 한쪽만 바뀐 채로 돈다.
+프롬프트가 말하는 대상도 같은 이유로 과제 파일의 `audience` 한 칸이고, 블록과 과제
+설명의 `{{AUDIENCE}}` 자리에 들어간다 (tasks.fill_audience, 11-8).
 
 생성 프롬프트의 슬롯은 다섯이다 - 원본 HTML · 재시도 블록 · 선택지 요약 · 오류
 조건 · 계획.
@@ -24,7 +26,7 @@ import re
 from senior_ui.audit.flow import original_error_paths
 from senior_ui.config import ROOT
 from senior_ui.preserved import GLOBAL_NAME
-from senior_ui.tasks import load_task
+from senior_ui.tasks import fill_audience, load_task
 
 from .model import IMAGE_MARK
 from .preserve import optional_names, preserved_data, split_groups
@@ -58,6 +60,8 @@ def _with_task(name, task=None):
             .replace("{{CONTRACT}}", load_block("CONTRACT").rstrip("\n"))
             .replace("{{REVEAL}}", load_block("REVEAL").rstrip("\n")))
     text = text.replace("{{TASK}}", t["description"])
+    # 대상 문구 (과제 파일의 audience). 과제 설명의 자리는 load_task 가 이미 채웠다
+    text = fill_audience(text, t["audience"])
     parts = t.get("prompt") or {}
 
     def fill(m):

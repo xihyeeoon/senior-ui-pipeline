@@ -240,9 +240,19 @@ async def drain_dialogs(tasks, grace_ms=DIALOG_GRACE_MS):
         await asyncio.gather(*pending, return_exceptions=True)
 
 
+def mark_entrances(got, visit, reveal=0):
+    """보인 입구에 어디서 보였는지를 적는다 (11-8, 기록만 - 검사 K 의 entrance_distance).
+    `visit` 은 그 걸음의 방문 이름, `reveal` 은 그때까지 누른 펼치기 수 (정답 걸음은 0).
+    스크롤 거리(scroll_px)는 probe 가 잰다 (probes.ENTRANCES)."""
+    for row in (got or {}).values():
+        if row.get("visible"):
+            row.update(visit=visit, reveal=reveal)
+    return got
+
+
 def merge_entrances(have, got):
     """걸음마다 모은 입구 상태를 합친다. 한 번이라도 보였으면 보인 것이고, 기록용
-    글자는 처음 보인 때의 것이다."""
+    글자 · 처음 보인 방문 · 그때의 스크롤 거리는 처음 보인 때의 것이다."""
     for action, row in (got or {}).items():
         old = have.get(action)
         if old is None or (row.get("visible") and not old.get("visible")):
@@ -271,6 +281,9 @@ async def collect_screen(page, flow, visit, reached=None, original_groups=()):
            "dom_screen": await page.evaluate(P.DOM_SCREEN)}
     row.update(await page.evaluate(P.INVENTORY))
     row["choices"] = await page.evaluate(P.CHOICE_GROUPS, list(original_groups))
+    # 그중 지금 누를 수 있게 보이는 값 (11-8 2-3). 검사 I 가 "문서 안에만 있고 어느
+    # 상태에서도 보이지 않는 값" 을 이것으로 가른다 (probes.CHOICE_SHOWN)
+    row["choices_shown"] = await page.evaluate(P.CHOICE_SHOWN, list(original_groups))
     # CONTRAST 는 두 칸으로 돌려준다 - 잰 것과 잴 수 없었던 것. 한 칸으로
     # 합치면 그라디언트 위의 글자가 "저명암 아님" 과 구분되지 않는다.
     contrast = await page.evaluate(P.CONTRAST)
@@ -408,7 +421,8 @@ async def walk(page, flow, data, want_shots, url, see=False, original_groups=())
 
         data["screens"][visit] = await collect_screen(
             page, flow, visit, data["reached"], original_groups)
-        merge_entrances(data["entrances_seen"], await page.evaluate(P.ENTRANCES))
+        merge_entrances(data["entrances_seen"],
+                        mark_entrances(await page.evaluate(P.ENTRANCES), visit))
         if want_shots:
             await page.screenshot(path=os.path.join(
                 want_shots, "audit_%s.png" % SHOT_SAFE.sub("_", visit)))
@@ -547,10 +561,11 @@ async def walk_reveal(browser, url, flow, spec, original_groups=()):
 
     정답 경로의 걷기와 따로 걷는다 - 펼친 상태가 A~H 가 보는 화면을 바꾸지
     않게. 선택지는 정답 경로와 같은 `original_groups` 로 모은다 (drive 참고).
-    돌려주는 것은 `{"at", "choices": {action: [값]}, "error"}`."""
+    돌려주는 것은 `{"at", "choices": {action: [값]}, "choices_shown": {action: [값]},
+    "error"}` - choices_shown 은 그중 누를 수 있게 보인 값이다 (probes.CHOICE_SHOWN)."""
     truth = truth_of(flow)
-    row = {"at": spec.get("at"), "choices": {}, "error": None, "violations": [],
-           "entrances_seen": {}}
+    row = {"at": spec.get("at"), "choices": {}, "choices_shown": {}, "error": None,
+           "violations": [], "entrances_seen": {}}
     page = await browser.new_page(viewport={"width": 390, "height": 844})
     ed = {"js_errors": [], "js_error_details": [], "dialogs": [], "reached": []}
     tasks = attach_listeners(page, ed)
@@ -560,14 +575,22 @@ async def walk_reveal(browser, url, flow, spec, original_groups=()):
         hint = await where_is(page, msg) if isinstance(e, Exception) else None
         row["error"] = {"phase": phase, "detail": msg + (" || " + hint if hint else "")}
 
-    def merge(groups):
+    def merge(groups, key="choices"):
         for action, vals in (groups or {}).items():
-            have = row["choices"].setdefault(action, [])
+            have = row[key].setdefault(action, [])
             have += [v for v in vals if v not in have]
 
-    async def merge_texts():
-        # 펼친 뒤 누를 수 있게 보인 과제 밖 입구 - 검사 K 가 정답 경로의 것과 함께 센다
-        merge_entrances(row["entrances_seen"], await page.evaluate(P.ENTRANCES))
+    async def merge_choices():
+        # 문서 안의 값과, 그중 지금 누를 수 있게 보이는 값 (검사 I, 11-8 2-3)
+        merge(await page.evaluate(P.CHOICE_GROUPS, list(original_groups)))
+        merge(await page.evaluate(P.CHOICE_SHOWN, list(original_groups)), "choices_shown")
+
+    async def merge_texts(clicks):
+        # 펼친 뒤 누를 수 있게 보인 과제 밖 입구 - 검사 K 가 정답 경로의 것과 함께 센다.
+        # 몇 번 누른 뒤에 보였는지도 적는다 (entrance_distance 의 reveal, 기록만)
+        merge_entrances(row["entrances_seen"],
+                        mark_entrances(await page.evaluate(P.ENTRANCES), spec.get("at"),
+                                       clicks))
 
     try:
         try:
@@ -594,8 +617,8 @@ async def walk_reveal(browser, url, flow, spec, original_groups=()):
                 return row
             if visit == spec.get("at"):
                 break
-        merge(await page.evaluate(P.CHOICE_GROUPS, list(original_groups)))
-        await merge_texts()
+        await merge_choices()
+        await merge_texts(0)
         actions = spec.get("do") or []
         for i, act in enumerate(actions if isinstance(actions, list) else [actions]):
             sel = act.get("click") if isinstance(act, dict) and set(act) == {"click"} \
@@ -621,8 +644,8 @@ async def walk_reveal(browser, url, flow, spec, original_groups=()):
                     % (i, sel, before.get("dom_screen") or before.get("landed_on"),
                        after.get("dom_screen") or after.get("landed_on")))
                 return row
-            merge(await page.evaluate(P.CHOICE_GROUPS, list(original_groups)))
-            await merge_texts()
+            await merge_choices()
+            await merge_texts(i + 1)
         return row
     finally:
         await drain_dialogs(tasks)

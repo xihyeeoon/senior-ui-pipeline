@@ -10,8 +10,11 @@ r"""통과한 실행마다 디자이너에게 넘길 변경 설명서(designer_b
                                                             걸어 본 결과)
     5. 사람이 따로 봐야 할 것                               (warning · 도구가 고친 것 ·
                                                             일부러 뺀 선택지)
+    5b. 과제 밖 입구는 어디서 처음 보이나                   (검사 K 의 entrance_distance,
+                                                            원본과 나란히 - 기록만)
     6. 스크린샷을 보고 무엇을 다듬었나                      (다듬기 회차마다 비평 ·
-                                                            바꾼 것 · 전후 스크린샷)
+                                                            바꾼 것 · 전후 스크린샷.
+                                                            끈 실행은 "다듬기 안 함" 한 줄)
 
 맨 위 한 줄은 최종 빌드가 어디서 왔는지다 - 생성인지 다듬기 몇 회차인지, 다듬기가
 실패해 되돌렸는지 (summary 의 refine.final_from · reverted).
@@ -28,6 +31,7 @@ import os
 
 from senior_ui.audit.flow import original_error_paths
 from senior_ui.preserved import GLOBAL_NAME
+from senior_ui.tasks import fill_audience
 
 
 def _cell(s):
@@ -91,15 +95,21 @@ def shot_pairs(before, after):
     return rows
 
 
-def refine_section(refine, brief_dir):
-    """보고 다듬기 절. 다듬기 기록이 없으면 빈 목록."""
+def refine_section(refine, brief_dir, audience=None):
+    """보고 다듬기 절. 다듬기를 끈 실행(refine 0 - 11-8 부터 기본)은 한 줄이고, 다듬기
+    기록이 아예 없는 옛 실행은 빈 목록."""
     rounds = (refine or {}).get("rounds") or []
+    if not rounds and (refine or {}).get("budget") == 0:
+        return ["## 보고 다듬기", "", "다듬기 안 함 (refine 0)", ""]
     if not rounds:
         return []
     out = ["## 보고 다듬기", "",
-           "검사를 통과한 빌드의 스크린샷을 모델에게 보여 주고, 60대 이상 사용자가 처음 "
+           "검사를 통과한 빌드의 스크린샷을 모델에게 보여 주고, %s 처음 "
            "볼 때 어디서 멈추고 무엇을 못 읽고 무엇을 잘못 누를지 화면을 보고 판단하게 "
-           "했다. 다듬은 빌드는 검사를 다시 통과해야 최종이 된다.", ""]
+           "했다. 다듬은 빌드는 검사를 다시 통과해야 최종이 된다."
+           # 다듬기 프롬프트와 같은 대상 문구 (과제 파일의 audience, 11-8). 기록이 없는
+           # 옛 실행은 그때 프롬프트의 문구
+           % fill_audience("{{AUDIENCE}}가", audience or "60대 이상 사용자"), ""]
     if refine.get("reverted"):
         out += ["**되돌림**: %s — 최종은 직전에 통과한 시도 %s 다." % (
             refine["reverted"]["reason"], refine["reverted"]["to_attempt"]), ""]
@@ -151,6 +161,45 @@ def refine_section(refine, brief_dir):
     return out
 
 
+def _where_cells(at, absent):
+    """입구 거리 표의 세 칸 (화면 · 펼치기 · 스크롤). 보이지 않았으면 `absent` 와 "-" 둘."""
+    if not at:
+        return [absent, "-", "-"]
+    clicks = at.get("reveal")
+    reveal = "?" if clicks is None else str(clicks)
+    if clicks and at.get("via"):
+        reveal += " (reveal `%s`)" % at["via"]
+    scroll = at.get("scroll_px")
+    return ["`%s`" % at["visit"] if at.get("visit") else "?", reveal,
+            "?" if scroll is None else str(scroll)]
+
+
+def entrance_section(rows):
+    """과제 밖 입구 절 (11-8). 검사 K 의 지표 entrance_distance 를 원본과 나란히 옮긴다 -
+    기록만 하고 기준선 · 합격선은 두지 않는다. 지표가 없으면(검사 K 가 물러난 리포트)
+    빈 목록."""
+    if not rows:
+        return []
+    out = ["## 과제 밖 입구", "",
+           "과제 경로 위 화면의 다른 메뉴 · 버튼(과제 파일의 `entrances`, 검사 K)이 처음 보이는 "
+           "자리를 원본과 나란히 적는다. 남아 있는 것과 찾을 수 있는 것은 다르다 (Findlater, "
+           "McGrenere 2007). 기록만 한다 — 판정 · 고르기에 쓰지 않고, 기준선 · 합격선은 정하지 "
+           "않았다.", "",
+           "- 화면: 걷는 동안 처음 누를 수 있게 보인 방문 (흐름의 걸음 이름)",
+           "- 펼치기: 그 입구를 보려고 누른 펼치기(흐름 명세의 `reveal`) 횟수. 바로 보이면 0",
+           "- 스크롤: 그 화면 맨 위에서 입구 전체가 창(390×844) 안에 들어오기까지 내려야 하는 "
+           "거리(px). 첫 화면 안이면 0", "",
+           "| 입구 | 원본 화면 | 원본 펼치기 | 원본 스크롤 px | 재설계 화면 | 재설계 펼치기 "
+           "| 재설계 스크롤 px |", "|---|---|---|---|---|---|---|"]
+    for d in rows:
+        cells = (["%s %s (`%s`)" % (d.get("id"), _cell(d.get("label")), d.get("action"))]
+                 + _where_cells(d.get("original"), "원본에서 보이지 않음")
+                 + _where_cells(d.get("build"), "보이지 않음"))
+        out.append("| %s |" % " | ".join(cells))
+    out.append("")
+    return out
+
+
 def mapping_rows(plan, original_screens):
     """`(원본 화면, 재설계 화면)` 줄들. 원본 화면 순서, 그다음 새 화면."""
     rows = []
@@ -164,7 +213,9 @@ def mapping_rows(plan, original_screens):
 
 
 def choice_gaps(metrics):
-    """검사 I 의 kept 와 selectable 이 다른 것. `[(action, kept, selectable)]`."""
+    """검사 I 의 kept 와 selectable 이 다른 것. `[(action, kept, selectable)]`. 11-8 부터는
+    원본에서 보이던 값이 생성물에서 보이지 않으면 fatal 이라 통과한 빌드에는 원본에서도
+    보이지 않던 값(이체의 증권사 탭)이나 옛 실행의 차이만 남는다."""
     kept = metrics.get("choice_values_kept") or {}
     sel = metrics.get("choice_values_selectable") or {}
     return [(a, kept[a], sel.get(a)) for a in sorted(kept)
@@ -208,7 +259,7 @@ def error_rows(errors, plan, metrics, warnings):
 def render_brief(run_name, attempt, plan, diagnosis, report, original_screens,
                  shots_dir, brief_dir, preserved=None, redeclared=None,
                  model_html=None, git=None, reflections=None, errors=None,
-                 refine=None):
+                 refine=None, audience=None):
     report = report or {}
     metrics = report.get("metrics") or {}
     diag = {d["id"]: d for d in diagnosis or []}
@@ -275,7 +326,8 @@ def render_brief(run_name, attempt, plan, diagnosis, report, original_screens,
                     r["id"], os.path.basename(shot), _link(shot, brief_dir)))
         out.append("")
 
-    out += refine_section(refine, brief_dir)
+    out += entrance_section(metrics.get("entrance_distance"))
+    out += refine_section(refine, brief_dir, audience)
 
     out += ["## 화면별 스크린샷", "", "검사기가 과제를 걸으며 찍은 것이다.", ""]
     for sc in plan["screens"]:
@@ -296,11 +348,13 @@ def render_brief(run_name, attempt, plan, diagnosis, report, original_screens,
              for w in warnings] or ["없음"])
     out.append("")
     gaps = choice_gaps(metrics)
-    out += ["### 선택지: 문서에 있는 것과 고를 수 있던 것의 차이", ""]
+    out += ["### 선택지: 문서에 있는 것과 누를 수 있게 보인 것", "",
+            "검사 I 는 원본의 선택지 값마다 걷는 동안(펼치기 포함) 어느 상태에서 누를 수 있게 "
+            "보였는지 센다. 원본을 걷는 동안 보이던 값이 생성물에서 어느 상태에서도 보이지 "
+            "않으면 검사 I 의 fatal 이다 (11-8). 아래는 남은 차이 — 원본도 걷는 동안 보이지 "
+            "않던 값이고, 실제 앱에서 그 값에 닿는 길이 있는지 사람이 본다.", ""]
     if gaps:
-        out += ["검사기가 걷는 동안 DOM 에서 고를 수 없던 값이 있다. \"전체 보기\" 뒤나 "
-                "검색 결과로만 나오는 목록이면 정상이다 — 실제 앱에서 그 길이 있는지 본다.",
-                "", "| 선택지 | 문서에 있음 | 걷는 동안 고를 수 있음 |", "|---|---|---|"]
+        out += ["| 선택지 | 문서에 있음 | 걷는 동안 누를 수 있게 보임 |", "|---|---|---|"]
         out += ["| %s | %s | %s |" % (a, k, s) for a, k, s in gaps]
     else:
         out.append("없음")
@@ -383,6 +437,6 @@ def write_brief(summary, original_screens, brief_path, errors=None):
         model_html=final.get("model_html_promoted") or final.get("model_html"),
         git=summary.get("git"), reflections=reflections,
         errors=original_error_paths() if errors is None else errors,
-        refine=summary.get("refine"))
+        refine=summary.get("refine"), audience=summary.get("audience"))
     io.open(brief_path, "w", encoding="utf-8", newline="\n").write(text)
     return brief_path

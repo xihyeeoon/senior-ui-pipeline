@@ -701,10 +701,51 @@ def test_refine_zero_turns_it_off(audit_by_marker, out_root, tmp_path):
     assert s["refine"]["rounds"] == [] and s["refine"]["final_label"] == "생성"
 
 
-def test_the_default_refine_count_is_two():
-    assert config.DEFAULT_REFINE == 2
-    assert loop.refine_choice(make_args("x", refine=None)) == (2, "config.DEFAULT_REFINE")
-    assert loop.refine_choice(make_args("x", refine=1)) == (1, "--refine")
+# 다듬기를 기본으로 끈 이유 (11-8). config 주석 · README · docs 에 같은 한 줄이 있다.
+REFINE_OFF_WHY = ("2026-10-07 예비 실행 두 번에서 다듬기 전후 화면이 거의 같아 기본으로 껐다 "
+                  "(20261006-215902: 비평 3건 중 1건 반영, 20261007-102041: 시도 1 과 3 이 같음)")
+
+
+def test_refine_is_off_by_default():
+    """11-8: 기본은 0 (끔). --refine N 을 주면 전처럼 돈다 - 코드는 지우지 않았다."""
+    assert config.DEFAULT_REFINE == 0
+    assert loop.refine_choice(make_args("x", refine=None)) == (0, "config.DEFAULT_REFINE")
+    assert loop.refine_choice(make_args("x", refine=2)) == (2, "--refine")
+
+
+@pytest.mark.parametrize("path", ["senior_ui/config.py", "README.md", "docs/README.md",
+                                  "docs/restructure-prompt.md"])
+def test_why_refine_is_off_is_written_where_refine_is_described(path):
+    text = " ".join(read(os.path.join(_api.ROOT_DIR, *path.split("/"))).split())
+    # 주석 줄 머리의 # 은 문장 사이에 끼므로 걷어 내고 본다
+    assert REFINE_OFF_WHY in text.replace(" # ", " ")
+
+
+def test_the_refine_why_line_stays_out_of_the_prompt_blocks():
+    """다듬기 설명은 사람용 메모다 - 프롬프트(블록 안)에는 들어가지 않는다."""
+    for name in ("PLAN_PROMPT", "PROMPT", "REFINE_PROMPT", "CONTRACT", "REFLECT", "REVEAL"):
+        assert "기본으로 껐다" not in _api.prompt_module.load_block(name)
+
+
+def test_a_default_run_does_not_refine(audit_by_marker, out_root, tmp_path):
+    """--refine 을 주지 않은 실행: 다듬기 호출이 없고, 기록에 0 과 출처가 남고, 설명서의
+    다듬기 절은 한 줄이다."""
+    code, s, sent, d = run_refine(audit_by_marker, out_root, tmp_path, [IMPROVE], n=None)
+    assert code == 0 and s["passed"]
+    assert not any(is_refine(c["prompt"]) for c in sent)
+    assert (s["refine"]["budget"], s["refine"]["source"]) == (0, "config.DEFAULT_REFINE")
+    assert s["refine"]["rounds"] == [] and s["refine"]["final_label"] == "생성"
+    md = read(os.path.join(d, "designer_brief.md"))
+    assert "## 보고 다듬기\n\n다듬기 안 함 (refine 0)\n\n## " in md
+    assert "스크린샷을 모델에게 보여 주고" not in md
+
+
+def test_the_refine_section_of_a_run_without_refine_is_one_line():
+    assert brief.refine_section({"budget": 0, "rounds": []}, ".") == [
+        "## 보고 다듬기", "", "다듬기 안 함 (refine 0)", ""]
+    # 다듬기 기록이 아예 없는 옛 실행(11-5 전)은 전처럼 절이 없다
+    assert brief.refine_section(None, ".") == []
+    assert brief.refine_section({}, ".") == []
 
 
 def test_a_failed_run_is_not_refined(fake_run_env, out_root, tmp_path):
@@ -717,7 +758,8 @@ def test_a_failed_run_is_not_refined(fake_run_env, out_root, tmp_path):
 
 def test_the_refine_prompt_asks_an_open_question_not_a_checklist():
     text = _api.prompt_module.load_refine_template()
-    assert "60대 이상 사용자가 이 화면들을 처음 본다고 하자" in text
+    # 대상 문구는 과제 파일의 audience 다 (11-8 4) - 전에는 "60대 이상 사용자가"
+    assert "60대 이상 고령 사용자가 이 화면들을 처음 본다고 하자" in text
     assert "어디서 멈추는가. 무엇을 못 읽는가. 무엇을 잘못 누르는가." in text
     assert "코드에서 짐작한 것이 아니라 그림에서 본 것으로 판단하라" in text
     # 비평 칸은 빈칸 틀이다

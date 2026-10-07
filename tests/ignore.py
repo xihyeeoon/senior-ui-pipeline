@@ -25,6 +25,7 @@ import json
 # 비교한다 - 넓게 빼면 검사 I 가 보는 선택지 집합까지 비교에서 사라진다.
 SNAPSHOT = [
     "screens.*.choices.pw",        # 숫자판 버튼 값의 DOM 순서
+    "screens.*.choices_shown.pw",  # 그중 보이는 것 - 같은 순서 (11-8 2-3)
     "screens.password.text",       # 화면 텍스트에 숫자판 순서가 그대로 들어간다
     "screens.password.wrapped",    # 줄바꿈 수집 항목의 text 와 순서
 ]
