@@ -875,6 +875,8 @@ def test_probe_image_measures_one_image(probe_env, out_root, capsys):
     assert "배수 = 422 / 351 = 1.202" in out
     assert '"gpt-6.1-sol": {"method": "patch", "multiplier": 1.2, "budget": 2500},' in out
     assert "estimated 표시만 지우면 된다" in out
+    # 고치기 전: "2%% 안에서" - 서식을 거치지 않는 글에 %% 를 적었다
+    assert "어림과 실측이 2% 안에서 같다" in out and "%%" not in out
     assert "그림 한 장의 실측" in probe_log(out_root)
 
 
