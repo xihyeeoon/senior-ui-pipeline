@@ -39,7 +39,8 @@ def demo_task(tmp_path, monkeypatch):
         "truth": {"AMOUNT": "500", "CODE": "77"},
         "steps": [{"screen": "home"}], "error_paths": []}), encoding="utf-8")
     (tasks / "demo.json").write_text(json.dumps({
-        "id": "demo", "description": ["demo"], "original": "inputs/original_bill.html",
+        "id": "demo", "description": ["demo"], "audience": "데모 사용자",
+        "original": "inputs/original_bill.html",
         "flow": str(flow).replace(os.sep, "/"),
         "done_expect": [["#dn-x", "{AMOUNT_SHOWN}"]],
         "required_truth": ["AMOUNT", "CODE"], "required_error_paths": [],

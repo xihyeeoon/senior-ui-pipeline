@@ -31,6 +31,7 @@ import os
 
 from senior_ui.audit.flow import original_error_paths
 from senior_ui.preserved import GLOBAL_NAME
+from senior_ui.tasks import fill_audience
 
 
 def _cell(s):
@@ -94,7 +95,7 @@ def shot_pairs(before, after):
     return rows
 
 
-def refine_section(refine, brief_dir):
+def refine_section(refine, brief_dir, audience=None):
     """보고 다듬기 절. 다듬기를 끈 실행(refine 0 - 11-8 부터 기본)은 한 줄이고, 다듬기
     기록이 아예 없는 옛 실행은 빈 목록."""
     rounds = (refine or {}).get("rounds") or []
@@ -103,9 +104,12 @@ def refine_section(refine, brief_dir):
     if not rounds:
         return []
     out = ["## 보고 다듬기", "",
-           "검사를 통과한 빌드의 스크린샷을 모델에게 보여 주고, 60대 이상 사용자가 처음 "
+           "검사를 통과한 빌드의 스크린샷을 모델에게 보여 주고, %s 처음 "
            "볼 때 어디서 멈추고 무엇을 못 읽고 무엇을 잘못 누를지 화면을 보고 판단하게 "
-           "했다. 다듬은 빌드는 검사를 다시 통과해야 최종이 된다.", ""]
+           "했다. 다듬은 빌드는 검사를 다시 통과해야 최종이 된다."
+           # 다듬기 프롬프트와 같은 대상 문구 (과제 파일의 audience, 11-8). 기록이 없는
+           # 옛 실행은 그때 프롬프트의 문구
+           % fill_audience("{{AUDIENCE}}가", audience or "60대 이상 사용자"), ""]
     if refine.get("reverted"):
         out += ["**되돌림**: %s — 최종은 직전에 통과한 시도 %s 다." % (
             refine["reverted"]["reason"], refine["reverted"]["to_attempt"]), ""]
@@ -255,7 +259,7 @@ def error_rows(errors, plan, metrics, warnings):
 def render_brief(run_name, attempt, plan, diagnosis, report, original_screens,
                  shots_dir, brief_dir, preserved=None, redeclared=None,
                  model_html=None, git=None, reflections=None, errors=None,
-                 refine=None):
+                 refine=None, audience=None):
     report = report or {}
     metrics = report.get("metrics") or {}
     diag = {d["id"]: d for d in diagnosis or []}
@@ -323,7 +327,7 @@ def render_brief(run_name, attempt, plan, diagnosis, report, original_screens,
         out.append("")
 
     out += entrance_section(metrics.get("entrance_distance"))
-    out += refine_section(refine, brief_dir)
+    out += refine_section(refine, brief_dir, audience)
 
     out += ["## 화면별 스크린샷", "", "검사기가 과제를 걸으며 찍은 것이다.", ""]
     for sc in plan["screens"]:
@@ -433,6 +437,6 @@ def write_brief(summary, original_screens, brief_path, errors=None):
         model_html=final.get("model_html_promoted") or final.get("model_html"),
         git=summary.get("git"), reflections=reflections,
         errors=original_error_paths() if errors is None else errors,
-        refine=summary.get("refine"))
+        refine=summary.get("refine"), audience=summary.get("audience"))
     io.open(brief_path, "w", encoding="utf-8", newline="\n").write(text)
     return brief_path

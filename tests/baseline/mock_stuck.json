@@ -15,6 +15,7 @@
   },
   "mock": "preserved-some",
   "task": "transfer",
+  "audience": "60대 이상 고령 사용자",
   "stage": "wireframe",
   "stage_source": "config.DEFAULT_STAGE",
   "budget_source": {

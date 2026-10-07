@@ -356,6 +356,8 @@ class Run:
                                            reasoning_effort=self.reasoning_effort),
                         "mock": args.mock,
                         "task": self.task["id"],
+                        # 프롬프트가 말한 대상 (과제 파일의 audience, 11-8)
+                        "audience": self.task.get("audience"),
                         "stage": args.stage,
                         "stage_source": getattr(args, "stage_source", None),
                         "budget_source": {k: v[1] for k, v in budget.items()},

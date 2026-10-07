@@ -8,7 +8,8 @@ r"""과제 정의 읽기. 과제 하나가 tasks/<이름>.json 하나다.
 
     {"id": "transfer",
      "label": "이체",
-     "description": ["프롬프트의 {{TASK}} 에 들어갈 글, 한 줄에 한 원소"],
+     "audience": "60대 이상 고령 사용자",
+     "description": ["프롬프트의 {{TASK}} 에 들어갈 글, 한 줄에 한 원소 - {{AUDIENCE}} 자리"],
      "original": "inputs/original_transfer.html",
      "flow": "flows/original.json",
      "done_expect": [["#dn-amt", "{AMOUNT_SHOWN}"]],
@@ -34,6 +35,7 @@ import hashlib
 import io
 import json
 import os
+import re
 
 from .config import ROOT, TASKS_DIR
 
@@ -45,9 +47,31 @@ DEFAULT_TASK = "transfer"
 #                     경고한다. {truth 키: 경고에 쓸 이름}
 #   dialog_ok_values  대화상자가 말해도 되는 숫자 (truth 키). 그 밖의 숫자를
 #                     말하는 대화상자는 검사 B 가 그 숫자를 함께 적는다
+#   audience          프롬프트가 말하는 대상 ("60대 이상 고령 사용자"). description 과
+#                     다듬기 프롬프트의 {{AUDIENCE}} 자리에 들어가고 summary.json 에 남는다
+#                     (fill_audience · restructure/prompt.py). 한 칸에 둔 이유: 대상을 바꾼
+#                     대조 실행과 모집 기준(65세 이상 여부)에 맞춘 문구 수정을 코드 수정 없이
+#                     하려고. 값을 바꾸는 것은 연구자 결정이다 (11-8).
 KEYS = ("id", "description", "original", "flow", "done_expect",
         "required_truth", "required_error_paths", "keep_on_screen",
-        "dialog_ok_values")
+        "dialog_ok_values", "audience")
+
+AUDIENCE_SLOT = "{{AUDIENCE}}"
+# 자리 바로 뒤의 조사 이/가 (뒤에 한글이 이어지지 않을 때만 - "이다" 는 조사가 아니다)
+AUDIENCE_PARTICLE = re.compile(r"\{\{AUDIENCE\}\}(이|가)(?![가-힣])")
+
+
+def fill_audience(text, audience):
+    """글의 {{AUDIENCE}} 자리를 대상 문구로 채운다. 자리 바로 뒤의 조사 이/가 는 값의 끝
+    글자에 맞춘다 - 받침이 있으면 "이", 없으면 "가" ("…고령 사용자가" · "…성인이"). 끝 글자가
+    한글이 아니면 적힌 조사 그대로 둔다. 값이 바뀌어도 프롬프트의 말이 틀리지 않게 한다."""
+    last = audience[-1:] if audience else ""
+
+    def particle(m):
+        if "가" <= last <= "힣":
+            return audience + ("이" if (ord(last) - 0xAC00) % 28 else "가")
+        return audience + m.group(1)
+    return AUDIENCE_PARTICLE.sub(particle, text).replace(AUDIENCE_SLOT, audience)
 
 
 def task_names():
@@ -123,6 +147,10 @@ def load_task(name=None):
         raise ValueError("%s 의 id 는 %r 이어야 한다 (지금은 %r)"
                          % (path, name, task["id"]))
     task["not_choices"] = not_choices_of(task, path)
+    if not isinstance(task["audience"], str) or not task["audience"].strip():
+        raise ValueError("%s 의 audience 는 빈 글이 아닌 문구여야 한다" % path)
     desc = task["description"]
-    task["description"] = "\n".join(desc) if isinstance(desc, list) else str(desc)
+    desc = "\n".join(desc) if isinstance(desc, list) else str(desc)
+    # 설명을 쓰는 모든 곳(프롬프트의 {{TASK}} · 화면설계서 머리)이 채운 글을 받는다
+    task["description"] = fill_audience(desc, task["audience"])
     return task

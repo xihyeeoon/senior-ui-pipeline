@@ -49,7 +49,7 @@ LLM 을 부르는 것은 재구성 루프 하나뿐이고, 키는 `.envs` 의 `O
 | `senior_ui/` | 이 프로젝트에서 쓴 코드 전부 — 재구성 루프, 검사기, 고르기, 화면설계서, 뷰어 색인, 실험 서버. 모두 `python -m senior_ui.…` 로 실행한다. | yes |
 | `web/` | 브라우저에서 열리는 것 — `dashboard.html`(내부 확인용 4화면), `session.html`(HTML 실험 장치 - 본실험에 쓰지 않는다. `--session` 을 줄 때만 서빙된다). | yes |
 | `flows/` | 흐름 파일. 검사기가 화면을 어떤 순서로 어떻게 몰고 다니는지의 명세. `original.json` 과 재구성본별 `restructured`·`run2`·`run3`·`run4`. `allowed_removals.json` 은 그것들과 다르다 — 과제별로 "빼도 되는 선택지" 를 적는 곳이고, **연구자만** 손으로 고친다 (아래 참고). `selection_rule.json` 은 C 후보를 고르는 규칙이다 (아래 'C 후보 고르기'). | yes |
-| `tasks/` | 과제 정의 — `transfer.json`(이체) · `bill.json`(공과금). 프롬프트의 과제 문단, 원본 HTML · 원본 흐름, 완료 화면 값, 필수 오류 경로, 과제 밖 입구(`entrances`, 검사 K)가 과제마다 여기 있다 (`senior_ui/tasks.py`). | yes |
+| `tasks/` | 과제 정의 — `transfer.json`(이체) · `bill.json`(공과금). 프롬프트의 과제 문단과 대상 문구(`audience`), 원본 HTML · 원본 흐름, 완료 화면 값, 필수 오류 경로, 과제 밖 입구(`entrances`, 검사 K)가 과제마다 여기 있다 (`senior_ui/tasks.py`). | yes |
 | `inputs/` | 파이프라인이 읽는 것. `original_transfer.html`(8화면 이체) · `original_bill.html`(8화면 공과금)이 원본 시제품이고 그 과제의 모든 갈래가 여기서 출발한다. `*.png` 는 실제 SOL 캡처라 추적하지 않는다 (실명이 보인다). | html 만 |
 | `kb/` | 재구성본 사후 대조용 규칙 46개. 생성에는 쓰지 않는다. | yes |
 | `results/` | 남겨야 할 증거. 재구성본 html, 그 검사 JSON, 스크린샷, 자동 실행 폴더 사본. `python -m senior_ui.collect_results` 가 `outputs/` 에서 복사해 온다. | **yes** |
@@ -334,6 +334,7 @@ API 없이: `--mock pass --mock-refine improve` (1회차에 다듬은 빌드가 
 | `attempts[].calls[].ratelimit` · `ratelimit` | 호출마다의 응답 헤더 `x-ratelimit-limit-tokens` · `-remaining-tokens` · `-limit-requests`, 그리고 마지막 값 |
 | `attempts[].calls[].waited_for_tokens` | 남은 토큰이 모자라 그 호출 전에 더 기다린 초 (추론형, 기다렸을 때만) |
 | `cost` | 시도별·전체 예상 금액 (USD) |
+| `audience` | 프롬프트가 말한 대상 — 과제 파일의 `audience` (지금 "60대 이상 고령 사용자"). 과제 설명과 다듬기 프롬프트의 `{{AUDIENCE}}` 자리에 들어간다. 값을 바꾸는 것은 연구자 결정이다 (11-8) |
 | `original` · `original_sha256` | 이 실행이 쓴 원본 HTML (루트 기준 경로)과 그 지문 — 줄끝을 LF 로 맞춘 sha256 (`tasks.fingerprint`). `run.log` 첫 줄에도 `original_sha256=… (경로)` 로 남는다. 시작하지 못한 실행에도 있다. 고르기의 문지기 `original` 이 지금 원본과 견준다 (11-11) |
 | `entrance_distance` | 최종 빌드의 과제 밖 입구마다 원본 · 생성물에서 처음 누를 수 있게 보인 방문(`visit`), 그 입구를 보려고 누른 펼치기 횟수(`reveal`, 바로 보이면 0, 펼치기로 보였으면 그 reveal 이름 `via`), 그 화면 맨 위에서 입구 전체가 창 안에 들어오기까지의 스크롤 거리(`scroll_px`, 첫 화면 안이면 0). 보이지 않았으면 `null`. 검사 K 의 지표를 옮긴 것이고 **기록만** 한다 — 판정 · 고르기 문지기에 쓰지 않고 기준선 · 합격선도 없다. 남아 있는 것과 찾을 수 있는 것은 다르다 (Findlater, McGrenere 2007). 설명서의 "과제 밖 입구" 표가 같은 값이다 (11-8) |
 

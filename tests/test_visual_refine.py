@@ -758,7 +758,8 @@ def test_a_failed_run_is_not_refined(fake_run_env, out_root, tmp_path):
 
 def test_the_refine_prompt_asks_an_open_question_not_a_checklist():
     text = _api.prompt_module.load_refine_template()
-    assert "60대 이상 사용자가 이 화면들을 처음 본다고 하자" in text
+    # 대상 문구는 과제 파일의 audience 다 (11-8 4) - 전에는 "60대 이상 사용자가"
+    assert "60대 이상 고령 사용자가 이 화면들을 처음 본다고 하자" in text
     assert "어디서 멈추는가. 무엇을 못 읽는가. 무엇을 잘못 누르는가." in text
     assert "코드에서 짐작한 것이 아니라 그림에서 본 것으로 판단하라" in text
     # 비평 칸은 빈칸 틀이다
