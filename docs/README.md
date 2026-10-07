@@ -104,6 +104,17 @@ CLI 를 여러 번 돌리거나 빌드를 브라우저로 열어 볼 때만 따�
 (레이트 리밋 · API 가 요청을 거절함 · 인프라 예산 소진 · 시작 자체를 못 함).
 떨어진 빌드는 다시 만들고, 돌지 못한 실행은 다시 만들 것이 없다.
 
+**같은 실패가 되풀이되면 예산이 남아도 멈춘다 (막힘, 11-9).** 검사까지 간 시도의
+fatal 을 (검사 · 대상 · 개수)로 줄여 — 대상은 fatal 의 `action` · `error_path` ·
+`screen` 중 처음 있는 것, 개수는 `missing` · `lost` 같은 목록의 길이 — 바로 앞
+시도와 같으면 `stopped_reason: stuck` 으로 끝낸다. `summary.json` 의 `stuck`
+(`{"attempt", "same_as", "fatal": [[검사, 대상, 개수], …]}`)과 `run.log` 의 "막힘(stuck)"
+줄에 남고, 종료 코드는 1 이다. 바로 앞 시도가 형식에서 떨어졌으면 견주지 않고,
+다듬기 회차는 보지 않는다. 고르기 도구는 stuck 실행을 통과하지 못한 실행으로 뺀다.
+공과금 예비 실행(`20261007-103023-bill`)은 시도 3 · 4 가 같은 fatal 이었다 — 지금이면
+시도 4 에서 멈춘다. API 없이 보려면 `--mock preserved-some --attempts 3` (시도 2 에서
+멈춘다, 기준값 `mock_stuck.json`).
+
 한 실행의 모든 것이 `outputs/restructure_auto/<타임스탬프>/` 에 남는다 — 보낸
 프롬프트 전문, 받은 답 전문, 시도별 html·흐름·검사 결과, 화면별 스크린샷,
 `run.log`, `summary.json`. 모델을 바꾸는 법과 처음 쓰는 모델을 먼저 확인하는 명령 둘
@@ -528,7 +539,7 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
 
 | 문지기 | 후보가 되려면 |
 |---|---|
-| `passed` | `summary.passed == true` |
+| `passed` | `summary.passed == true` (같은 실패가 되풀이되어 멈춘 실행 `stopped_reason: stuck` 은 기록이 어긋나 있어도 통과로 세지 않는다) |
 | `no_redeclared` | `final.preserved.redeclared` 가 비어 있다 (도구가 고친 흔적이 없다) |
 | `no_truncated` | **마지막 시도** 의 답이 길이 제한에서 잘리지 않았다. 중간 시도의 잘림은 최종 시안과 상관없으므로 빼지 않고, 순위표의 '중간 잘림' 열에 횟수로만 보인다 |
 | `clean_tree` | `git.dirty == false`. 기록이 없는 옛 실행은 어긴 것으로 본다 |

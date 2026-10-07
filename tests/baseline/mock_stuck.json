@@ -13,7 +13,7 @@
     "encoding": "o200k_base(대체)",
     "reasoning_effort": "medium"
   },
-  "mock": "fail",
+  "mock": "preserved-some",
   "task": "transfer",
   "stage": "wireframe",
   "stage_source": "config.DEFAULT_STAGE",
@@ -117,9 +117,7 @@
         "redeclared": [],
         "read": [
           "BANKS",
-          "SECS",
-          "AMT_KEYS",
-          "QUICK"
+          "SECS"
         ]
       },
       "html": "<run>/attempt_1.html",
@@ -127,8 +125,8 @@
       "model_html": "<run>/attempt_1.model.html",
       "stage": "audit",
       "passed": false,
-      "fatal": 10,
-      "warning": 0
+      "fatal": 1,
+      "warning": 1
     },
     {
       "n": 2,
@@ -146,7 +144,7 @@
       "calls": [
         {
           "stage": "retry",
-          "estimated_prompt": 26687,
+          "estimated_prompt": 26817,
           "method": "tiktoken:o200k_base(대체)",
           "max_tokens": 32000,
           "usage": null,
@@ -171,9 +169,7 @@
         "redeclared": [],
         "read": [
           "BANKS",
-          "SECS",
-          "AMT_KEYS",
-          "QUICK"
+          "SECS"
         ]
       },
       "html": "<run>/attempt_2.html",
@@ -181,8 +177,8 @@
       "model_html": "<run>/attempt_2.model.html",
       "stage": "audit",
       "passed": false,
-      "fatal": 10,
-      "warning": 0
+      "fatal": 1,
+      "warning": 1
     }
   ],
   "passed": false,
@@ -205,18 +201,16 @@
       "redeclared": [],
       "read": [
         "BANKS",
-        "SECS",
-        "AMT_KEYS",
-        "QUICK"
+        "SECS"
       ]
     },
     "model_html": "<run>/attempt_2.model.html"
   },
   "budget": {
     "format_used": 0,
-    "format_budget": 2,
+    "format_budget": 3,
     "audit_used": 2,
-    "audit_budget": 2,
+    "audit_budget": 3,
     "infra_used": 0,
     "infra_budget": 3
   },
@@ -224,19 +218,19 @@
   "trend": [
     {
       "attempt": 1,
-      "fatal_total": 10,
+      "fatal_total": 1,
       "fatal_root": 1,
-      "fatal_derived": 9,
-      "screens": "1/9",
-      "stopped_at": "who"
+      "fatal_derived": 0,
+      "screens": "9/9",
+      "stopped_at": null
     },
     {
       "attempt": 2,
-      "fatal_total": 10,
+      "fatal_total": 1,
       "fatal_root": 1,
-      "fatal_derived": 9,
-      "screens": "1/9",
-      "stopped_at": "who"
+      "fatal_derived": 0,
+      "screens": "9/9",
+      "stopped_at": null
     }
   ],
   "git": {
@@ -270,7 +264,7 @@
       },
       "retry": {
         "calls": 1,
-        "estimated_prompt": 26687,
+        "estimated_prompt": 26817,
         "images": 0,
         "estimated_images": 0,
         "max_tokens": 32000,
@@ -281,7 +275,7 @@
     },
     "total": {
       "calls": 3,
-      "estimated_prompt": 60640,
+      "estimated_prompt": 60770,
       "images": 14,
       "estimated_images": 5908,
       "max_tokens": 89000,
@@ -341,54 +335,9 @@
     "same_as": 1,
     "fatal": [
       [
-        "A",
-        "accno",
-        1
-      ],
-      [
-        "A",
-        "amount",
-        1
-      ],
-      [
-        "A",
-        "auth",
-        1
-      ],
-      [
-        "A",
-        "bank",
-        1
-      ],
-      [
-        "A",
-        "done",
-        1
-      ],
-      [
-        "A",
-        "review",
-        1
-      ],
-      [
-        "A",
-        "who",
-        1
-      ],
-      [
-        "A",
-        "whoconfirm",
-        1
-      ],
-      [
-        "J",
-        "wrong-account",
-        1
-      ],
-      [
-        "J",
-        "wrong-bank",
-        1
+        "I",
+        "pick-bank",
+        57
       ]
     ]
   }

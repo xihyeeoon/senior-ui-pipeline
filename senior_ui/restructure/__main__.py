@@ -95,6 +95,8 @@ gpt-6.1-sol). 어디서 왔는지는 run.log 첫 줄과 summary.json 의 model_s
 남는다. --mock 은 .envs 와 RESTRUCTURE_MODEL 을 읽지 않는다 (--model 은 듣는다) -
 mock 기준값이 PC 마다 달라지지 않게.
 Exit: 0 = a build passed, 1 = every attempt failed, 2 = could not run.
+같은 실패가 되풀이되면 - 검사까지 간 시도의 fatal (검사 · 대상 · 개수)가 바로 앞
+시도와 같으면 - 남은 예산을 쓰지 않고 막힘(stopped_reason: stuck)으로 끝난다 (1).
 
 "돌지 못했다"(2)에 들어가는 것은 넷이다 - 레이트 리밋으로 멈춤, API 가 요청을
 거절함(키·권한·잘못된 요청), 인프라 예산 소진, 시작 자체를 못 함(입력·흐름·

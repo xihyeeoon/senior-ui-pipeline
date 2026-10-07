@@ -218,7 +218,9 @@ def collect(run_dir):
         "task": run_task(s, name),
         "mock": s.get("mock"),
         # 결과
-        "passed": s.get("passed") is True,
+        # 같은 실패를 되풀이해 멈춘 실행(stuck)은 통과하지 못한 실행이다. 루프는 그때
+        # passed 를 false 로 두지만, 기록이 어긋나 있어도 통과로 세지 않는다.
+        "passed": s.get("passed") is True and s.get("stopped_reason") != "stuck",
         "stopped_reason": s.get("stopped_reason"),
         "attempts": sum(1 for a in attempts if a.get("stage") in DESIGN_STAGES
                         and a.get("phase") not in REFINE_PHASES),

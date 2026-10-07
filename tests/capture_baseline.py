@@ -409,6 +409,9 @@ def ensure_mock_input():
 MOCK_RUNS = [
     ("mock_pass", ["--mock", "pass", "--attempts", "1"]),
     ("mock_fail", ["--mock", "fail", "--attempts", "2", "--delay", "0"]),
+    # 같은 실패가 되풀이되면 예산이 남아도 멈춘다 (막힘, loop.stuck_on). preserved-some 은
+    # 시도마다 같은 빌드라 검사 I 의 같은 fatal 로 떨어진다 - 예산 3 중 2 에서 멈춘다.
+    ("mock_stuck", ["--mock", "preserved-some", "--attempts", "3", "--delay", "0"]),
     # 선택지 데이터를 도구가 지키는 장치의 세 경우. 셋은 Run 1 빌드의 은행
     # 목록 한 줄에서만 다르고, 그 한 줄 때문에 각각 다른 자리에서 갈린다.
     ("mock_preserved_all", ["--mock", "preserved-all", "--attempts", "1"]),

@@ -54,6 +54,7 @@
 | `test_format_rules.py` | 형식 검사(`reply.py`)가 검사기의 규칙 함수(back_to · 화면 목록 · 방문 이름 · 조작부 이름)를 그대로 쓰는지 |
 | `test_tool_failures.py` | 도구 버그(종료 2 · internal_error) · 바깥 문제(인프라 예산) · 시작 실패(cannot_start) · CLI 의 `--out` · 인프라 예산의 출처 |
 | `test_real_runs_browser.py` | `fixtures/real_runs/` 의 첫 답을 루프의 길과 CLI 로 실제로 판정한다 (sol 은 K fatal 1 - 입구 31개 중 2개만 남았다 · astra 는 J 1 · K 1). `-m browser` |
+| `test_stuck.py` | 같은 실패의 되풀이 = 막힘(stuck, 11-9) - fatal 의 (검사 · 대상 · 개수), 같은 실패 두 번이면 남은 예산을 쓰지 않고 멈춤, 바뀐 실패 · 개수만 다른 실패 · 사이에 낀 형식 실패는 계속, 통과한 실행은 막히지 않음, 고르기 도구가 stuck 을 통과 못 한 실행으로 봄. 모델도 브라우저도 부르지 않는다 (mock 은 `test_drive` 의 `mock_stuck`) |
 | `test_choice_roles.py` | 선택지 아님 선언(과제 파일 `not_choices`, 11-9) - 과제 파일의 모양, 판정 입력이 붙이고 모델의 것은 버리는지, 검사 I 가 선언된 무리를 판정에서 빼고 `choice_groups_not_choices` 로 남기는지, 프롬프트 · 형식 검사가 그 무리만 받치는 `MENU_TABS` 의 참조를 요구하지 않는지, 설명서의 표. `-m browser` 에서는 저장된 공과금 답 셋(`fixtures/real_runs/bill_sol`)을 바뀐 검사기로 판정한다 (셋 다 I 하나 - 항목이 하나뿐인 분류의 메뉴 항목 6개) |
 | `fixtures/real_runs/` | 실제 실행의 답 그대로 (`sol` = `outputs/restructure_auto/20261006-124055`, `astra` = `20261006-124838`, `bill_sol` = `20261007-103023-bill` 의 시도 2 · 3 · 4). `attempt_N.response.txt` · 첫 계획(`plan.json`) · 도구가 넣은 선택지 데이터(`preserved.json`, `attempt_N.html` 의 블록) |
 | `fake_openai.py` | `openai.OpenAI` 의 대역 (with_raw_response 의 헤더 · Responses · models.list · 429 · 400) |
@@ -102,7 +103,9 @@
   (`capture_baseline.MOCK_RUNS`). 일곱은 Run 1 빌드의 은행 목록 한 줄과
   `00`·`전액` 을 채우는 방법(배열을 읽는가, 마크업에 쓰는가)과 오류 처리
   (`model.ERRORS`)에서만 다르고, 그 차이 때문에 각각 다른 자리에서 갈린다.
-  `mock_fail` 은 검사까지 가서 떨어진다 (`passed=false`, 종료 코드 1).
+  `mock_fail` 은 검사까지 가서 떨어진다 (`passed=false`, 종료 코드 1) — 두 시도가
+  같은 fatal 이라 시도 2 에서 막힘(`stopped_reason: stuck`)으로 끝난다. `mock_stuck` 은
+  `preserved-some` 을 예산 3 으로 돌려 남은 예산을 쓰지 않고 시도 2 에서 멈추는 것을 본다.
   `mock_pass` 와 `mock_preserved_all` 은 통과한다 (`passed=true`, 종료 코드 0),
   `mock_preserved_some` 은 검사 I 에서, `mock_preserved_none` 은 형식 검사에서
   떨어진다. `mock_errors_undeclared` 는 오류 경로를 적지 않아 형식 검사에서,
@@ -142,7 +145,8 @@
 `quick` 의 `all`, `num` 의 `00` 이 생성물에 없다. 나머지 하나는 검사 K(과제 밖 입구)다 —
 원본의 입구 31개가 하나도 없다. 원본 대 원본은 입구 31/31 (공과금 32/32). mock 실행:
 `mock_pass` · `mock_preserved_all` · `mock_entrances_reveal` · `mock_entrances_folded` ·
-`bill/mock_bill_identity` 는 통과하고, `mock_fail` 은 검사에서 (2회), `mock_preserved_some` 은 검사 I 에서,
+`bill/mock_bill_identity` 는 통과하고, `mock_fail` 은 검사에서 (2회 - 같은 실패라 막힘), `mock_preserved_some` 은 검사 I 에서
+(`mock_stuck` 은 같은 것을 예산 3 으로 - 시도 2 에서 막힘),
 `mock_preserved_none` · `mock_errors_undeclared` 는 형식 검사에서,
 `mock_errors_unhandled` 는 검사 J 에서, `mock_entrances_none` 은 검사 K 에서 떨어진다.
 

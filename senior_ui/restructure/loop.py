@@ -1159,8 +1159,69 @@ def record(r, n, p, entry, report, build):
         r.summary["passed"] = True
         r.log("PASSED on attempt %d" % n)
         return STOP
+    # r.last 를 바꾸기 전에 본다 - 지금 r.last 가 직전 시도의 검사 결과다.
+    same_as = stuck_on(r, entry, report)
     r.last = {"report": report, "html": build["html"], "flow_text": build["flow_text"]}
+    if same_as is not None:
+        return _stuck_stop(r, n, same_as, report)
     return _budget_stop(r, entry)
+
+
+# --------------------------------------------------------------------------- #
+# 막힘 - 같은 실패의 되풀이
+# --------------------------------------------------------------------------- #
+# fatal 하나에서 "무엇을" 가리키는 칸과 "몇 개" 를 담은 칸. 검사마다 쓰는 칸이 다르다 -
+# I 는 action · missing, J 는 error_path, K 는 missing, A 는 screen · lost, C 는 action ·
+# actions, B 는 screen · numbers. 앞의 것이 먼저다.
+FATAL_TARGET = ("action", "error_path", "screen")
+FATAL_ITEMS = ("missing", "lost", "actions", "numbers")
+
+
+def fatal_key(f):
+    """fatal 하나의 (검사, 대상, 개수). 대상이 없으면 "", 셀 목록이 없으면 1."""
+    target = next((str(f[k]) for k in FATAL_TARGET if f.get(k)), "")
+    items = next((f[k] for k in FATAL_ITEMS if isinstance(f.get(k), list)), None)
+    return (str(f.get("check")), target, 1 if items is None else len(items))
+
+
+def fatal_keys(report):
+    """리포트의 fatal 들의 (검사, 대상, 개수), 정렬한 것. 순서는 실패를 가르지 않는다."""
+    return sorted(fatal_key(f) for f in (report or {}).get("fatal") or [])
+
+
+def stuck_on(r, entry, report):
+    """이 시도가 직전 시도와 같은 실패인가. 같으면 직전 시도의 번호, 아니면 None.
+
+    공과금 예비 실행(20261007-103023-bill)의 시도 3 · 4 가 같은 fatal 로 떨어졌고 시도 5 도
+    같은 실패 목록을 받았다. 같은 재시도 블록에는 같은 답이 올 공산이 크다 - 예산만 쓴다.
+
+    생성 루프의 검사 단계끼리만 견준다. 직전 시도가 형식에서 떨어졌으면 견줄 검사 결과가
+    없고, 다듬기(phase 가 있는 시도)는 회차마다 예산이 1 이라 따로 멈춘다 - 거기서 막힘을
+    적으면 통과한 실행이 stuck 으로 기록된다."""
+    if entry.get("stage") != "audit" or entry.get("phase") or report.get("passed"):
+        return None
+    attempts = r.summary["attempts"]
+    prev = attempts[-2] if len(attempts) >= 2 else None
+    if not prev or prev.get("stage") != "audit" or prev.get("phase"):
+        return None
+    if fatal_keys(r.last["report"]) != fatal_keys(report):
+        return None
+    return prev["n"]
+
+
+def _stuck_stop(r, n, same_as, report):
+    """막힘으로 실행을 끝낸다. 남은 예산은 쓰지 않는다."""
+    keys = fatal_keys(report)
+    b = r.budget
+    r.summary["stopped_reason"] = "stuck"
+    r.summary["stuck"] = {"attempt": n, "same_as": same_as,
+                          "fatal": [list(k) for k in keys]}
+    r.log("막힘(stuck): 시도 %d 의 fatal (검사 · 대상 · 개수)가 직전 시도 %d 과 같다 — %s. "
+          "남은 예산(형식 %d · 검사 %d)은 쓰지 않고 끝낸다"
+          % (n, same_as, " · ".join("%s%s %d" % (c, "/" + t if t else "", k)
+                                    for c, t, k in keys),
+             b.budget["format"] - b.format_used, b.budget["audit"] - b.audit_used))
+    return STOP
 
 
 def _budget_stop(r, entry):
