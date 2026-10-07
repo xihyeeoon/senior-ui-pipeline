@@ -10,8 +10,10 @@ r"""영역 묶기 - 실행마다 모델 호출 한 번 (어긋나면 한 번 더
 다시 보내지 않는다). 그래도 어긋나면 맞는 부분은 쓰고, 남은 요소를 "기타" 영역으로
 묶고, 그 사실을 남긴다 (`fallback`).
 
-영역이 빈 상태 안내이면 답에 그 표시(empty_state)를 더 쓸 수 있다 - 없어도 맞는 답이다.
-설계서는 모델이 표시한 것만 "예외: 빈 화면" 으로 적는다 (글자로 판정하지 않는다).
+답에는 장마다 화면 이름(name)과, 영역이 빈 상태 안내이면 그 표시(empty_state)를 더
+쓸 수 있다 - 둘 다 없어도 맞는 답이다. 설계서는 화면 이름이 없으면 계획의 화면 목적
+앞부분을 쓰고, 빈 상태는 모델이 표시한 것만 "예외: 빈 화면" 으로 적는다 (글자로
+판정하지 않는다).
 
 `--mock` 은 정해진 답을 쓴다 (mock_answer) - 요소를 위에서 아래로 보며 세로로 크게
 벌어지는 곳에서 나눈다. 시험용 모드 둘이 더 있다: bad-then-good (첫 답이 어긋나고
@@ -48,6 +50,10 @@ class CannotRun(Exception):
     """설계서를 만들 수 없다 - 실행이 아니라 도구 쪽 사정 (서버 · 폴더)."""
 
 
+# 모델이 쓴 화면 이름의 상한 (넘으면 버리고 계획의 화면 목적을 쓴다)
+TITLE_CHARS = 40
+
+
 # --------------------------------------------------------------------------- #
 # 프롬프트
 # --------------------------------------------------------------------------- #
@@ -59,10 +65,11 @@ INTRO = """이것은 은행 앱 화면설계서의 "영역" 을 나누는 일입
 - 누르면 어디로 가는지는 쓰지 마세요. 설계서의 동작 칸에는 도구가 직접 눌러 확인한 결과가 들어갑니다.
 - 모든 요소는 정확히 한 영역에 들어가야 합니다. 목록에 없는 번호를 쓰지 마세요. 요소가 없는 장은 regions 를 빈 목록으로 둡니다.
 - 영역 번호(no)는 장마다 1부터, 위에서 아래 순서로 매깁니다.
+- 장마다 화면 이름(name)을 짧게 씁니다 (예: "받는 사람 고르기"). 장 id 를 그대로 옮기지 마세요.
 - 영역이 빈 상태 안내(목록이 비어 있다는 글 같은 것)이면 그 영역에 "empty_state": true 를 붙입니다. 아니면 쓰지 않습니다.
 
 답은 JSON 한 덩어리만 씁니다:
-{"sheets": [{"id": "<장 id>", "regions": [{"no": 1, "name": "<영역 이름>", "elements": ["e1", "e2"], "description": "<한두 줄>"}]}]}
+{"sheets": [{"id": "<장 id>", "name": "<화면 이름>", "regions": [{"no": 1, "name": "<영역 이름>", "elements": ["e1", "e2"], "description": "<한두 줄>"}]}]}
 """
 
 RETRY_INTRO = """앞의 답에 문제가 있습니다. 아래 문제를 고쳐 **전체 답을 다시** JSON 한 덩어리로 쓰세요. 다른 규칙은 처음과 같습니다 — 모든 요소가 정확히 한 영역에, 목록에 없는 번호는 쓰지 않고, 누르면 어디로 가는지는 쓰지 않습니다.
@@ -233,6 +240,19 @@ def settle_regions(answer, sheets, source):
     return out, fallback
 
 
+def titles_of(answer):
+    """답에서 장마다 화면 이름 `{장 id: 이름}`. 없거나 글이 아니거나 길면 뺀다."""
+    out = {}
+    for row in (answer or {}).get("sheets") or []:
+        if not isinstance(row, dict) or not isinstance(row.get("id"), str):
+            continue
+        name = row.get("name")
+        if isinstance(name, str) and name.strip() and len(name.strip()) <= TITLE_CHARS \
+                and row["id"] not in out:
+            out[row["id"]] = " ".join(name.split())
+    return out
+
+
 def _union(boxes):
     x0 = min(b[0] for b in boxes)
     y0 = min(b[1] for b in boxes)
@@ -304,6 +324,7 @@ def group(sheets, model=None, mock=None, out_dir=".", log=print, reasoning_effor
     if not todo:
         for sh in sheets:
             sh["regions"] = []
+            sh["title"] = None
         return rec
     prompt = build_prompt(todo)
     images = images_of(todo, out_dir)
@@ -385,8 +406,10 @@ def group(sheets, model=None, mock=None, out_dir=".", log=print, reasoning_effor
     if fallback:
         log("영역 묶기: 어긋난 채 끝났다 - %s 의 남은 요소를 '%s' 로 묶었다"
             % (", ".join(sorted(fallback)), OTHER_NAME))
+    titles = titles_of(answer)
     for sh in sheets:
         sh["regions"] = settled.get(sh["id"], [])
+        sh["title"] = titles.get(sh["id"])
     return rec
 
 

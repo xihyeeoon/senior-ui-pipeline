@@ -287,8 +287,11 @@ def test_layout_keeps_a_phone_screen_in_one_column():
 
 
 def test_layout_splits_a_long_screen_into_columns():
+    """그림 칸(PIC_H)은 장 맨 위의 정보칸 만큼 낮다 (11-12b) - 2,909px 화면은 세 단."""
+    assert RD.PIC_H == 620
     k, s, h = RD.layout(390, 2909)
-    assert k == 2 and h == 1455
+    assert k == 3 and h == 970
+    assert RD.layout(390, 1800)[0] == 2
     assert RD.layout(390, 8000)[0] >= 3
 
 
@@ -403,6 +406,91 @@ def test_the_region_answer_may_flag_an_empty_state():
     out, _ = R.settle_regions(ans, sh, "model")
     assert out["scr-a"][0]["empty"] is True and "empty" not in out["scr-a"][1]
     assert "empty_state" in R.build_prompt(sh)
+
+
+@pytest.mark.parametrize("purpose,head", [
+    ("출금 계좌를 확인하고 이체를 시작한다. 기존의 다른 기능도 이용한다.",
+     "출금 계좌를 확인하고 이체를 시작한다"),
+    ("새 계좌로 보내기 또는 자주 쓰는 계좌·내 계좌·최근 계좌에서 받는 대상을 정한다.",
+     "새 계좌로 보내기 또는 자주 쓰는…"),
+    ("금액을 넣는다", "금액을 넣는다"), (None, None), ("", None)])
+def test_the_purpose_head_is_the_first_sentence_clipped(purpose, head):
+    assert B.purpose_head(purpose) == head
+    assert head is None or len(head) <= B.NAME_CHARS
+
+
+def test_screen_names_come_from_the_region_answer_then_the_plan():
+    """화면 이름: 영역 묶기의 화면 이름(그 장, 없으면 본 장의 것) → 계획의 화면 목적
+    앞부분 → 화면 이름 (11-12b)."""
+    shs = [rsheet("scr-a", title="받는 사람 고르기"),
+           rsheet("scr-a--error-x", kind="error", main=False, of="scr-a", title=None),
+           rsheet("scr-b", title=None, purpose="금액을 넣는다. 빠른 금액도 있다."),
+           rsheet("scr-c", title=None, purpose=None)]
+    B.name_sheets(shs)
+    assert [(s["name"], s["name_source"]) for s in shs] == [
+        ("받는 사람 고르기", "model"), ("받는 사람 고르기", "model"),
+        ("금액을 넣는다", "plan"), ("c", "screen")]
+
+
+def test_the_region_answer_may_name_each_sheet(tmp_path, monkeypatch):
+    """답의 장마다 name 은 없어도 맞는 답이다. 글이 아니거나 너무 길면 버린다."""
+    shs = shots(tmp_path, sheet(), sheet("scr-b"), sheet("scr-c"))
+    regs = [{"no": 1, "name": "버튼", "elements": ["e1", "e2", "e3"], "description": "d"}]
+    answer = json.dumps({"sheets": [
+        {"id": "scr-a", "name": " 받는 사람  고르기 ", "regions": regs},
+        {"id": "scr-b", "name": "가" * (R.TITLE_CHARS + 1), "regions": regs},
+        {"id": "scr-c", "name": 3, "regions": regs}]}, ensure_ascii=False)
+    monkeypatch.setattr(M, "load_env", lambda: None)
+    monkeypatch.setattr(M, "call_model", lambda *a, **k: {
+        "text": answer, "usage": None, "finish_reason": "stop", "seconds": 1.0})
+    rec = R.group(shs, model="gpt-6.1-sol", out_dir=str(tmp_path), log=lambda m: None)
+    assert rec["problems"] == []
+    assert [s["title"] for s in shs] == ["받는 사람 고르기", None, None]
+    assert "화면 이름(name)" in R.build_prompt(shs)
+    mock = shots(tmp_path, sheet())
+    R.group(mock, mock="regions", out_dir=str(tmp_path), log=lambda m: None)
+    assert mock[0]["title"] is None                    # mock 은 화면 이름을 쓰지 않는다
+
+
+def test_the_path_to_each_sheet_follows_the_flow():
+    """경로 = 흐름 명세의 정답 걸음을 그 상태의 방문까지, 조건별 장은 끝에 제 장."""
+    flow = json.load(io.open(os.path.join(FIX, "actions.flow.json"), encoding="utf-8"))
+    states = W.states_of(flow)
+    screen = {"visit:a": "a", "visit:b": "b", "error:bad": "b", "reveal:pick": "a"}
+    walked = {"states": {k: {"items": [], "dom_screen": v} for k, v in screen.items()},
+              "clicks": {}}
+    run = {"task": "transfer", "plan_data": {"screens": [
+        {"name": "a", "purpose": "첫 화면.", "from": ["home"]},
+        {"name": "b", "purpose": "둘째 화면.", "from": ["amount"]}]}}
+    sheets, _ = B.assemble(run, flow, states, walked, [])
+    assert {s["id"]: s["path"] for s in sheets} == {
+        "scr-a": ["scr-a"], "scr-a--reveal-pick": ["scr-a", "scr-a--reveal-pick"],
+        "scr-b": ["scr-a", "scr-b"], "scr-b--error-bad": ["scr-a", "scr-b", "scr-b--error-bad"]}
+
+
+def test_each_sheet_starts_with_an_info_row():
+    """장 맨 위의 정보칸 한 줄 - 화면 ID · 화면 이름 · 경로 · 원본 화면 · 조건(조건별
+    화면일 때만)."""
+    a = rsheet("scr-a", name="받는 사람", name_source="model", path=["scr-a"])
+    b = rsheet("scr-b", name="금액을 넣는다", name_source="plan", path=["scr-a", "scr-b"],
+               from_original=["amount", "err-amount"])
+    e = rsheet("scr-b--error-x", kind="error", main=False, of="scr-b", name="금액을 넣는다",
+               name_source="plan", path=["scr-a", "scr-b", "scr-b--error-x"],
+               condition="오류 경로 'x' 조건 글", from_original=["amount", "err-amount"])
+    by_id = {s["id"]: s for s in (a, b, e)}
+    info = RD.render_info(e, set(by_id), by_id)
+    head = info.split("</tr>")[0]
+    for th in ("화면 ID", "화면 이름", "경로", "바탕이 된 원본 화면", "조건"):
+        assert th in head
+    assert 'scr-b--error-x<span class="tag error">[오류]</span>' in info
+    assert ('<a href="#scr-a">받는 사람</a> &gt; <a href="#scr-b">금액을 넣는다</a> &gt; '
+            '<b>금액을 넣는다</b>') in info
+    assert "amount, err-amount" in info and "오류 경로 &#x27;x&#x27; 조건 글" in info
+    assert "계획의 화면 목적 앞부분" in info
+    main = RD.render_info(a, set(by_id), by_id)
+    assert "조건" not in main.split("</tr>")[0] and "모델 설명" in main
+    page = RD.render_sheet(e, set(by_id), by_id)
+    assert page.index('<table class="info">') < page.index('<div class="pic">')
 
 
 def test_result_text_links_to_the_sheet():

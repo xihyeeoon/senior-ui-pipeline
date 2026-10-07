@@ -1,9 +1,10 @@
 r"""storyboard.json 하나로 설계서(index.html)를 그린다. 그림 말고는 다른 것을 읽지 않는다.
 
 한 장 = 가로 A4. 맨 앞장(과제 · 화면 순서 · 변경 목록 · 진단 요약 · 실행 정보) 다음에
-화면마다 한 장 - 왼쪽은 와이어프레임 그림 위에 영역 테두리와 번호(굵게)와 요소
-번호(가늘게), 오른쪽은 화면 ID · 화면 목적 · 영역 표 · 조건별 화면 링크. 조건별
-화면은 그 화면 뒤에 같은 모양으로 오고, 장 제목에 [오류] · [펼침] · [다시 지남] 꼬리표가
+화면마다 한 장 - 맨 위에 정보칸 한 줄(화면 ID · 화면 이름 · 경로 · 바탕이 된 원본 화면 ·
+조건), 왼쪽은 와이어프레임 그림 위에 영역 테두리와 번호(굵게)와 요소 번호(가늘게),
+오른쪽은 화면 목적 · 영역 표 · 조건별 화면 링크. 조건별 화면은 그 화면 뒤에 같은 모양으로
+오고, 장 제목에 [오류] · [펼침] · [다시 지남] 꼬리표가
 붙는다. 예외 상황은 영역 표에 적는다 - 꺼진 버튼은 "예외: 비활성" (도구 확인), 빈 상태
 안내는 영역 묶기 답이 표시한 것만 "예외: 빈 화면" (모델 설명, 글자로 판정하지 않는다).
 
@@ -23,7 +24,8 @@ import math
 import re
 
 # 가로 A4 (297 x 210mm) - 여백 8mm. CSS 픽셀(1/96 인치)로 쓴 그림 칸.
-PIC_W, PIC_H = 560, 680
+# 그림 칸의 높이는 장 맨 위의 정보칸 만큼 줄였다.
+PIC_W, PIC_H = 560, 620
 SLICE_GAP = 10
 MAX_SLICES = 6
 
@@ -171,8 +173,8 @@ html, body { margin: 0; background: #e9e9e6; color: var(--ink);
   font: 11px/1.45 "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
 .sheet { width: 281mm; min-height: 194mm; margin: 10mm auto; padding: 0; background: #fff;
   box-shadow: 0 1px 4px rgba(0,0,0,.18); position: relative; }
-.sheet.screen { display: grid; grid-template-columns: 560px 1fr; column-gap: 16px;
-  padding: 0; }
+.sheet.screen { display: grid; grid-template-columns: 560px 1fr; grid-template-rows: auto 1fr;
+  column-gap: 16px; padding: 0; }
 .sheet.cover { padding: 6mm 8mm; }
 @media print {
   html, body { background: #fff; }
@@ -199,8 +201,13 @@ th { background: var(--soft); font-weight: 600; white-space: nowrap; }
 .flow { margin: 0; padding-left: 18px; }
 .flow li { margin: 2px 0; }
 .how { color: var(--muted); }
-.pic { padding: 8px 0 0 8px; }
-.pic-head { font-weight: 700; font-size: 12px; margin-bottom: 4px; }
+.info { grid-column: 1 / -1; margin: 0; width: 100%; }
+.info th { font-size: 9.5px; padding: 2px 5px; }
+.info td { font-size: 10.5px; padding: 3px 5px; }
+.info .sid { font: 700 14px/1.25 Consolas, monospace; white-space: nowrap; }
+.info .path a { color: inherit; }
+.src.plain { color: var(--muted); font-weight: 400; }
+.pic { padding: 6px 0 0 8px; }
 .slices { display: flex; gap: 10px; align-items: flex-start; }
 .slice { position: relative; overflow: hidden; outline: 1px solid #bbb; background: #fff; }
 .slice img { position: absolute; left: 0; display: block; }
@@ -211,10 +218,8 @@ th { background: var(--soft); font-weight: 600; white-space: nowrap; }
 .el span { position: absolute; right: 0; top: 0; background: rgba(255,255,255,.85); color: var(--el);
   font: 600 7px/8px sans-serif; padding: 0 1px; }
 .pic-note { color: var(--muted); font-size: 9.5px; margin-top: 4px; }
-.spec { padding: 8px 8px 8px 0; }
-.sid { font: 700 18px/1.2 Consolas, monospace; }
-.sid .of { font: 400 11px sans-serif; color: var(--muted); margin-left: 6px; }
-.purpose { margin: 4px 0 6px; }
+.spec { padding: 6px 8px 8px 0; }
+.purpose { margin: 0 0 6px; }
 .cond { background: #fff4e6; border-left: 3px solid var(--reg); padding: 3px 6px; margin: 4px 0 6px; }
 .regs td.no { width: 26px; text-align: center; font-weight: 700; color: var(--reg); }
 .regs td.nm { width: 34%; }
@@ -253,6 +258,11 @@ def _how(how, flow_sheet_ids):
     return " → ".join(parts)
 
 
+def _clip(s, n):
+    s = " ".join(str(s).split())
+    return s if len(s) <= n else s[:n - 1] + "…"
+
+
 def _link(sid, ids):
     if not sid:
         return "-"
@@ -279,7 +289,7 @@ def render_cover(data, ids):
         sh = sheets.get(st.get("sheet")) or {}
         how = _how(st.get("how"), ids)
         out.append("<li>%s %s%s</li>" % (
-            _link(st.get("sheet"), ids), esc(sh.get("purpose") or ""),
+            _link(st.get("sheet"), ids), esc(sh.get("name") or sh.get("purpose") or ""),
             ' <span class="how">← 앞 화면에서 %s</span>' % how if how else ""))
     out.append("</ol>")
     if data["flow"]["errors"]:
@@ -381,21 +391,20 @@ def render_cover(data, ids):
 
     out.append("<h2>장 목록</h2><ul class=\"flow\">")
     for s in data["sheets"]:
-        out.append("<li>%s%s%s</li>" % (_link(s["id"], ids), _tag(s),
-                                        " — %s" % esc(s["condition"]) if s.get("condition")
-                                        else " — %s" % esc(s.get("purpose") or "")))
+        out.append("<li>%s%s %s — %s</li>" % (
+            _link(s["id"], ids), _tag(s), esc(s.get("name") or ""),
+            esc(s["condition"]) if s.get("condition") else esc(s.get("purpose") or "")))
     out.append("</ul></section>")
     return "\n".join(out)
 
 
 def render_picture(sh):
     if not sh.get("picture") or not sh.get("size"):
-        return ('<div class="pic"><div class="pic-head">%s%s</div><p class="warn">그림 없음 - '
-                "%s</p></div>" % (esc(sh["id"]), _tag(sh), esc(sh.get("error") or "걷지 못했다")))
+        return ('<div class="pic"><p class="warn">그림 없음 - %s</p></div>'
+                % esc(sh.get("error") or "걷지 못했다"))
     w, h = sh["size"]
     k, s, slice_h = layout(w, h)
-    out = ['<div class="pic"><div class="pic-head">%s%s</div><div class="slices">'
-           % (esc(sh["id"]), _tag(sh))]
+    out = ['<div class="pic"><div class="slices">']
     for i in range(k):
         y0, y1 = i * slice_h, min(h, (i + 1) * slice_h)
         out.append('<div class="slice" style="width:%.1fpx;height:%.1fpx">'
@@ -435,19 +444,51 @@ def render_picture(sh):
     return "".join(out)
 
 
+NAME_SOURCE = {"model": None, "plan": "계획의 화면 목적 앞부분", "screen": "화면 이름"}
+# 경로 칸에 적는 화면 이름의 길이 (넘으면 자른다 - 전체 이름은 그 장에 있다)
+PATH_CHARS = 12
+
+
+def render_info(sh, ids, by_id):
+    """장 맨 위의 정보칸 한 줄 - 화면 ID · 화면 이름 · 경로 · 바탕이 된 원본 화면 · 조건."""
+    src = sh.get("name_source")
+    name = "%s%s" % (esc(sh.get("name") or ""), _src("model") if src == "model" else
+                     ' <span class="src plain">%s</span>' % NAME_SOURCE[src]
+                     if NAME_SOURCE.get(src) else "")
+    path = []
+    trail = sh.get("path") or []
+    for i, sid in enumerate(trail):
+        s = by_id.get(sid) or {}
+        label = esc(_clip(s.get("name") or sid, PATH_CHARS))
+        if i == len(trail) - 1:
+            path.append("<b>%s</b>%s" % (label, _tag(s)))
+        else:
+            path.append('<a href="#%s">%s</a>' % (esc(sid), label))
+    head = ["화면 ID", "화면 이름", "경로 (흐름 명세)", "바탕이 된 원본 화면"]
+    cells = ['<td class="sid">%s%s</td>' % (esc(sh["id"]), _tag(sh)),
+             "<td>%s</td>" % name,
+             '<td class="path">%s</td>' % (" &gt; ".join(path) or "-"),
+             "<td>%s%s</td>" % (esc(", ".join(sh.get("from_original") or [])) or "-",
+                                ' <span class="src plain">계획</span>'
+                                if sh.get("from_original") else "")]
+    if sh.get("condition"):
+        head.append("조건")
+        cells.append("<td>%s</td>" % esc(sh["condition"]))
+    widths = ["", ' style="width:150px"', "", ' style="width:110px"', ' style="width:270px"']
+    return ('<table class="info"><tr>%s</tr><tr>%s</tr></table>'
+            % ("".join("<th%s>%s</th>" % (widths[i], t) for i, t in enumerate(head)),
+               "".join(cells)))
+
+
 def render_sheet(sh, ids, sheets_by_id):
     items = {it["no"]: it for it in sh["items"]}
-    out = ['<section class="sheet screen" id="%s">' % esc(sh["id"]), render_picture(sh),
-           '<div class="spec">']
-    of = (' <span class="of">조건별 화면 · 본 화면 %s</span>' % _link(sh["of"], ids)
-          if sh.get("of") else "")
-    out.append('<div class="sid">%s%s%s</div>' % (esc(sh["id"]), _tag(sh), of))
-    if sh.get("condition"):
-        out.append('<div class="cond">조건: %s</div>' % esc(sh["condition"]))
-    out.append('<div class="purpose"><b>화면 목적</b> %s%s</div>' % (
-        esc(sh.get("purpose") or "계획에 없음"),
-        " · <b>원본 화면</b> %s" % esc(", ".join(sh["from_original"]))
-        if sh.get("from_original") else ""))
+    out = ['<section class="sheet screen" id="%s">' % esc(sh["id"]),
+           render_info(sh, ids, sheets_by_id), render_picture(sh), '<div class="spec">']
+    if sh.get("of"):
+        out.append('<div class="purpose"><b>조건별 화면</b> · 본 화면 %s</div>'
+                   % _link(sh["of"], ids))
+    out.append('<div class="purpose"><b>화면 목적</b> %s</div>'
+               % esc(sh.get("purpose") or "계획에 없음"))
     if sh.get("dialogs"):
         out.append('<div class="cond">이 상태에 오는 동안 뜬 알림창: %s</div>' % " · ".join(
             "'%s'" % esc(d.get("message")) for d in sh["dialogs"]))

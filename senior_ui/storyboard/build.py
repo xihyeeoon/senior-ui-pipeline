@@ -32,7 +32,10 @@ from .run import head_commit, load_run, original_fingerprint
 
 OUT_DIR = "storyboard"
 JSON_NAME = "storyboard.json"
-SCHEMA = 1
+# 2: 장마다 화면 이름(title · name · name_source)과 경로(path) (11-12b)
+SCHEMA = 2
+# 화면 이름이 없을 때 쓰는 계획의 화면 목적 앞부분의 길이
+NAME_CHARS = 20
 
 # 한 줄로 보는 행 - 위쪽 끝이 이만큼 안에 있으면 같은 줄로 보고 왼쪽부터 번호를 매긴다.
 ROW_TOLERANCE = 6
@@ -244,7 +247,48 @@ def assemble(run, flow, states, walked, groups):
     flow_info = flow_order(run, flow, states, sheets, by_key)
     for sh in ordered:
         sh["condition"] = condition_text(sh, by_key[sh["state"]], run, sheets, flow_info)
+        sh["path"] = path_of(by_key[sh["state"]], flow, sheets)
     return ordered, flow_info
+
+
+def path_of(state, flow, sheets):
+    """그 장에 이르는 경로 - 정답 경로의 걸음마다의 장 id, 그 상태의 방문까지. 조건별
+    상태(오류 · 펼친 뒤)는 그 끝에 제 장을 붙인다. 같은 장이 잇달아 오면 하나로."""
+    visits = visit_keys(flow.get("steps") or [])
+    upto = visits.index(state["visit"]) if state["visit"] in visits else -1
+    out = []
+    for v in visits[:upto + 1]:
+        sh = sheets.get("visit:%s" % v)
+        if sh and (not out or out[-1] != sh["id"]):
+            out.append(sh["id"])
+    if state["kind"] != "visit":
+        out.append(sheets[state["key"]]["id"])
+    return out
+
+
+def purpose_head(purpose, limit=NAME_CHARS):
+    """계획의 화면 목적 앞부분 - 첫 문장, 길면 limit 자에서 자른다."""
+    if not purpose:
+        return None
+    text = " ".join(str(purpose).split())
+    first = re.split(r"(?<=[.!?。])\s+", text)[0].rstrip(".。 ")
+    return first if len(first) <= limit else first[:limit - 1].rstrip() + "…"
+
+
+def name_sheets(sheets):
+    """장마다 화면 이름. 영역 묶기의 화면 이름(그 장, 없으면 본 장의 것)이 있으면 그것
+    (출처 model), 없으면 계획의 화면 목적 앞부분 (plan), 그것도 없으면 화면 이름 (screen)."""
+    by_id = {s["id"]: s for s in sheets}
+    for sh in sheets:
+        parent = by_id.get(sh.get("of")) or {}
+        title = sh.get("title") or parent.get("title")
+        head = purpose_head(sh.get("purpose"))
+        if title:
+            sh["name"], sh["name_source"] = title, "model"
+        elif head:
+            sh["name"], sh["name_source"] = head, "plan"
+        else:
+            sh["name"], sh["name_source"] = sh.get("screen") or sh["id"], "screen"
 
 
 def rel_shot(path):
@@ -483,6 +527,7 @@ def make(run_dir, port=config.AUTO_PORT, model=None, mock=None, log_echo=True,
 
         call = R.group(sheets, model=model, mock=mock, out_dir=out, log=log,
                        reasoning_effort=reasoning_effort)
+        name_sheets(sheets)
         data = {
             "schema": SCHEMA,
             "generated": {"at": time.strftime("%Y-%m-%d %H:%M:%S"),
