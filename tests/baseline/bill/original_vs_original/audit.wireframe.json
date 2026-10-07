@@ -153,6 +153,12 @@
       "pick-bill": 18,
       "pw": 10
     },
+    "choice_values_shown_in_original": {
+      "menu-item": 289,
+      "pick-bill": 18,
+      "pw": 10
+    },
+    "choice_values_not_selectable": {},
     "choice_values_missing": {},
     "entrances_original": 32,
     "entrances_kept": 32,

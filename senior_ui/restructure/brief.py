@@ -209,7 +209,9 @@ def mapping_rows(plan, original_screens):
 
 
 def choice_gaps(metrics):
-    """검사 I 의 kept 와 selectable 이 다른 것. `[(action, kept, selectable)]`."""
+    """검사 I 의 kept 와 selectable 이 다른 것. `[(action, kept, selectable)]`. 11-8 부터는
+    원본에서 보이던 값이 생성물에서 보이지 않으면 fatal 이라 통과한 빌드에는 원본에서도
+    보이지 않던 값(이체의 증권사 탭)이나 옛 실행의 차이만 남는다."""
     kept = metrics.get("choice_values_kept") or {}
     sel = metrics.get("choice_values_selectable") or {}
     return [(a, kept[a], sel.get(a)) for a in sorted(kept)
@@ -342,11 +344,13 @@ def render_brief(run_name, attempt, plan, diagnosis, report, original_screens,
              for w in warnings] or ["없음"])
     out.append("")
     gaps = choice_gaps(metrics)
-    out += ["### 선택지: 문서에 있는 것과 고를 수 있던 것의 차이", ""]
+    out += ["### 선택지: 문서에 있는 것과 누를 수 있게 보인 것", "",
+            "검사 I 는 원본의 선택지 값마다 걷는 동안(펼치기 포함) 어느 상태에서 누를 수 있게 "
+            "보였는지 센다. 원본을 걷는 동안 보이던 값이 생성물에서 어느 상태에서도 보이지 "
+            "않으면 검사 I 의 fatal 이다 (11-8). 아래는 남은 차이 — 원본도 걷는 동안 보이지 "
+            "않던 값이고, 실제 앱에서 그 값에 닿는 길이 있는지 사람이 본다.", ""]
     if gaps:
-        out += ["검사기가 걷는 동안 DOM 에서 고를 수 없던 값이 있다. \"전체 보기\" 뒤나 "
-                "검색 결과로만 나오는 목록이면 정상이다 — 실제 앱에서 그 길이 있는지 본다.",
-                "", "| 선택지 | 문서에 있음 | 걷는 동안 고를 수 있음 |", "|---|---|---|"]
+        out += ["| 선택지 | 문서에 있음 | 걷는 동안 누를 수 있게 보임 |", "|---|---|---|"]
         out += ["| %s | %s | %s |" % (a, k, s) for a, k, s in gaps]
     else:
         out.append("없음")

@@ -21,17 +21,30 @@ DOM 을 더 보는 이유는 그 반대다. 블록을 빼면 "블록을 참조�
 찾는 단위는 낱말이다. 글자가 들어 있는지로만 보면 짧은 값이 다른 글자 속에서
 우연히 맞는다. 경계는 값의 글자 종류마다 다르다 (boundary() 참고).
 
-지표는 둘로 나뉜다. `choice_values_kept` 는 위 두 곳 어디에든 있는 값의 수이고
-판정 기준이다. `choice_values_selectable` 는 그중 DOM 에서 실제로 고를 수 있던
-값의 수다. 둘이 다르면 경고 하나를 남긴다 - fatal 이 아니다. "전체 보기" 뒤나
-검색 결과로만 목록이 나오는 설계는 검사기가 그 버튼을 누르지 않으면 DOM 에
-나타나지 않으므로, fatal 로 하면 정상 설계가 떨어진다. 판정은 느슨한 쪽으로
-하고 차이는 사람이 보게 남긴다.
+지표는 둘로 나뉜다. `choice_values_kept` 는 위 두 곳 어디에든 있는 값의 수다 -
+"남아 있다". `choice_values_selectable` 는 그중 걷는 동안 어느 상태에서 **누를 수 있게
+보인** 값의 수다 - "고를 수 있다" (11-8 2-3, 아래).
 
-"전체 보기" 를 눌러야 목록이 만들어지는 설계는 흐름 명세의 `reveal` 에 그 조작을
-적는다. drive 가 그 조작을 따로 걸으며 모은 값(`rep["revealed"]`)도 DOM 에서 고를
-수 있던 값으로 센다. 펼친 뒤에도 값이 data-action 요소로 있어야 한다는 기준은
-같다 - 같은 CHOICE_GROUPS 로 모은다.
+"전체 보기" 를 눌러야 목록이 만들어지거나 보이는 설계는 흐름 명세의 `reveal` 에 그
+조작을 적는다. drive 가 그 조작을 따로 걸으며 모은 값(`rep["revealed"]`)도 센다. 펼친
+뒤에도 값이 data-action 요소로 있어야 한다는 기준은 같다 - 같은 CHOICE_GROUPS 로 모은다.
+
+펼친 뒤 실제로 보이는가 (11-8 2-3, 2026-10-07 20:38). 공과금 실행 20261007-201603-bill 의
+전체메뉴에서 분야 칸이 열린 모양인데 속이 비어 보였다 - 그 안에는 닫힌 분류 제목뿐이고
+항목은 분류를 한 번 더 눌러야 보였다. 이 검사는 메뉴 289개가 문서 안에 있는지만 세서
+통과했다 ("숨김 · 접힘은 괜찮다"). 이제 원본 선택지 값마다, 정답 걸음이나 reveal 뒤 어느
+상태에서 누를 수 있게 보였는지(그려져 있고 크기 > 0, display / visibility / opacity 로
+숨지 않았고 disabled 가 아니다 - probes.CHOICE_SHOWN, 스냅샷의 `choices_shown`)를 센다.
+문서 안에만 있고 어느 상태에서도 보이지 않은 값은 fatal 이다 (`not_selectable`).
+
+다만 **원본을 걷는 동안 원본에서 보인 값만** 그렇게 센다 - 검사 K 가 원본을 걷는 동안
+보인 입구만 세는 것과 같은 규칙이다 (연구자 결정 2026-10-07). 원본 흐름이 걷지 않는 상태
+에만 있는 값(이체 원본의 증권사 29개 - 은행 시트의 [증권사] 탭 뒤)은 원본에서도 보이지
+않았으므로 생성물에도 "보여야 한다" 를 요구하지 않고, 전처럼 남아 있기만 하면 되며 보이지
+않으면 경고다. 그 값까지 요구하려면 원본 흐름에 그 탭을 여는 reveal 을 적는다.
+
+`choices_shown` 이 없는 스냅샷(수집이 생기기 전의 것 · 손으로 만든 것)은 전처럼 DOM 에
+있으면 고를 수 있다고 보고, 보이는지는 판정하지 않았다고 남긴다.
 
 흐름 파일이 "일부러 뺐다" 를 선언할 수 있다. 안전을 위해 뺀 선택지까지 누락으로
 세면 고칠 수 없는 fatal 이 재생성 루프에 계속 남는다 (declared() 참고).
@@ -184,6 +197,25 @@ def dom_values(rep):
     return "\n".join(sorted(seen))
 
 
+def shown_values(snapshot):
+    """걷는 동안 누를 수 있게 보인 선택지 값 (`choices_shown` - 걸음마다 + reveal 뒤). 한
+    덩어리 글로 - dom_values 와 같은 이유 (경계 규칙을 똑같이 쓴다)."""
+    seen = set()
+    for row in (snapshot.get("screens") or {}).values():
+        for vals in (row.get("choices_shown") or {}).values():
+            seen.update(v for v in (vals or []) if v)
+    for res in (snapshot.get("revealed") or {}).values():
+        for vals in ((res or {}).get("choices_shown") or {}).values():
+            seen.update(v for v in (vals or []) if v)
+    return "\n".join(sorted(seen))
+
+
+def measured(snapshot):
+    """그 스냅샷에 보이는 값의 수집(`choices_shown`)이 있는가. 없으면 수집이 생기기 전의
+    스냅샷이거나 손으로 만든 것이다."""
+    return any("choices_shown" in row for row in (snapshot.get("screens") or {}).values())
+
+
 def reveal_violations(rep):
     """펼치기 조작이 규칙(그 화면에 보이는 data-action 요소를 click, 같은 화면에
     머문다)을 어긴 것. `[(action, 내용)]`."""
@@ -216,11 +248,21 @@ def run(ctx):
     # 블록을 빼는 이유와 DOM 을 더 보는 이유는 이 파일 머리말에 있다.
     text = strip_data_block(ctx.rep_html)
     dom = dom_values(ctx.rep)
+    # 걷는 동안 누를 수 있게 보인 값 (11-8 2-3). 원본 · 생성물 둘 다 수집이 있어야 본다 -
+    # 없으면 전처럼 DOM 에 있으면 고를 수 있다고 보고 그 사실을 남긴다.
+    seeing = measured(ctx.orig) and measured(ctx.rep)
+    shown = shown_values(ctx.rep) if seeing else dom
+    orig_shown = shown_values(ctx.orig) if seeing else None
+    if not seeing:
+        ctx.skipped.append(
+            "I/보임 - 스냅샷에 보이는 값의 수집(choices_shown)이 없다 (수집이 생기기 전의 "
+            "스냅샷이거나 손으로 만든 것). 문서(DOM)에 있으면 고를 수 있다고 보았다 - "
+            "누를 수 있게 보였는지는 판정하지 않았다.")
 
     decl = declared(ctx.flow)
     skip = not_choices(ctx.flow)
     missing_by_action, kept, selectable, unreachable, by_design = {}, {}, {}, {}, {}
-    not_choice = {}
+    not_choice, not_selectable, in_original = {}, {}, {}
     for action, vals in orig_choices.items():
         if len(vals) < 2:
             continue
@@ -233,13 +275,22 @@ def run(ctx):
         # 남은 개수는 실제로 찾을 수 있는 값의 수다. 일부러 뺀 값은 "남아 있다"
         # 가 아니라 "뺐다" 이므로 여기에 넣지 않는다.
         kept[action] = len(vals) - len(gone)
-        # 그중 DOM 에서 고를 수 있던 것. 판정에는 쓰지 않는다.
-        selectable[action] = sum(1 for v in vals if present(v, dom))
-        hidden = sorted(v for v in vals
-                        if present(v, text) and not present(v, dom))
+        # 그중 걷는 동안 누를 수 있게 보인 것 (수집이 없는 옛 스냅샷은 DOM 에 있던 것)
+        selectable[action] = sum(1 for v in vals if present(v, shown))
+        allowed, reason = decl.get(action, (set(), ""))
+        # 남아 있지만 한 번도 보이지 않은 값. 일부러 빼도 된다고 한 값은 숨겨도 된다.
+        hidden = sorted(v for v in vals if v not in gone and v not in allowed
+                        and not present(v, shown))
+        if seeing:
+            # 원본을 걷는 동안 원본에서 보인 값만 "보여야 한다" 로 센다 (머리말)
+            required = {v for v in vals if present(v, orig_shown)}
+            in_original[action] = len(required)
+            must = [v for v in hidden if v in required]
+            if must:
+                not_selectable[action] = must
+            hidden = [v for v in hidden if v not in required]
         if hidden:
             unreachable[action] = hidden
-        allowed, reason = decl.get(action, (set(), ""))
         on_purpose = [v for v in gone if v in allowed]
         missing = [v for v in gone if v not in allowed]
         if on_purpose:
@@ -266,10 +317,15 @@ def run(ctx):
     # 남은 개수도 내보낸다. 없는 값만 보면 "67개 중 58개 없음" 과 "3개 중 2개
     # 없음" 이 리포트에서 같은 모양이 된다 - 둘은 전혀 다른 상태다.
     metrics["choice_values_kept"] = kept
-    # 판정과 따로 내보내는 숫자. kept 는 "문서 어디에든 있다" 이고 이것은 "걷는
-    # 동안 DOM 에서 고를 수 있었다" 다. 둘을 한 숫자로 합치면 "숨겨 두었지만
-    # 고를 수 있다" 와 "글자로만 있고 길이 없다" 가 구분되지 않는다.
+    # kept 는 "문서 어디에든 있다" 이고 이것은 "걷는 동안 어느 상태에서 누를 수 있게
+    # 보였다" 다 (11-8 2-3). 둘을 한 숫자로 합치면 "숨겨 두었지만 펼칠 수 있다" 와 "글자로만
+    # 있고 길이 없다" 가 구분되지 않는다.
     metrics["choice_values_selectable"] = selectable
+    if seeing:
+        # 원본을 걷는 동안 원본에서 보인 값의 수 - "보여야 한다" 로 센 값들
+        metrics["choice_values_shown_in_original"] = in_original
+        # 그중 생성물에서 한 번도 누를 수 있게 보이지 않은 값 - fatal
+        metrics["choice_values_not_selectable"] = not_selectable
     metrics["choice_values_missing"] = {a: d["missing"]
                                         for a, d in missing_by_action.items()}
     # 흐름 명세의 펼치기 조작과 그 결과. 없으면 키가 없다 (옛 흐름 그대로).
@@ -287,19 +343,36 @@ def run(ctx):
         F("I", None, "흐름 명세의 reveal.%s 가 펼치기 규칙을 어겼다: %s. 펼치기는 그 화면에 "
           "보이는 data-action 버튼을 click 하는 것만이고, 누른 뒤에도 같은 화면이어야 "
           "한다." % (action, why), action=action, reveal_violation=True)
-    # 차이는 경고다. fatal 로 하면 "전체 보기" 뒤나 검색 결과로만 목록을 내놓는
-    # 설계가 떨어진다 - 검사기가 그 버튼을 누르지 않으면 DOM 에 나타나지 않고,
-    # 그것은 설계의 결함이 아니라 흐름 명세가 그 길을 걷지 않은 것이다. 그래서
-    # 판정은 느슨한 쪽으로 하고, 사람이 볼 줄 하나를 남긴다.
+    # 문서 안에만 있고 걷는 동안 어느 상태에서도 누를 수 있게 보이지 않은 값 - fatal
+    # (11-8 2-3). 숨기거나 접어 둔 값은 펼치는 조작이 흐름 명세의 reveal 에 있어야
+    # 검사기가 볼 수 있다. 걷기가 일찍 멈췄으면 그 뒤 화면의 값은 보지 못한 것이므로
+    # 멈춘 탓으로 적는다 (derived_from - 검사 J 와 같다).
+    for action, hidden in sorted(not_selectable.items()):
+        sample = ", ".join(hidden[:5]) + (" …" if len(hidden) > 5 else "")
+        extra = {"derived_from": ctx.stopped_at} if ctx.stopped_at else {}
+        F("I", None,
+          "원본의 %s 선택지 %d개 중 %d개가 생성물 문서 안에는 있지만 걷는 동안 어느 상태에서도 "
+          "누를 수 있게 보이지 않았다 (예: %s). 원본에서는 걷는 동안 보이던 값이다. 숨기거나 "
+          "접어 둔 값은 사용자가 고를 수 없다 - 눌러야 보이는 목록이면 그 조작을 흐름 명세의 "
+          "reveal 에 적어라 (검사기는 정답 걸음과 reveal 뒤에 보이는 값만 센다).%s"
+          % (action, len(orig_choices[action]), len(hidden), sample,
+             " 걷기가 %s 에서 멈춰 그 뒤 화면을 보지 못했다." % ctx.stopped_at
+             if ctx.stopped_at else ""),
+          action=action, not_selectable=hidden, **extra)
+    # 원본에서도 걷는 동안 보이지 않은 값(seeing), 또는 보이는 값의 수집이 없는 옛
+    # 스냅샷의 차이는 경고다 - 판정에는 넣지 않고 사람이 볼 줄 하나를 남긴다.
     for action, hidden in sorted(unreachable.items()):
         sample = ", ".join(hidden[:5]) + (" …" if len(hidden) > 5 else "")
+        why = ("원본도 걷는 동안 보이지 않은 값이라 판정에는 넣지 않는다 - 원본 흐름이 그 값이 "
+               "보이는 상태를 걷지 않는다." if seeing else
+               '"전체 보기" 뒤나 검색 결과로만 나오는 목록이면 정상이다 - 판정에는 넣지 '
+               "않는다. 그 길을 걷게 하려면 흐름 명세의 reveal 에 펼치는 조작을 적어라.")
         ctx.warn("I", None,
                  "원본의 %s 선택지 %d개 중 %d개는 생성물 문서 안에는 있지만 "
-                 "검사기가 걷는 동안 DOM 에서는 고를 수 없었다 (예: %s). "
-                 '"전체 보기" 뒤나 검색 결과로만 나오는 목록이면 정상이다 - '
-                 "판정에는 넣지 않는다. 그 길을 걷게 하려면 흐름 명세의 reveal "
-                 "에 펼치는 조작을 적어라."
-                 % (action, len(orig_choices[action]), len(hidden), sample),
+                 "검사기가 걷는 동안 %s (예: %s). %s"
+                 % (action, len(orig_choices[action]), len(hidden),
+                    "누를 수 있게 보이지 않았다" if seeing else "DOM 에서는 고를 수 없었다",
+                    sample, why),
                  action=action, not_selectable=hidden)
     for action, d in sorted(missing_by_action.items()):
         sample = ", ".join(d["missing"][:5]) + (" …" if len(d["missing"]) > 5 else "")

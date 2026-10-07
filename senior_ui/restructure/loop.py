@@ -1233,10 +1233,10 @@ def record(r, n, p, entry, report, build):
 # 막힘 - 같은 실패의 되풀이
 # --------------------------------------------------------------------------- #
 # fatal 하나에서 "무엇을" 가리키는 칸과 "몇 개" 를 담은 칸. 검사마다 쓰는 칸이 다르다 -
-# I 는 action · missing, J 는 error_path, K 는 missing, A 는 screen · lost, C 는 action ·
-# actions, B 는 screen · numbers. 앞의 것이 먼저다.
+# I 는 action · missing (보이지 않는 값은 not_selectable, 11-8), J 는 error_path, K 는
+# missing, A 는 screen · lost, C 는 action · actions, B 는 screen · numbers. 앞의 것이 먼저다.
 FATAL_TARGET = ("action", "error_path", "screen")
-FATAL_ITEMS = ("missing", "lost", "actions", "numbers")
+FATAL_ITEMS = ("missing", "not_selectable", "lost", "actions", "numbers")
 
 
 def fatal_key(f):

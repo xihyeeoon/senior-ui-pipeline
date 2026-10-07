@@ -510,6 +510,25 @@ STATE_PAIRS = "() => {" + EACH_RULE + r"""
 """
 
 
+# --- 누를 수 있게 보이는가 (검사 K 의 입구 · 검사 I 의 보이는 선택지가 함께 쓴다) -------
+# 그려져 있고(크기 >= 1x1), 자신이나 조상이 display · visibility · opacity 로 숨지 않았고,
+# disabled 가 아니다. 브라우저의 checkVisibility() 를 쓴다 - 닫힌 <details> 안의 요소는
+# display 도 크기도 멀쩡하지만(Chromium 은 그 안을 content-visibility 로 숨긴다) 보이지 않고,
+# 조상의 opacity:0 도 요소 자신의 계산값에는 나타나지 않는다. 그 둘을 놓치면 접어 둔
+# 입구가 펼치는 조작 없이 "보인다" 로 세였다 (11-8 - mock entrances-folded 가 reveal 없이도
+# 통과했다). checkVisibility 가 없는 브라우저는 요소 자신의 계산값만 본다 (전의 규칙).
+PRESSABLE = r"""
+  const pressable = e => {
+    if (e.disabled || e.getAttribute('aria-disabled') === 'true') return false;
+    const r = e.getBoundingClientRect();
+    if (r.width < 1 || r.height < 1) return false;
+    if (typeof e.checkVisibility === 'function')
+      return e.checkVisibility({checkOpacity: true, checkVisibilityCSS: true});
+    const cs = getComputedStyle(e);
+    return cs.display !== 'none' && cs.visibility !== 'hidden' && +cs.opacity !== 0;
+  };
+"""
+
 # --- I: 반복 선택지의 식별값 --------------------------------------------------
 # 같은 data-action 을 공유하는 요소가 둘 이상이면 그것은 "고르는 것들" 이다 -
 # 은행 목록이든 숫자판이든 받는 사람 목록이든. 각 요소를 가리키는 값은
@@ -520,7 +539,13 @@ STATE_PAIRS = "() => {" + EACH_RULE + r"""
 # 원본이 정한다 - 그 이름의 요소는 생성물이 분류마다 하나씩 따로 놓았든 한곳에
 # 모았든 형제 수와 상관없이 모두 센다. 원본을 걸을 때는 빈 목록이고, 목록에 없는
 # 이름은 형제 둘 이상일 때만 무리다 (뒤로가기 같은 버튼이 무리가 되지 않게).
-CHOICE_GROUPS = r"""
+#
+# CHOICE_SHOWN (11-8 2-3) 은 같은 무리 가운데 **지금 누를 수 있게 보이는** 요소의 값만
+# 모은다 - 검사 K 의 입구와 같은 PRESSABLE (그려져 있고 크기 > 0, 자신이나 조상이 숨기지
+# 않았고 - 닫힌 <details> 안 포함 - disabled 가 아니다). 무리를 정하는 규칙은 CHOICE_GROUPS 와 한 글자도 다르지 않게
+# 같은 글에서 만든다 (아래 _CHOICES). 보이는 값이 하나뿐이어도 그 무리의 값이다. 검사 I 가
+# "문서 안에만 있고 어느 상태에서도 보이지 않는 값" 을 이것으로 가른다.
+_CHOICES = r"""
 (known) => {
   const fixed = new Set(known || []);
   const groups = {};
@@ -550,6 +575,7 @@ CHOICE_GROUPS = r"""
       byParent.forEach(sibs => { if (sibs.length >= 2) els = els.concat(sibs); });
       if (els.length < 2) continue;          // 형제가 둘 이상이어야 선택지다
     }
+    __FILTER__
     const vals = [];
     els.forEach(el => {
       let v = null;
@@ -563,11 +589,16 @@ CHOICE_GROUPS = r"""
     });
     const uniq = Array.from(new Set(vals));
     // 원본의 무리는 값이 하나만 보여도 그 무리의 값이다.
-    if (uniq.length >= (fixed.has(action) ? 1 : 2)) out[action] = uniq;
+    if (uniq.length >= __AT_LEAST__) out[action] = uniq;
   }
   return out;
 }
 """
+CHOICE_GROUPS = (_CHOICES.replace("    __FILTER__\n", "")
+                 .replace("__AT_LEAST__", "(fixed.has(action) ? 1 : 2)"))
+CHOICE_SHOWN = (_CHOICES.replace("__FILTER__", PRESSABLE.strip()
+                                 + "\n    els = els.filter(pressable);")
+                .replace("__AT_LEAST__", "1"))
 
 
 # --- K: 과제 밖 입구 ------------------------------------------------------------
@@ -585,25 +616,6 @@ CHOICE_GROUPS = r"""
 # 띠 안의 위치와 덮개에 가려진 것은 재지 않는다. 같은 이름이 여럿 보이면 덜 내려도 되는
 # 것을 고른다. 보이지 않는 요소는 null 이다.
 ENTRANCE_PREFIX = "oos-"
-
-# --- 누를 수 있게 보이는가 (검사 K 의 입구 · 검사 I 의 보이는 선택지가 함께 쓴다) -------
-# 그려져 있고(크기 >= 1x1), 자신이나 조상이 display · visibility · opacity 로 숨지 않았고,
-# disabled 가 아니다. 브라우저의 checkVisibility() 를 쓴다 - 닫힌 <details> 안의 요소는
-# display 도 크기도 멀쩡하지만(Chromium 은 그 안을 content-visibility 로 숨긴다) 보이지 않고,
-# 조상의 opacity:0 도 요소 자신의 계산값에는 나타나지 않는다. 그 둘을 놓치면 접어 둔
-# 입구가 펼치는 조작 없이 "보인다" 로 세였다 (11-8 - mock entrances-folded 가 reveal 없이도
-# 통과했다). checkVisibility 가 없는 브라우저는 요소 자신의 계산값만 본다 (전의 규칙).
-PRESSABLE = r"""
-  const pressable = e => {
-    if (e.disabled || e.getAttribute('aria-disabled') === 'true') return false;
-    const r = e.getBoundingClientRect();
-    if (r.width < 1 || r.height < 1) return false;
-    if (typeof e.checkVisibility === 'function')
-      return e.checkVisibility({checkOpacity: true, checkVisibilityCSS: true});
-    const cs = getComputedStyle(e);
-    return cs.display !== 'none' && cs.visibility !== 'hidden' && +cs.opacity !== 0;
-  };
-"""
 
 ENTRANCES = r"""
 () => {

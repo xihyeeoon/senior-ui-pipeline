@@ -468,7 +468,21 @@
         "back_to_sheet": "scr-accno"
       }
     ],
-    "reveals": []
+    "reveals": [
+      {
+        "action": "pick-bank",
+        "at_sheet": "scr-bank",
+        "sheet": "scr-bank--reveal-pick-bank",
+        "how": [
+          {
+            "type": "click",
+            "selector": "[data-action='bank-other']",
+            "item": "e3",
+            "text": "다른 은행이에요"
+          }
+        ]
+      }
+    ]
   },
   "original": {
     "html": "inputs/original_transfer.html",
@@ -1060,10 +1074,24 @@
         "original_from": "survey",
         "by": "value",
         "values": 67,
-        "found": 0,
-        "actions": [],
+        "found": 7,
+        "actions": [
+          "pick-bank"
+        ],
         "tied": [],
-        "cells": {},
+        "cells": {
+          "scr-bank": {
+            "mark": "○",
+            "found": 7,
+            "of": 67,
+            "actions": [
+              "pick-bank"
+            ],
+            "sheets": [
+              "scr-bank--reveal-pick-bank"
+            ]
+          }
+        },
         "section": "choices",
         "kind": "group"
       },
@@ -1857,7 +1885,6 @@
       }
     ],
     "missing": [
-      "choices:pick-bank",
       "inputs:pw"
     ]
   },
@@ -1869,11 +1896,11 @@
     "quick"
   ],
   "counts": {
-    "sheets": 11,
+    "sheets": 12,
     "main_sheets": 9,
-    "items": 85,
-    "elements": 103,
-    "clicks": 85
+    "items": 87,
+    "elements": 111,
+    "clicks": 87
   },
   "sheets": [
     {
@@ -3365,7 +3392,9 @@
           "source": "mock"
         }
       ],
-      "conditions": [],
+      "conditions": [
+        "scr-bank--reveal-pick-bank"
+      ],
       "of": null,
       "condition": null,
       "path": [
@@ -3373,6 +3402,135 @@
         "scr-who",
         "scr-accno",
         "scr-bank"
+      ],
+      "title": null,
+      "name": "은행을 고른다",
+      "name_source": "plan"
+    },
+    {
+      "id": "scr-bank--reveal-pick-bank",
+      "screen": "bank",
+      "state": "reveal:pick-bank",
+      "kind": "reveal",
+      "main": false,
+      "expected_screen": "bank",
+      "purpose": "은행을 고른다",
+      "from_original": [
+        "bank"
+      ],
+      "picture": "shots/reveal-pick-bank.png",
+      "marked": "shots/reveal-pick-bank.marked.png",
+      "size": [
+        390,
+        847
+      ],
+      "scale": 2,
+      "grown": 0,
+      "clipped": 0,
+      "covered": 0,
+      "dialogs": [],
+      "error": null,
+      "items": [
+        {
+          "kind": "element",
+          "action": "back-accno",
+          "text": "← 이전",
+          "aria": null,
+          "value": "← 이전",
+          "id": null,
+          "tag": "button",
+          "box": [
+            14,
+            42,
+            98,
+            50
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e1",
+          "result": {
+            "kind": "screen",
+            "to": "accno",
+            "to_id": "scr-accno"
+          }
+        },
+        {
+          "kind": "group",
+          "action": "pick-bank",
+          "text": "신 신한",
+          "aria": null,
+          "value": "신한",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            275,
+            358,
+            620
+          ],
+          "disabled": false,
+          "entrance": false,
+          "group": {
+            "count": 7,
+            "values": [
+              "국민",
+              "기업",
+              "농협",
+              "산업",
+              "수협",
+              "신한",
+              "제주"
+            ]
+          },
+          "no": "e2",
+          "result": {
+            "kind": "screen",
+            "to": "whoconfirm",
+            "to_id": "scr-whoconfirm"
+          }
+        }
+      ],
+      "regions": [
+        {
+          "no": 1,
+          "name": "영역 1",
+          "description": "(mock) 요소 e1",
+          "elements": [
+            "e1"
+          ],
+          "box": [
+            14,
+            42,
+            98,
+            50
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 2,
+          "name": "영역 2",
+          "description": "(mock) 요소 e2",
+          "elements": [
+            "e2"
+          ],
+          "box": [
+            16,
+            275,
+            358,
+            620
+          ],
+          "source": "mock"
+        }
+      ],
+      "conditions": [],
+      "of": "scr-bank",
+      "condition": "'pick-bank' 을 펼친 뒤 — scr-bank 에서 펼치는 조작을 한 상태 (흐름 명세 reveal)",
+      "path": [
+        "scr-start",
+        "scr-who",
+        "scr-accno",
+        "scr-bank",
+        "scr-bank--reveal-pick-bank"
       ],
       "title": null,
       "name": "은행을 고른다",
@@ -4670,7 +4828,7 @@
     "calls": [
       {
         "phase": "first",
-        "images": 11,
+        "images": 12,
         "tokens": null,
         "cost_usd": 0.0,
         "seconds": "<seconds>",

@@ -380,8 +380,17 @@ o 계열과 맞지 않는다) · `types/shared/reasoning_effort.py`.
   모양과 상관없이 센다** — 원본에서 무리였던 이름(`i_choices.original_groups`, 과제가
   선택지가 아니라고 선언한 이름은 뺀다)의 요소는 생성물에서 형제가 없어도 모두 세고,
   원본에서 무리가 아니던 이름은 형제 둘 이상일 때만 무리다 (11-9b).
-  `choice_values_kept` 가 판정 기준이고 `choice_values_selectable` 는 그중 DOM 에서
-  고를 수 있던 수다 — 둘이 다르면 경고가 난다 (fatal 아님).
+  `choice_values_kept` 는 남아 있는 값의 수이고, `choice_values_selectable` 는 그중 걷는
+  동안(정답 걸음 · reveal 뒤) 어느 상태에서 **누를 수 있게 보인** 값의 수다 — 그려져 있고
+  크기 > 0, 자신이나 조상이 display · visibility · opacity 로 숨지 않았고 disabled 가
+  아니다 (`probes.CHOICE_SHOWN`, 스냅샷의 `choices_shown`). 원본을 걷는 동안 원본에서
+  보이던 값이 생성물에서 어느 상태에서도 보이지 않으면 fatal 이다 (11-8 2-3,
+  `choice_values_not_selectable`). 전에는 문서 안에만 있으면 통과했다 — 공과금 실행
+  20261007-201603-bill 의 전체메뉴는 분야 칸을 눌러도 닫힌 분류 제목만 보였다. 원본도
+  걷는 동안 보이지 않던 값(이체 원본의 [증권사] 탭 29개 — 원본 흐름이 그 탭을 누르지
+  않는다)은 검사 K 와 같은 규칙으로 요구하지 않는다 (`choice_values_shown_in_original` 이
+  요구한 수, 차이는 경고). 그 값까지 요구하려면 원본 흐름에 탭을 여는 `reveal` 을 적는다.
+  보이는 값의 수집이 없는 옛 스냅샷은 전처럼 DOM 에 있으면 고를 수 있다고 본다.
 
 **모델이 만든 것과 도구가 고친 것은 파일로 갈라 둔다.** 검사기가 여는 파일과
 승격되는 산출물(`outputs/restructured_auto.html`)에는 데이터 블록이 들어 있다 —
@@ -731,7 +740,7 @@ in `metrics.flow_notes`. It does not silently accept the mismatch.
 | F | English words the original did not have (runtime and markup-only) | warning |
 | G | `.x` and `.x.on` must still render differently | warning |
 | H | classes the markup uses that no stylesheet defines | warning |
-| I | values the original offered as choices must still exist somewhere in the build | fatal |
+| I | values the original offered as choices must still exist somewhere in the build; values the original showed on its walk must be pressable-visible in some state of the build's walk (a step or after a `reveal`) — 문서 안에만 있으면 fatal (11-8) | fatal |
 | J | each required wrong input (the task's `required_error_paths`) brings up an error state with new text and `recover` leads back to a screen where it can be fixed; warns when the text has none of the task's words | fatal |
 | K | 과제 밖 입구 — 과제 파일 `entrances` 의 메뉴 · 버튼 (더미앱 A1 의 OutOfScope 탭 대상, 연구자 확정)이 빌드 어딘가에 남아 있다. 원본의 `data-action` 이름(`oos-*`)을 그대로 가진 요소가 걷는 동안(reveal 포함) 누를 수 있게 보이면 있다 (그려져 있고 disabled 가 아니다, 같은 화면이 아니어도 된다). 원본을 걷는 동안 보인 입구만 센다. 글자 · `aria-label` 은 기록만 한다 (`entrances_shown_as`). 처음 보인 방문 · 펼치기 횟수 · 스크롤 거리도 기록만 한다 (`entrance_distance`, 11-8) | fatal |
 

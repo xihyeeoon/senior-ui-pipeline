@@ -3,6 +3,43 @@
   "fatal": [],
   "warning": [
     {
+      "check": "I",
+      "screen": null,
+      "detail": "원본의 pick-bank 선택지 67개 중 29개는 생성물 문서 안에는 있지만 검사기가 걷는 동안 누를 수 있게 보이지 않았다 (예: BNK투자증권, DB증권, IBK투자증권, KB증권, LS증권 …). 원본도 걷는 동안 보이지 않은 값이라 판정에는 넣지 않는다 - 원본 흐름이 그 값이 보이는 상태를 걷지 않는다.",
+      "action": "pick-bank",
+      "not_selectable": [
+        "BNK투자증권",
+        "DB증권",
+        "IBK투자증권",
+        "KB증권",
+        "LS증권",
+        "NH투자증권",
+        "교보증권",
+        "다올투자증권",
+        "대신증권",
+        "메리츠증권",
+        "미래에셋증권",
+        "부국증권",
+        "삼성증권",
+        "상상인증권",
+        "신영증권",
+        "신한투자증권",
+        "아이엠증권",
+        "에스케이증권",
+        "우리투자증권",
+        "유안타증권",
+        "유진투자증권",
+        "카카오페이증권",
+        "케이프투자증권",
+        "키움증권",
+        "토스증권",
+        "하나증권",
+        "한국투자증권",
+        "한화투자증권",
+        "현대차증권"
+      ]
+    },
+    {
       "check": "J",
       "screen": "err-bank",
       "detail": "오류 경로 wrong-bank: 새로 나타난 글에 은행 중 어느 단어도 없다 - 무엇이 틀렸는지 알아채기 어렵다. 나타난 글: ETA00325 / 해당 계좌번호내 과목코드 오류입니다. / 입력하신 계좌번호를 확인해주세요. / 확인",
@@ -161,12 +198,20 @@
       "pw": 10
     },
     "choice_values_selectable": {
-      "pick-bank": 67,
+      "pick-bank": 38,
       "acc-num": 10,
       "quick": 4,
       "num": 11,
       "pw": 10
     },
+    "choice_values_shown_in_original": {
+      "pick-bank": 38,
+      "acc-num": 10,
+      "quick": 4,
+      "num": 11,
+      "pw": 10
+    },
+    "choice_values_not_selectable": {},
     "choice_values_missing": {},
     "error_paths": {
       "wrong-account": {

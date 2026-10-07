@@ -125,8 +125,8 @@
       "model_html": "<run>/attempt_1.model.html",
       "stage": "audit",
       "passed": false,
-      "fatal": 1,
-      "warning": 1
+      "fatal": 2,
+      "warning": 0
     },
     {
       "n": 2,
@@ -144,7 +144,7 @@
       "calls": [
         {
           "stage": "retry",
-          "estimated_prompt": 27343,
+          "estimated_prompt": 27512,
           "method": "tiktoken:o200k_base(대체)",
           "max_tokens": 32000,
           "usage": null,
@@ -177,8 +177,8 @@
       "model_html": "<run>/attempt_2.model.html",
       "stage": "audit",
       "passed": false,
-      "fatal": 1,
-      "warning": 1
+      "fatal": 2,
+      "warning": 0
     }
   ],
   "passed": false,
@@ -218,16 +218,16 @@
   "trend": [
     {
       "attempt": 1,
-      "fatal_total": 1,
-      "fatal_root": 1,
+      "fatal_total": 2,
+      "fatal_root": 2,
       "fatal_derived": 0,
       "screens": "9/9",
       "stopped_at": null
     },
     {
       "attempt": 2,
-      "fatal_total": 1,
-      "fatal_root": 1,
+      "fatal_total": 2,
+      "fatal_root": 2,
       "fatal_derived": 0,
       "screens": "9/9",
       "stopped_at": null
@@ -264,7 +264,7 @@
       },
       "retry": {
         "calls": 1,
-        "estimated_prompt": 27343,
+        "estimated_prompt": 27512,
         "images": 0,
         "estimated_images": 0,
         "max_tokens": 32000,
@@ -275,7 +275,7 @@
     },
     "total": {
       "calls": 3,
-      "estimated_prompt": 62801,
+      "estimated_prompt": 62970,
       "images": 15,
       "estimated_images": 6330,
       "max_tokens": 89000,
@@ -336,6 +336,11 @@
     "attempt": 2,
     "same_as": 1,
     "fatal": [
+      [
+        "I",
+        "pick-bank",
+        6
+      ],
       [
         "I",
         "pick-bank",

@@ -854,6 +854,13 @@ REVEAL_SWAPS = [
 # 목록을 열고 [전체 보기] 를 누른다.
 MOCK_REVEAL = {"pick-bank": {"at": "bank", "do": [
     {"click": "[data-action='bank-other']"}, {"click": "#show-all-banks"}]}}
+# 그 밖의 이체 모드의 흐름 명세에 더하는 펼치기 조작 (11-8 2-3). Run 1 빌드의 은행 목록은
+# 문서에 다 있지만 [다른 은행이에요] 를 눌러야 보인다 - 정답 경로는 계좌번호로 짐작한 은행을
+# 그대로 고르므로 목록을 열지 않는다. 검사 I 가 원본에서 보이던 값이 생성물에서 어느
+# 상태에서 누를 수 있게 보이는지 세게 된 뒤로, 그 조작을 적지 않은 답은 떨어진다.
+# reveal 모드는 제 조작(MOCK_REVEAL)이 있고, reveal-undeclared 는 일부러 적지 않는 모드다.
+MOCK_BANK_REVEAL = {"pick-bank": {"at": "bank", "do": [
+    {"click": "[data-action='bank-other']"}]}}
 MODES = sorted(MOCKS)
 
 # 과제 밖 입구를 어떻게 두는가 (검사 K). Run 1 빌드에는 입구가 하나도 없다 - 원본의
@@ -1135,8 +1142,10 @@ def mock_base(mode):
             flow["error_paths"] = json.loads(json.dumps(MOCK_ERROR_PATHS))
         if REVEAL_MODES.get(mode):
             flow["reveal"] = json.loads(json.dumps(MOCK_REVEAL))
+        elif mode not in REVEAL_MODES:
+            flow["reveal"] = json.loads(json.dumps(MOCK_BANK_REVEAL))
         if ENTRANCE_MODES.get(mode) in ("reveal", "folded"):
-            flow["reveal"] = json.loads(json.dumps(MOCK_ENTRANCE_REVEAL))
+            flow["reveal"].update(json.loads(json.dumps(MOCK_ENTRANCE_REVEAL)))
     return html, flow
 
 

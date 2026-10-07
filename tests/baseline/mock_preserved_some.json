@@ -125,8 +125,8 @@
       "model_html": "<run>/attempt_1.model.html",
       "stage": "audit",
       "passed": false,
-      "fatal": 1,
-      "warning": 1
+      "fatal": 2,
+      "warning": 0
     }
   ],
   "passed": false,
@@ -166,8 +166,8 @@
   "trend": [
     {
       "attempt": 1,
-      "fatal_total": 1,
-      "fatal_root": 1,
+      "fatal_total": 2,
+      "fatal_root": 2,
       "fatal_derived": 0,
       "screens": "9/9",
       "stopped_at": null
