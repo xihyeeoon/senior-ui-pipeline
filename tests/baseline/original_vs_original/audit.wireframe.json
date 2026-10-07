@@ -91,12 +91,12 @@
     "dead_controls_unverifiable": [],
     "dead_controls_new": 0,
     "dead_controls_pre_existing": [],
-    "low_contrast_after": 60,
-    "low_contrast_before": 60,
+    "low_contrast_after": 36,
+    "low_contrast_before": 36,
     "low_contrast_by_screen": {
       "home": {
-        "before": 21,
-        "after": 21
+        "before": 16,
+        "after": 16
       },
       "recipient": {
         "before": 2,
@@ -111,8 +111,8 @@
         "after": 3
       },
       "bank": {
-        "before": 22,
-        "after": 22
+        "before": 3,
+        "after": 3
       },
       "amount": {
         "before": 4,
@@ -204,15 +204,15 @@
     "entrances_not_in_original": [],
     "entrances_shown_as": {
       "T1": {
-        "text": "☺",
+        "text": "",
         "aria": "메시지"
       },
       "T2": {
-        "text": "▤",
+        "text": "",
         "aria": "지갑"
       },
       "T3": {
-        "text": "♤",
+        "text": "",
         "aria": "알림"
       },
       "T4": {
@@ -260,19 +260,19 @@
         "aria": "금액 숨기기"
       },
       "T15": {
-        "text": "Ⓦ 금융",
+        "text": "금융",
         "aria": "금융"
       },
       "T16": {
-        "text": "⌂ 상품",
+        "text": "상품",
         "aria": "상품"
       },
       "T17": {
-        "text": "🎁 혜택",
+        "text": "혜택",
         "aria": "혜택"
       },
       "T18": {
-        "text": "📈 주식",
+        "text": "주식",
         "aria": "주식"
       },
       "T19": {
@@ -280,11 +280,11 @@
         "aria": "다건이체"
       },
       "T20": {
-        "text": "👤",
+        "text": "",
         "aria": "받는 사람 관리"
       },
       "T21": {
-        "text": "⌕",
+        "text": "",
         "aria": "검색"
       },
       "T22": {
@@ -316,7 +316,7 @@
         "aria": "공유"
       },
       "R1": {
-        "text": "⌕",
+        "text": "",
         "aria": "전체메뉴"
       },
       "R3": {
@@ -324,7 +324,7 @@
         "aria": "쉬운홈"
       },
       "R4": {
-        "text": "⌂ 홈",
+        "text": "홈",
         "aria": "홈"
       }
     },

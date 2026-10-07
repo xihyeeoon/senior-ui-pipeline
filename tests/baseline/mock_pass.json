@@ -79,7 +79,7 @@
       "calls": [
         {
           "stage": "plan",
-          "estimated_prompt": 19368,
+          "estimated_prompt": 19824,
           "method": "tiktoken:o200k_base(대체)",
           "max_tokens": 25000,
           "usage": null,
@@ -89,7 +89,7 @@
         },
         {
           "stage": "generate",
-          "estimated_prompt": 15178,
+          "estimated_prompt": 15634,
           "method": "tiktoken:o200k_base(대체)",
           "max_tokens": 32000,
           "usage": null,
@@ -191,7 +191,7 @@
     "by_stage": {
       "plan": {
         "calls": 1,
-        "estimated_prompt": 19368,
+        "estimated_prompt": 19824,
         "images": 15,
         "estimated_images": 6330,
         "max_tokens": 25000,
@@ -201,7 +201,7 @@
       },
       "generate": {
         "calls": 1,
-        "estimated_prompt": 15178,
+        "estimated_prompt": 15634,
         "images": 0,
         "estimated_images": 0,
         "max_tokens": 32000,
@@ -222,7 +222,7 @@
     },
     "total": {
       "calls": 3,
-      "estimated_prompt": 54528,
+      "estimated_prompt": 55440,
       "images": 26,
       "estimated_images": 10972,
       "max_tokens": 89000,
@@ -232,7 +232,7 @@
     },
     "first_attempt": {
       "calls": 2,
-      "estimated_prompt": 34546,
+      "estimated_prompt": 35458,
       "images": 15,
       "estimated_images": 6330,
       "max_tokens": 57000,
@@ -309,5 +309,5 @@
     "audit_failures": 0
   },
   "original": "inputs/original_transfer.html",
-  "original_sha256": "bc3dd029351bd45c8ab14f921f120325f8ef9377c33c8459febd5b7c71ccec0b"
+  "original_sha256": "f76a8b2f9226e20bfc521325c0b0d0cb040d3ce3f958c9a3376377a7b6141e63"
 }

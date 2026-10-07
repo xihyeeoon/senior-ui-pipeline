@@ -78,16 +78,16 @@
     "dead_controls_unverifiable": [],
     "dead_controls_new": 0,
     "dead_controls_pre_existing": [],
-    "low_contrast_after": 55,
-    "low_contrast_before": 55,
+    "low_contrast_after": 49,
+    "low_contrast_before": 49,
     "low_contrast_by_screen": {
       "home": {
-        "before": 21,
-        "after": 21
+        "before": 16,
+        "after": 16
       },
       "menu": {
-        "before": 8,
-        "after": 8
+        "before": 7,
+        "after": 7
       },
       "search": {
         "before": 1,
@@ -161,15 +161,15 @@
     "entrances_not_in_original": [],
     "entrances_shown_as": {
       "B1": {
-        "text": "☺",
+        "text": "",
         "aria": "메시지"
       },
       "B2": {
-        "text": "▤",
+        "text": "",
         "aria": "지갑"
       },
       "B3": {
-        "text": "♤",
+        "text": "",
         "aria": "알림"
       },
       "B4": {
@@ -217,43 +217,43 @@
         "aria": "금액 숨기기"
       },
       "B15": {
-        "text": "Ⓦ 금융",
+        "text": "금융",
         "aria": "금융"
       },
       "B16": {
-        "text": "⌂ 상품",
+        "text": "상품",
         "aria": "상품"
       },
       "B17": {
-        "text": "🎁 혜택",
+        "text": "혜택",
         "aria": "혜택"
       },
       "B18": {
-        "text": "📈 주식",
+        "text": "주식",
         "aria": "주식"
       },
       "B19": {
-        "text": "💬",
+        "text": "",
         "aria": "고객센터 채팅"
       },
       "B20": {
-        "text": "⚙",
+        "text": "",
         "aria": "설정"
       },
       "B21": {
-        "text": "⎋",
+        "text": "",
         "aria": "로그아웃"
       },
       "B22": {
-        "text": "⌕",
+        "text": "",
         "aria": "검색"
       },
       "B24": {
-        "text": "💬",
+        "text": "",
         "aria": "고객센터"
       },
       "B25": {
-        "text": "⌂",
+        "text": "",
         "aria": "홈"
       },
       "B26": {
@@ -265,15 +265,15 @@
         "aria": "자주쓰는 지로번호 등록"
       },
       "B28": {
-        "text": "💬",
+        "text": "",
         "aria": "고객센터"
       },
       "B29": {
-        "text": "⌂",
+        "text": "",
         "aria": "홈"
       },
       "B30": {
-        "text": "💬",
+        "text": "",
         "aria": "고객센터"
       },
       "R2": {
@@ -285,7 +285,7 @@
         "aria": "쉬운홈"
       },
       "R4": {
-        "text": "⌂ 홈",
+        "text": "홈",
         "aria": "홈"
       }
     },

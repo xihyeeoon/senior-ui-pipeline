@@ -45,9 +45,9 @@
     ],
     "source": "senior-ui-dummy-app 00834ca 의 OutOfScope · showOutOfScope 코드 - lib/screens/a1_home.dart · a1_transfer_entry.dart · a1_transfer_amount.dart · a1_transfer_done.dart (+ R1 menuEntry · R3 home_link_쉬운홈 · R4 home_nav_홈 은 범위 안이지만 원본 HTML 에서는 죽어 있던 요소). 표: 11-7 입구 후보표",
     "items": [
-      {"id": "T1", "dummy": "home_header_메시지", "screen": "home", "action": "oos-message", "label": "메시지", "text": "☺"},
-      {"id": "T2", "dummy": "home_header_지갑", "screen": "home", "action": "oos-wallet", "label": "지갑", "text": "▤"},
-      {"id": "T3", "dummy": "home_header_알림", "screen": "home", "action": "oos-alarm", "label": "알림", "text": "♤"},
+      {"id": "T1", "dummy": "home_header_메시지", "screen": "home", "action": "oos-message", "label": "메시지", "text": null, "remark": "원본에서는 글자 없는 그림 자리 (role=img, aria-label \"메시지 아이콘\", 11-11)"},
+      {"id": "T2", "dummy": "home_header_지갑", "screen": "home", "action": "oos-wallet", "label": "지갑", "text": null, "remark": "원본에서는 글자 없는 그림 자리 (role=img, aria-label \"지갑 아이콘\", 11-11)"},
+      {"id": "T3", "dummy": "home_header_알림", "screen": "home", "action": "oos-alarm", "label": "알림", "text": null, "remark": "원본에서는 글자 없는 그림 자리 (role=img, aria-label \"알림 아이콘\", 11-11)"},
       {"id": "T4", "dummy": "home_irp_banner", "screen": "home", "action": "oos-irp", "label": "IRP 안내", "text": "절세혜택과 안정적인 노후, IRP로 준비하세요"},
       {"id": "T5", "dummy": "home_button_앱카드 가입", "screen": "home", "action": "oos-appcard", "label": "앱카드 가입", "text": "앱카드 가입"},
       {"id": "T6", "dummy": "home_pill_바로받기", "screen": "home", "action": "oos-get-coupon", "label": "바로받기", "text": "바로받기"},
@@ -64,8 +64,8 @@
       {"id": "T17", "dummy": "home_nav_혜택", "screen": "home", "action": "oos-tab-benefit", "label": "혜택", "text": "혜택"},
       {"id": "T18", "dummy": "home_nav_주식", "screen": "home", "action": "oos-tab-stock", "label": "주식", "text": "주식"},
       {"id": "T19", "dummy": "transfer_entry_multi", "screen": "recipient", "action": "oos-multi-transfer", "label": "다건이체", "text": "다건이체"},
-      {"id": "T20", "dummy": "transfer_entry_payee_manage", "screen": "recipient", "action": "oos-payee-manage", "label": "받는 사람 관리", "text": "👤"},
-      {"id": "T21", "dummy": "transfer_entry_search", "screen": "recipient", "action": "oos-search", "label": "검색", "text": "⌕"},
+      {"id": "T20", "dummy": "transfer_entry_payee_manage", "screen": "recipient", "action": "oos-payee-manage", "label": "받는 사람 관리", "text": null, "remark": "원본에서는 글자 없는 그림 자리 (role=img, aria-label \"받는 사람 관리 아이콘\", 11-11)"},
+      {"id": "T21", "dummy": "transfer_entry_search", "screen": "recipient", "action": "oos-search", "label": "검색", "text": null, "remark": "원본에서는 글자 없는 그림 자리 (role=img, aria-label \"검색 아이콘\", 11-11)"},
       {"id": "T22", "dummy": "transfer_entry_section_자주쓰는 계좌", "screen": "recipient", "action": "oos-frequent", "label": "자주쓰는 계좌", "text": "자주쓰는 계좌", "remark": "줄 하나가 입구 하나 (편집 · 펼침을 따로 세지 않는다)"},
       {"id": "T23", "dummy": "transfer_entry_section_내 계좌", "screen": "recipient", "action": "oos-my-accounts", "label": "내 계좌", "text": "내 계좌"},
       {"id": "T24", "dummy": "transfer_entry_section_최근", "screen": "recipient", "action": "oos-recent", "label": "최근", "text": "최근"},
@@ -73,7 +73,7 @@
       {"id": "T26", "dummy": "transfer_done_pill_추가이체", "screen": "done", "action": "oos-more-transfer", "label": "추가이체", "text": "추가이체"},
       {"id": "T27", "dummy": "transfer_done_pill_상세보기", "screen": "done", "action": "oos-detail", "label": "상세보기", "text": "상세보기"},
       {"id": "T28", "dummy": "transfer_done_share", "screen": "done", "action": "oos-share", "label": "공유", "text": "공유"},
-      {"id": "R1", "dummy": "menuEntry", "screen": "home", "action": "oos-menu", "label": "전체메뉴", "text": "⌕"},
+      {"id": "R1", "dummy": "menuEntry", "screen": "home", "action": "oos-menu", "label": "전체메뉴", "text": null, "remark": "원본에서는 글자 없는 그림 자리 (role=img, aria-label \"전체메뉴 아이콘\", 11-11)"},
       {"id": "R3", "dummy": "home_link_쉬운홈", "screen": "home", "action": "oos-easy-home", "label": "쉬운홈", "text": "쉬운홈"},
       {"id": "R4", "dummy": "home_nav_홈", "screen": "home", "action": "oos-tab-home", "label": "홈", "text": "홈"}
     ]

@@ -82,7 +82,7 @@
       "calls": [
         {
           "stage": "plan",
-          "estimated_prompt": 20399,
+          "estimated_prompt": 21096,
           "method": "tiktoken:o200k_base(대체)",
           "max_tokens": 25000,
           "usage": null,
@@ -92,7 +92,7 @@
         },
         {
           "stage": "generate",
-          "estimated_prompt": 15225,
+          "estimated_prompt": 15922,
           "method": "tiktoken:o200k_base(대체)",
           "max_tokens": 32000,
           "usage": null,
@@ -211,7 +211,7 @@
     "by_stage": {
       "plan": {
         "calls": 1,
-        "estimated_prompt": 20399,
+        "estimated_prompt": 21096,
         "images": 15,
         "estimated_images": 6330,
         "max_tokens": 25000,
@@ -221,7 +221,7 @@
       },
       "generate": {
         "calls": 1,
-        "estimated_prompt": 15225,
+        "estimated_prompt": 15922,
         "images": 0,
         "estimated_images": 0,
         "max_tokens": 32000,
@@ -231,7 +231,7 @@
       },
       "refine": {
         "calls": 1,
-        "estimated_prompt": 20922,
+        "estimated_prompt": 21724,
         "images": 15,
         "estimated_images": 6330,
         "max_tokens": 32000,
@@ -242,7 +242,7 @@
     },
     "total": {
       "calls": 3,
-      "estimated_prompt": 56546,
+      "estimated_prompt": 58742,
       "images": 30,
       "estimated_images": 12660,
       "max_tokens": 89000,
@@ -252,7 +252,7 @@
     },
     "first_attempt": {
       "calls": 2,
-      "estimated_prompt": 35624,
+      "estimated_prompt": 37018,
       "images": 15,
       "estimated_images": 6330,
       "max_tokens": 57000,
@@ -311,7 +311,7 @@
         "audit_failures": 0,
         "tokens": {
           "calls": 1,
-          "estimated_prompt": 20922,
+          "estimated_prompt": 21724,
           "images": 15,
           "estimated_images": 6330,
           "max_tokens": 32000,
@@ -329,5 +329,5 @@
     "audit_failures": 0
   },
   "original": "inputs/original_bill.html",
-  "original_sha256": "45d3de27aa032b72c6a9ad00224de16ad3f755a67dbdac437bc4752ddc458565"
+  "original_sha256": "5d2f7e8bc94301d1e3651c8ea0e4ad259c892c2b4246bd979f22b14b850adfb9"
 }
