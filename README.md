@@ -15,8 +15,9 @@ HCI 연구에서 **조건 C** 를 만드는 데 쓴다. 실험은 Flutter 더미
 
 **도구의 결과물은 화면설계서다. 재구성 HTML 은 검증용 속 재료다.** 모델이 만든 HTML 은
 검사기가 걸어 보고 판정하기 위한 것이고, 디자이너가 받는 것은 검사를 통과한 HTML 에서 뽑은
-설계서 — 화면마다 화면 ID, 회색 와이어프레임 그림, 그림 위의 번호 영역, 설명 표(영역별
-요소 · 누르면 가는 곳 · 조건별 상태) — 다. 색 · 모양은 디자이너의 몫이라 넣지 않는다.
+설계서 — 와이어플로 한 장, 기능-화면 표, 화면마다 정보칸 · 로우파이 와이어프레임 그림(회색
+상자와 글자) · 그림 위의 번호 영역 · 설명 표(영역별 요소 · 클릭 결과 주석 · 예외) — 다. 색 ·
+모양은 디자이너의 몫이라 넣지 않는다 (위치 · 크기 · 글자 크기 · 굵기는 설계 결정이라 남긴다).
 
 자세한 것은 [`docs/README.md`](docs/README.md) (운영 문서 전부) 와 아래 각 절의 링크.
 
@@ -145,6 +146,7 @@ uv pip install -r requirements.txt
 # 화면설계서 - 통과한 실행 하나에서
 .\.venv\Scripts\python.exe -m senior_ui.storyboard outputs\restructure_auto\<실행> --model gpt-6.1-sol
 .\.venv\Scripts\python.exe -m senior_ui.storyboard outputs\restructure_auto\<실행> --mock
+.\.venv\Scripts\python.exe -m senior_ui.storyboard outputs\restructure_auto\<실행> --regions-from <저장된 storyboard.json>
 
 # C 후보 고르기 - 과제마다 여러 번 돌린 실행에 순위를 매긴다
 .\.venv\Scripts\python.exe -m senior_ui.select --task transfer
