@@ -334,6 +334,77 @@ def test_same_screen_changes_read_as_annotations(detail, phrase):
     assert RD.same_phrase(detail) == phrase
 
 
+def rsheet(sid="scr-a", kind="visit", main=True, of=None, items=None, regions=None,
+           **kw):
+    """그리기 시험용 장 하나 (그림 없음)."""
+    items = items if items is not None else []
+    regions = regions if regions is not None else (
+        [{"no": 1, "name": "영역", "description": "", "box": [0, 0, 10, 10], "source": "mock",
+          "elements": [it["no"] for it in items]}] if items else [])
+    sh = {"id": sid, "screen": sid[4:].split("--")[0], "kind": kind, "main": main, "of": of,
+          "items": items, "regions": regions, "picture": None, "size": None,
+          "purpose": "목적입니다. 둘째 문장", "from_original": ["home"], "dialogs": [],
+          "conditions": [], "condition": None if main else "조건 글", "error": None}
+    sh.update(kw)
+    return sh
+
+
+def ritem(no, text, result, **kw):
+    it = {"no": no, "kind": "element", "action": "a-%s" % no, "text": text, "aria": None,
+          "value": text, "tag": "button", "box": [0, 0, 10, 10], "disabled": False,
+          "entrance": False, "result": result}
+    it.update(kw)
+    return it
+
+
+@pytest.mark.parametrize("kind,main,tag", [
+    ("error", False, "[오류]"), ("reveal", False, "[펼침]"), ("visit", False, "[다시 지남]"),
+    ("error", True, "[오류]"), ("visit", True, None)])
+def test_the_sheet_title_carries_the_condition_tag(kind, main, tag):
+    """조건별 화면(오류 상태 · 펼친 뒤)은 그대로 두고 장 제목에 꼬리표를 붙인다 (11-12b)."""
+    sid = "scr-a" if main else "scr-a--x"
+    sh = rsheet(sid, kind=kind, main=main, of=None if main else "scr-a")
+    page = RD.render_sheet(sh, {sid, "scr-a"}, {sid: sh})
+    assert RD.sheet_tag(sh) == (tag.strip("[]") if tag else None)
+    for t in ("[오류]", "[펼침]", "[다시 지남]"):
+        assert (t in page) == (t == tag), t
+
+
+def test_a_disabled_control_is_marked_as_an_exception():
+    """꺼진 버튼은 도구가 확인한 예외다 - "예외: 비활성"."""
+    sh = rsheet(items=[ritem("e1", "다음", {"kind": "disabled"}, disabled=True),
+                       ritem("e2", "이전", {"kind": "none"})])
+    page = RD.render_sheet(sh, {"scr-a"}, {"scr-a": sh})
+    assert page.count("예외: 비활성") == 1
+    li = [l for l in page.split("<li>") if "예외: 비활성" in l][0]
+    assert "&#x27;다음&#x27;" in li and "비활성 (이 상태에서는 누를 수 없음)" in li
+
+
+def test_an_empty_state_is_marked_only_when_the_region_answer_says_so():
+    """빈 상태는 글자로 판정하지 않는다 - 영역 묶기 답의 표시(empty_state)가 있을 때만
+    "예외: 빈 화면"."""
+    items = [ritem("e1", "등록된 계좌가 없습니다", {"kind": "none"})]
+    plain = rsheet(items=items)
+    assert "예외: 빈 화면" not in RD.render_sheet(plain, {"scr-a"}, {"scr-a": plain})
+    flagged = rsheet(items=items, regions=[
+        {"no": 1, "name": "빈 목록", "description": "", "box": [0, 0, 10, 10],
+         "source": "model", "elements": ["e1"], "empty": True}])
+    page = RD.render_sheet(flagged, {"scr-a"}, {"scr-a": flagged})
+    assert page.count("예외: 빈 화면") == 1 and "모델 설명" in page
+
+
+def test_the_region_answer_may_flag_an_empty_state():
+    sh = [sheet()]
+    ans = {"sheets": [{"id": "scr-a", "regions": [
+        {"no": 1, "name": "목록", "elements": ["e1", "e2"], "description": "d",
+         "empty_state": True},
+        {"no": 2, "name": "아래", "elements": ["e3"], "description": "d", "empty_state": "yes"}]}]}
+    assert R.check(ans, sh) == []
+    out, _ = R.settle_regions(ans, sh, "model")
+    assert out["scr-a"][0]["empty"] is True and "empty" not in out["scr-a"][1]
+    assert "empty_state" in R.build_prompt(sh)
+
+
 def test_result_text_links_to_the_sheet():
     it = {"kind": "element", "result": {"kind": "screen", "to": "b", "to_id": "scr-b"}}
     assert RD.result_text(it, True, {"scr-b"}) == '클릭 시 → <a href="#scr-b">[scr-b]</a> 이동'

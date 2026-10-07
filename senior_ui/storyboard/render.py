@@ -3,7 +3,9 @@ r"""storyboard.json 하나로 설계서(index.html)를 그린다. 그림 말고�
 한 장 = 가로 A4. 맨 앞장(과제 · 화면 순서 · 변경 목록 · 진단 요약 · 실행 정보) 다음에
 화면마다 한 장 - 왼쪽은 와이어프레임 그림 위에 영역 테두리와 번호(굵게)와 요소
 번호(가늘게), 오른쪽은 화면 ID · 화면 목적 · 영역 표 · 조건별 화면 링크. 조건별
-화면은 그 화면 뒤에 같은 모양으로 온다.
+화면은 그 화면 뒤에 같은 모양으로 오고, 장 제목에 [오류] · [펼침] · [다시 지남] 꼬리표가
+붙는다. 예외 상황은 영역 표에 적는다 - 꺼진 버튼은 "예외: 비활성" (도구 확인), 빈 상태
+안내는 영역 묶기 답이 표시한 것만 "예외: 빈 화면" (모델 설명, 글자로 판정하지 않는다).
 
 스크롤되는 화면은 그림이 길다. 한 장에 들도록 그림을 여러 단으로 잘라 나란히 놓는다
 (layout - 가장 크게 보이는 단 수를 고른다). 영역 테두리는 단마다 잘려 그려지고 번호는
@@ -27,6 +29,7 @@ MAX_SLICES = 6
 
 SOURCE_LABEL = {"tool": "도구 확인", "model": "모델 설명", "mock": "mock",
                 "tool_group": "도구 묶음"}
+TAG = {"error": "오류", "reveal": "펼침", "visit": "다시 지남"}
 
 
 def esc(s):
@@ -57,6 +60,13 @@ def item_label(it):
                                       " · ".join(vals[:3]), " …" if len(vals) > 3 else "")
     t = it.get("text") or it.get("aria") or it["action"]
     return "'%s'" % t
+
+
+def sheet_tag(sh):
+    """장 제목의 꼬리표 - 오류 · 펼침 · 다시 지남. 본 장(정답 경로)은 없다."""
+    if sh.get("kind") == "visit":
+        return None if sh.get("main") else TAG["visit"]
+    return TAG.get(sh.get("kind"))
 
 
 # --------------------------------------------------------------------------- #
@@ -181,6 +191,11 @@ th { background: var(--soft); font-weight: 600; white-space: nowrap; }
   border: 1px solid currentColor; margin-left: 4px; white-space: nowrap; vertical-align: 1px; }
 .src.tool { color: #1864ab; } .src.model { color: #862e9c; } .src.mock { color: #5c5f66; }
 .src.tool_group { color: #a61e4d; }
+.tag { display: inline-block; font: 700 10px/1.3 sans-serif; padding: 0 4px; margin-left: 4px;
+  border: 1px solid currentColor; border-radius: 2px; vertical-align: 2px; white-space: nowrap; }
+.tag.error { color: #c92a2a; } .tag.reveal { color: #5f3dc4; } .tag.visit { color: #495057; }
+.ex { display: inline-block; font-size: 9px; font-weight: 700; padding: 0 3px; margin-right: 3px;
+  background: #fff4e6; color: #a6420e; border: 1px solid #f0b37e; white-space: nowrap; }
 .flow { margin: 0; padding-left: 18px; }
 .flow li { margin: 2px 0; }
 .how { color: var(--muted); }
@@ -218,6 +233,11 @@ th { background: var(--soft); font-weight: 600; white-space: nowrap; }
 def _src(source):
     key = source if source in SOURCE_LABEL else "tool"
     return '<span class="src %s">%s</span>' % (key, SOURCE_LABEL[key])
+
+
+def _tag(sh):
+    t = sheet_tag(sh)
+    return ('<span class="tag %s">[%s]</span>' % (esc(sh["kind"]), esc(t))) if t else ""
 
 
 def _how(how, flow_sheet_ids):
@@ -361,20 +381,21 @@ def render_cover(data, ids):
 
     out.append("<h2>장 목록</h2><ul class=\"flow\">")
     for s in data["sheets"]:
-        out.append("<li>%s%s</li>" % (_link(s["id"], ids),
-                                      " — %s" % esc(s["condition"]) if s.get("condition")
-                                      else " — %s" % esc(s.get("purpose") or "")))
+        out.append("<li>%s%s%s</li>" % (_link(s["id"], ids), _tag(s),
+                                        " — %s" % esc(s["condition"]) if s.get("condition")
+                                        else " — %s" % esc(s.get("purpose") or "")))
     out.append("</ul></section>")
     return "\n".join(out)
 
 
 def render_picture(sh):
     if not sh.get("picture") or not sh.get("size"):
-        return ('<div class="pic"><div class="pic-head">%s</div><p class="warn">그림 없음 - %s'
-                "</p></div>" % (esc(sh["id"]), esc(sh.get("error") or "걷지 못했다")))
+        return ('<div class="pic"><div class="pic-head">%s%s</div><p class="warn">그림 없음 - '
+                "%s</p></div>" % (esc(sh["id"]), _tag(sh), esc(sh.get("error") or "걷지 못했다")))
     w, h = sh["size"]
     k, s, slice_h = layout(w, h)
-    out = ['<div class="pic"><div class="pic-head">%s</div><div class="slices">' % esc(sh["id"])]
+    out = ['<div class="pic"><div class="pic-head">%s%s</div><div class="slices">'
+           % (esc(sh["id"]), _tag(sh))]
     for i in range(k):
         y0, y1 = i * slice_h, min(h, (i + 1) * slice_h)
         out.append('<div class="slice" style="width:%.1fpx;height:%.1fpx">'
@@ -420,7 +441,7 @@ def render_sheet(sh, ids, sheets_by_id):
            '<div class="spec">']
     of = (' <span class="of">조건별 화면 · 본 화면 %s</span>' % _link(sh["of"], ids)
           if sh.get("of") else "")
-    out.append('<div class="sid">%s%s</div>' % (esc(sh["id"]), of))
+    out.append('<div class="sid">%s%s%s</div>' % (esc(sh["id"]), _tag(sh), of))
     if sh.get("condition"):
         out.append('<div class="cond">조건: %s</div>' % esc(sh["condition"]))
     out.append('<div class="purpose"><b>화면 목적</b> %s%s</div>' % (
@@ -440,11 +461,14 @@ def render_sheet(sh, ids, sheets_by_id):
                 it = items.get(e)
                 if not it:
                     continue
-                lis.append('<li><span class="e">%s</span>%s — %s</li>' % (
-                    esc(e), esc(item_label(it)), result_text(it, True, ids)))
-            out.append('<tr><td class="no">%d</td><td class="nm"><b>%s</b>'
+                ex = ('<span class="ex">예외: 비활성</span>'
+                      if (it.get("result") or {}).get("kind") == "disabled" else "")
+                lis.append('<li><span class="e">%s</span>%s — %s%s</li>' % (
+                    esc(e), esc(item_label(it)), ex, result_text(it, True, ids)))
+            empty = '<span class="ex">예외: 빈 화면</span>' if r.get("empty") else ""
+            out.append('<tr><td class="no">%d</td><td class="nm">%s<b>%s</b>'
                        '<span class="desc">%s</span> %s</td><td>%s<ul>%s</ul></td></tr>' % (
-                           r["no"], esc(r["name"]), esc(r.get("description")),
+                           r["no"], empty, esc(r["name"]), esc(r.get("description")),
                            _src(src_key), _src("tool"), "".join(lis)))
         out.append("</table>")
     else:
@@ -453,7 +477,8 @@ def render_sheet(sh, ids, sheets_by_id):
         out.append('<div class="conds"><b>조건별 화면</b><ul>')
         for cid in sh["conditions"]:
             c = sheets_by_id.get(cid) or {}
-            out.append("<li>%s — %s</li>" % (_link(cid, ids), esc(c.get("condition") or "")))
+            out.append("<li>%s%s — %s</li>" % (_link(cid, ids), _tag(c),
+                                              esc(c.get("condition") or "")))
         out.append("</ul></div>")
     out.append("</div></section>")
     return "\n".join(out)

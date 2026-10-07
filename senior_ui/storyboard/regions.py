@@ -10,6 +10,9 @@ r"""영역 묶기 - 실행마다 모델 호출 한 번 (어긋나면 한 번 더
 다시 보내지 않는다). 그래도 어긋나면 맞는 부분은 쓰고, 남은 요소를 "기타" 영역으로
 묶고, 그 사실을 남긴다 (`fallback`).
 
+영역이 빈 상태 안내이면 답에 그 표시(empty_state)를 더 쓸 수 있다 - 없어도 맞는 답이다.
+설계서는 모델이 표시한 것만 "예외: 빈 화면" 으로 적는다 (글자로 판정하지 않는다).
+
 `--mock` 은 정해진 답을 쓴다 (mock_answer) - 요소를 위에서 아래로 보며 세로로 크게
 벌어지는 곳에서 나눈다. 시험용 모드 둘이 더 있다: bad-then-good (첫 답이 어긋나고
 다시 물으면 맞는다), bad (두 번 다 어긋난다 → "기타").
@@ -56,6 +59,7 @@ INTRO = """이것은 은행 앱 화면설계서의 "영역" 을 나누는 일입
 - 누르면 어디로 가는지는 쓰지 마세요. 설계서의 동작 칸에는 도구가 직접 눌러 확인한 결과가 들어갑니다.
 - 모든 요소는 정확히 한 영역에 들어가야 합니다. 목록에 없는 번호를 쓰지 마세요. 요소가 없는 장은 regions 를 빈 목록으로 둡니다.
 - 영역 번호(no)는 장마다 1부터, 위에서 아래 순서로 매깁니다.
+- 영역이 빈 상태 안내(목록이 비어 있다는 글 같은 것)이면 그 영역에 "empty_state": true 를 붙입니다. 아니면 쓰지 않습니다.
 
 답은 JSON 한 덩어리만 씁니다:
 {"sheets": [{"id": "<장 id>", "regions": [{"no": 1, "name": "<영역 이름>", "elements": ["e1", "e2"], "description": "<한두 줄>"}]}]}
@@ -207,7 +211,8 @@ def settle_regions(answer, sheets, source):
                 continue
             regs.append({"name": str(reg.get("name") or "").strip() or "이름 없음",
                          "description": str(reg.get("description") or "").strip(),
-                         "elements": sorted(els, key=nos.index), "source": source})
+                         "elements": sorted(els, key=nos.index), "source": source,
+                         "empty": reg.get("empty_state") is True})
         left = [n for n in nos if n not in taken]
         if left:
             regs.append({"name": OTHER_NAME, "description": OTHER_DESC, "elements": left,
@@ -220,8 +225,10 @@ def settle_regions(answer, sheets, source):
         for i, r in enumerate(regs, 1):
             r["no"] = i
             r["box"] = _union([boxes[e] for e in r["elements"]])
-        out[sh["id"]] = [{"no": r["no"], "name": r["name"], "description": r["description"],
-                          "elements": r["elements"], "box": r["box"], "source": r["source"]}
+        out[sh["id"]] = [dict({"no": r["no"], "name": r["name"],
+                               "description": r["description"], "elements": r["elements"],
+                               "box": r["box"], "source": r["source"]},
+                              **({"empty": True} if r.get("empty") else {}))
                          for r in regs]
     return out, fallback
 
