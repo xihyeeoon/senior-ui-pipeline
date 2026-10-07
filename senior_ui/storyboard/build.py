@@ -3,12 +3,13 @@ r"""설계서 조립 - 실행 폴더를 읽고, 걷고, 영역을 묶고, storyb
 storyboard/ 에 남는 것:
 
   storyboard.json        설계서의 모든 내용 (그림 말고는 이것으로 다시 그린다 - render.py)
-  index.html             설계서 (가로 A4 화면마다 한 장, 맨 앞장)
+  index.html             설계서 (가로 A4 - 맨 앞장 · 와이어플로 · 기능-화면 표 · 화면마다 한 장)
   storyboard.pdf         index.html 을 브라우저(Chromium)로 인쇄한 것
-  shots/<상태>.png       회색 와이어프레임 그림 (390px 폭, 2배 해상도)
+  shots/<상태>.png       로우파이 와이어프레임 그림 (390px 폭, 2배 해상도)
   shots/<상태>.marked.png 요소 번호를 얹은 그림 (모델에게 보낸 것, 1배)
-  wireframe.html         그림용 사본 - 최종 HTML 에 회색 덮개만 넣었다
+  wireframe.html         그림용 사본 - 최종 HTML 에 로우파이 덮개만 넣었다
   regions.prompt.txt · regions.response.txt (+ regions.retry.*)  영역 묶기 호출 기록
+  regions.from.json      --regions-from 으로 다시 쓴 저장된 설계서의 사본
   storyboard.log         한 줄씩 무엇을 했는지
 
 실행 폴더의 다른 파일은 고치지 않는다.
@@ -21,10 +22,11 @@ import shutil
 import time
 
 from senior_ui import config
-from senior_ui.audit.flow import visit_keys
+from senior_ui.audit.flow import load_flow, visit_keys
 from senior_ui.audit.inputs import judged_flow, read_flow
 from senior_ui.devserver import ensure_server
 
+from . import features as F
 from . import regions as R
 from . import render
 from . import walk as W
@@ -32,7 +34,15 @@ from .run import head_commit, load_run, original_fingerprint
 
 OUT_DIR = "storyboard"
 JSON_NAME = "storyboard.json"
-SCHEMA = 1
+# --regions-from 으로 다시 쓴 저장된 설계서의 사본 (원래 파일이 이 폴더 안에 있었으면
+# 지워지므로, 읽은 것을 그대로 남긴다)
+REUSED_NAME = "regions.from.json"
+# 2: 장마다 화면 이름(title · name · name_source)과 경로(path), 원본 걷기(original) ·
+#    기능-화면 표(features) (11-12b). 기능-화면 표의 선택지 · 숫자판을 값으로 찾으며
+#    original.choices 가 더해졌다 (11-12c)
+SCHEMA = 2
+# 화면 이름이 없을 때 쓰는 계획의 화면 목적 앞부분의 길이
+NAME_CHARS = 20
 
 # 한 줄로 보는 행 - 위쪽 끝이 이만큼 안에 있으면 같은 줄로 보고 왼쪽부터 번호를 매긴다.
 ROW_TOLERANCE = 6
@@ -244,7 +254,48 @@ def assemble(run, flow, states, walked, groups):
     flow_info = flow_order(run, flow, states, sheets, by_key)
     for sh in ordered:
         sh["condition"] = condition_text(sh, by_key[sh["state"]], run, sheets, flow_info)
+        sh["path"] = path_of(by_key[sh["state"]], flow, sheets)
     return ordered, flow_info
+
+
+def path_of(state, flow, sheets):
+    """그 장에 이르는 경로 - 정답 경로의 걸음마다의 장 id, 그 상태의 방문까지. 조건별
+    상태(오류 · 펼친 뒤)는 그 끝에 제 장을 붙인다. 같은 장이 잇달아 오면 하나로."""
+    visits = visit_keys(flow.get("steps") or [])
+    upto = visits.index(state["visit"]) if state["visit"] in visits else -1
+    out = []
+    for v in visits[:upto + 1]:
+        sh = sheets.get("visit:%s" % v)
+        if sh and (not out or out[-1] != sh["id"]):
+            out.append(sh["id"])
+    if state["kind"] != "visit":
+        out.append(sheets[state["key"]]["id"])
+    return out
+
+
+def purpose_head(purpose, limit=NAME_CHARS):
+    """계획의 화면 목적 앞부분 - 첫 문장, 길면 limit 자에서 자른다."""
+    if not purpose:
+        return None
+    text = " ".join(str(purpose).split())
+    first = re.split(r"(?<=[.!?。])\s+", text)[0].rstrip(".。 ")
+    return first if len(first) <= limit else first[:limit - 1].rstrip() + "…"
+
+
+def name_sheets(sheets):
+    """장마다 화면 이름. 영역 묶기의 화면 이름(그 장, 없으면 본 장의 것)이 있으면 그것
+    (출처 model), 없으면 계획의 화면 목적 앞부분 (plan), 그것도 없으면 화면 이름 (screen)."""
+    by_id = {s["id"]: s for s in sheets}
+    for sh in sheets:
+        parent = by_id.get(sh.get("of")) or {}
+        title = sh.get("title") or parent.get("title")
+        head = purpose_head(sh.get("purpose"))
+        if title:
+            sh["name"], sh["name_source"] = title, "model"
+        elif head:
+            sh["name"], sh["name_source"] = head, "plan"
+        else:
+            sh["name"], sh["name_source"] = sh.get("screen") or sh["id"], "screen"
 
 
 def rel_shot(path):
@@ -399,8 +450,9 @@ def public(sheets):
 
 
 def inspect(build_url, wire_url, flow, groups, shots_dir, log=print,
-            concurrency=W.CONCURRENCY):
-    """걷기만 - 상태들과 걸은 결과. 단위 시험이 작은 HTML 로 이것을 부른다."""
+            concurrency=W.CONCURRENCY, original=None):
+    """걷기만 - 상태들과 걸은 결과. 단위 시험이 작은 HTML 로 이것을 부른다.
+    original = (원본 URL, 원본 흐름) 이면 원본도 한 번 걷는다 (walked["original"])."""
     states = W.states_of(flow)
     for st in states:
         st["file_id"] = safe(st["key"].replace(":", "-"))
@@ -430,20 +482,26 @@ def inspect(build_url, wire_url, flow, groups, shots_dir, log=print,
         return [(it["no"], target_of(it)) for it in items]
 
     walked = W.walk(build_url, wire_url, flow, states, shots_dir, number, selectors_for,
-                    targets_for, log=log, concurrency=concurrency)
+                    targets_for, log=log, concurrency=concurrency, original=original)
     return states, walked
 
 
 def make(run_dir, port=config.AUTO_PORT, model=None, mock=None, log_echo=True,
-         pdf=True, reasoning_effort=None, concurrency=W.CONCURRENCY):
+         pdf=True, reasoning_effort=None, concurrency=W.CONCURRENCY, regions_from=None):
     """실행 폴더 하나의 설계서. 돌려주는 것은 `(code, storyboard_or_reason)`.
 
     0 = 만들었다, 1 = 만들었지만 영역 묶기를 모델로 하지 못했다 (화면마다 "기타"),
-    2 = 만들 수 없는 실행이다 (load_run 의 NotReady) - 아무것도 쓰지 않는다."""
+    2 = 만들 수 없는 실행이다 (load_run 의 NotReady) - 아무것도 쓰지 않는다.
+
+    regions_from 은 저장된 설계서(storyboard.json)다. 주면 영역 묶기를 부르지 않고 그
+    영역 답을 쓴다 - 요소 번호가 이번 걷기와 다르면 R.ReuseMismatch. 그 파일이 이
+    실행의 storyboard/ 안에 있어도 되도록 폴더를 지우기 전에 읽고, 사본(regions.from.json)
+    을 새 폴더에 남긴다."""
     run = load_run(run_dir)                     # NotReady 는 부르는 쪽이 받는다
     if not config.inside_root(run["dir"]):
         raise R.CannotRun("실행 폴더가 저장소 밖이다 (%s) - 서버가 그 파일을 주지 못한다"
                           % run["dir"])
+    saved = R.read_saved(regions_from) if regions_from else None
     out = os.path.join(run["dir"], OUT_DIR)
     if os.path.isdir(out):
         shutil.rmtree(out)
@@ -452,6 +510,11 @@ def make(run_dir, port=config.AUTO_PORT, model=None, mock=None, log_echo=True,
     t0 = time.time()
     log("실행 %s · 과제 %s · 최종 시도 %s" % (run["name"], run["task"],
                                           (run["final"] or {}).get("attempt")))
+    if saved is not None:
+        with io.open(os.path.join(out, REUSED_NAME), "w", encoding="utf-8",
+                     newline="\n") as f:
+            json.dump(saved, f, ensure_ascii=False, indent=1)
+        log("저장된 영역 답: %s (사본 %s)" % (regions_from, REUSED_NAME))
     html = io.open(run["html"], encoding="utf-8").read()
     wire_path = os.path.join(out, "wireframe.html")
     with io.open(wire_path, "w", encoding="utf-8", newline="\n") as f:
@@ -471,9 +534,12 @@ def make(run_dir, port=config.AUTO_PORT, model=None, mock=None, log_echo=True,
         rel = lambda p: os.path.relpath(p, config.ROOT).replace(os.sep, "/")
         build_url = "%s/%s" % (base, rel(run["html"]))
         wire_url = "%s/%s" % (base, rel(wire_path))
+        orig_rel = run["task_def"]["original"]
+        orig_flow = load_flow(None, task=run["task"])
         states, walked = inspect(build_url, wire_url, flow, groups,
                                  os.path.join(out, "shots"), log=log,
-                                 concurrency=concurrency)
+                                 concurrency=concurrency,
+                                 original=("%s/%s" % (base, orig_rel), orig_flow))
         sheets, flow_info = assemble(run, flow, states, walked, groups)
         front = front_matter(run, run.get("plan_data"), run.get("diagnosis_data"))
         log("장 %d (본 장 %d) · 항목 %d · 누르기 %d번 · 그림 %.1f초 · 누르기 %.1f초"
@@ -481,8 +547,27 @@ def make(run_dir, port=config.AUTO_PORT, model=None, mock=None, log_echo=True,
                sum(len(s["items"]) for s in sheets), walked.get("click_count", 0),
                walked["seconds"].get("pictures", 0), walked["seconds"].get("clicks", 0)))
 
-        call = R.group(sheets, model=model, mock=mock, out_dir=out, log=log,
-                       reasoning_effort=reasoning_effort)
+        if saved is not None:
+            try:
+                call = R.reuse(sheets, saved, regions_from, log=log)
+            except R.ReuseMismatch as e:
+                log("만들지 않았다 - %s" % e)
+                raise R.ReuseMismatch("%s - 읽은 설계서의 사본: %s"
+                                      % (e, os.path.join(out, REUSED_NAME)))
+        else:
+            call = R.group(sheets, model=model, mock=mock, out_dir=out, log=log,
+                           reasoning_effort=reasoning_effort)
+        name_sheets(sheets)
+        survey = walked.get("original") or {}
+        where = F.where_in_original(survey)
+        # 원본의 무리마다 값 - 기능-화면 표가 이 값으로 장을 찾는다 (이름이 아니라)
+        values = {a: (survey.get("choices") or {}).get(a) or [] for a in groups}
+        table = F.matrix(sheets, flow_info, groups, metrics.get("choice_groups_original"),
+                         (run["task_def"].get("entrances") or {}).get("items"),
+                         _task_errors(run["task"]), where, values)
+        if table["missing"]:
+            log("기능-화면 표: 어느 장에서도 보지 못한 줄 %d - %s"
+                % (len(table["missing"]), ", ".join(table["missing"])))
         data = {
             "schema": SCHEMA,
             "generated": {"at": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -492,6 +577,12 @@ def make(run_dir, port=config.AUTO_PORT, model=None, mock=None, log_echo=True,
                                       "total": None}},
             **front,
             "flow": flow_info,
+            "original": {"html": orig_rel,
+                         "steps": [{"visit": st["visit"], "lit": st["lit"]}
+                                   for st in survey.get("steps") or []],
+                         "error": survey.get("error"), "where": where,
+                         "choices": values},
+            "features": table,
             "choice_groups": groups,
             "counts": {"sheets": len(sheets),
                        "main_sheets": sum(1 for s in sheets if s["main"]),

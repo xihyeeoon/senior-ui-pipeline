@@ -4,7 +4,8 @@ r"""화면설계서 (python -m senior_ui.storyboard <실행 폴더>).
 재구성 · 검사 · 고르기는 건드리지 않는다.
 
   run.py      실행 폴더 읽기 - 통과했는지, 최종 HTML · 흐름 명세 · 계획 · 진단 · 검사 결과
-  walk.py     브라우저 - 상태마다 다시 걷기, 회색 덮개 그림, 요소 모으기, 눌러 보기
+  walk.py     브라우저 - 상태마다 다시 걷기, 로우파이 덮개 그림, 요소 모으기, 눌러 보기
+  features.py 기능-화면 표 - "기능은 줄이지 않는다" 의 확인표 (장마다 보인 요소 · 흐름 명세)
   regions.py  영역 묶기 - 모델 호출 한 번 (어긋나면 한 번 다시), mock, 검사, "기타"
   render.py   storyboard.json 하나로 index.html 을 그린다 · 브라우저 인쇄로 PDF
   build.py    위를 차례로 부르고 storyboard/ 에 쓴다

@@ -10,9 +10,18 @@ r"""영역 묶기 - 실행마다 모델 호출 한 번 (어긋나면 한 번 더
 다시 보내지 않는다). 그래도 어긋나면 맞는 부분은 쓰고, 남은 요소를 "기타" 영역으로
 묶고, 그 사실을 남긴다 (`fallback`).
 
+답에는 장마다 화면 이름(name)과, 영역이 빈 상태 안내이면 그 표시(empty_state)를 더
+쓸 수 있다 - 둘 다 없어도 맞는 답이다. 설계서는 화면 이름이 없으면 계획의 화면 목적
+앞부분을 쓰고, 빈 상태는 모델이 표시한 것만 "예외: 빈 화면" 으로 적는다 (글자로
+판정하지 않는다).
+
 `--mock` 은 정해진 답을 쓴다 (mock_answer) - 요소를 위에서 아래로 보며 세로로 크게
 벌어지는 곳에서 나눈다. 시험용 모드 둘이 더 있다: bad-then-good (첫 답이 어긋나고
 다시 물으면 맞는다), bad (두 번 다 어긋난다 → "기타").
+
+`--regions-from` 은 저장된 설계서(storyboard.json)의 영역 답을 그대로 쓴다 (reuse) -
+모델을 부르지 않는다. 장마다 요소 번호가 이번 걷기와 같을 때만 쓰고, 다르면
+ReuseMismatch 로 멈춘다.
 """
 import io
 import json
@@ -45,6 +54,14 @@ class CannotRun(Exception):
     """설계서를 만들 수 없다 - 실행이 아니라 도구 쪽 사정 (서버 · 폴더)."""
 
 
+class ReuseMismatch(Exception):
+    """저장된 영역 답을 쓸 수 없다 - 요소 번호가 이번 걷기와 다르다. 메시지가 이유다."""
+
+
+# 모델이 쓴 화면 이름의 상한 (넘으면 버리고 계획의 화면 목적을 쓴다)
+TITLE_CHARS = 40
+
+
 # --------------------------------------------------------------------------- #
 # 프롬프트
 # --------------------------------------------------------------------------- #
@@ -56,9 +73,11 @@ INTRO = """이것은 은행 앱 화면설계서의 "영역" 을 나누는 일입
 - 누르면 어디로 가는지는 쓰지 마세요. 설계서의 동작 칸에는 도구가 직접 눌러 확인한 결과가 들어갑니다.
 - 모든 요소는 정확히 한 영역에 들어가야 합니다. 목록에 없는 번호를 쓰지 마세요. 요소가 없는 장은 regions 를 빈 목록으로 둡니다.
 - 영역 번호(no)는 장마다 1부터, 위에서 아래 순서로 매깁니다.
+- 장마다 화면 이름(name)을 짧게 씁니다 (예: "받는 사람 고르기"). 장 id 를 그대로 옮기지 마세요.
+- 영역이 빈 상태 안내(목록이 비어 있다는 글 같은 것)이면 그 영역에 "empty_state": true 를 붙입니다. 아니면 쓰지 않습니다.
 
 답은 JSON 한 덩어리만 씁니다:
-{"sheets": [{"id": "<장 id>", "regions": [{"no": 1, "name": "<영역 이름>", "elements": ["e1", "e2"], "description": "<한두 줄>"}]}]}
+{"sheets": [{"id": "<장 id>", "name": "<화면 이름>", "regions": [{"no": 1, "name": "<영역 이름>", "elements": ["e1", "e2"], "description": "<한두 줄>"}]}]}
 """
 
 RETRY_INTRO = """앞의 답에 문제가 있습니다. 아래 문제를 고쳐 **전체 답을 다시** JSON 한 덩어리로 쓰세요. 다른 규칙은 처음과 같습니다 — 모든 요소가 정확히 한 영역에, 목록에 없는 번호는 쓰지 않고, 누르면 어디로 가는지는 쓰지 않습니다.
@@ -207,7 +226,9 @@ def settle_regions(answer, sheets, source):
                 continue
             regs.append({"name": str(reg.get("name") or "").strip() or "이름 없음",
                          "description": str(reg.get("description") or "").strip(),
-                         "elements": sorted(els, key=nos.index), "source": source})
+                         "elements": sorted(els, key=nos.index),
+                         "source": reg.get("_source") or source,
+                         "empty": reg.get("empty_state") is True})
         left = [n for n in nos if n not in taken]
         if left:
             regs.append({"name": OTHER_NAME, "description": OTHER_DESC, "elements": left,
@@ -220,10 +241,25 @@ def settle_regions(answer, sheets, source):
         for i, r in enumerate(regs, 1):
             r["no"] = i
             r["box"] = _union([boxes[e] for e in r["elements"]])
-        out[sh["id"]] = [{"no": r["no"], "name": r["name"], "description": r["description"],
-                          "elements": r["elements"], "box": r["box"], "source": r["source"]}
+        out[sh["id"]] = [dict({"no": r["no"], "name": r["name"],
+                               "description": r["description"], "elements": r["elements"],
+                               "box": r["box"], "source": r["source"]},
+                              **({"empty": True} if r.get("empty") else {}))
                          for r in regs]
     return out, fallback
+
+
+def titles_of(answer):
+    """답에서 장마다 화면 이름 `{장 id: 이름}`. 없거나 글이 아니거나 길면 뺀다."""
+    out = {}
+    for row in (answer or {}).get("sheets") or []:
+        if not isinstance(row, dict) or not isinstance(row.get("id"), str):
+            continue
+        name = row.get("name")
+        if isinstance(name, str) and name.strip() and len(name.strip()) <= TITLE_CHARS \
+                and row["id"] not in out:
+            out[row["id"]] = " ".join(name.split())
+    return out
 
 
 def _union(boxes):
@@ -297,6 +333,7 @@ def group(sheets, model=None, mock=None, out_dir=".", log=print, reasoning_effor
     if not todo:
         for sh in sheets:
             sh["regions"] = []
+            sh["title"] = None
         return rec
     prompt = build_prompt(todo)
     images = images_of(todo, out_dir)
@@ -378,8 +415,10 @@ def group(sheets, model=None, mock=None, out_dir=".", log=print, reasoning_effor
     if fallback:
         log("영역 묶기: 어긋난 채 끝났다 - %s 의 남은 요소를 '%s' 로 묶었다"
             % (", ".join(sorted(fallback)), OTHER_NAME))
+    titles = titles_of(answer)
     for sh in sheets:
         sh["regions"] = settled.get(sh["id"], [])
+        sh["title"] = titles.get(sh["id"])
     return rec
 
 
@@ -389,3 +428,92 @@ def retry_prompt(sheets, previous, problems):
             + "\n\n## 앞의 답\n" + (previous or "(없음)")
             + "\n\n## 장 (처음과 같다)\n\n" + "\n\n".join(sheet_block(sh) for sh in sheets)
             + "\n")
+
+
+# --------------------------------------------------------------------------- #
+# 저장된 영역 답 다시 쓰기 (--regions-from)
+# --------------------------------------------------------------------------- #
+def read_saved(path):
+    """저장된 설계서(storyboard.json)를 읽는다. 못 읽으면 ReuseMismatch."""
+    try:
+        with io.open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError) as e:
+        raise ReuseMismatch("저장된 설계서를 읽지 못했다 (%s): %s" % (path, e))
+    if not isinstance(data, dict) or not isinstance(data.get("sheets"), list):
+        raise ReuseMismatch("저장된 설계서에 sheets 가 없다 (%s)" % path)
+    return data
+
+
+def _numbering(sh):
+    return [(it.get("no"), it.get("kind"), it.get("action")) for it in sh.get("items") or []]
+
+
+def _say(row):
+    if not row:
+        return "없음"
+    return "%s %s '%s'" % (row[0], "무리" if row[1] == "group" else "요소", row[2])
+
+
+def reuse_problems(saved, sheets):
+    """저장된 설계서의 요소 번호가 이번 걷기와 같은가. `[다른 점]` - 비면 쓸 수 있다.
+
+    요소가 있는 장의 목록이 같고, 장마다 번호 · 종류(요소 / 무리) · data-action 이
+    차례대로 같아야 한다. 글자나 위치는 보지 않는다 (같은 요소의 글이 바뀔 수 있다)."""
+    old = {sh.get("id"): sh for sh in saved.get("sheets") or []
+           if isinstance(sh, dict) and sh.get("items")}
+    new = {sh["id"]: sh for sh in sheets if sh["items"]}
+    problems = ["저장된 답에 %s 장이 없다" % sid for sid in new if sid not in old]
+    problems += ["저장된 답의 %s 장이 이번에는 없다" % sid for sid in old if sid not in new]
+    for sid in new:
+        if sid not in old:
+            continue
+        a, b = _numbering(old[sid]), _numbering(new[sid])
+        if a == b:
+            continue
+        diff = next((i for i, (x, y) in enumerate(zip(a, b)) if x != y), min(len(a), len(b)))
+        problems.append("%s 의 요소가 다르다 - 저장된 답 %d개 · 이번 %d개, 처음 다른 곳: "
+                        "저장된 답 %s / 이번 %s"
+                        % (sid, len(a), len(b), _say(a[diff] if diff < len(a) else None),
+                           _say(b[diff] if diff < len(b) else None)))
+    return problems
+
+
+def reuse(sheets, saved, path, log=print):
+    """저장된 설계서의 영역 답을 그대로 sheets 에 넣고 호출 기록을 돌려준다. 모델은
+    부르지 않는다. 요소 번호가 다르면 ReuseMismatch (아무것도 넣지 않는다).
+
+    영역의 출처 꼬리표(모델 설명 · mock · 도구 묶음)와 화면 이름은 저장된 답의 것을
+    그대로 둔다. 영역 테두리는 이번 요소 위치로 다시 잰다."""
+    problems = reuse_problems(saved, sheets)
+    if problems:
+        raise ReuseMismatch("저장된 영역 답의 요소 번호가 이번 걷기와 다르다 - %s%s"
+                            % (" · ".join(problems[:5]),
+                               " (외 %d건)" % (len(problems) - 5) if len(problems) > 5
+                               else ""))
+    old_call = saved.get("regions_call") or {}
+    answer = {"sheets": []}
+    for sh in saved.get("sheets") or []:
+        if not isinstance(sh, dict):
+            continue
+        answer["sheets"].append({
+            "id": sh.get("id"), "name": sh.get("title"),
+            "regions": [{"no": r.get("no"), "name": r.get("name"),
+                         "description": r.get("description"), "elements": r.get("elements"),
+                         "empty_state": bool(r.get("empty")), "_source": r.get("source")}
+                        for r in sh.get("regions") or [] if isinstance(r, dict)]})
+    todo = [sh for sh in sheets if sh["items"]]
+    settled, fallback = settle_regions(answer, todo, "model")
+    titles = titles_of(answer)
+    for sh in sheets:
+        sh["regions"] = settled.get(sh["id"], [])
+        sh["title"] = titles.get(sh["id"])
+    log("영역 묶기: 저장된 영역 답을 그대로 썼다 - %s (그때 %s, 모델은 부르지 않았다)"
+        % (path, "mock %s" % old_call.get("mock") if old_call.get("mock")
+           else old_call.get("model")))
+    return {"model": old_call.get("model"), "mock": old_call.get("mock"),
+            "reused": {"path": path, "run": (saved.get("run") or {}).get("id"),
+                       "at": (saved.get("generated") or {}).get("at"),
+                       "cost_usd": old_call.get("cost_usd")},
+            "calls": [], "problems": [], "fallback": fallback, "cost_usd": 0.0,
+            "error": None, "reasoning_effort": old_call.get("reasoning_effort")}

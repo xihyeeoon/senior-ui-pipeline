@@ -6,14 +6,19 @@ r"""화면설계서 - 검사를 통과한 재구성 실행 하나에서 디자�
 Usage:
   python -m senior_ui.storyboard outputs/restructure_auto/<실행> --model gpt-6.1-sol
   python -m senior_ui.storyboard outputs/restructure_auto/<실행> --mock
+  python -m senior_ui.storyboard outputs/restructure_auto/<실행>
+      --regions-from outputs/restructure_auto/<실행>/storyboard/storyboard.json
 
 --model 은 영역 묶기 호출의 모델이다 (주지 않으면 config.DEFAULT_MODEL). 키는 재구성
 루프와 같이 환경 변수 또는 .envs 의 OPENAI_API_KEY 에서 읽는다. --mock 은 모델을
 부르지 않고 정해진 영역 답을 쓴다 (키도 읽지 않는다). --mock 뒤의 모드는 시험용이다
-(bad-then-good · bad - regions.MOCK_MODES).
+(bad-then-good · bad - regions.MOCK_MODES). --regions-from 은 저장된 설계서의 영역 답을
+그대로 쓰고 모델을 부르지 않는다 (요소 번호가 같을 때만 - 다르면 만들지 않고 이유).
+이미 실제 모델로 만든 설계서를 새 형식으로 다시 뽑을 때 쓴다.
 
 Exit: 0 = 만들었다, 1 = 만들었지만 영역 묶기 모델을 부르지 못해 화면마다 "기타" 로
-묶었다, 2 = 만들지 않았다 (통과하지 못한 실행 · 실행 폴더가 아님 · 서버 · 브라우저).
+묶었다, 2 = 만들지 않았다 (통과하지 못한 실행 · 실행 폴더가 아님 · 저장된 영역 답의 요소 번호가
+다름 · 서버 · 브라우저).
 """
 import argparse
 import sys
@@ -35,6 +40,9 @@ def build_parser():
                      help="영역 묶기 모델 (기본 config.DEFAULT_MODEL = %s)" % config.DEFAULT_MODEL)
     who.add_argument("--mock", nargs="?", const=R.DEFAULT_MOCK, choices=R.MOCK_MODES,
                      default=None, help="모델을 부르지 않고 정해진 영역 답을 쓴다")
+    who.add_argument("--regions-from", default=None, metavar="STORYBOARD_JSON",
+                     help="저장된 설계서(storyboard.json)의 영역 답을 그대로 쓴다 - 모델을 "
+                          "부르지 않는다. 요소 번호가 같을 때만")
     ap.add_argument("--reasoning-effort", default=None,
                     help="추론형 모델의 노력 (기본 config.DEFAULT_REASONING_EFFORT)")
     ap.add_argument("--port", type=int, default=config.AUTO_PORT,
@@ -52,8 +60,12 @@ def main(argv=None):
     try:
         code, data = make(args.run_dir, port=args.port, model=args.model, mock=args.mock,
                           pdf=not args.no_pdf, reasoning_effort=args.reasoning_effort,
-                          concurrency=args.concurrency or W.CONCURRENCY)
+                          concurrency=args.concurrency or W.CONCURRENCY,
+                          regions_from=args.regions_from)
     except NotReady as e:
+        print("storyboard: 만들지 않았다 - %s" % e, file=sys.stderr)
+        return 2
+    except R.ReuseMismatch as e:
         print("storyboard: 만들지 않았다 - %s" % e, file=sys.stderr)
         return 2
     except (R.CannotRun, RuntimeError) as e:
@@ -68,7 +80,8 @@ def main(argv=None):
     c = data["counts"]
     print("storyboard: 장 %d (화면 %d) · 항목 %d · 누르기 %d번 · 영역 묶기 %s · 종료 %d"
           % (c["sheets"], c["main_sheets"], c["items"], c["clicks"],
-             "mock" if args.mock else (data["regions_call"].get("error") or "모델"), code))
+             "mock" if args.mock else "저장된 답" if args.regions_from else
+             (data["regions_call"].get("error") or "모델"), code))
     return code
 
 
