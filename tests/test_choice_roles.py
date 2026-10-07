@@ -287,12 +287,17 @@ def bill_verdicts(server):
 def test_saved_bill_replies_keep_every_menu_item(bill_verdicts, n):
     """처음: 시도 2 는 I 셋(menu-chip 60 · menu-item 6 · menu-tab 1), 시도 3 · 4 는 I 둘
     (menu-chip 60 · menu-item 6). not_choices 뒤(11-9): 셋 다 I 하나 (menu-item 6 -
-    SINGLE_ITEM_SECTIONS). 무리를 원본이 정한 뒤(11-9b): fatal 이 없다."""
+    SINGLE_ITEM_SECTIONS). 무리를 원본이 정한 뒤(11-9b): fatal 이 없다.
+
+    펼친 뒤 실제로 보이는가(11-8 2-3): 시도 2 는 메뉴 항목 289개 중 286개가 문서 안에는
+    있지만 걷는 동안 어느 상태에서도 보이지 않는다 (접힌 분류 안, 흐름 명세에 reveal 이
+    없다) - I 하나 (not_selectable 286). 값은 모두 남아 있다. 시도 3 · 4 는 그대로다."""
     v = bill_verdicts[n]
     assert v["problems"] == []
     report = v["report"]
-    assert report["fatal"] == [], [(f["check"], f.get("action"), f.get("missing"))
-                                   for f in report["fatal"]]
+    got = [(f["check"], f.get("action"), len(f.get("not_selectable") or []))
+           for f in report["fatal"]]
+    assert got == ([("I", "menu-item", 286)] if n == 2 else []), got
     m = report["metrics"]
     assert m["choice_values_missing"] == {}
     assert set(m["choice_groups_original"]) == {"menu-item", "pick-bill", "pw"}
@@ -300,5 +305,5 @@ def test_saved_bill_replies_keep_every_menu_item(bill_verdicts, n):
         "menu-chip": {"values": 60, "reason": BILL_DECLARED["menu-chip"]},
         "menu-tab": {"values": 7, "reason": BILL_DECLARED["menu-tab"]}}
     assert m["choice_values_kept"]["menu-item"] == 289
-    assert m["choice_values_selectable"]["menu-item"] == 289
+    assert m["choice_values_selectable"]["menu-item"] == (3 if n == 2 else 289)
     assert not [w for w in report["warning"] if "menu-tab" in w["detail"]]

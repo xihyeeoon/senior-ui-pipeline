@@ -1350,10 +1350,13 @@ def test_storyboard_of_the_mock_pass_run(server):
     quick = rows["quick"]
     assert (quick["found"], quick["values"], quick["actions"]) == (4, 4, ["amt-set"])
     assert marks(quick) == {"scr-amount": "●"}       # 금액 화면에 바로 보인다
-    # 은행 목록은 "다른 은행이에요" 뒤에만 있고, 흐름은 그 상태에 머물지 않는다 (오류 경로도
-    # 은행을 고른 뒤의 확인 화면이 장이다) - 어느 장에서도 값을 찾지 못한다
+    # 은행 목록은 "다른 은행이에요" 뒤에만 있다. mock 답의 흐름 명세가 그 조작을 reveal 로
+    # 적은 뒤로(11-8 2-3 - 검사 I 가 보이는 값을 센다) 그 펼친 뒤 장에서 찾는다 (그림 한
+    # 장에 든 7개 - ○)
     bank = rows["pick-bank"]
-    assert bank["cells"] == {} and bank["found"] == 0 and "choices:pick-bank" in         data["features"]["missing"]
+    assert marks(bank) == {"scr-bank": "○"} and bank["found"] == 7
+    assert bank["cells"]["scr-bank"]["sheets"] == ["scr-bank--reveal-pick-bank"]
+    assert "choices:pick-bank" not in data["features"]["missing"]
     # 비밀번호 숫자판도 "비밀번호로 확인" 뒤에만 있다. 0~9 는 계좌번호 · 금액 숫자판의 값과
     # 같지만, 생성물의 data-action 하나는 원본 무리 하나에만 센다 (11-12d) - 보지 못함
     pw = rows["pw"]

@@ -355,6 +355,15 @@ def missing_of(report):
     return report["metrics"]["choice_values_missing"].get("quick", [])
 
 
+def missing_fatals(report):
+    """값이 없는 fatal 만 - 보이지 않는 값의 fatal(not_selectable, 11-8 2-3)은 따로 센다."""
+    return [f for f in fatals(report, "I") if f.get("missing")]
+
+
+def hidden_fatals(report):
+    return [f for f in fatals(report, "I") if f.get("not_selectable")]
+
+
 def test_a_short_value_inside_another_word_is_not_present(i_substring):
     """'all' 은 class="small" 안에 있다. 거기 있다고 고를 수 있는 것은 아니다.
 
@@ -372,11 +381,20 @@ def test_values_kept_only_as_an_attribute_or_an_array_element_still_count(i_subs
     assert i_substring["metrics"]["choice_groups_original"] == {"quick": 5}
 
 
+def test_a_value_kept_only_in_a_script_array_is_not_selectable(i_substring):
+    """11-8 2-3: 남아 있는 것과 고를 수 있는 것은 다르다. 70000 은 스크립트 배열에만 있고
+    걷는 동안 어느 상태에서도 누를 수 있게 보이지 않는다 - 원본에서는 보이던 값이므로 fatal
+    이다 (전에는 경고). 50000 은 버튼으로 보인다."""
+    assert i_substring["metrics"]["choice_values_selectable"] == {"quick": 1}
+    assert [f["not_selectable"] for f in hidden_fatals(i_substring)] == [["70000"]]
+
+
 def test_the_missing_choices_are_one_fatal(i_substring):
-    hit = fatals(i_substring, "I")
+    hit = missing_fatals(i_substring)
     assert len(hit) == 1, details(i_substring["fatal"])
     assert hit[0]["missing"] == ["10000", "100000", "all"]
-    assert len(i_substring["fatal"]) == 1, details(i_substring["fatal"])
+    # 그 밖의 fatal 은 보이지 않는 70000 하나뿐이다 (11-8 2-3)
+    assert len(i_substring["fatal"]) == 2, details(i_substring["fatal"])
 
 
 def test_a_declared_removal_is_not_fatal(i_declared):
@@ -386,7 +404,7 @@ def test_a_declared_removal_is_not_fatal(i_declared):
     누락으로 세졌다 - 고칠 수 없는 fatal 이 재생성 루프에 계속 남는다.
     """
     assert missing_of(i_declared) == ["10000", "100000"]
-    hit = fatals(i_declared, "I")
+    hit = missing_fatals(i_declared)
     assert len(hit) == 1, details(i_declared["fatal"])
     assert hit[0]["missing"] == ["10000", "100000"]
 
@@ -406,7 +424,7 @@ def test_an_undeclared_removal_is_still_fatal(i_declared):
     """선언한 것만 빠진다. 10000 · 100000 은 선언하지 않았으므로 그대로 fatal
     이다 - 선언이 검사를 끄는 장치가 되어서는 안 된다."""
     assert i_declared["passed"] is False
-    assert fatals(i_declared, "I")[0]["missing"] == ["10000", "100000"]
+    assert missing_fatals(i_declared)[0]["missing"] == ["10000", "100000"]
 
 
 def test_declaring_a_removal_does_not_change_the_kept_count(i_declared):
