@@ -969,6 +969,18 @@ def test_unit_same_screen_change(unit):
 
 
 @pytest.mark.browser
+def test_unit_the_cover_marks_do_not_leak_into_element_values(unit):
+    """요소의 값은 data-action 말고 첫 data-* 값, 없으면 글자다. 덮개가 붙이는 표시
+    (data-sb-fill="solid" 같은 것)는 값이 아니다 - 그림 페이지에서 요소를 모으므로
+    섞이면 모든 버튼의 값이 'solid' 가 된다 (11-12b 기준값 비교에서 잡았다)."""
+    items = unit["states"]["visit:a"]["items"]
+    assert items["go-b"]["value"] == "다음 화면" and items["noop"]["value"] == "아무것도 안 함"
+    assert items["pick"]["value"] == "3"
+    assert not any(it["value"].startswith("solid") for st in unit["states"].values()
+                   for it in st["items"].values())
+
+
+@pytest.mark.browser
 def test_unit_nothing_happens(unit):
     assert result(unit, "noop") == {"kind": "none"}
 

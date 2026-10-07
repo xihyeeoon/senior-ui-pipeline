@@ -285,9 +285,10 @@ ELEMENTS = r"""() => {
     }
     return false;
   };
+  // 덮개의 표시(data-sb-*)는 값이 아니다 - 이 조각은 그림 페이지에서 돈다
   const valueOf = el => {
     for (const k in el.dataset) {
-      if (k === 'action') continue;
+      if (k === 'action' || /^sb[A-Z]/.test(k)) continue;
       const x = (el.dataset[k] || '').trim();
       if (x) return x;
     }
@@ -444,9 +445,9 @@ LOCATE = r"""(want) => {
   document.querySelectorAll('[data-sb-target]').forEach(e => e.removeAttribute('data-sb-target'));
   const all = Array.from(document.querySelectorAll('[data-action]'));
   const shown = e => { const r = e.getBoundingClientRect(); return r.width >= 1 && r.height >= 1; };
-  const valueOf = el => {
+  const valueOf = el => {                       // ELEMENTS 의 것과 같은 규칙
     for (const k in el.dataset) {
-      if (k === 'action') continue;
+      if (k === 'action' || /^sb[A-Z]/.test(k)) continue;
       const x = (el.dataset[k] || '').trim();
       if (x) return x;
     }
