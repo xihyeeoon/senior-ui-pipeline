@@ -942,6 +942,20 @@ def revise_plan(r, n, p, entry, refl, problems):
     return []
 
 
+def note_accepted(r, entry, accepted):
+    """답 가르기가 바꿔 받은 것을 남긴다 (reply.parse_reply 의 accepted).
+
+    지금은 배열로 온 reveal 하나다 - 원소의 action 을 키로 한 객체로 받는다
+    (reply.accept_reveal_list). 흐름 명세 파일(attempt_N.flow.json)은 받은 모양이고,
+    모델이 쓴 그대로는 답 전문(.response.txt)에 있다."""
+    if "reveal_from_list" not in accepted or "reveal_from_list" in entry:
+        return
+    names = accepted["reveal_from_list"]
+    entry["reveal_from_list"] = list(names)
+    r.log("flow: reveal 이 배열로 왔다 - 원소의 action 을 키로 한 객체로 받았다 (%s)"
+          % (", ".join(names) or "빈 배열 → 빈 객체"))
+
+
 def check_reply(r, p, entry, reply, n=None):
     """답을 HTML + 흐름 명세로 가르고 모양을 본다. 파일로도 남긴다.
 
@@ -951,11 +965,13 @@ def check_reply(r, p, entry, reply, n=None):
     if r.asked_reflection:
         refl, refl_problems = note_reflection(r, p, entry, reply["text"])
     truncated = reply["finish_reason"] == "length"
+    accepted = {}
     try:
         if truncated:
             raise ValueError("답이 길이 제한에서 잘렸다 (finish_reason=length). "
                              "코드 블록 두 개만, 군더더기 없이 출력하라")
-        html, flow, flow_text = parse_reply(reply["text"])
+        html, flow, flow_text = parse_reply(reply["text"], accepted)
+        note_accepted(r, entry, accepted)
         flow.setdefault("name", "auto")
         note_model_claims(r, entry, flow)
         # 마지막 화면을 다른 이름으로 지어 놓고 완료 칸만 "done" 으로 적은 흐름.
@@ -970,6 +986,7 @@ def check_reply(r, p, entry, reply, n=None):
         problems = validate_flow(flow, html, r.errors, r.task["done_expect"])
     except FlowShape as e:
         # 타입이 틀린 흐름 명세. 답의 형식 문제(PARSE)가 아니라 FLOW 문제다.
+        note_accepted(r, entry, accepted)
         r.log("flow: %d problem(s): %s" % (len(e.problems),
                                            " | ".join(e.problems)[:300]))
         entry.update(stage="flow", passed=False, fatal=len(e.problems))

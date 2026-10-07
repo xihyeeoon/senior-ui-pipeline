@@ -231,7 +231,7 @@
       },
       "refine": {
         "calls": 1,
-        "estimated_prompt": 20766,
+        "estimated_prompt": 20922,
         "images": 15,
         "estimated_images": 6330,
         "max_tokens": 32000,
@@ -242,7 +242,7 @@
     },
     "total": {
       "calls": 3,
-      "estimated_prompt": 56390,
+      "estimated_prompt": 56546,
       "images": 30,
       "estimated_images": 12660,
       "max_tokens": 89000,
@@ -311,7 +311,7 @@
         "audit_failures": 0,
         "tokens": {
           "calls": 1,
-          "estimated_prompt": 20766,
+          "estimated_prompt": 20922,
           "images": 15,
           "estimated_images": 6330,
           "max_tokens": 32000,

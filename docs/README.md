@@ -134,6 +134,11 @@ fatal 을 (검사 · 대상 · 개수)로 줄여 — 대상은 fatal 의 `action
   명세. 다듬은 빌드는 검사를 다시 통과해야 최종이 되고, 떨어지면 한 번 고치게 한 뒤
   그래도 떨어지면 직전에 통과한 빌드로 되돌린다. 기록은 `attempt_N.critique.json` ·
   `summary.refine` · 설명서의 "보고 다듬기" 절과 맨 위 "최종:" 줄.
+  흐름 명세의 `reveal` 모양은 생성 · 다듬기 프롬프트가 같은 블록(`<!-- REVEAL -->`)을
+  쓴다. 형식 검사는 배열로 온 `reveal` 을 원소마다 `action` 이 있으면
+  `{action: {"at", "do"}}` 로 한 번 바꿔 받고(빈 배열은 빈 객체), 그 사실을 시도 기록의
+  `reveal_from_list` 와 `run.log` 에 남긴다 — 예비 실행 두 번의 다듬기 답이 모두
+  `"reveal": []` 로 형식에서 떨어져 고치기 호출을 한 번씩 더 썼다 (11-9).
 
 호출마다 보낸 그림 수와 그림 토큰 어림이 `summary` 의 `calls[].images` ·
 `estimated_images` (실제 실행이면 `measured_images` 도)에 남고, 한 호출에 그림이

@@ -4,7 +4,8 @@
 보낸다. 실행은 `python -m senior_ui.restructure --model gpt-6.1-sol` 이다. 프롬프트는
 `<!-- 이름 -->` 과 `<!-- /이름 -->` 으로 감싼 블록들뿐이고, 그 밖은 사람용 메모다:
 `PLAN_PROMPT` (진단·계획) · `PROMPT` (생성과 재시도) · `REFINE_PROMPT` (보고 다듬기) ·
-`CONTRACT` (셋이 함께 쓰는 기술 계약, `{{CONTRACT}}` 자리) · `REFLECT` (재시도의 반성 요청).
+`CONTRACT` (셋이 함께 쓰는 기술 계약, `{{CONTRACT}}` 자리) · `REVEAL` (생성 · 다듬기가 함께 쓰는
+흐름 명세 `reveal` 의 모양, `{{REVEAL}}` 자리) · `REFLECT` (재시도의 반성 요청).
 
 **출처 메모.** Run 1 (`outputs/restructured_transfer.html`) 은 대화에서 직접 지시해 만들었고
 그 문장은 저장소에 남아 있지 않다. 아래 본문은 `restructure-runs.md` 에 인용된 브리프
@@ -198,11 +199,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   `{"repeat": n, "click": 선택자, "wait": 초}`, `{"wait": 초}` 중 하나.
 {{TASK_FLOW_VALUES}}{{TASK_FLOW_ERRORS}}
 {{TASK_FLOW_DONE}}
-- 눌러야 목록이 만들어지는 설계라면, 그 조작을 `reveal` 에
-  적는다: `"reveal": {"<선택지의 data-action>": {"at": "<steps 의 화면 이름>", "do": [{"click": "<선택자>"}]}}`.
-  `do` 의 항목은 `{"click": 선택자}` 하나뿐이다. 누를 것은 `at` 화면에 보이는 `data-action`
-  버튼이고, 누른 뒤에도 같은 화면이어야 한다. 검사기는 `at` 까지 간 뒤 `do` 를 하나씩 누르며
-  선택지를 모은다. 펼친 뒤에는 모든 값이 `data-action` 요소로 있어야 한다.
+{{REVEAL}}
 - `derived_from_original` 은 `false`.
 - 선택자는 네 HTML 에 있는 것만 쓴다. 검사기는 없는 선택자에서 멈춘다.
 
@@ -221,6 +218,20 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 {{ORIGINAL_HTML}}
 ```
 <!-- /PROMPT -->
+
+## 펼치기 조작의 모양 (생성 · 다듬기가 함께 쓴다)
+
+흐름 명세의 `reveal` 칸 설명. 생성 프롬프트 3절과 다듬기 프롬프트 2절이 이 블록 하나를 쓴다
+(`{{REVEAL}}`). 다듬기 프롬프트에 이 모양이 없던 동안, 예비 실행 두 번(20261006-215902 ·
+20261007-102041)의 다듬기 답이 모두 `"reveal": []` 을 적어 형식 검사에서 떨어졌다.
+
+<!-- REVEAL -->
+- 눌러야 목록이 만들어지는 설계라면, 그 조작을 `reveal` 에
+  적는다: `"reveal": {"<선택지의 data-action>": {"at": "<steps 의 화면 이름>", "do": [{"click": "<선택자>"}]}}`.
+  `do` 의 항목은 `{"click": 선택자}` 하나뿐이다. 누를 것은 `at` 화면에 보이는 `data-action`
+  버튼이고, 누른 뒤에도 같은 화면이어야 한다. 검사기는 `at` 까지 간 뒤 `do` 를 하나씩 누르며
+  선택지를 모은다. 펼친 뒤에는 모든 값이 `data-action` 요소로 있어야 한다.
+<!-- /REVEAL -->
 
 ## 기술 계약 (생성 · 재시도 · 다듬기가 함께 쓴다)
 
@@ -304,6 +315,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   다듬을 것이 없다고 보면 `done` 을 `true` 로 둔다.
 - 흐름 명세는 지금 것을 고쳐 낸다. 형식은 같다 (`steps` · `expect` · `error_paths` ·
   `reveal`). 바꾼 선택자가 있으면 흐름 명세도 맞춰 고쳐라.
+{{REVEAL}}
 {{TASK_FLOW_VALUES}}{{TASK_FLOW_ERRORS}}
 
 ## 3. 지켜야 할 기술 계약 (검사기가 이 형식으로 화면을 몰고 다닌다)

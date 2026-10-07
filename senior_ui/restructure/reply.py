@@ -118,9 +118,32 @@ def shape_problems(flow):
     return problems
 
 
-def parse_reply(text):
+def accept_reveal_list(flow):
+    """배열로 온 reveal 을 `{action: {"at", "do"}}` 로 한 번 바꿔 받는다. 흐름 명세를
+    제자리에서 바꾼다. 바꿨으면 action 이름들(빈 배열이면 []), 아니면 None.
+
+    예비 실행 두 번(20261006-215902 · 20261007-102041)의 다듬기 답이 모두
+    `"reveal": []` 을 적어 형식에서 떨어졌다 - 다듬기 프롬프트에 reveal 의 모양이
+    없었다. 원소마다 이름(action)이 있으면 무엇을 펼치는지 분명하므로 받는다. 이름이
+    없거나 · 글이 아니거나 · 겹치거나 · 객체가 아닌 원소가 있으면 그대로 두고
+    shape_problems 가 문제로 센다. 받았다는 사실은 부르는 쪽이 남긴다."""
+    reveal = flow.get("reveal")
+    if not isinstance(reveal, list):
+        return None
+    names = [x.get("action") if isinstance(x, dict) else None for x in reveal]
+    if not all(isinstance(n, str) and n for n in names) or len(set(names)) != len(names):
+        return None
+    flow["reveal"] = {x["action"]: {k: v for k, v in x.items() if k != "action"}
+                      for x in reveal}
+    return names
+
+
+def parse_reply(text, accepted=None):
     """Last ```html``` block and last ```json``` block. Raises ValueError with
-    a message meant to go straight into the next prompt."""
+    a message meant to go straight into the next prompt.
+
+    모양 검사 전에 배열로 온 reveal 을 한 번 객체로 바꿔 받는다 (accept_reveal_list).
+    `accepted` 에 dict 를 주면 받아 준 것을 적는다 - `{"reveal_from_list": [이름…]}`."""
     blocks = {}
     for kind, body in FENCE.findall(text):
         blocks[kind] = body
@@ -135,6 +158,10 @@ def parse_reply(text):
         flow = json.loads(blocks["json"])
     except json.JSONDecodeError as e:
         raise ValueError("흐름 명세가 JSON 으로 읽히지 않는다: %s" % e)
+    if isinstance(flow, dict):
+        names = accept_reveal_list(flow)
+        if names is not None and accepted is not None:
+            accepted["reveal_from_list"] = names
     # 타입 검사는 여기서 끝낸다. 아래 어디에서도 모양을 다시 의심하지 않는다.
     problems = shape_problems(flow)
     if problems:

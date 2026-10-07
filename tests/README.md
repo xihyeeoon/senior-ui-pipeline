@@ -55,8 +55,9 @@
 | `test_tool_failures.py` | 도구 버그(종료 2 · internal_error) · 바깥 문제(인프라 예산) · 시작 실패(cannot_start) · CLI 의 `--out` · 인프라 예산의 출처 |
 | `test_real_runs_browser.py` | `fixtures/real_runs/` 의 첫 답을 루프의 길과 CLI 로 실제로 판정한다 (sol 은 K fatal 1 - 입구 31개 중 2개만 남았다 · astra 는 J 1 · K 1). `-m browser` |
 | `test_stuck.py` | 같은 실패의 되풀이 = 막힘(stuck, 11-9) - fatal 의 (검사 · 대상 · 개수), 같은 실패 두 번이면 남은 예산을 쓰지 않고 멈춤, 바뀐 실패 · 개수만 다른 실패 · 사이에 낀 형식 실패는 계속, 통과한 실행은 막히지 않음, 고르기 도구가 stuck 을 통과 못 한 실행으로 봄. 모델도 브라우저도 부르지 않는다 (mock 은 `test_drive` 의 `mock_stuck`) |
+| `test_refine_reveal.py` | 다듬기의 reveal 형식 (11-9) - 생성 · 다듬기 프롬프트가 같은 reveal 모양 블록을 쓰는지, 형식 검사가 배열로 온 reveal 을 (원소마다 action 이 있으면) 한 번 객체로 바꿔 받고 그 사실을 남기는지, 예비 실행 두 번의 다듬기 답(`fixtures/real_runs/refine_*`)이 형식 검사를 지나는지. 모델도 브라우저도 부르지 않는다 |
 | `test_choice_roles.py` | 선택지 아님 선언(과제 파일 `not_choices`, 11-9) - 과제 파일의 모양, 판정 입력이 붙이고 모델의 것은 버리는지, 검사 I 가 선언된 무리를 판정에서 빼고 `choice_groups_not_choices` 로 남기는지, 프롬프트 · 형식 검사가 그 무리만 받치는 `MENU_TABS` 의 참조를 요구하지 않는지, 설명서의 표. `-m browser` 에서는 저장된 공과금 답 셋(`fixtures/real_runs/bill_sol`)을 바뀐 검사기로 판정한다 (셋 다 I 하나 - 항목이 하나뿐인 분류의 메뉴 항목 6개) |
-| `fixtures/real_runs/` | 실제 실행의 답 그대로 (`sol` = `outputs/restructure_auto/20261006-124055`, `astra` = `20261006-124838`, `bill_sol` = `20261007-103023-bill` 의 시도 2 · 3 · 4). `attempt_N.response.txt` · 첫 계획(`plan.json`) · 도구가 넣은 선택지 데이터(`preserved.json`, `attempt_N.html` 의 블록) |
+| `fixtures/real_runs/` | 실제 실행의 답 그대로 (`sol` = `outputs/restructure_auto/20261006-124055`, `astra` = `20261006-124838`, `bill_sol` = `20261007-103023-bill` 의 시도 2 · 3 · 4, `refine_215902` · `refine_102041` = 두 실행의 다듬기 답 `refine.response.txt` 와 그때의 계획). `attempt_N.response.txt` · 첫 계획(`plan.json`) · 도구가 넣은 선택지 데이터(`preserved.json`, `attempt_N.html` 의 블록) |
 | `fake_openai.py` | `openai.OpenAI` 의 대역 (with_raw_response 의 헤더 · Responses · models.list · 429 · 400) |
 | `baseline/` | 기준값. 마지막 캡처 실행의 결과다 |
 | `fixtures/sessions/` | `session_report` 용 가짜 세션 4건 |

@@ -52,8 +52,11 @@ def _with_task(name, task=None):
     두면 과제의 규칙 한 덩이가 말없이 프롬프트에서 사라진다."""
     t = load_task(task)
     # 기술 계약은 생성 · 다듬기가 같은 블록을 쓴다 (CONTRACT). 계약 안에도 과제
-    # 칸({{TASK_RULES}})이 있으므로 칸을 채우기 전에 넣는다.
-    text = load_block(name).replace("{{CONTRACT}}", load_block("CONTRACT").rstrip("\n"))
+    # 칸({{TASK_RULES}})이 있으므로 칸을 채우기 전에 넣는다. 흐름 명세의 펼치기
+    # 조작(reveal) 모양도 두 프롬프트가 같은 블록이다 (REVEAL).
+    text = (load_block(name)
+            .replace("{{CONTRACT}}", load_block("CONTRACT").rstrip("\n"))
+            .replace("{{REVEAL}}", load_block("REVEAL").rstrip("\n")))
     text = text.replace("{{TASK}}", t["description"])
     parts = t.get("prompt") or {}
 
