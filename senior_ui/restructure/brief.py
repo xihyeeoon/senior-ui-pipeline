@@ -11,7 +11,8 @@ r"""통과한 실행마다 디자이너에게 넘길 변경 설명서(designer_b
     5. 사람이 따로 봐야 할 것                               (warning · 도구가 고친 것 ·
                                                             일부러 뺀 선택지)
     6. 스크린샷을 보고 무엇을 다듬었나                      (다듬기 회차마다 비평 ·
-                                                            바꾼 것 · 전후 스크린샷)
+                                                            바꾼 것 · 전후 스크린샷.
+                                                            끈 실행은 "다듬기 안 함" 한 줄)
 
 맨 위 한 줄은 최종 빌드가 어디서 왔는지다 - 생성인지 다듬기 몇 회차인지, 다듬기가
 실패해 되돌렸는지 (summary 의 refine.final_from · reverted).
@@ -92,8 +93,11 @@ def shot_pairs(before, after):
 
 
 def refine_section(refine, brief_dir):
-    """보고 다듬기 절. 다듬기 기록이 없으면 빈 목록."""
+    """보고 다듬기 절. 다듬기를 끈 실행(refine 0 - 11-8 부터 기본)은 한 줄이고, 다듬기
+    기록이 아예 없는 옛 실행은 빈 목록."""
     rounds = (refine or {}).get("rounds") or []
+    if not rounds and (refine or {}).get("budget") == 0:
+        return ["## 보고 다듬기", "", "다듬기 안 함 (refine 0)", ""]
     if not rounds:
         return []
     out = ["## 보고 다듬기", "",

@@ -208,24 +208,14 @@
         "prompt": null,
         "completion": null,
         "reasoning": null
-      },
-      "refine": {
-        "calls": 1,
-        "estimated_prompt": 20053,
-        "images": 11,
-        "estimated_images": 4642,
-        "max_tokens": 32000,
-        "prompt": null,
-        "completion": null,
-        "reasoning": null
       }
     },
     "total": {
-      "calls": 3,
-      "estimated_prompt": 55511,
-      "images": 26,
-      "estimated_images": 10972,
-      "max_tokens": 89000,
+      "calls": 2,
+      "estimated_prompt": 35458,
+      "images": 15,
+      "estimated_images": 6330,
+      "max_tokens": 57000,
       "prompt": null,
       "completion": null,
       "reasoning": null
@@ -253,10 +243,6 @@
       {
         "attempt": 1,
         "usd": null
-      },
-      {
-        "attempt": 2,
-        "usd": null
       }
     ],
     "total_usd": null,
@@ -268,40 +254,9 @@
     "original_images": 15
   },
   "refine": {
-    "budget": 2,
+    "budget": 0,
     "source": "config.DEFAULT_REFINE",
-    "rounds": [
-      {
-        "round": 1,
-        "attempt": 2,
-        "from_attempt": 1,
-        "images": 11,
-        "before_shots": "<run>/shots/attempt_1/see",
-        "after_shots": null,
-        "critique": "<run>/attempt_2.critique.json",
-        "issues": 0,
-        "keep": 1,
-        "done": true,
-        "passed": null,
-        "fix_attempt": null,
-        "fix_passed": null,
-        "became_final": false,
-        "stopped": "done",
-        "format_failures": 0,
-        "audit_failures": 0,
-        "tokens": {
-          "calls": 1,
-          "estimated_prompt": 20053,
-          "images": 11,
-          "estimated_images": 4642,
-          "max_tokens": 32000,
-          "prompt": null,
-          "completion": null,
-          "reasoning": null
-        },
-        "usd": null
-      }
-    ],
+    "rounds": [],
     "final_from": "generate",
     "final_label": "생성",
     "reverted": null,

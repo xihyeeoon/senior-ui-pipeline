@@ -196,7 +196,12 @@ IMAGE_WARN_COUNT = 40
 # 보고 다듬기 횟수 (--refine). 검사를 통과한 빌드의 스크린샷을 모델에게 보여 주고
 # 다듬게 하는 횟수다. 0 이면 끈다. 형식 · 검사 예산과 따로 센다
 # (restructure.loop.refine_choice).
-DEFAULT_REFINE = 2
+#
+# 기본은 0 (끔, 11-8). 2026-10-07 예비 실행 두 번에서 다듬기 전후 화면이 거의 같아
+# 기본으로 껐다 (20261006-215902: 비평 3건 중 1건 반영, 20261007-102041: 시도 1 과 3 이
+# 같음). --refine N 을 주면 전처럼 돈다 - 코드는 그대로 있다. 고르기 규칙
+# (flows/selection_rule.json 의 gates.budget.refine)도 같은 값이다.
+DEFAULT_REFINE = 0
 
 # 출력 길이 기본값 (completion 상한, 생각 토큰 포함). --max-tokens ·
 # --plan-max-tokens 를 주지 않으면 부르는 방식(restructure.model.profile_for)의

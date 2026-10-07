@@ -235,7 +235,7 @@
     "original_images": 15
   },
   "refine": {
-    "budget": 2,
+    "budget": 0,
     "source": "config.DEFAULT_REFINE",
     "rounds": [],
     "final_from": null,
