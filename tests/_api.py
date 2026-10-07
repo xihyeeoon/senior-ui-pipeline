@@ -43,6 +43,12 @@ from senior_ui import tasks as _tasks                        # noqa: E402
 from senior_ui.select import __main__ as _select_cli         # noqa: E402
 from senior_ui.select import collect as _select_collect      # noqa: E402
 from senior_ui.select import rule as _select_rule            # noqa: E402
+from senior_ui.storyboard import build as _sb_build          # noqa: E402
+from senior_ui.storyboard import walk as _sb_walk            # noqa: E402
+from senior_ui.storyboard import regions as _sb_regions      # noqa: E402
+from senior_ui.storyboard import render as _sb_render        # noqa: E402
+from senior_ui.storyboard import run as _sb_run              # noqa: E402
+from senior_ui.storyboard import __main__ as _sb_cli         # noqa: E402
 # ======================================================================= #
 
 # ---- senior_ui/audit (core.audit · drive.drive · flow.load_flow) ------- #
@@ -197,3 +203,13 @@ select_main = _select_cli.main
 select_collect = _select_collect.collect
 select_rule_module = _select_rule
 DEFAULT_SELECTION_RULE = _select_rule.DEFAULT_RULE
+
+# ---- senior_ui/storyboard (화면설계서) ---------------------------------- #
+# 걷기 · 영역 묶기 · 그리기 · 실행 폴더 읽기를 테스트가 하나씩 보므로 모듈째로 내보낸다.
+storyboard_build = _sb_build
+storyboard_walk = _sb_walk
+storyboard_regions = _sb_regions
+storyboard_render = _sb_render
+storyboard_run = _sb_run
+storyboard_main = _sb_cli.main
+storyboard_cli_parser = _sb_cli.build_parser

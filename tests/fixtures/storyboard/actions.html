@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>설계서 동작 확인</title>
+<style>
+body{margin:0;font:16px sans-serif;background:#fff}
+#phone{width:390px;height:844px;position:relative;overflow:hidden;background:#fff}
+.screen{position:absolute;inset:0;display:none;flex-direction:column}
+.screen.on{display:flex}
+.body{flex:1;overflow:auto;padding:8px}
+.bar{height:72px;flex:none;border-top:1px solid #ccc;display:flex;align-items:center;padding:0 8px}
+button{display:block;margin:6px 0;padding:10px;font-size:16px;color:#0b5ed7;background:#e7f1ff}
+.keys{display:flex;gap:6px}
+.keys button{margin:0;width:60px}
+.row{height:60px;border-bottom:1px solid #eee}
+.wrap{position:relative;display:inline-block}
+.lid{position:absolute;inset:0;background:#fff}
+.pic{width:80px;height:40px;background:url(nothing.png) #fa0}
+</style>
+</head>
+<body>
+<div id="phone">
+  <section class="screen on" data-screen="a">
+    <div class="body">
+      <button data-action="go-b" id="go-b">다음 화면</button>
+      <button data-action="show-note">메모 보기</button>
+      <p id="note" hidden>메모가 보입니다</p>
+      <button data-action="noop">아무것도 안 함</button>
+      <div class="keys">
+        <button data-action="pick" data-v="3">3</button>
+        <button data-action="pick" data-v="1">1</button>
+        <button data-action="pick" data-v="4">4</button>
+        <button data-action="pick" data-v="2">2</button>
+      </div>
+      <p id="picked"></p>
+      <button data-action="next" disabled>꺼진 다음</button>
+      <button data-action="oos-help" aria-label="도움말">?</button>
+      <div class="wrap"><button data-action="under">가려진 버튼</button><div class="lid"></div></div>
+      <img src="nothing.png" width="80" height="40" alt="그림 자리">
+      <div class="pic"></div>
+      <div class="row">줄 1</div><div class="row">줄 2</div><div class="row">줄 3</div>
+      <div class="row">줄 4</div><div class="row">줄 5</div><div class="row">줄 6</div>
+      <div class="row">줄 7</div><div class="row">줄 8</div><div class="row">줄 9</div>
+      <div class="row">줄 10</div><div class="row">줄 11</div><div class="row">줄 12</div>
+      <button data-action="bottom">맨 아래</button>
+    </div>
+    <div class="bar"><button data-action="later">늦게 넘어가기</button></div>
+  </section>
+  <section class="screen" data-screen="b">
+    <div class="body">
+      <button data-action="back-a">이전</button>
+      <button data-action="err">틀린 값 넣기</button>
+      <p id="err" hidden>값이 틀렸습니다</p>
+    </div>
+  </section>
+</div>
+<script>
+var cur = 'a';
+window.__screen = function () { return cur; };
+function go(n) {
+  document.querySelectorAll('.screen').forEach(function (s) {
+    s.classList.toggle('on', s.dataset.screen === n);
+  });
+  cur = n;
+}
+document.addEventListener('click', function (e) {
+  var t = e.target.closest('[data-action]');
+  if (!t) return;
+  var a = t.dataset.action;
+  if (a === 'go-b') go('b');
+  else if (a === 'back-a') go('a');
+  else if (a === 'show-note') document.getElementById('note').hidden = false;
+  else if (a === 'pick') document.getElementById('picked').textContent = '고른 값: ' + t.dataset.v;
+  else if (a === 'err') document.getElementById('err').hidden = false;
+  else if (a === 'later') setTimeout(function () { go('b'); }, 700);
+});
+</script>
+</body>
+</html>

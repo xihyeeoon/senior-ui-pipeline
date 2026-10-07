@@ -895,7 +895,7 @@ CLI_FILES = ["senior_ui/audit/__main__.py", "senior_ui/audit/report.py",
              "senior_ui/restructure/__main__.py", "senior_ui/collect_results.py",
              "senior_ui/experiment/report.py", "senior_ui/experiment/server.py",
              "senior_ui/viewer/build_index.py", "senior_ui/select/__main__.py",
-             "senior_ui/devserver.py"]
+             "senior_ui/devserver.py", "senior_ui/storyboard/__main__.py"]
 
 
 def test_every_outside_package_that_is_imported_is_in_requirements():
