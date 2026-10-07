@@ -79,7 +79,7 @@
       "calls": [
         {
           "stage": "plan",
-          "estimated_prompt": 19352,
+          "estimated_prompt": 19368,
           "method": "tiktoken:o200k_base(대체)",
           "max_tokens": 25000,
           "usage": null,
@@ -244,7 +244,7 @@
     "by_stage": {
       "plan": {
         "calls": 1,
-        "estimated_prompt": 19352,
+        "estimated_prompt": 19368,
         "images": 15,
         "estimated_images": 6330,
         "max_tokens": 25000,
@@ -275,7 +275,7 @@
     },
     "total": {
       "calls": 3,
-      "estimated_prompt": 61417,
+      "estimated_prompt": 61433,
       "images": 15,
       "estimated_images": 6330,
       "max_tokens": 89000,
@@ -285,7 +285,7 @@
     },
     "first_attempt": {
       "calls": 2,
-      "estimated_prompt": 34530,
+      "estimated_prompt": 34546,
       "images": 15,
       "estimated_images": 6330,
       "max_tokens": 57000,

@@ -59,6 +59,27 @@ def test_see_slices_every_scrolling_screen_from_the_top(server, tmp_path):
     assert os.path.exists(os.path.join(tmp_path, "audit_inner.png"))
 
 
+def test_the_original_walk_keeps_the_state_the_researcher_wrote(server, tmp_path):
+    """이체 원본을 재구성 루프처럼(see · 오류 경로까지) 걸으면 계좌 화면이 두 장이다 -
+    들어온 모습(account)과 입력란을 누른 뒤(account#2). 흐름 걸음의 state 는 그 걸음의
+    그림에만 남고, 원본 이름표에 붙는다 (11-11)."""
+    flow = _api.load_flow(None)
+    asyncio.run(_api.drive("%s/%s" % (C.BASE_URL, C.ORIGINAL_REL), flow,
+                           want_shots=str(tmp_path), see=True, errors=True))
+    index = json.load(open(os.path.join(tmp_path, "see", "index.json"), encoding="utf-8"))
+    visits = [i["visit"] for i in index]
+    assert visits.index("account#2") == visits.index("account") + 1
+    state = "키패드 열림 — 계좌번호 입력란을 누른 뒤"
+    assert [(i["visit"], i["state"]) for i in index if "state" in i] == [("account#2", state)]
+    loop = _api.loop_module
+    labels = [i["label"] for i in loop.see_images(str(tmp_path), loop.ORIGINAL_LABELS,
+                                                  ["wrong-account", "wrong-bank"])]
+    assert "원본 화면 account" in labels
+    assert "원본 화면 account#2 — " + state in labels
+    assert labels[-2:] == ["원본 오류 상태 wrong-account — 잘못된 값을 넣은 직후",
+                           "원본 오류 상태 wrong-bank — 잘못된 값을 넣은 직후"]
+
+
 def test_without_see_the_walk_takes_only_its_old_shots(server, tmp_path):
     drive(tmp_path)
     assert not os.path.exists(os.path.join(tmp_path, "see"))

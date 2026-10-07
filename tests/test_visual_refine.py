@@ -323,6 +323,49 @@ def test_see_images_labels_scroll_parts_and_error_states(tmp_path):
                    "원본 오류 상태 wrong-bank — 잘못된 값을 넣은 직후"]
 
 
+def test_original_labels_carry_the_state_the_researcher_wrote(tmp_path):
+    """흐름 걸음의 state(글자)는 see/index.json 에 남고, 원본 그림의 이름표에 방문
+    이름 바로 뒤로 붙는다 - 모델에게 가는 "전환" 정보다 (11-11). 스크롤 장 표시는
+    그 뒤다. state 가 없는 그림의 이름표는 전과 같다."""
+    shots = str(tmp_path)
+    for f in ("account.1.png", "account_2.1.png", "bank.1.png", "bank.2.png"):
+        make_png(os.path.join(shots, "see", f))
+    state = "키패드 열림 — 계좌번호 입력란을 누른 뒤"
+    index = [{"visit": "account", "file": "account.1.png", "part": 1, "parts": 1,
+              "offset": 0, "more_px": 0},
+             {"visit": "account#2", "file": "account_2.1.png", "part": 1, "parts": 1,
+              "offset": 0, "more_px": 0, "state": state},
+             {"visit": "bank", "file": "bank.1.png", "part": 1, "parts": 2,
+              "offset": 0, "more_px": 0, "state": "시트"},
+             {"visit": "bank", "file": "bank.2.png", "part": 2, "parts": 2,
+              "offset": 674, "more_px": 0, "state": "시트"}]
+    with open(os.path.join(shots, "see", "index.json"), "w", encoding="utf-8") as f:
+        json.dump(index, f, ensure_ascii=False)
+    got = [i["label"] for i in loop.see_images(shots, loop.ORIGINAL_LABELS)]
+    assert got == ["원본 화면 account",
+                   "원본 화면 account#2 — 키패드 열림 — 계좌번호 입력란을 누른 뒤",
+                   "원본 화면 bank — 시트 — 스크롤 1/2 (맨 위)",
+                   "원본 화면 bank — 시트 — 스크롤 2/2 (674px 내린 모습)"]
+    # state 는 원본 흐름(연구자)에서만 쓴다 - 생성물의 그림 이름표에는 붙이지 않는다
+    built = [i["label"] for i in loop.see_images(shots, loop.BUILD_LABELS)]
+    assert built == ["화면 account", "화면 account#2", "화면 bank — 스크롤 1/2 (맨 위)",
+                     "화면 bank — 스크롤 2/2 (674px 내린 모습)"]
+
+
+@pytest.mark.parametrize("state", ["키패드 열림", {"not": "text"}, ["x"], 3, ""])
+def test_the_model_flow_check_does_not_mind_a_state(state):
+    """모델이 쓰는 흐름 명세의 형식 검사는 state 를 몰라도 되고, 있어도(모양이 무엇이든)
+    문제 삼지 않는다."""
+    root = _api.ROOT
+    flow = json.load(open(os.path.join(root, "flows", "restructured.json"), encoding="utf-8"))
+    html = open(os.path.join(root, "results", "restructured_transfer.html"),
+                encoding="utf-8").read()
+    before = _api.validate_flow(json.loads(json.dumps(flow)), html)
+    flow["steps"][2]["state"] = state
+    assert _api.reply_module.shape_problems(flow) == []
+    assert _api.validate_flow(flow, html) == before
+
+
 # --------------------------------------------------------------------------- #
 # evidence_kind
 # --------------------------------------------------------------------------- #

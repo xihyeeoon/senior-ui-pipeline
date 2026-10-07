@@ -413,7 +413,7 @@ async def walk(page, flow, data, want_shots, url, see=False, original_groups=())
             await page.screenshot(path=os.path.join(
                 want_shots, "audit_%s.png" % SHOT_SAFE.sub("_", visit)))
             if see:
-                seen += await capture_see(page, want_shots, visit)
+                seen += await capture_see(page, want_shots, visit, step.get("state"))
                 write_see_index(want_shots, seen)
 
 
@@ -473,12 +473,17 @@ def see_parts(extra, client):
     return parts, step, more
 
 
-async def capture_see(page, folder, visit):
+async def capture_see(page, folder, visit, state=None):
     """켜진 화면을 맨 위부터 잘라 `folder/see/<방문>.<n>.png` 로 찍는다.
 
     돌려주는 것은 장마다 `{visit, file, part, parts, offset, more_px}`. 다 찍은
     뒤에는 스크롤 위치를 찍기 전으로 되돌린다 - 걷기의 다음 걸음이 보는 상태를
-    바꾸지 않는다."""
+    바꾸지 않는다.
+
+    `state` 는 그 걸음의 선택 칸 "state" - 연구자가 흐름에 적은 그 상태의 이름이다
+    ("키패드 열림 — 계좌번호 입력란을 누른 뒤"). 글자가 있으면 장마다 `state` 로
+    남긴다. 스크린샷 한 장은 무엇을 눌러 이 모습이 되었는지를 담지 못하므로, 상태
+    사이의 전환은 연구자가 흐름에 적는다 (docs/input-contract.md "입력 약속")."""
     out = os.path.join(folder, SEE_DIR)
     os.makedirs(out, exist_ok=True)
     m = await page.evaluate(SEE_MARK)
@@ -495,6 +500,8 @@ async def capture_see(page, folder, visit):
             await page.screenshot(path=os.path.join(out, name))
             items.append({"visit": visit, "file": name, "part": i + 1, "parts": parts,
                           "offset": y, "more_px": more if i == parts - 1 else 0})
+            if isinstance(state, str) and state.strip():
+                items[-1]["state"] = state.strip()
     finally:
         if m["extra"] > 0:
             await page.evaluate(SEE_SCROLL, m["top"])

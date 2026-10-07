@@ -148,6 +148,12 @@ fatal 을 (검사 · 대상 · 개수)로 줄여 — 대상은 fatal 의 `action
   진단·계획 호출에 그림으로 넣는다. 그림은 `shots/original/see/`, 기록은
   `attempt_1.plan_prompt.txt` 의 그림 줄. 진단마다 `evidence_kind`(screen · code · both)를
   적게 해 `summary.plan.evidence_kinds` 로 센다. `--see off` 는 전의 동작이다.
+  그림마다 이름표가 붙는다 — `원본 화면 <방문 이름>`, 흐름 걸음에 `state`(연구자가 적은
+  그 상태의 이름)가 있으면 그 글자를 잇는다: `원본 화면 account#2 — 키패드 열림 —
+  계좌번호 입력란을 누른 뒤`. 스크린샷 한 장은 무엇을 눌러 그 모습이 되었는지를 담지
+  못하므로 상태 사이의 전환은 원본 흐름에 적고, 이 이름표가 모델에게 가는 전환 정보다
+  (`see/index.json` 의 `state`, [`input-contract.md`](input-contract.md) 의 "입력
+  약속"). 모델이 쓴 흐름 명세의 `state` 는 쓰지 않는다 — 형식 검사도 그 칸을 보지 않는다.
 - **보고 다듬기** (`--refine N`, 기본 2, 0 이면 끔). 시도가 검사를 통과하면 그 빌드의
   스크린샷과 계획 · HTML · 흐름 명세를 주고 다듬게 한다. 답은 비평(json) → html → 흐름
   명세. 다듬은 빌드는 검사를 다시 통과해야 최종이 되고, 떨어지면 한 번 고치게 한 뒤

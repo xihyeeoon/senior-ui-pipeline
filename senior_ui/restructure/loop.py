@@ -137,16 +137,22 @@ def refine_choice(args):
 
 
 # 그림 이름표. 원본은 진단·계획 호출에, 빌드는 다듬기 호출에 들어간다.
-ORIGINAL_LABELS = {"screen": "원본 화면", "error": "원본 오류 상태"}
-BUILD_LABELS = {"screen": "화면", "error": "오류 상태"}
+#
+# `state` 는 흐름 걸음의 state(연구자가 적은 그 상태의 이름)를 이름표에 붙이는가다.
+# 원본에만 붙인다 - "원본 화면 account#2 — 키패드 열림 — 계좌번호 입력란을 누른 뒤".
+# 이 이름표가 모델에게 가는 "전환" 정보다 (docs/input-contract.md "입력 약속", 11-11).
+# 모델이 쓴 흐름 명세에 state 가 있어도 빌드 그림의 이름표에는 붙이지 않는다.
+ORIGINAL_LABELS = {"screen": "원본 화면", "error": "원본 오류 상태", "state": True}
+BUILD_LABELS = {"screen": "화면", "error": "오류 상태", "state": False}
 
 
 def see_images(shots, labels, error_ids=()):
     """찍어 둔 그림들을 `[{"label", "path"}]` 로. 화면은 see/index.json 순서,
     그 뒤에 오류 상태(audit_error_<id>.png, 과제의 오류 순서). 없는 것은 건너뛴다.
 
-    이름표에는 화면 이름과, 스크롤되는 화면이면 몇 번째 장인지와 몇 px 내린
-    모습인지를 적는다. 4장에서 끊긴 화면은 남은 높이도 적는다."""
+    이름표에는 화면 이름(방문 이름)과, 원본이면 그 걸음의 state, 스크롤되는 화면이면
+    몇 번째 장인지와 몇 px 내린 모습인지를 적는다. 4장에서 끊긴 화면은 남은 높이도
+    적는다."""
     if not shots:
         return []
     out = []
@@ -154,6 +160,8 @@ def see_images(shots, labels, error_ids=()):
     items = json.load(io.open(index, encoding="utf-8")) if os.path.exists(index) else []
     for it in items:
         label = "%s %s" % (labels["screen"], it["visit"])
+        if labels.get("state") and it.get("state"):
+            label += " — %s" % it["state"]
         if it["parts"] > 1:
             label += " — 스크롤 %d/%d (%s)" % (
                 it["part"], it["parts"],
