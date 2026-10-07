@@ -572,7 +572,7 @@ CHOICE_GROUPS = r"""
 
 # --- K: 과제 밖 입구 ------------------------------------------------------------
 # 과제 밖 입구(과제 파일의 entrances)는 원본의 data-action 이름(oos-*)으로 찾는다.
-# 이름마다 지금 누를 수 있게 보이는가(그려져 있고 disabled 가 아니다)와, 기록용으로
+# 이름마다 지금 누를 수 있게 보이는가(PRESSABLE - 아래)와, 기록용으로
 # 그 요소의 글자 · aria-label 을 모은다 - 글자는 판정에 쓰지 않는다 (11-7b).
 # 같은 이름이 여럿이면 보이는 것 하나를 고른다. 문서 전체를 보지만 숨은 화면 안의
 # 요소는 크기가 0 이라 보이지 않는 것이 된다 - 그 화면에 도착한 걸음에서 보인다.
@@ -585,18 +585,32 @@ CHOICE_GROUPS = r"""
 # 띠 안의 위치와 덮개에 가려진 것은 재지 않는다. 같은 이름이 여럿 보이면 덜 내려도 되는
 # 것을 고른다. 보이지 않는 요소는 null 이다.
 ENTRANCE_PREFIX = "oos-"
+
+# --- 누를 수 있게 보이는가 (검사 K 의 입구 · 검사 I 의 보이는 선택지가 함께 쓴다) -------
+# 그려져 있고(크기 >= 1x1), 자신이나 조상이 display · visibility · opacity 로 숨지 않았고,
+# disabled 가 아니다. 브라우저의 checkVisibility() 를 쓴다 - 닫힌 <details> 안의 요소는
+# display 도 크기도 멀쩡하지만(Chromium 은 그 안을 content-visibility 로 숨긴다) 보이지 않고,
+# 조상의 opacity:0 도 요소 자신의 계산값에는 나타나지 않는다. 그 둘을 놓치면 접어 둔
+# 입구가 펼치는 조작 없이 "보인다" 로 세였다 (11-8 - mock entrances-folded 가 reveal 없이도
+# 통과했다). checkVisibility 가 없는 브라우저는 요소 자신의 계산값만 본다 (전의 규칙).
+PRESSABLE = r"""
+  const pressable = e => {
+    if (e.disabled || e.getAttribute('aria-disabled') === 'true') return false;
+    const r = e.getBoundingClientRect();
+    if (r.width < 1 || r.height < 1) return false;
+    if (typeof e.checkVisibility === 'function')
+      return e.checkVisibility({checkOpacity: true, checkVisibilityCSS: true});
+    const cs = getComputedStyle(e);
+    return cs.display !== 'none' && cs.visibility !== 'hidden' && +cs.opacity !== 0;
+  };
+"""
+
 ENTRANCES = r"""
 () => {
   const out = {};
   const clean = s => (s || '').replace(/\s+/g, ' ').trim();
-  const shown = e => {
-    const cs = getComputedStyle(e);
-    if (cs.display === 'none' || cs.visibility === 'hidden') return false;
-    if (+cs.opacity === 0) return false;
-    if (e.disabled || e.getAttribute('aria-disabled') === 'true') return false;
-    const r = e.getBoundingClientRect();
-    return r.width >= 1 && r.height >= 1;
-  };
+  __PRESSABLE__
+  const shown = pressable;
   const docY = () => (document.scrollingElement || document.documentElement).scrollTop;
   /* el 을 담은, 지금 스크롤할 수 있는 조상들 */
   const scrollers = el => {
@@ -648,4 +662,4 @@ ENTRANCES = r"""
   });
   return out;
 }
-""".replace("__PREFIX__", ENTRANCE_PREFIX)
+""".replace("__PREFIX__", ENTRANCE_PREFIX).replace("__PRESSABLE__", PRESSABLE.strip())

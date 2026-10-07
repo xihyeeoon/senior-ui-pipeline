@@ -266,10 +266,11 @@ def final_audit(summary):
 
 
 @pytest.mark.browser
-@pytest.mark.parametrize("mode,reveal", [("pass", 0), ("entrances-reveal", 1)])
+@pytest.mark.parametrize("mode,reveal", [("pass", 0), ("entrances-reveal", 1),
+                                         ("entrances-folded", 1)])
 def test_a_mock_run_writes_the_distance_table(server, mode, reveal):
-    """mock 의 입구 블록은 첫 화면에 바로(pass), [다른 메뉴] 를 눌러야(reveal) 보인다.
-    원본은 모두 바로 보인다."""
+    """mock 의 입구 블록은 첫 화면에 바로(pass), [다른 메뉴] 를 눌러야(reveal), 접힌
+    <details> 를 펼쳐야(folded) 보인다. 원본은 모두 바로 보인다."""
     import capture_baseline as C
     C.ensure_mock_input()
     summary, code = C.run_mock(["--mock", mode, "--attempts", "1"])

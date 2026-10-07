@@ -353,3 +353,41 @@ def test_an_original_without_that_entrance_fails_even_if_the_word_remains(
         os.remove(os.path.join(ROOT, rel))
     assert missing(report) == [gone], report["fatal"]
     assert [x["check"] for x in report["fatal"]] == ["K"], report["fatal"]
+
+
+# 닫힌 <details> 안 · 조상이 opacity:0 · disabled - 누를 수 있게 보이지 않는다 (11-8,
+# probes.PRESSABLE). 전에는 요소 자신의 계산값만 보아 앞의 둘이 "보인다" 로 세였다 -
+# Chromium 은 닫힌 <details> 의 안을 display 가 아니라 content-visibility 로 숨긴다.
+VISIBILITY_PAGE = """<!doctype html><html lang="ko"><head><meta charset="utf-8"><style>
+.screen{display:none}.screen.on{display:block}</style></head><body><div id="phone">
+<section class="screen on" data-screen="home">
+<button data-action="oos-shown">보임</button>
+<details><summary data-action="more" id="more">더</summary>
+<button data-action="oos-folded">접힘</button></details>
+<span style="opacity:0"><button data-action="oos-faded">흐림</button></span>
+<button data-action="oos-off" disabled>꺼짐</button>
+</section></div><script>
+window.__screen = () => 'home';
+document.getElementById('phone').addEventListener('click', e => {});
+</script></body></html>"""
+
+
+@pytest.mark.browser
+def test_folded_faded_and_disabled_entrances_are_not_shown_until_revealed(server):
+    import asyncio
+    import capture_baseline as C
+    rel = ".pytest-outputs/entrances_visibility.html"
+    os.makedirs(os.path.join(ROOT, ".pytest-outputs"), exist_ok=True)
+    io.open(os.path.join(ROOT, rel), "w", encoding="utf-8").write(VISIBILITY_PAGE)
+    f = {"name": "probe", "derived_from_original": False, "required_ids": [],
+         "steps": [{"screen": "home"}], "expect": {},
+         "reveal": {"oos-folded": {"at": "home", "do": [{"click": "#more"}]}}}
+    try:
+        got = asyncio.run(_api.drive("%s/%s" % (C.BASE_URL, rel), f, errors=False))
+    finally:
+        os.remove(os.path.join(ROOT, rel))
+    main = {a: r["visible"] for a, r in got["entrances_seen"].items()}
+    assert main == {"oos-shown": True, "oos-folded": False, "oos-faded": False,
+                    "oos-off": False}
+    after = got["revealed"]["oos-folded"]["entrances_seen"]["oos-folded"]
+    assert after["visible"] is True and after["reveal"] == 1
