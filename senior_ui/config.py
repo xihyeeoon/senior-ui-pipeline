@@ -154,13 +154,15 @@ MODEL_PRICES = {
 #   tile   base + 512px 타일 수 x tile. 2048 정사각형 → 짧은 변 768 로 줄인 뒤 센다.
 #
 # gpt-6.1-sol 은 그 안내에 없다 (모델 페이지에는 "Input modalities: text, image" 가
-# 있다). 같은 계열(gpt-6-astra · gpt-5.6-sol)의 값을 넣고 estimated 로 표시한다.
+# 있다). 같은 계열(gpt-6-astra · gpt-5.6-sol)의 값을 넣고 estimated 로 표시했었다.
 # 실측은 `python -m senior_ui.restructure --probe gpt-6.1-sol --image` 로 잰다 -
 # 그 결과의 "그림 한 장의 실측 토큰" 을 390x844 한 장의 패치 수(351)로 나눈 값이
-# multiplier 다. 실측으로 고치면 estimated 를 지운다.
+# multiplier 다. 2026-10-07 probe 의 실측은 430 (배수 1.225) 으로 어림 422 와 2% 안에서
+# 같아 배수는 그대로 두고 estimated 를 지웠다 (outputs/model-probe.log). 같은 날
+# 공과금 실행의 진단·계획 호출도 그림 15장 실측 6,317 · 어림 6,330 이었다.
+# 표에 있는 다른 모델 가운데 estimated 를 단 것이 생기면 이름표에 "(추정)" 이 붙는다.
 IMAGE_TOKENS = {
-    "gpt-6.1-sol": {"method": "patch", "multiplier": 1.2, "budget": 2500,
-                    "estimated": True},   # 안내에 없음 - 같은 계열 값
+    "gpt-6.1-sol": {"method": "patch", "multiplier": 1.2, "budget": 2500},
     "gpt-6-astra": {"method": "patch", "multiplier": 1.2, "budget": 2500},
     "gpt-5.6-sol": {"method": "patch", "multiplier": 1.2, "budget": 2500},
     "gpt-5.6-terra": {"method": "patch", "multiplier": 1.2, "budget": 2500},

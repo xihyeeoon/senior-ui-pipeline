@@ -88,7 +88,7 @@
           "usage": null,
           "images": 15,
           "estimated_images": 6330,
-          "image_method": "patch x1.2 (추정)"
+          "image_method": "patch x1.2"
         },
         {
           "stage": "generate",

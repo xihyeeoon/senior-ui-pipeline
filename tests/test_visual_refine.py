@@ -54,10 +54,12 @@ def test_png_size_is_read_from_the_header(tmp_path):
 
 
 def test_a_phone_screen_on_gpt_6_1_sol_is_about_422_tokens():
-    """390x844 = 13 x 27 = 351 패치 x 1.2. sol 은 안내에 없어 같은 계열 값 - 추정."""
+    """390x844 = 13 x 27 = 351 패치 x 1.2. sol 은 안내에 없지만 2026-10-07 probe 의
+    실측(430)이 어림과 2% 안에서 같아 배수는 그대로 두고 추정 표시를 지웠다."""
     tokens, how = model.image_tokens(390, 844, "gpt-6.1-sol")
     assert tokens == 422
-    assert "patch" in how and "추정" in how
+    assert "patch" in how and "추정" not in how
+    assert "estimated" not in config.IMAGE_TOKENS["gpt-6.1-sol"]
 
 
 def test_gpt_6_astra_uses_the_documented_patch_rule():
