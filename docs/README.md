@@ -70,7 +70,8 @@ CLI 를 여러 번 돌리거나 빌드를 브라우저로 열어 볼 때만 따�
 (`python -m senior_ui.restructure --port 3010`, `pytest -m browser --port 3010`,
 `tests/capture_baseline.py --port 3010`) — 그때는 그 포트에 떠 있는 서버를 아래의 확인
 파일로 이 작업 트리일 때만 재사용한다. 사람이 띄우는 서버(아래 명령)와 대시보드
-(`시작.bat`)는 `:3003` 그대로다.
+(`시작.bat`)는 `:3003` 그대로다. 주의: 같은 과제의 같은 `--mock` 을 같은 초에 두 번
+띄우면 실행 폴더 이름(초 단위 시각 + 과제 + mock)이 겹친다 — 그때는 몇 초 띄워 시작한다.
 
 ```powershell
 .\.venv\Scripts\python.exe -m senior_ui.devserver    # 127.0.0.1:3003, Ctrl+C 로 끈다
