@@ -33,10 +33,10 @@ from playwright.async_api import Error as PlaywrightError
 
 from senior_ui import audit as A
 from senior_ui import config
-from senior_ui.audit.drive import SHOT_SAFE
+from senior_ui.audit.drive import SHOT_SAFE, nothing_read
 from senior_ui.audit.flow import required_errors
 from senior_ui.audit.inputs import load_allowed_removals, model_claims
-from senior_ui.config import OUTPUTS_ENV, ROOT, inside_root, outputs_dir, url_for
+from senior_ui.config import AUTO_PORT, OUTPUTS_ENV, ROOT, inside_root, outputs_dir, url_for
 from senior_ui.devserver import ensure_server
 from senior_ui.tasks import DEFAULT_TASK, abs_path, load_task
 
@@ -51,7 +51,7 @@ from .model import (MOCK_TASK, TEMPERATURE, SEED, ApiRejected, InfraFailed,
 from .plan import (PlanProblems, apply_changes, critique_issues, evidence_kinds,
                    match_problems, parse_critique, parse_plan, parse_reflection,
                    plan_report, screens_in, unaddressed)
-from .preserve import inject, names_read, preserved_data
+from .preserve import inject, names_read, optional_names, preserved_data
 from .prompt import (BUILD_SHOTS_INTRO, build_plan_prompt, build_prompt,
                      build_refine_prompt, choices_block, errors_block,
                      load_plan_template, load_refine_template, load_template,
@@ -263,8 +263,11 @@ class Run:
                  refine_template=""):
         self.args = args
         self.refine_template = refine_template
-        # 프롬프트에 넣는 원본과 브라우저가 걷는 원본은 같은 문서다.
+        # 프롬프트에 넣는 원본과 브라우저가 걷는 원본은 같은 문서다. URL 은 서버를
+        # 띄운 뒤에 정해진다 (자동 실행은 빈 포트 - run 이 채운다).
         self.original_url = original_url
+        # 검사기가 빌드를 여는 서버의 포트. run 이 서버를 띄운 뒤 채운다.
+        self.port = config.PORT
         self.log = log
         self.run_dir = run_dir
         self.model = model
@@ -313,6 +316,9 @@ class Run:
         # 입력이 가진 선택지 데이터. 실행마다 한 번 뽑아 시도마다 넣는다.
         # {배열 이름: [원소들]} (preserve.preserved_data).
         self.preserved = {}
+        # 그중 읽으라고 하지 않는 이름 - 과제가 선택지가 아니라고 선언한 무리만
+        # 받치는 배열 (preserve.optional_names, 공과금의 MENU_TABS).
+        self.preserved_optional = []
         # 연구자가 관리하는 "빼도 되는 선택지" 목록. 검사 직전에 흐름에 합친다.
         self.allowed_removals = {}
         self.orig_snapshot = None
@@ -376,8 +382,8 @@ def make_logger(log_path):
     return log
 
 
-def original_url(path):
-    """원본 파일을 서버가 서빙하는 URL 로.
+def original_rel(path):
+    """원본 파일의 저장소 루트 기준 경로 ('/' 구분). URL 은 서버를 띄운 뒤 url_for 로.
 
     프롬프트에 넣는 HTML 과 브라우저로 걷는 문서는 같아야 한다. 걷는 쪽만
     config.ORIGINAL_URL 로 못박혀 있으면, --original 로 다른 파일을 줬을 때
@@ -385,13 +391,25 @@ def original_url(path):
     경고 없이.
 
     서버는 저장소 루트만 서빙하므로 그 밖의 파일은 URL 이 없다. 열 수 없는
-    것을 연 척하는 대신 RuntimeError 로 멈춘다.
+    것을 연 척하는 대신 RuntimeError 로 멈춘다 - 서버를 띄우기 전에.
     """
     rel = os.path.relpath(os.path.abspath(path), ROOT)
     if rel.startswith(os.pardir) or os.path.isabs(rel):
         raise RuntimeError("--original 은 저장소 안의 파일이어야 한다 (서버가 "
                            "서빙하는 범위 밖이다): %s" % path)
-    return url_for(rel.replace(os.sep, "/"))
+    return rel.replace(os.sep, "/")
+
+
+def port_choice(args):
+    """`(포트, 어디서 왔나)`. --port 를 주면 그 포트, 아니면 빈 포트(config.AUTO_PORT).
+
+    빈 포트면 실행마다 제 서버를 띄우고 제 것만 끈다 - 같은 포트를 명시하지 않으면
+    실행 · 테스트를 동시에 돌려도 된다. --port 를 주면 전처럼 그 포트에 떠 있는 서버를
+    (이 작업 트리를 서빙할 때만) 재사용한다."""
+    given = getattr(args, "port", None)
+    if given is not None:
+        return given, "--port"
+    return AUTO_PORT, "config.AUTO_PORT"
 
 
 def model_choice(args):
@@ -939,6 +957,20 @@ def revise_plan(r, n, p, entry, refl, problems):
     return []
 
 
+def note_accepted(r, entry, accepted):
+    """답 가르기가 바꿔 받은 것을 남긴다 (reply.parse_reply 의 accepted).
+
+    지금은 배열로 온 reveal 하나다 - 원소의 action 을 키로 한 객체로 받는다
+    (reply.accept_reveal_list). 흐름 명세 파일(attempt_N.flow.json)은 받은 모양이고,
+    모델이 쓴 그대로는 답 전문(.response.txt)에 있다."""
+    if "reveal_from_list" not in accepted or "reveal_from_list" in entry:
+        return
+    names = accepted["reveal_from_list"]
+    entry["reveal_from_list"] = list(names)
+    r.log("flow: reveal 이 배열로 왔다 - 원소의 action 을 키로 한 객체로 받았다 (%s)"
+          % (", ".join(names) or "빈 배열 → 빈 객체"))
+
+
 def check_reply(r, p, entry, reply, n=None):
     """답을 HTML + 흐름 명세로 가르고 모양을 본다. 파일로도 남긴다.
 
@@ -948,11 +980,13 @@ def check_reply(r, p, entry, reply, n=None):
     if r.asked_reflection:
         refl, refl_problems = note_reflection(r, p, entry, reply["text"])
     truncated = reply["finish_reason"] == "length"
+    accepted = {}
     try:
         if truncated:
             raise ValueError("답이 길이 제한에서 잘렸다 (finish_reason=length). "
                              "코드 블록 두 개만, 군더더기 없이 출력하라")
-        html, flow, flow_text = parse_reply(reply["text"])
+        html, flow, flow_text = parse_reply(reply["text"], accepted)
+        note_accepted(r, entry, accepted)
         flow.setdefault("name", "auto")
         note_model_claims(r, entry, flow)
         # 마지막 화면을 다른 이름으로 지어 놓고 완료 칸만 "done" 으로 적은 흐름.
@@ -967,6 +1001,7 @@ def check_reply(r, p, entry, reply, n=None):
         problems = validate_flow(flow, html, r.errors, r.task["done_expect"])
     except FlowShape as e:
         # 타입이 틀린 흐름 명세. 답의 형식 문제(PARSE)가 아니라 FLOW 문제다.
+        note_accepted(r, entry, accepted)
         r.log("flow: %d problem(s): %s" % (len(e.problems),
                                            " | ".join(e.problems)[:300]))
         entry.update(stage="flow", passed=False, fatal=len(e.problems))
@@ -1022,7 +1057,7 @@ def check_reply(r, p, entry, reply, n=None):
     # 보면 무엇을 보내도 "읽었다" 가 된다 (reply.preserved_problems).
     names = list(r.preserved)
     read = names_read(html, names)
-    problems = problems + preserved_problems(html, r.preserved)
+    problems = problems + preserved_problems(html, r.preserved, r.preserved_optional)
     build_html, redeclared = inject(html, r.preserved)
     if names:
         entry["preserved"] = {"injected": {n: len(v) for n, v in r.preserved.items()},
@@ -1100,7 +1135,7 @@ def _drive_audit(r, n, entry, build):
     while True:
         try:
             return run_audit(r.orig_snapshot, r.original_html, build["html_path"],
-                             build["flow_path"], url_for(rel), shots, r.args.stage,
+                             build["flow_path"], url_for(rel, r.port), shots, r.args.stage,
                              original_url=r.original_url,
                              allowed_removals=r.allowed_removals,
                              task=r.task["id"],
@@ -1156,8 +1191,69 @@ def record(r, n, p, entry, report, build):
         r.summary["passed"] = True
         r.log("PASSED on attempt %d" % n)
         return STOP
+    # r.last 를 바꾸기 전에 본다 - 지금 r.last 가 직전 시도의 검사 결과다.
+    same_as = stuck_on(r, entry, report)
     r.last = {"report": report, "html": build["html"], "flow_text": build["flow_text"]}
+    if same_as is not None:
+        return _stuck_stop(r, n, same_as, report)
     return _budget_stop(r, entry)
+
+
+# --------------------------------------------------------------------------- #
+# 막힘 - 같은 실패의 되풀이
+# --------------------------------------------------------------------------- #
+# fatal 하나에서 "무엇을" 가리키는 칸과 "몇 개" 를 담은 칸. 검사마다 쓰는 칸이 다르다 -
+# I 는 action · missing, J 는 error_path, K 는 missing, A 는 screen · lost, C 는 action ·
+# actions, B 는 screen · numbers. 앞의 것이 먼저다.
+FATAL_TARGET = ("action", "error_path", "screen")
+FATAL_ITEMS = ("missing", "lost", "actions", "numbers")
+
+
+def fatal_key(f):
+    """fatal 하나의 (검사, 대상, 개수). 대상이 없으면 "", 셀 목록이 없으면 1."""
+    target = next((str(f[k]) for k in FATAL_TARGET if f.get(k)), "")
+    items = next((f[k] for k in FATAL_ITEMS if isinstance(f.get(k), list)), None)
+    return (str(f.get("check")), target, 1 if items is None else len(items))
+
+
+def fatal_keys(report):
+    """리포트의 fatal 들의 (검사, 대상, 개수), 정렬한 것. 순서는 실패를 가르지 않는다."""
+    return sorted(fatal_key(f) for f in (report or {}).get("fatal") or [])
+
+
+def stuck_on(r, entry, report):
+    """이 시도가 직전 시도와 같은 실패인가. 같으면 직전 시도의 번호, 아니면 None.
+
+    공과금 예비 실행(20261007-103023-bill)의 시도 3 · 4 가 같은 fatal 로 떨어졌고 시도 5 도
+    같은 실패 목록을 받았다. 같은 재시도 블록에는 같은 답이 올 공산이 크다 - 예산만 쓴다.
+
+    생성 루프의 검사 단계끼리만 견준다. 직전 시도가 형식에서 떨어졌으면 견줄 검사 결과가
+    없고, 다듬기(phase 가 있는 시도)는 회차마다 예산이 1 이라 따로 멈춘다 - 거기서 막힘을
+    적으면 통과한 실행이 stuck 으로 기록된다."""
+    if entry.get("stage") != "audit" or entry.get("phase") or report.get("passed"):
+        return None
+    attempts = r.summary["attempts"]
+    prev = attempts[-2] if len(attempts) >= 2 else None
+    if not prev or prev.get("stage") != "audit" or prev.get("phase"):
+        return None
+    if fatal_keys(r.last["report"]) != fatal_keys(report):
+        return None
+    return prev["n"]
+
+
+def _stuck_stop(r, n, same_as, report):
+    """막힘으로 실행을 끝낸다. 남은 예산은 쓰지 않는다."""
+    keys = fatal_keys(report)
+    b = r.budget
+    r.summary["stopped_reason"] = "stuck"
+    r.summary["stuck"] = {"attempt": n, "same_as": same_as,
+                          "fatal": [list(k) for k in keys]}
+    r.log("막힘(stuck): 시도 %d 의 fatal (검사 · 대상 · 개수)가 직전 시도 %d 과 같다 — %s. "
+          "남은 예산(형식 %d · 검사 %d)은 쓰지 않고 끝낸다"
+          % (n, same_as, " · ".join("%s%s %d" % (c, "/" + t if t else "", k)
+                                    for c, t, k in keys),
+             b.budget["format"] - b.format_used, b.budget["audit"] - b.audit_used))
+    return STOP
 
 
 def _budget_stop(r, entry):
@@ -1569,14 +1665,14 @@ def note_internal_error(r, e):
 
 def run(args):
     """한 실행 전체. 돌려주는 것이 프로세스의 종료 코드다 - exit_code 참고."""
-    # 검사기는 빌드를 :3003 이 서빙하는 http:// 로 연다. 그 서버는 저장소
+    # 검사기는 빌드를 devserver 가 서빙하는 http:// 로 연다. 그 서버는 저장소
     # 루트만 서빙하므로, 산출물 폴더가 밖에 있으면 검사기가 빌드를 열지 못해
     # 첫 화면에서 멈춘다 - 그것이 설계 실패처럼 보인다.
     # mock 실행은 기본으로 .mock-outputs/ 에 쓴다 (config.outputs_dir).
     mock = bool(args.mock)
     if not inside_root(outputs_dir(mock)):
         print("cannot start: %s 가 저장소 루트 밖을 가리킨다 (%s). 검사기는 "
-              ":3003 이 서빙하는 %s 안의 파일만 열 수 있다."
+              "devserver 가 서빙하는 %s 안의 파일만 열 수 있다."
               % (OUTPUTS_ENV, outputs_dir(mock), ROOT), file=sys.stderr)
         return 2
 
@@ -1664,20 +1760,22 @@ def run(args):
         plan_template = load_plan_template(task["id"])
         refine_template = load_refine_template(task["id"])
         original_html = io.open(args.original, encoding="utf-8").read()
-        orig_url = original_url(args.original)
+        orig_rel = original_rel(args.original)
         allowed = load_allowed_removals(task["id"])
     except (OSError, RuntimeError, ValueError) as e:
         return cannot_start(e)
 
     budget = budget_choice(args)
+    port, port_source = port_choice(args)
     log("run: %s | model=%s | 예산 형식 %d · 검사 %d | stage=%s | mock=%s | original=%s"
+        " | port=%s (출처 %s)"
         % (run_dir, model, budget["format"][0], budget["audit"][0], args.stage,
-           args.mock, orig_url)
+           args.mock, orig_rel, port or "빈 포트", port_source)
         + ("" if task["id"] == DEFAULT_TASK else " | task=%s" % task["id"]))
     try:
         # 과제의 필수 오류 경로(required_errors)가 원본 흐름에 정의되지 않았으면
         # 여기서 멈춘다 - 과제 파일의 문제이고 실행을 시작할 수 없다.
-        r = Run(args, log, run_dir, model, template, original_html, orig_url,
+        r = Run(args, log, run_dir, model, template, original_html, None,
                 plan_template=plan_template, task=task, model_source=source,
                 refine_template=refine_template)
     except (OSError, RuntimeError, ValueError) as e:
@@ -1691,13 +1789,16 @@ def run(args):
         # 띄우지 못했거나, 떠 있는 것이 이 저장소를 서빙하지 않는다. 둘 다
         # "빌드가 떨어졌다" 가 아니라 "돌지 못했다" 다.
         try:
-            server = ensure_server(log)
+            server = ensure_server(log, port=port)
         except RuntimeError as e:
             log("cannot start: %s" % e)
             print("cannot start: %s" % e, file=sys.stderr)
             r.summary["stopped_reason"] = "cannot_start"
             r.summary["error"] = str(e)
             return exit_code(r.summary)
+        # 띄운 서버의 포트 (빈 포트면 지금 잡힌 것). 재사용했으면 준 포트다.
+        r.port = getattr(server, "port", None) or port
+        r.original_url = url_for(orig_rel, r.port)
         # 대비·언어 검사의 기준이 되는 원본 스냅샷. 실행마다 한 번만 걷는다.
         # 과제의 원본 흐름으로 걷는다 - 다른 과제의 흐름으로 걸으면 첫 화면에서
         # 멈추고, 선택지 요약 · 지킬 데이터가 빈다.
@@ -1724,6 +1825,17 @@ def run(args):
             r.summary["stopped_reason"] = "cannot_start"
             r.summary["error"] = why
             return exit_code(r.summary)
+        # 걸었지만 원본에서 화면을 하나도 읽지 못했다 - 비교 기준이 없다. 시도마다의
+        # 판정(run_audit)은 이 스냅샷을 쓰므로, 여기서 멈추지 않으면 원본 없이 판정해
+        # 원본과 견주는 검사가 빈 결과를 낸다 (drive.nothing_read).
+        unread = nothing_read(snap)
+        if unread:
+            why = "원본을 읽지 못했다 (%s): %s" % (r.original_url, unread)
+            log("cannot start: %s" % why)
+            print("cannot start: %s" % why, file=sys.stderr)
+            r.summary["stopped_reason"] = "cannot_start"
+            r.summary["error"] = why
+            return exit_code(r.summary)
         snap.pop("error_paths", None)
         r.orig_snapshot = snap
         r.original_images = see_images(shots, ORIGINAL_LABELS,
@@ -1732,7 +1844,8 @@ def run(args):
         if r.see:
             log("보기: 원본 그림 %d장 (%s)" % (len(r.original_images),
                                           os.path.relpath(shots, run_dir)))
-        r.choices = choices_block(r.orig_snapshot, original_html)
+        r.choices = choices_block(r.orig_snapshot, original_html,
+                                  not_choices=task["not_choices"])
         if r.choices:
             log("선택지: %s" % " / ".join(
                 l.strip() for l in r.choices.splitlines() if l.startswith("  ")))
@@ -1740,9 +1853,13 @@ def run(args):
         # 도구가 들고 있다가 시도마다 재설계 HTML 에 넣는다.
         r.preserved = preserved_data(r.orig_snapshot, original_html)
         r.summary["preserved"] = {n: len(v) for n, v in r.preserved.items()}
+        r.preserved_optional = optional_names(r.orig_snapshot, original_html,
+                                              task["not_choices"])
         if r.preserved:
-            log("지킬 데이터: %s" % " / ".join(
-                "%s %d개" % (n, len(v)) for n, v in r.preserved.items()))
+            log("지킬 데이터: %s%s" % (" / ".join(
+                "%s %d개" % (n, len(v)) for n, v in r.preserved.items()),
+                (" — 읽지 않아도 되는 것(선택지가 아닌 무리의 것): %s"
+                 % ", ".join(r.preserved_optional)) if r.preserved_optional else ""))
 
         n = 0
         while True:
@@ -1770,7 +1887,7 @@ def run(args):
     finally:
         if server:
             server.terminate()
-            log("server: stopped (pid %d)" % server.pid)
+            log("server: stopped (:%s, pid %d)" % (getattr(server, "port", "?"), server.pid))
         # 요약은 이 실행의 기록이다. 루프가 터져도(흐름 명세가 검사기를 터뜨린다,
         # 사용자가 끊는다) 남아야 한다 - 밖에 두면 그런 실행은 run.log 조각
         # 말고는 아무것도 남기지 않는다.

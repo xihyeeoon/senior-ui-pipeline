@@ -46,8 +46,22 @@ if HERE not in sys.path:
 
 import _api                                                  # noqa: E402
 
-PORT = _api.PORT
-BASE_URL = "http://localhost:%d" % PORT
+# 브라우저가 여는 서버의 주소. 서버를 띄운 뒤 use_port 가 실제 포트로 맞춘다 - 기본은
+# 빈 포트라 실행마다 다르다 (config.AUTO_PORT). 테스트의 server fixture 도 같다. 아래
+# 값은 서버를 띄우기 전의 자리 채움이다.
+BASE_URL = _api.config_module.base_url()
+
+
+def original_groups(orig, flow):
+    """생성물을 걸을 때 넘기는 원본의 선택지 무리 이름 - 검사기 CLI · 루프와 같은 것
+    (i_choices.original_groups). 원본을 먼저 걷고 그 결과로 만든다."""
+    return _api.i_choices_module.original_groups(orig, flow)
+
+
+def use_port(port):
+    """이 프로세스의 브라우저가 여는 서버의 포트를 정한다 (BASE_URL)."""
+    global BASE_URL
+    BASE_URL = _api.config_module.base_url(port)
 
 # (이름, 빌드 파일의 루트 기준 경로, 흐름 파일 이름 - None 이면 원본 흐름)
 CASES = [
@@ -100,16 +114,18 @@ class _Reused(object):
         pass
 
 
-def start_server():
-    """이 작업 트리를 :3003 에 띄운다 (devserver.ensure_server).
+def start_server(port=_api.config_module.AUTO_PORT):
+    """이 작업 트리를 띄운다 (devserver.ensure_server). 기본은 빈 포트에 이 캡처만의
+    서버다 - 같은 포트를 명시하지 않으면 다른 실행 · 테스트와 동시에 돌려도 된다.
 
-    이미 떠 있으면 그것이 **이 작업 트리를** 서빙하는지 확인 파일로 보고 재사용한다 -
-    기준값은 서빙 내용에 전적으로 달려 있으므로, 다른 worktree · 다른 폴더 · 대시보드
-    서버면 멈춘다. 전에는 무엇이 떠 있든 멈췄다 (무엇을 서빙하는지 알 수 없었으므로)."""
+    --port 로 포트를 주면 이미 떠 있는 서버가 **이 작업 트리를** 서빙하는지 확인 파일로
+    보고 재사용한다 - 기준값은 서빙 내용에 전적으로 달려 있으므로, 다른 worktree · 다른
+    폴더 · 대시보드 서버면 멈춘다."""
     try:
-        proc = _api.ensure_server(say)
+        proc = _api.ensure_server(say, port=port)
     except RuntimeError as e:
         raise SystemExit("멈췄습니다: %s" % e)
+    use_port(getattr(proc, "port", None) or port)
     return proc or _Reused()
 
 
@@ -155,7 +171,7 @@ def capture_cases(out):
         rep_html = read(os.path.join(ROOT, rel))
 
         # audit.py main() 과 같은 순서:
-        #   흐름 읽기 -> 원본 drive -> 빌드 drive -> audit() -> apply_stage
+        #   흐름 읽기 -> 원본 drive -> 빌드 drive (원본의 무리 이름) -> audit() -> apply_stage
         flow = _api.load_flow(flow_path)
         base_flow = _api.load_flow(None) \
             if not flow.get("derived_from_original", True) else flow
@@ -164,7 +180,8 @@ def capture_cases(out):
         orig = asyncio.run(_api.drive(orig_url, base_flow,
                                       errors=base_flow is flow))
         say("  %s: 빌드 drive (%s)" % (name, rel))
-        rep = asyncio.run(_api.drive(rep_url, flow))
+        rep = asyncio.run(_api.drive(rep_url, flow,
+                                     original_groups=original_groups(orig, flow)))
 
         report = _api.audit(orig, rep, orig_html, rep_html, flow)
         d = os.path.join(out, name)
@@ -409,6 +426,9 @@ def ensure_mock_input():
 MOCK_RUNS = [
     ("mock_pass", ["--mock", "pass", "--attempts", "1"]),
     ("mock_fail", ["--mock", "fail", "--attempts", "2", "--delay", "0"]),
+    # 같은 실패가 되풀이되면 예산이 남아도 멈춘다 (막힘, loop.stuck_on). preserved-some 은
+    # 시도마다 같은 빌드라 검사 I 의 같은 fatal 로 떨어진다 - 예산 3 중 2 에서 멈춘다.
+    ("mock_stuck", ["--mock", "preserved-some", "--attempts", "3", "--delay", "0"]),
     # 선택지 데이터를 도구가 지키는 장치의 세 경우. 셋은 Run 1 빌드의 은행
     # 목록 한 줄에서만 다르고, 그 한 줄 때문에 각각 다른 자리에서 갈린다.
     ("mock_preserved_all", ["--mock", "preserved-all", "--attempts", "1"]),
@@ -432,7 +452,7 @@ MOCK_RUNS = [
 # 그 이름은 뷰어와 실험 조건이 "지금 쓰는 재구성본" 으로 읽는 것인데,
 # preserved-all 모드는 실제로 통과하므로 기준값을 뽑거나 테스트를 돌릴
 # 때마다 그 파일이 mock 결과로 덮인다. 저장소 루트 **안** 에 두는 이유는
-# 검사기가 빌드를 :3003 이 서빙하는 http:// 로 열기 때문이다.
+# 검사기가 빌드를 devserver 가 서빙하는 http:// 로 열기 때문이다.
 MOCK_OUTPUTS = os.path.join(ROOT, ".mock-outputs")
 
 
@@ -733,7 +753,8 @@ def bill_errors():
 
 def bill_prompts(orig_html, orig_snapshot):
     """(선택지 요약, 진단·계획 프롬프트, 첫 생성 프롬프트) 전문."""
-    choices = _api.choices_block(orig_snapshot, orig_html)
+    choices = _api.choices_block(orig_snapshot, orig_html,
+                                 not_choices=_api.load_task(BILL_TASK)["not_choices"])
     plan = _api.build_plan_prompt(_api.load_plan_template(BILL_TASK), model_html(orig_html),
                                   choices, _api.plan_module.screens_in(orig_html),
                                   errors=bill_errors())
@@ -751,7 +772,8 @@ def capture_bill(out):
         say("  bill/%s: 원본 drive" % name)
         orig = asyncio.run(_api.drive(orig_url, flow))
         say("  bill/%s: 빌드 drive (%s)" % (name, rel))
-        rep = asyncio.run(_api.drive("%s/%s" % (BASE_URL, rel), flow))
+        rep = asyncio.run(_api.drive("%s/%s" % (BASE_URL, rel), flow,
+                                     original_groups=original_groups(orig, flow)))
         report = _api.audit(orig, rep, orig_html, read(os.path.join(ROOT, rel)), flow)
         c = os.path.join(d, name)
         dump(os.path.join(c, "snapshots.json"), {"orig": orig, "rep": rep})
@@ -786,6 +808,8 @@ def main():
                     default=os.path.join(HERE, "fixtures", "sessions"))
     ap.add_argument("--only", choices=["all", BILL], default="all",
                     help="bill: baseline/bill/ 만 다시 뽑는다 (이체 기준값은 그대로)")
+    ap.add_argument("--port", type=int, default=_api.config_module.AUTO_PORT,
+                    help="서버 포트. 주지 않으면 빈 포트 (mock 실행은 저마다 빈 포트를 잡는다)")
     args = ap.parse_args()
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -796,7 +820,7 @@ def main():
         if os.path.isdir(d):
             shutil.rmtree(d)
         say("공과금 기준값 -> %s" % d)
-        server = start_server()
+        server = start_server(args.port)
         try:
             capture_bill(out)
         finally:
@@ -811,7 +835,7 @@ def main():
     os.makedirs(out)
 
     say("기준값 -> %s" % out)
-    server = start_server()
+    server = start_server(args.port)
     copied = False
     try:
         say("[1/7] audit.py main() 과 같은 순서로 4가지 경우")

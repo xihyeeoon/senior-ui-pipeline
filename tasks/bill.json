@@ -31,6 +31,10 @@
     "ENO"
   ],
   "required_error_paths": [],
+  "not_choices": {
+    "menu-chip": "분류로 스크롤하는 표지판 — 찾아가는 수단",
+    "menu-tab": "분야로 스크롤하는 탭 — 찾아가는 수단"
+  },
   "entrances": {
     "note": [
       "과제 밖 입구 - 과제 경로 위 화면에서 누를 수 있지만 이 과제에는 쓰지 않는 메뉴 · 버튼 (검사 K).",

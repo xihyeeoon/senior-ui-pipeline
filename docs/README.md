@@ -62,6 +62,17 @@ LLM 이 쓴 것이라 다시 만들려면 API 비용이 들고 바이트까지 �
 CLI 를 여러 번 돌리거나 빌드를 브라우저로 열어 볼 때만 따로 띄워 둔다 — 이 작업 트리를
 **루프백(127.0.0.1)에만** 서빙한다.
 
+**자동 실행은 빈 포트를 잡는다 (11-9).** 재구성 루프 · `pytest` · 기준값 캡처는 실행마다
+빈 포트(`config.AUTO_PORT` = 0)에 제 서버를 띄우고 끝에서 제 것만 끈다. 그래서
+**같은 포트를 명시하지 않으면 동시에 돌려도 된다** — 루프 둘, 루프와 테스트, 테스트
+둘. 전에는 모두 `:3003` 하나를 써서, 뒤에 시작한 쪽이 앞의 서버를 재사용하다가 앞의
+쪽이 끝나며 끄면 걷던 도중에 끊겼다. 포트를 정해 쓰려면 `--port N`
+(`python -m senior_ui.restructure --port 3010`, `pytest -m browser --port 3010`,
+`tests/capture_baseline.py --port 3010`) — 그때는 그 포트에 떠 있는 서버를 아래의 확인
+파일로 이 작업 트리일 때만 재사용한다. 사람이 띄우는 서버(아래 명령)와 대시보드
+(`시작.bat`)는 `:3003` 그대로다. 주의: 같은 과제의 같은 `--mock` 을 같은 초에 두 번
+띄우면 실행 폴더 이름(초 단위 시각 + 과제 + mock)이 겹친다 — 그때는 몇 초 띄워 시작한다.
+
 ```powershell
 .\.venv\Scripts\python.exe -m senior_ui.devserver    # 127.0.0.1:3003, Ctrl+C 로 끈다
 ```
@@ -104,6 +115,17 @@ CLI 를 여러 번 돌리거나 빌드를 브라우저로 열어 볼 때만 따�
 (레이트 리밋 · API 가 요청을 거절함 · 인프라 예산 소진 · 시작 자체를 못 함).
 떨어진 빌드는 다시 만들고, 돌지 못한 실행은 다시 만들 것이 없다.
 
+**같은 실패가 되풀이되면 예산이 남아도 멈춘다 (막힘, 11-9).** 검사까지 간 시도의
+fatal 을 (검사 · 대상 · 개수)로 줄여 — 대상은 fatal 의 `action` · `error_path` ·
+`screen` 중 처음 있는 것, 개수는 `missing` · `lost` 같은 목록의 길이 — 바로 앞
+시도와 같으면 `stopped_reason: stuck` 으로 끝낸다. `summary.json` 의 `stuck`
+(`{"attempt", "same_as", "fatal": [[검사, 대상, 개수], …]}`)과 `run.log` 의 "막힘(stuck)"
+줄에 남고, 종료 코드는 1 이다. 바로 앞 시도가 형식에서 떨어졌으면 견주지 않고,
+다듬기 회차는 보지 않는다. 고르기 도구는 stuck 실행을 통과하지 못한 실행으로 뺀다.
+공과금 예비 실행(`20261007-103023-bill`)은 시도 3 · 4 가 같은 fatal 이었다 — 지금이면
+시도 4 에서 멈춘다. API 없이 보려면 `--mock preserved-some --attempts 3` (시도 2 에서
+멈춘다, 기준값 `mock_stuck.json`).
+
 한 실행의 모든 것이 `outputs/restructure_auto/<타임스탬프>/` 에 남는다 — 보낸
 프롬프트 전문, 받은 답 전문, 시도별 html·흐름·검사 결과, 화면별 스크린샷,
 `run.log`, `summary.json`. 모델을 바꾸는 법과 처음 쓰는 모델을 먼저 확인하는 명령 둘
@@ -123,6 +145,11 @@ CLI 를 여러 번 돌리거나 빌드를 브라우저로 열어 볼 때만 따�
   명세. 다듬은 빌드는 검사를 다시 통과해야 최종이 되고, 떨어지면 한 번 고치게 한 뒤
   그래도 떨어지면 직전에 통과한 빌드로 되돌린다. 기록은 `attempt_N.critique.json` ·
   `summary.refine` · 설명서의 "보고 다듬기" 절과 맨 위 "최종:" 줄.
+  흐름 명세의 `reveal` 모양은 생성 · 다듬기 프롬프트가 같은 블록(`<!-- REVEAL -->`)을
+  쓴다. 형식 검사는 배열로 온 `reveal` 을 원소마다 `action` 이 있으면
+  `{action: {"at", "do"}}` 로 한 번 바꿔 받고(빈 배열은 빈 객체), 그 사실을 시도 기록의
+  `reveal_from_list` 와 `run.log` 에 남긴다 — 예비 실행 두 번의 다듬기 답이 모두
+  `"reveal": []` 로 형식에서 떨어져 고치기 호출을 한 번씩 더 썼다 (11-9).
 
 호출마다 보낸 그림 수와 그림 토큰 어림이 `summary` 의 `calls[].images` ·
 `estimated_images` (실제 실행이면 `measured_images` 도)에 남고, 한 호출에 그림이
@@ -146,7 +173,8 @@ API 없이: `--mock pass --mock-refine improve` (1회차에 다듬은 빌드가 
 ```
 
 루프가 만든 빌드(모델 흐름 - `flows/` 밖의 흐름 파일)를 다시 검사할 때는 그 실행의
-과제를 `--task` 로 꼭 준다. 없으면 판정하지 않고 종료 2 다. 판정 기준(정답 · 완료
+과제를 `--task` 로 꼭 준다. 없으면 판정하지 않고 종료 2 다. 원본(`--original`, 주지
+않으면 `:3003` 의 과제 원본)을 읽지 못해도 판정하지 않고 종료 2 다. 판정 기준(정답 · 완료
 화면 값 · 오류 경로)은 흐름이 아니라 과제에서 오고, 루프와 같은 판정 입력
 (`senior_ui/audit/inputs.py` 의 `judged_flow`)을 거친다.
 
@@ -326,12 +354,16 @@ o 계열과 맞지 않는다) · `types/shared/reasoning_effort.py`.
   에 남는다.
 - **참조 검사** — 스크립트가 그 이름을 읽는지 형식 검사 단계에서 본다 (브라우저
   없음). 읽지 않으면 검사기까지 가지 않는다. 값을 하나도 빠뜨리지 않고 직접 쓴
-  목록은 요구하지 않는다.
+  목록은 요구하지 않는다. 과제가 선택지가 아니라고 선언한 무리만 받치는 이름도
+  요구하지 않는다 (아래 '선택지가 아닌 무리').
 - **검사 I** — 그 블록(`script#preserved-data`)은 "값이 있다" 의 증거로 세지
   않는다. 세면 모델이 하나도 그리지 않아도 통과한다. 대신 걷는 동안 렌더링된
-  DOM 에서 모은 선택지 값을 함께 본다. `choice_values_kept` 가 판정 기준이고
-  `choice_values_selectable` 는 그중 DOM 에서 고를 수 있던 수다 — 둘이 다르면
-  경고가 난다 (fatal 아님).
+  DOM 에서 모은 선택지 값을 함께 본다. **무리는 원본이 정하고, 생성물에서는 놓인
+  모양과 상관없이 센다** — 원본에서 무리였던 이름(`i_choices.original_groups`, 과제가
+  선택지가 아니라고 선언한 이름은 뺀다)의 요소는 생성물에서 형제가 없어도 모두 세고,
+  원본에서 무리가 아니던 이름은 형제 둘 이상일 때만 무리다 (11-9b).
+  `choice_values_kept` 가 판정 기준이고 `choice_values_selectable` 는 그중 DOM 에서
+  고를 수 있던 수다 — 둘이 다르면 경고가 난다 (fatal 아님).
 
 **모델이 만든 것과 도구가 고친 것은 파일로 갈라 둔다.** 검사기가 여는 파일과
 승격되는 산출물(`outputs/restructured_auto.html`)에는 데이터 블록이 들어 있다 —
@@ -397,6 +429,36 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
 지금은 비어 있다 (`{"transfer": {}}`). 무엇을 넣을지는 연구자가 정한다. 모양이
 틀린 파일은 조용히 무시되지 않고 실행이 멈춘다 — 적어 두었는데 무시되면
 연구자는 적었다고 믿고 결과는 다르게 나온다.
+
+### 선택지가 아닌 무리 (과제 파일의 `not_choices`)
+
+검사 I 는 원본에서 같은 `data-action` 을 가진 형제 2개 이상을 선택지 무리로 본다.
+그 규칙은 누르면 스크롤만 하는 표지판 · 탭도 선택지로 센다 — 공과금 원본의
+`menu-chip`(60) · `menu-tab`(7) 은 `scrollMenuTo` 로 메뉴 항목(`menu-item`)을
+찾아가는 수단이지 고르는 대상이 아니다. 예비 실행(`20261007-103023-bill`)의 시도
+2 · 3 · 4 가 이 둘 때문에 같은 이유로 떨어졌다. 그래서 과제 파일이 "선택지가
+아니다" 를 이유와 함께 선언한다 (연구자 결정, 2026-10-07).
+
+```json
+"not_choices": {"menu-chip": "분류로 스크롤하는 표지판 — 찾아가는 수단",
+                "menu-tab": "분야로 스크롤하는 탭 — 찾아가는 수단"}
+```
+
+- 위의 `allowed_removals` 와 뜻이 다르다 — 그쪽은 "선택지인데 이 값은 빼도 된다",
+  이쪽은 "이 무리는 처음부터 선택지가 아니다" 다. 섞지 않는다.
+- 판정 입력(`audit.inputs.judged_flow` · 연구자 흐름은 `flow.load_flow`)이 과제의
+  선언을 흐름에 붙인다. 모델이 흐름 명세에 `not_choices` 를 적으면 버리고
+  `model_claims_dropped` 에 남긴다.
+- 검사 I 는 선언된 무리를 판정에서 빼고 지표 `choice_groups_not_choices`
+  (`{무리: {"values": 원본의 값 수, "reason": 이유}}`)와 `checks_stood_down` 에 남긴다.
+  `choice_groups_original` · `choice_values_kept` 에는 들어가지 않는다.
+- 그 무리만 받치는 배열(공과금의 `MENU_TABS`)도 `window.PRESERVED` 에는 그대로
+  들어간다 — 모델이 써도 되고 안 써도 되는 데이터다. 프롬프트의 "빠뜨리지 말고
+  참조하라" 와 형식 검사의 참조 요구에서만 빠진다.
+- 설명서의 "선택지가 아니라고 선언한 무리" 표에 무리와 이유가 나온다.
+- 이체 과제는 선언할 것이 없다 (`"not_choices": {}`) — `tab-bank` · `tab-sec` 는
+  이름이 달라 한 무리가 아니다. 칸이 없는 과제 파일도 빈 선언이다. 이유가 빈
+  선언은 받지 않고 멈춘다.
 
 ## C 후보 고르기 (`python -m senior_ui.select`)
 
@@ -497,7 +559,7 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
 
 | 문지기 | 후보가 되려면 |
 |---|---|
-| `passed` | `summary.passed == true` |
+| `passed` | `summary.passed == true` (같은 실패가 되풀이되어 멈춘 실행 `stopped_reason: stuck` 은 기록이 어긋나 있어도 통과로 세지 않는다) |
 | `no_redeclared` | `final.preserved.redeclared` 가 비어 있다 (도구가 고친 흔적이 없다) |
 | `no_truncated` | **마지막 시도** 의 답이 길이 제한에서 잘리지 않았다. 중간 시도의 잘림은 최종 시안과 상관없으므로 빼지 않고, 순위표의 '중간 잘림' 열에 횟수로만 보인다 |
 | `clean_tree` | `git.dirty == false`. 기록이 없는 옛 실행은 어긴 것으로 본다 |
@@ -551,6 +613,10 @@ the same 8-screen task and diffs them. It prints machine-readable JSON and exits
 Exit 1 means it audited the build and the build failed. Exit 2 means the audit
 itself could not run - inputs or flow unreadable, no browser, anything that
 stops the drive - and the JSON then carries that reason as its single fatal.
+원본을 열지 못했거나 원본에서 화면을 하나도 읽지 못했을 때도 2 다 (11-9b,
+`drive.nothing_read`) — 원본 없이 판정하면 원본과 견주는 검사가 빈 결과를 내 생성물이
+"통과" 한다. `--original` 을 주지 않으면 원본은 `:3003` 에서 연다 (사람이 띄우는 서버).
+재구성 루프는 같은 경우 실행 시작에서 멈춘다 (`cannot_start`, 종료 2).
 The caller has to tell those two apart: a build that failed gets regenerated, an
 auditor that could not run does not.
 
@@ -721,10 +787,11 @@ flags as optimistic.
 .\.venv\Scripts\python.exe tests\capture_baseline.py
 ```
 
-`:3003` 에 이미 서버가 있으면 그것이 **이 작업 트리를** 서빙할 때만 그대로 쓰고
-(확인 파일 `/.devserver-id`), 아니면 캡처는 멈춘다 — 기준값은 그 포트가 서빙하는
-내용에 전적으로 달려 있어서, 다른 worktree · 다른 폴더의 서버를 쓰면 기준값이 무엇을
-기준으로 한 것인지 알 수 없어진다. 실행마다 흔들리는 값(원본 시제품의 비밀번호
+캡처는 빈 포트에 제 서버를 띄운다 (mock 실행도 저마다) — 같은 포트를 명시하지 않으면
+동시에 돌려도 된다. `--port N` 을 주면 그 포트에 이미 있는 서버가 **이 작업 트리를**
+서빙할 때만 그대로 쓰고 (확인 파일 `/.devserver-id`), 아니면 캡처는 멈춘다 — 기준값은
+그 포트가 서빙하는 내용에 전적으로 달려 있어서, 다른 worktree · 다른 폴더의 서버를
+쓰면 기준값이 무엇을 기준으로 한 것인지 알 수 없어진다. 실행마다 흔들리는 값(원본 시제품의 비밀번호
 숫자판 셔플)을 어떻게 빼는지, 지금 기준값에 어떤 동작이 담겨 있는지는
 `tests/README.md` 에 적혀 있다.
 

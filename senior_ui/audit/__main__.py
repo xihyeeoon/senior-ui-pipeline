@@ -47,10 +47,11 @@ import sys
 import traceback
 
 from .._cli import setup_stdout
-from ..config import OUTPUTS_DIR, url_for
+from ..config import OUTPUTS_DIR, PORT, url_for
 from ..tasks import abs_path, load_task, task_names
+from .checks.i_choices import original_groups
 from .core import audit
-from .drive import drive
+from .drive import drive, nothing_read
 from .flow import load_flow
 from .inputs import judged_flow, read_flow, researcher_flow
 from .stage import STAGES, apply_stage
@@ -161,7 +162,17 @@ def main(argv=None):
         # 않는다 - 오류 경로는 빌드의 흐름으로 빌드를 걷는다.
         orig = asyncio.run(drive(args.original, base_flow,
                                  errors=base_flow is flow))
-        rep = asyncio.run(drive(args.build, flow, want_shots=args.shots))
+        # 원본 없이는 판정하지 않는다. 원본과 견주는 검사가 빈 결과를 내 생성물이
+        # "통과" 한다 (drive.nothing_read). 빌드는 걷지 않는다.
+        unread = nothing_read(orig)
+        if unread:
+            return cannot_run("원본을 읽지 못해 판정하지 않는다 (%s): %s. 원본 URL 을 "
+                              "확인하라 - 주지 않으면 과제 파일의 원본을 :%d 에서 연다"
+                              % (args.original, unread, PORT), args.out)
+        # 선택지 무리는 원본이 정한다 - 원본을 먼저 걸었으므로 그 결과에서 무리였던
+        # 이름을 넘긴다 (checks/i_choices.original_groups).
+        rep = asyncio.run(drive(args.build, flow, want_shots=args.shots,
+                                original_groups=original_groups(orig, flow)))
 
         report = audit(orig, rep, orig_html, rep_html, flow)
         report = apply_stage(report, stage)

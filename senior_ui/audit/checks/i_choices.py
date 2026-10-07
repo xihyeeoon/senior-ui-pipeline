@@ -6,6 +6,8 @@ r"""검사 I - 선택지 보존. fatal.
     원문   재설계 HTML 의 글자. **도구가 넣은 데이터 블록은 뺀다.**
     DOM    걸음마다 렌더링된 DOM 에서 모은 선택지 값 (drive 의 CHOICE_GROUPS)
 
+무리는 원본이 정하고, 생성물에서는 놓인 모양과 상관없이 센다 (original_groups).
+
 데이터 블록을 빼는 이유가 이 검사의 핵심이다. 도구는 입력이 가진 선택지 데이터를
 재설계 HTML 에 `<script id="preserved-data">` 로 넣어 준다 (senior_ui/preserved.py,
 senior_ui/restructure/preserve.py). 그러면 모든 값이 원문에 생기므로, 빼지 않으면
@@ -33,6 +35,11 @@ DOM 을 더 보는 이유는 그 반대다. 블록을 빼면 "블록을 참조�
 
 흐름 파일이 "일부러 뺐다" 를 선언할 수 있다. 안전을 위해 뺀 선택지까지 누락으로
 세면 고칠 수 없는 fatal 이 재생성 루프에 계속 남는다 (declared() 참고).
+
+과제는 "이 무리는 선택지가 아니다" 를 선언할 수 있다 (not_choices() 참고). 같은
+data-action 의 형제 무리면 무엇이든 선택지로 세는 규칙은, 누르면 스크롤만 하는
+표지판 · 탭(공과금의 menu-chip · menu-tab)도 선택지로 센다. 선언된 무리는 판정에서
+빼고 지표 `choice_groups_not_choices` 에 이유와 함께 남긴다.
 """
 import re
 
@@ -115,6 +122,45 @@ def declared(flow):
     return out
 
 
+def original_choices(orig_snapshot):
+    """원본을 걷는 동안 모은 선택지 값. `{action: {값들}}` - 화면마다 모은 것을 합친다."""
+    out = {}
+    for row in (orig_snapshot.get("screens") or {}).values():
+        for action, vals in (row.get("choices") or {}).items():
+            out.setdefault(action, set()).update(vals)
+    return out
+
+
+def original_groups(orig_snapshot, flow):
+    """원본에서 선택지 무리였던 이름들 (정렬). 생성물을 걸을 때 drive(original_groups=…)
+    로 넘긴다 - probes.CHOICE_GROUPS 는 그 이름의 요소를 형제 수와 상관없이 모두 센다.
+
+    어떤 data-action 이 선택지 무리인지는 원본이 정한다. 재설계가 그 값들을 분류마다
+    나눠 놓든 한곳에 모으든 그것은 보여 주는 방식이다. 공과금 예비 실행의 세 답은
+    항목이 하나뿐인 분류 여섯 곳의 메뉴 항목을 그렸는데, 형제가 없어 세지 못했다.
+
+    기준은 이 검사가 세는 무리와 같다 - 원본에서 값이 둘 이상이고, 과제가 선택지가
+    아니라고 선언하지 않은 이름 (not_choices). 생성물은 보지 않는다 - "생성물 어딘가에서
+    무리가 된 이름" 으로 하면 판정 기준이 생성물에 따라 달라진다."""
+    skip = not_choices(flow)
+    return sorted(a for a, vals in original_choices(orig_snapshot).items()
+                  if len(vals) >= 2 and a not in skip)
+
+
+def not_choices(flow):
+    """과제가 선택지가 아니라고 선언한 무리. `{action: 이유}`.
+
+    판정 입력(audit.inputs.judged_flow · flow.load_flow)이 과제 파일의 not_choices 를
+    흐름에 붙인다 - 모델이 흐름 명세에 적은 것은 거기서 버려진다. 무리 전체를 뺀다는
+    점이 declared() 와 다르다: 그쪽은 선택지인데 일부러 뺀 **값** 이고, 이쪽은 처음부터
+    고르는 대상이 아닌 **무리** 다.
+    """
+    spec = flow.get("not_choices")
+    if not isinstance(spec, dict):
+        return {}
+    return {a: str(why or "") for a, why in spec.items()}
+
+
 def dom_values(rep):
     """빌드를 걷는 동안 렌더링된 DOM 에서 모은 선택지 값. 한 덩어리 글로.
 
@@ -162,10 +208,7 @@ def run(ctx):
     # 그 선택지를 쓰려던 사람은 막힌다. 검사 과제가 쓰는 값 하나만 남기고
     # 나머지를 지우는 식의 최소 구현을 잡는다. 앱 종류와 무관한 규칙이다 -
     # 같은 data-action 을 공유하는 반복 요소면 무엇이든 선택지로 본다.
-    orig_choices = {}
-    for row in ctx.orig["screens"].values():
-        for action, vals in (row.get("choices") or {}).items():
-            orig_choices.setdefault(action, set()).update(vals)
+    orig_choices = original_choices(ctx.orig)
 
     # 생성물에서는 "어디에든 있는가" 만 본다. 한 화면에 다 보일 필요는 없고,
     # 스크립트 안의 배열로 들고 있어도 된다. 보는 곳은 둘이다 - 원문에서 도구가
@@ -175,9 +218,15 @@ def run(ctx):
     dom = dom_values(ctx.rep)
 
     decl = declared(ctx.flow)
+    skip = not_choices(ctx.flow)
     missing_by_action, kept, selectable, unreachable, by_design = {}, {}, {}, {}, {}
+    not_choice = {}
     for action, vals in orig_choices.items():
         if len(vals) < 2:
+            continue
+        if action in skip:
+            # 고르는 대상이 아니다 - 남았는지 세지 않는다. 원본에 있던 무리만 남긴다.
+            not_choice[action] = {"values": len(vals), "reason": skip[action]}
             continue
         gone = sorted(v for v in vals
                       if not present(v, text) and not present(v, dom))
@@ -199,7 +248,13 @@ def run(ctx):
             missing_by_action[action] = {"total": len(vals), "missing": missing}
 
     metrics["choice_groups_original"] = {a: len(v) for a, v in orig_choices.items()
-                                         if len(v) >= 2}
+                                         if len(v) >= 2 and a not in skip}
+    # 선택지가 아니라고 선언한 무리 - 판정에서 뺐다는 사실을 이유와 함께 남긴다.
+    # 사라지게 두면 "원본에 그 무리가 없었다" 와 "있었지만 세지 않았다" 를 가를 수 없다.
+    metrics["choice_groups_not_choices"] = not_choice
+    for action, d in sorted(not_choice.items()):
+        ctx.skipped.append("I/%s 선택지 무리 %d개 - 과제가 선택지가 아니라고 선언했다: %s"
+                           % (action, d["values"], d["reason"] or "이유가 적혀 있지 않다"))
     # 일부러 뺀 것은 fatal 로 세지 않는 대신 이유와 함께 남긴다. 조용히
     # 사라지면 "검사가 통과했다" 와 "검사를 내려놓았다" 를 구분할 수 없다.
     metrics["choice_values_removed_by_design"] = by_design

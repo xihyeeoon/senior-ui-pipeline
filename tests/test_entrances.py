@@ -346,7 +346,8 @@ def test_an_original_without_that_entrance_fails_even_if_the_word_remains(
         f = _api.load_flow(None, task=task)
         orig = asyncio.run(_api.drive("%s/%s" % (C.BASE_URL, t["original"]), f))
         nf = dict(f, derived_from_original=False)   # 화면 대 화면 비교(A · C)는 빼고 K 만
-        rep = asyncio.run(_api.drive("%s/%s" % (C.BASE_URL, rel), nf))
+        rep = asyncio.run(_api.drive("%s/%s" % (C.BASE_URL, rel), nf,
+                                     original_groups=C.original_groups(orig, nf)))
         report = _api.audit(orig, rep, orig_html, build, nf)
     finally:
         os.remove(os.path.join(ROOT, rel))

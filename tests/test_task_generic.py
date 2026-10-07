@@ -342,9 +342,10 @@ def cli_drives(monkeypatch, tmp_path, extra, flow_path=None):
     CLI = _api.audit_cli_module
     seen = []
 
-    async def fake_drive(url, flow, want_shots=None, errors=True):
+    async def fake_drive(url, flow, want_shots=None, errors=True, **_kw):
         seen.append((url, flow["name"], flow["task"]))
-        return {}
+        # 원본은 화면 하나를 읽은 것으로 - 읽지 못하면 CLI 가 멈춘다 (test_no_original)
+        return {"screens": {"home": {"landed_on": "home"}}, "load_failed": None}
     monkeypatch.setattr(CLI, "drive", fake_drive)
     monkeypatch.setattr(CLI, "audit", lambda *a: {"passed": True, "fatal": [],
                                                   "warning": [], "metrics": {}})

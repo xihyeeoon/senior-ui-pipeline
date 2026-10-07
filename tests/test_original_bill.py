@@ -33,7 +33,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 REL = "inputs/original_bill.html"
 FLOW = os.path.join(ROOT, "flows", "original_bill.json")
-URL = "%s/%s" % (C.BASE_URL, REL)
+
+
+def url():
+    """서버를 띄운 뒤의 주소 (server fixture 가 빈 포트로 띄운다)."""
+    return "%s/%s" % (C.BASE_URL, REL)
 
 
 def load_flow():
@@ -61,7 +65,7 @@ def page(browser):
     p = browser.new_page(viewport={"width": 390, "height": 844})
     js_errors = []
     p.on("pageerror", lambda e: js_errors.append(str(e)))
-    p.goto(URL, wait_until="networkidle")
+    p.goto(url(), wait_until="networkidle")
     p.js_errors = js_errors
     yield p
     assert js_errors == []
@@ -181,7 +185,7 @@ def test_error_paths(browser):
     for ep in flow["error_paths"]:
         page = browser.new_page(viewport={"width": 390, "height": 844})
         try:
-            page.goto(URL, wait_until="networkidle")
+            page.goto(url(), wait_until="networkidle")
             walk_to(page, flow, ep["from_step"])
             act(page, ep["inputs"], flow["truth"])
             assert wait_screen(page, ep["expect_screen"]), ep["id"]

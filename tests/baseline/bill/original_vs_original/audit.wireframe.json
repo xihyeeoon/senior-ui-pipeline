@@ -128,23 +128,27 @@
     "state_pairs_collapsed": 0,
     "undefined_classes_new": [],
     "choice_groups_original": {
-      "menu-tab": 7,
-      "menu-chip": 60,
       "menu-item": 289,
       "pick-bill": 18,
       "pw": 10
     },
+    "choice_groups_not_choices": {
+      "menu-tab": {
+        "values": 7,
+        "reason": "분야로 스크롤하는 탭 — 찾아가는 수단"
+      },
+      "menu-chip": {
+        "values": 60,
+        "reason": "분류로 스크롤하는 표지판 — 찾아가는 수단"
+      }
+    },
     "choice_values_removed_by_design": {},
     "choice_values_kept": {
-      "menu-tab": 7,
-      "menu-chip": 60,
       "menu-item": 289,
       "pick-bill": 18,
       "pw": 10
     },
     "choice_values_selectable": {
-      "menu-tab": 7,
-      "menu-chip": 60,
       "menu-item": 289,
       "pick-bill": 18,
       "pw": 10
@@ -293,6 +297,8 @@
     "js_error_details": [],
     "flow_notes": [],
     "checks_stood_down": [
+      "I/menu-chip 선택지 무리 60개 - 과제가 선택지가 아니라고 선언했다: 분류로 스크롤하는 표지판 — 찾아가는 수단",
+      "I/menu-tab 선택지 무리 7개 - 과제가 선택지가 아니라고 선언했다: 분야로 스크롤하는 탭 — 찾아가는 수단",
       "J/흐름에 오류 경로가 없다 - 정답 경로만 걸었다",
       "D/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다.",
       "E/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다.",

@@ -305,6 +305,18 @@ def render_brief(run_name, attempt, plan, diagnosis, report, original_screens,
     else:
         out.append("없음")
     out.append("")
+    not_choices = metrics.get("choice_groups_not_choices") or {}
+    out += ["### 선택지가 아니라고 선언한 무리", ""]
+    if not_choices:
+        out += ["원본에서 같은 `data-action` 을 가진 형제 무리지만 과제 파일(`not_choices`)이 "
+                "선택지가 아니라고 선언한 것이다. 검사 I 는 이 무리가 남았는지 세지 않았다.",
+                "",
+                "| 무리 (`data-action`) | 원본의 값 | 이유 |", "|---|---|---|"]
+        out += ["| `%s` | %s | %s |" % (a, d.get("values"), _cell(d.get("reason")))
+                for a, d in sorted(not_choices.items())]
+    else:
+        out.append("없음")
+    out.append("")
     out += ["### 도구가 고친 것", ""]
     if redeclared:
         out.append("도구가 고친 것: 모델이 %s 의 목록을 직접 다시 써서, 도구가 그 선언을 "

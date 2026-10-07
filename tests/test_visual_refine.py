@@ -54,10 +54,12 @@ def test_png_size_is_read_from_the_header(tmp_path):
 
 
 def test_a_phone_screen_on_gpt_6_1_sol_is_about_422_tokens():
-    """390x844 = 13 x 27 = 351 패치 x 1.2. sol 은 안내에 없어 같은 계열 값 - 추정."""
+    """390x844 = 13 x 27 = 351 패치 x 1.2. sol 은 안내에 없지만 2026-10-07 probe 의
+    실측(430)이 어림과 2% 안에서 같아 배수는 그대로 두고 추정 표시를 지웠다."""
     tokens, how = model.image_tokens(390, 844, "gpt-6.1-sol")
     assert tokens == 422
-    assert "patch" in how and "추정" in how
+    assert "patch" in how and "추정" not in how
+    assert "estimated" not in config.IMAGE_TOKENS["gpt-6.1-sol"]
 
 
 def test_gpt_6_astra_uses_the_documented_patch_rule():
@@ -152,7 +154,9 @@ from test_restructure_bugs import (GOOD_DIAGNOSIS, GOOD_PLAN, GOOD_REPLY,  # noq
 
 loop = _api.loop_module
 
-SNAPSHOT = {"screens": {}, "reached": [], "dialogs": [], "js_errors": [],
+# 가짜 원본 걷기의 결과 - 읽힌 화면이 하나 있어야 루프가 시작한다 (drive.nothing_read)
+SNAPSHOT = {"screens": {"home": {"landed_on": "home", "dom_screen": "home", "choices": {}}},
+            "reached": ["home"], "dialogs": [], "js_errors": [],
             "js_error_details": [], "missing_ids": [], "state_pairs": [],
             "undefined_classes": [], "notes": [], "load_failed": None}
 
@@ -871,6 +875,8 @@ def test_probe_image_measures_one_image(probe_env, out_root, capsys):
     assert "배수 = 422 / 351 = 1.202" in out
     assert '"gpt-6.1-sol": {"method": "patch", "multiplier": 1.2, "budget": 2500},' in out
     assert "estimated 표시만 지우면 된다" in out
+    # 고치기 전: "2%% 안에서" - 서식을 거치지 않는 글에 %% 를 적었다
+    assert "어림과 실측이 2% 안에서 같다" in out and "%%" not in out
     assert "그림 한 장의 실측" in probe_log(out_root)
 
 
@@ -978,9 +984,11 @@ def test_the_model_input_still_walks_the_task(server, task):
     io.open(os.path.join(config.ROOT, rel), "w", encoding="utf-8").write(strip(html))
     try:
         f = _api.load_flow(None, task=task)
-        base = "http://localhost:%d" % config.PORT
+        import capture_baseline as C
+        base = C.BASE_URL                    # server fixture 가 띄운 포트
         orig = asyncio.run(_api.drive("%s/%s" % (base, t["original"]), f))
-        rep = asyncio.run(_api.drive("%s/%s" % (base, rel), f))
+        rep = asyncio.run(_api.drive("%s/%s" % (base, rel), f,
+                                     original_groups=C.original_groups(orig, f)))
         report = _api.audit(orig, rep, html, strip(html), f)
     finally:
         os.remove(os.path.join(config.ROOT, rel))

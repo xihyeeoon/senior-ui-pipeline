@@ -55,7 +55,11 @@ def make_run(out_root, **kw):
     return r
 
 
-FAKE_SNAPSHOT = {"screens": {}, "reached": [], "dialogs": [], "js_errors": [],
+# 가짜 원본 걷기의 결과. 화면 하나는 읽힌 것이어야 한다 - 화면을 하나도 읽지 못한
+# 원본으로는 루프가 시작하지 않는다 (drive.nothing_read, test_no_original).
+FAKE_SNAPSHOT = {"screens": {"home": {"landed_on": "home", "dom_screen": "home",
+                                      "choices": {}}},
+                 "reached": ["home"], "dialogs": [], "js_errors": [],
                  "js_error_details": [], "missing_ids": [], "state_pairs": [],
                  "undefined_classes": [], "notes": [], "load_failed": None}
 
@@ -71,7 +75,7 @@ def passing_report():
 def out_root(request):
     """테스트가 쓰는 산출물 폴더. 저장소 루트 **아래** 에 둔다.
 
-    검사기는 빌드를 :3003 이 서빙하는 http:// 로 열고 그 서버는 ROOT 만
+    검사기는 빌드를 devserver 가 서빙하는 http:// 로 열고 그 서버는 ROOT 만
     서빙하므로, 산출물이 밖에 있으면 실제 실행에서는 빌드를 열지 못한다.
     tmp_path 를 쓰면 그 사실이 테스트에서 드러나지 않는다.
     """
@@ -97,7 +101,7 @@ def fake_run_env(monkeypatch, out_root):
 
     monkeypatch.setenv("SENIOR_UI_OUTPUTS", out_root)
     monkeypatch.setenv("OPENAI_API_KEY", "test-key-not-used")
-    monkeypatch.setattr(loop, "ensure_server", lambda log: None)
+    monkeypatch.setattr(loop, "ensure_server", lambda log, port=None: None)
     monkeypatch.setattr(loop.A, "drive", fake_drive)
     monkeypatch.setattr(loop.A, "load_flow",
                         lambda p, task=None: {"name": "original", "steps": []})
@@ -105,7 +109,7 @@ def fake_run_env(monkeypatch, out_root):
     # 파일의 가짜 답(오류 경로 없음)이 모두 형식에서 떨어진다. 오류 경로를
     # 요구하는 루프는 test_error_paths.py 가 따로 본다.
     monkeypatch.setattr(loop, "required_errors", lambda task=None: [])
-    monkeypatch.setattr(loop, "choices_block", lambda snap, html: "")
+    monkeypatch.setattr(loop, "choices_block", lambda snap, html, **kw: "")
     monkeypatch.setattr(loop, "load_template", lambda task=None: "TEMPLATE {{ORIGINAL_HTML}} "
                                                        "{{RETRY_BLOCK}} {{CHOICES}}")
     monkeypatch.setattr(loop, "load_plan_template", lambda task=None: PLAN_TEMPLATE)

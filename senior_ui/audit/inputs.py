@@ -5,8 +5,8 @@ r"""판정 입력 - 모델이 쓴 흐름 명세를 판정에 쓰는 흐름으로
 
   걷는 법     steps · error_paths 의 걸음 · reveal · required_ids · expect 의
               선택자. 설계마다 다르므로 설계를 만든 모델이 적는다.
-  판정 기준   정답(truth) · 빼도 되는 선택지 · 걸어야 할 오류 경로 · 검사 단계 ·
-              원본에서 파생됐는가. 과제와 연구자가 정한다.
+  판정 기준   정답(truth) · 빼도 되는 선택지 · 선택지가 아닌 무리 · 걸어야 할 오류
+              경로 · 검사 단계 · 원본에서 파생됐는가. 과제와 연구자가 정한다.
 
 판정 기준을 모델의 말로 정하면 모델이 자기 빌드의 채점 기준을 고르게 된다
 (원칙 P1). 그래서 judged_flow 하나가 모델 흐름의 판정 기준 칸을 버리고 과제의
@@ -129,6 +129,8 @@ def model_claims(flow, task=DEFAULT_TASK):
         out.append("truth")
     if flow.get("choices_removed"):
         out.append("choices_removed")
+    if flow.get("not_choices"):
+        out.append("not_choices")
     if "task" in flow and flow["task"] != task:
         out.append("task")
     if "stage" in flow:
@@ -179,6 +181,8 @@ def judged_flow(flow, task=None, stage=None, allowed_removals=None):
       truth                  과제의 정답 (과제의 원본 흐름). 모델 것은 검증 없이 버린다
       derived_from_original  늘 false - 모델의 설계는 새 설계다
       choices_removed        연구자 파일(flows/allowed_removals.json)의 그 과제 칸
+      not_choices            과제 파일의 not_choices - 선택지가 아니라고 선언한 무리와
+                             이유 (검사 I 가 판정에서 뺀다)
       error_paths_required   과제 파일의 required_error_paths
       stage                  부르는 쪽이 정한 단계, 없으면 config.DEFAULT_STAGE
       done_amount            과제의 완료 화면 금액 자리 (done_expect 첫 짝)
@@ -204,6 +208,7 @@ def judged_flow(flow, task=None, stage=None, allowed_removals=None):
     out["derived_from_original"] = False
     out["choices_removed"] = dict(load_allowed_removals(task)
                                   if allowed_removals is None else allowed_removals)
+    out["not_choices"] = dict(spec["not_choices"])
     out["error_paths_required"] = list(spec["required_error_paths"])
     out["stage"] = stage
     out.setdefault("expect", {})

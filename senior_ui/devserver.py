@@ -1,4 +1,4 @@
-r"""이 작업 트리를 127.0.0.1:3003 에 서빙하는 개발용 서버.
+r"""이 작업 트리를 127.0.0.1 에 서빙하는 개발용 서버 - 사람이 띄우면 :3003, 자동 실행은 빈 포트.
 
 검사기는 페이지를 file:// 이 아니라 http:// 로 연다 - 원본 시제품이 fetch 를
 쓰지 않더라도, 대시보드도 같은 포트로 서빙하므로 검사도 같은 조건에서 돈다.
@@ -7,10 +7,15 @@ r"""이 작업 트리를 127.0.0.1:3003 에 서빙하는 개발용 서버.
 그대로 둔다. 대신 루프백에만 띄운다 - 그 루트에는 .envs 와 sessions/ 가 같이
 들어 있어서, LAN 에 열면 검사기를 한 번 돌리는 동안 다 나간다.
 
-ensure_server() 는 이미 떠 있는 서버를 재사용한다 - 그때는 None 을 돌려주고,
-부른 쪽은 끝에서도 그 서버를 건드리지 않는다. 다만 재사용 전에 그것이 **이 작업
-트리의 파일을** 서빙하는지 확인한다 (serves_this_tree). 아니면 멈춘다 - 남의
-서버로 돌린 검사는 통과하든 떨어지든 뜻을 알 수 없다.
+자동 실행(재구성 루프 · pytest · 기준값 캡처)은 ensure_server(port=0) 으로 빈 포트에
+제 서버를 띄우고 끝에서 제 것만 끈다 (config.AUTO_PORT). 그래서 같은 포트를 명시하지
+않으면 둘을 동시에 돌려도 된다. 전에는 모두 :3003 하나를 썼다 - 뒤에 시작한 쪽이 앞의
+서버를 재사용하고, 앞의 쪽이 끝나며 그 서버를 끄면 뒤의 쪽은 걷다가 끊겼다.
+
+포트를 명시하면 ensure_server() 는 이미 떠 있는 서버를 재사용한다 - 그때는 None 을
+돌려주고, 부른 쪽은 끝에서도 그 서버를 건드리지 않는다. 다만 재사용 전에 그것이
+**이 작업 트리의 파일을** 서빙하는지 확인한다 (serves_this_tree). 아니면 멈춘다 -
+남의 서버로 돌린 검사는 통과하든 떨어지든 뜻을 알 수 없다.
 
 서버를 따로 띄워 두려면 (뷰어로 빌드를 열어 보거나 검사기 CLI 를 여러 번 돌릴 때):
 
@@ -28,9 +33,11 @@ import argparse
 import functools
 import io
 import os
+import re
 import socket
 import subprocess
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -98,40 +105,83 @@ def serves_this_tree(port, root=ROOT):
 
 
 def server_cmd(port, root=ROOT):
-    """띄우는 명령. 루프백에만 묶는다 (HOST). 테스트와 기준값 캡처도 이것을 쓴다."""
-    return [sys.executable, "-m", "http.server", str(port), "--bind", HOST,
+    """띄우는 명령. 루프백에만 묶는다 (HOST). 테스트와 기준값 캡처도 이것을 쓴다.
+    `-u` 는 빈 포트로 띄웠을 때 잡힌 포트를 알리는 첫 줄을 곧바로 내보내게 한다."""
+    return [sys.executable, "-u", "-m", "http.server", str(port), "--bind", HOST,
             "--directory", root]
 
 
-def ensure_server(log, port=PORT):
+# http.server 가 띄운 직후 찍는 줄. 빈 포트(0)로 띄우면 여기서 잡힌 포트를 읽는다.
+SERVING = re.compile(r"Serving HTTP on \S+ port (\d+)")
+
+
+def start_on_free_port(log, root=ROOT):
+    """빈 포트에 이 작업 트리의 서버를 띄운다. 돌려주는 Popen 의 `port` 가 잡힌 포트다.
+
+    포트를 먼저 골라 두고 띄우면 그 사이에 다른 실행이 같은 포트를 잡을 수 있다.
+    http.server 에 0 을 주면 운영체제가 bind 할 때 고르므로 그런 틈이 없다."""
+    tree_id(root)                       # 서버가 내보낼 확인 파일을 먼저 둔다
+    proc = subprocess.Popen(server_cmd(0, root), stdout=subprocess.PIPE,
+                            stderr=subprocess.DEVNULL, text=True, encoding="ascii",
+                            errors="replace")
+    first = []
+    reader = threading.Thread(target=lambda: first.append(proc.stdout.readline()),
+                              daemon=True)
+    reader.start()
+    reader.join(10)
+    m = SERVING.search(first[0]) if first else None
+    if not m:
+        proc.kill()
+        proc.wait()
+        raise RuntimeError("could not start http.server on a free port (첫 줄: %r)"
+                           % (first[0] if first else None))
+    proc.port = int(m.group(1))
+    log("server: started http.server on %s:%d (빈 포트, pid %d)" % (HOST, proc.port, proc.pid))
+    return proc
+
+
+def ensure_server(log, port=PORT, root=ROOT):
     """Return the Popen we started, or None if the port was already up (then we
-    leave it alone at the end too).
+    leave it alone at the end too). 띄운 Popen 의 `port` 가 그 서버의 포트다.
+
+    port 가 0 이면 빈 포트에 새로 띄운다 (start_on_free_port) - 재사용할 것이 없다.
 
     이미 떠 있으면 그것이 **이 작업 트리를** 서빙하는지 먼저 본다 (serves_this_tree).
     다른 폴더를 서빙하는 서버를 모르고 쓰면 검사는 돌긴 하지만 결과가 무엇을 뜻하는지
     알 수 없다. 빌드를 못 열어 전부 fatal 이 나거나, 더 나쁘게 같은 이름의 다른
     문서를 열어 통과한다.
     """
+    if not port:
+        return start_on_free_port(log, root)
     if listening(port):
-        if not serves_this_tree(port):
+        if not serves_this_tree(port, root):
             raise RuntimeError(
                 ":%d 에 이미 서버가 있지만 이 작업 트리(%s)의 파일을 서빙하지 않는다 "
                 "(확인 파일 %s 가 없거나 값이 다르다). 다른 worktree · 다른 폴더를 서빙하는 "
                 "서버이거나, 허용 목록만 서빙하는 대시보드 서버(시작.bat)일 수 있다. 그 "
                 "서버를 끄고 다시 실행하라 (확인: netstat -ano | findstr :%d)."
-                % (port, ROOT, TREE_ID_REL, port))
+                % (port, root, TREE_ID_REL, port))
         log("server: :%d already listening (이 작업 트리를 서빙한다), reusing it" % port)
         return None
-    tree_id()                           # 서버가 내보낼 확인 파일을 먼저 둔다
-    proc = subprocess.Popen(server_cmd(port), stdout=subprocess.DEVNULL,
+    tree_id(root)                       # 서버가 내보낼 확인 파일을 먼저 둔다
+    proc = subprocess.Popen(server_cmd(port, root), stdout=subprocess.DEVNULL,
                             stderr=subprocess.DEVNULL)
     for _ in range(50):
         if listening(port):
             log("server: started http.server on %s:%d (pid %d)" % (HOST, port, proc.pid))
+            proc.port = port
             return proc
         time.sleep(0.1)
     proc.kill()
     raise RuntimeError("could not start http.server on :%d" % port)
+
+
+def build_parser():
+    """사람이 띄우는 서버의 인자. 포트는 :3003 그대로다 (config.PORT) - 뷰어 · 문서의
+    주소가 그것을 가정한다. 자동 실행의 빈 포트와는 다르다."""
+    ap = argparse.ArgumentParser(prog="python -m senior_ui.devserver")
+    ap.add_argument("--port", type=int, default=PORT)
+    return ap
 
 
 def main(argv=None):
@@ -141,9 +191,7 @@ def main(argv=None):
     띄우지 않는다). 그래야 이 창을 닫거나 프로세스를 끝내면 서버도 함께 끝난다 -
     Windows 에서는 부모를 끝내도 자식 http.server 가 포트를 쥔 채 남는다."""
     setup_stdout()
-    ap = argparse.ArgumentParser(prog="python -m senior_ui.devserver")
-    ap.add_argument("--port", type=int, default=PORT)
-    args = ap.parse_args(argv)
+    args = build_parser().parse_args(argv)
     if listening(args.port):
         if not serves_this_tree(args.port):
             print("cannot start: :%d 에 이미 서버가 있지만 이 작업 트리(%s)를 서빙하지 "

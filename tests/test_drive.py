@@ -62,7 +62,8 @@ def drive_case(rel, flow_name):
 
     orig = asyncio.run(_api.drive("%s/%s" % (C.BASE_URL, C.ORIGINAL_REL), base_flow,
                                   errors=base_flow is flow))
-    rep = asyncio.run(_api.drive("%s/%s" % (C.BASE_URL, rel), flow))
+    rep = asyncio.run(_api.drive("%s/%s" % (C.BASE_URL, rel), flow,
+                                 original_groups=C.original_groups(orig, flow)))
     report = _api.audit(orig, rep, orig_html, rep_html, flow)
     return {"orig": orig, "rep": rep}, report
 
@@ -139,7 +140,8 @@ def drive_bill(rel, flow_name):
     orig_html = io.open(os.path.join(ROOT, C.BILL_ORIGINAL_REL), encoding="utf-8").read()
     rep_html = io.open(os.path.join(ROOT, rel), encoding="utf-8").read()
     orig = asyncio.run(_api.drive("%s/%s" % (C.BASE_URL, C.BILL_ORIGINAL_REL), flow))
-    rep = asyncio.run(_api.drive("%s/%s" % (C.BASE_URL, rel), flow))
+    rep = asyncio.run(_api.drive("%s/%s" % (C.BASE_URL, rel), flow,
+                                 original_groups=C.original_groups(orig, flow)))
     return {"orig": orig, "rep": rep}, _api.audit(orig, rep, orig_html, rep_html, flow)
 
 

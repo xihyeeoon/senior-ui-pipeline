@@ -135,7 +135,7 @@ def image_report(name, text_prompt, image_prompt, size):
              '    "%s": {"method": "patch", "multiplier": %s, "budget": %d},'
              % (name, round(mult, 2), rule.get("budget") or 2500)]
     if rule["known"] and abs(measured - est) <= max(2, 0.02 * est):
-        lines.append("어림과 실측이 2%% 안에서 같다 - 배수는 그대로 두고 estimated 표시만 "
+        lines.append("어림과 실측이 2% 안에서 같다 - 배수는 그대로 두고 estimated 표시만 "
                      "지우면 된다.")
     return lines
 

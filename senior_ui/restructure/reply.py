@@ -118,9 +118,32 @@ def shape_problems(flow):
     return problems
 
 
-def parse_reply(text):
+def accept_reveal_list(flow):
+    """배열로 온 reveal 을 `{action: {"at", "do"}}` 로 한 번 바꿔 받는다. 흐름 명세를
+    제자리에서 바꾼다. 바꿨으면 action 이름들(빈 배열이면 []), 아니면 None.
+
+    예비 실행 두 번(20261006-215902 · 20261007-102041)의 다듬기 답이 모두
+    `"reveal": []` 을 적어 형식에서 떨어졌다 - 다듬기 프롬프트에 reveal 의 모양이
+    없었다. 원소마다 이름(action)이 있으면 무엇을 펼치는지 분명하므로 받는다. 이름이
+    없거나 · 글이 아니거나 · 겹치거나 · 객체가 아닌 원소가 있으면 그대로 두고
+    shape_problems 가 문제로 센다. 받았다는 사실은 부르는 쪽이 남긴다."""
+    reveal = flow.get("reveal")
+    if not isinstance(reveal, list):
+        return None
+    names = [x.get("action") if isinstance(x, dict) else None for x in reveal]
+    if not all(isinstance(n, str) and n for n in names) or len(set(names)) != len(names):
+        return None
+    flow["reveal"] = {x["action"]: {k: v for k, v in x.items() if k != "action"}
+                      for x in reveal}
+    return names
+
+
+def parse_reply(text, accepted=None):
     """Last ```html``` block and last ```json``` block. Raises ValueError with
-    a message meant to go straight into the next prompt."""
+    a message meant to go straight into the next prompt.
+
+    모양 검사 전에 배열로 온 reveal 을 한 번 객체로 바꿔 받는다 (accept_reveal_list).
+    `accepted` 에 dict 를 주면 받아 준 것을 적는다 - `{"reveal_from_list": [이름…]}`."""
     blocks = {}
     for kind, body in FENCE.findall(text):
         blocks[kind] = body
@@ -135,6 +158,10 @@ def parse_reply(text):
         flow = json.loads(blocks["json"])
     except json.JSONDecodeError as e:
         raise ValueError("흐름 명세가 JSON 으로 읽히지 않는다: %s" % e)
+    if isinstance(flow, dict):
+        names = accept_reveal_list(flow)
+        if names is not None and accepted is not None:
+            accepted["reveal_from_list"] = names
     # 타입 검사는 여기서 끝낸다. 아래 어디에서도 모양을 다시 의심하지 않는다.
     problems = shape_problems(flow)
     if problems:
@@ -509,7 +536,7 @@ def validate_flow(flow, html, required_errors=None, done_expect=None):
 # --------------------------------------------------------------------------- #
 # 참조 검사 - 도구가 넣어 준 데이터를 읽는가
 # --------------------------------------------------------------------------- #
-def preserved_problems(html, data):
+def preserved_problems(html, data, optional=()):
     """도구가 넣어 줄 선택지 데이터를 스크립트가 읽지 않으면 형식 문제다.
 
     위의 검사들과 같은 성격이다 - 규칙으로 보고, 브라우저를 띄우지 않고, 메시지가
@@ -524,12 +551,16 @@ def preserved_problems(html, data):
     참조하든 않든 결과가 같은데, 요구하면 숫자판을 마크업에 적은 설계가 그것
     때문에 재시도를 한 번 쓴다 - 이 장치는 재시도를 아끼려고 만든 것이다.
     값이 "있다" 를 보는 눈은 검사 I 와 같은 것을 쓴다 (i_choices.present).
+
+    `optional` 은 넣어 주되 읽으라고 하지 않은 이름이다 - 과제가 선택지가 아니라고
+    선언한 무리만 받치는 배열 (preserve.optional_names). 읽지 않아도 문제가 아니다.
     """
     if not data:
         return []
     read = names_read(html, list(data))
     missed = [n for n, vals in data.items()
-              if n not in read and not all(present(v, html) for v in vals)]
+              if n not in optional and n not in read
+              and not all(present(v, html) for v in vals)]
     if not missed:
         return []
     return ["재설계 HTML 의 스크립트가 도구가 넣어 주는 선택지 데이터를 읽지 "

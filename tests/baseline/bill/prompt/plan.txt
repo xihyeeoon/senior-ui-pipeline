@@ -25,13 +25,11 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 
 원본의 반복 선택지 (스크립트가 런타임에 그린다):
   menu-item — 289개 (MENU_BANK 79 + MENU_CARD 77 + MENU_STOCK 72 + MENU_INSURE 55 + MENU_BENEFIT 41 + MENU_GOODS 18 + MENU_HELP 12)
-  menu-chip — 60개
   pick-bill — 18개 (BILL_ITEMS 23)
   pw — 10개 (PW_KEYS 10)
-  menu-tab — 7개 (MENU_TABS 7)
 
 이 데이터는 도구가 다음 이름으로 넣어 준다:
-  window.PRESERVED.MENU_BANK (79개) · window.PRESERVED.MENU_CARD (77개) · window.PRESERVED.MENU_STOCK (72개) · window.PRESERVED.MENU_INSURE (55개) · window.PRESERVED.MENU_BENEFIT (41개) · window.PRESERVED.MENU_GOODS (18개) · window.PRESERVED.MENU_HELP (12개) · window.PRESERVED.BILL_ITEMS (23개) · window.PRESERVED.PW_KEYS (10개) · window.PRESERVED.MENU_TABS (7개)
+  window.PRESERVED.MENU_BANK (79개) · window.PRESERVED.MENU_CARD (77개) · window.PRESERVED.MENU_STOCK (72개) · window.PRESERVED.MENU_INSURE (55개) · window.PRESERVED.MENU_BENEFIT (41개) · window.PRESERVED.MENU_GOODS (18개) · window.PRESERVED.MENU_HELP (12개) · window.PRESERVED.BILL_ITEMS (23개) · window.PRESERVED.PW_KEYS (10개)
 
 목록을 직접 쓰지 마라. 이것을 참조해 그려라. 선택지를 몇 개, 어떤 순서, 어떤
 묶음으로 보일지는 네가 정한다. 다만 모든 값을 고를 수 있어야 한다.
@@ -43,6 +41,12 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 때는 전체 목록이 DOM 에 있어야 한다. 눌러야 목록이 만들어지는 설계라면
 그 조작을 흐름 명세의 `reveal` 에 적어라.
 도구가 넣어 준 데이터 블록은 증거로 세지 않는다 - 그 데이터를 읽어 **그린** 것만 센다.
+
+선택지가 아니라고 과제가 정한 반복 요소 (검사가 선택지로 세지 않는다):
+  menu-chip — 60개: 분류로 스크롤하는 표지판 — 찾아가는 수단
+  menu-tab — 7개 (MENU_TABS 7): 분야로 스크롤하는 탭 — 찾아가는 수단
+그 값도 도구가 넣어 준다: window.PRESERVED.MENU_TABS (7개).
+써도 되고 쓰지 않아도 된다 - 읽지 않아도 형식 오류가 아니다.
 
 
 

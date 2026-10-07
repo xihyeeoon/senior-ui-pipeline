@@ -29,7 +29,8 @@ def run(rel, flow, base_flow=None, query=""):
     base_flow = base_flow or flow
     orig = asyncio.run(_api.drive("%s/%s" % (C.BASE_URL, C.ORIGINAL_REL),
                                   base_flow, errors=base_flow is flow))
-    rep = asyncio.run(_api.drive("%s/%s%s" % (C.BASE_URL, rel, query), flow))
+    rep = asyncio.run(_api.drive("%s/%s%s" % (C.BASE_URL, rel, query), flow,
+                                 original_groups=C.original_groups(orig, flow)))
     oh = io.open(os.path.join(ROOT, C.ORIGINAL_REL), encoding="utf-8").read()
     rh = io.open(os.path.join(ROOT, rel), encoding="utf-8").read()
     return rep, _api.audit(orig, rep, oh, rh, flow)

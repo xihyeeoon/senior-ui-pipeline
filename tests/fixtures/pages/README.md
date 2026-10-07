@@ -45,3 +45,10 @@
 **같은 화면을 두 번 지나는 흐름의 `expect`** 는 방문 이름으로 적는다. 첫 방문은
 화면 이름 그대로이고 두 번째는 `start#2` 다 (`senior_ui/audit/flow.py` 의
 `visit_keys`).
+
+## i_one_per_section
+
+검사 I 의 선택지 수집 (11-9b). 원본에서 무리였던 `menu-item` 을 분류마다 하나씩 따로 놓았고
+(같은 data-action 형제가 없다), 둘은 [더 보기] 를 눌러야 그려진다 (흐름의 `reveal`). 값은 도구의
+데이터 블록 모양(`script#preserved-data`)에만 있어 DOM 에서만 찾을 수 있다. 뒤로(`back`)는
+화면마다 하나씩이다. `tests/test_group_source.py` 가 걷는다 (원본 스냅샷은 손으로 만든다).
