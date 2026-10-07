@@ -240,9 +240,19 @@ async def drain_dialogs(tasks, grace_ms=DIALOG_GRACE_MS):
         await asyncio.gather(*pending, return_exceptions=True)
 
 
+def mark_entrances(got, visit, reveal=0):
+    """보인 입구에 어디서 보였는지를 적는다 (11-8, 기록만 - 검사 K 의 entrance_distance).
+    `visit` 은 그 걸음의 방문 이름, `reveal` 은 그때까지 누른 펼치기 수 (정답 걸음은 0).
+    스크롤 거리(scroll_px)는 probe 가 잰다 (probes.ENTRANCES)."""
+    for row in (got or {}).values():
+        if row.get("visible"):
+            row.update(visit=visit, reveal=reveal)
+    return got
+
+
 def merge_entrances(have, got):
     """걸음마다 모은 입구 상태를 합친다. 한 번이라도 보였으면 보인 것이고, 기록용
-    글자는 처음 보인 때의 것이다."""
+    글자 · 처음 보인 방문 · 그때의 스크롤 거리는 처음 보인 때의 것이다."""
     for action, row in (got or {}).items():
         old = have.get(action)
         if old is None or (row.get("visible") and not old.get("visible")):
@@ -408,7 +418,8 @@ async def walk(page, flow, data, want_shots, url, see=False, original_groups=())
 
         data["screens"][visit] = await collect_screen(
             page, flow, visit, data["reached"], original_groups)
-        merge_entrances(data["entrances_seen"], await page.evaluate(P.ENTRANCES))
+        merge_entrances(data["entrances_seen"],
+                        mark_entrances(await page.evaluate(P.ENTRANCES), visit))
         if want_shots:
             await page.screenshot(path=os.path.join(
                 want_shots, "audit_%s.png" % SHOT_SAFE.sub("_", visit)))
@@ -565,9 +576,12 @@ async def walk_reveal(browser, url, flow, spec, original_groups=()):
             have = row["choices"].setdefault(action, [])
             have += [v for v in vals if v not in have]
 
-    async def merge_texts():
-        # 펼친 뒤 누를 수 있게 보인 과제 밖 입구 - 검사 K 가 정답 경로의 것과 함께 센다
-        merge_entrances(row["entrances_seen"], await page.evaluate(P.ENTRANCES))
+    async def merge_texts(clicks):
+        # 펼친 뒤 누를 수 있게 보인 과제 밖 입구 - 검사 K 가 정답 경로의 것과 함께 센다.
+        # 몇 번 누른 뒤에 보였는지도 적는다 (entrance_distance 의 reveal, 기록만)
+        merge_entrances(row["entrances_seen"],
+                        mark_entrances(await page.evaluate(P.ENTRANCES), spec.get("at"),
+                                       clicks))
 
     try:
         try:
@@ -595,7 +609,7 @@ async def walk_reveal(browser, url, flow, spec, original_groups=()):
             if visit == spec.get("at"):
                 break
         merge(await page.evaluate(P.CHOICE_GROUPS, list(original_groups)))
-        await merge_texts()
+        await merge_texts(0)
         actions = spec.get("do") or []
         for i, act in enumerate(actions if isinstance(actions, list) else [actions]):
             sel = act.get("click") if isinstance(act, dict) and set(act) == {"click"} \
@@ -622,7 +636,7 @@ async def walk_reveal(browser, url, flow, spec, original_groups=()):
                        after.get("dom_screen") or after.get("landed_on")))
                 return row
             merge(await page.evaluate(P.CHOICE_GROUPS, list(original_groups)))
-            await merge_texts()
+            await merge_texts(i + 1)
         return row
     finally:
         await drain_dialogs(tasks)

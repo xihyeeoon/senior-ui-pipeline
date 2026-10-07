@@ -328,6 +328,473 @@
         "aria": "홈"
       }
     },
+    "entrance_distance": [
+      {
+        "id": "T1",
+        "label": "메시지",
+        "action": "oos-message",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T2",
+        "label": "지갑",
+        "action": "oos-wallet",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T3",
+        "label": "알림",
+        "action": "oos-alarm",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T4",
+        "label": "IRP 안내",
+        "action": "oos-irp",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T5",
+        "label": "앱카드 가입",
+        "action": "oos-appcard",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T6",
+        "label": "바로받기",
+        "action": "oos-get-coupon",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T7",
+        "label": "이벤트",
+        "action": "oos-event",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T8",
+        "label": "쿠폰",
+        "action": "oos-coupon",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T9",
+        "label": "포인트",
+        "action": "oos-point",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T10",
+        "label": "소비 상세",
+        "action": "oos-spend-detail",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T11",
+        "label": "마이신한포인트",
+        "action": "oos-my-point",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 87
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 87
+        }
+      },
+      {
+        "id": "T12",
+        "label": "자산 연결 이벤트",
+        "action": "oos-connect-event",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 471
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 471
+        }
+      },
+      {
+        "id": "T13",
+        "label": "홈화면 설정",
+        "action": "oos-home-setting",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 782
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 782
+        }
+      },
+      {
+        "id": "T14",
+        "label": "금액 숨기기",
+        "action": "oos-hide-amount",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 782
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 782
+        }
+      },
+      {
+        "id": "T15",
+        "label": "금융",
+        "action": "oos-tab-finance",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T16",
+        "label": "상품",
+        "action": "oos-tab-goods",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T17",
+        "label": "혜택",
+        "action": "oos-tab-benefit",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T18",
+        "label": "주식",
+        "action": "oos-tab-stock",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T19",
+        "label": "다건이체",
+        "action": "oos-multi-transfer",
+        "original": {
+          "visit": "recipient",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "recipient",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T20",
+        "label": "받는 사람 관리",
+        "action": "oos-payee-manage",
+        "original": {
+          "visit": "recipient",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "recipient",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T21",
+        "label": "검색",
+        "action": "oos-search",
+        "original": {
+          "visit": "recipient",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "recipient",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T22",
+        "label": "자주쓰는 계좌",
+        "action": "oos-frequent",
+        "original": {
+          "visit": "recipient",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "recipient",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T23",
+        "label": "내 계좌",
+        "action": "oos-my-accounts",
+        "original": {
+          "visit": "recipient",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "recipient",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T24",
+        "label": "최근",
+        "action": "oos-recent",
+        "original": {
+          "visit": "recipient",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "recipient",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T25",
+        "label": "출금계좌 변경",
+        "action": "oos-from-account",
+        "original": {
+          "visit": "amount",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "amount",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T26",
+        "label": "추가이체",
+        "action": "oos-more-transfer",
+        "original": {
+          "visit": "done",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "done",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T27",
+        "label": "상세보기",
+        "action": "oos-detail",
+        "original": {
+          "visit": "done",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "done",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "T28",
+        "label": "공유",
+        "action": "oos-share",
+        "original": {
+          "visit": "done",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "done",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "R1",
+        "label": "전체메뉴",
+        "action": "oos-menu",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "R3",
+        "label": "쉬운홈",
+        "action": "oos-easy-home",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 782
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 782
+        }
+      },
+      {
+        "id": "R4",
+        "label": "홈",
+        "action": "oos-tab-home",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      }
+    ],
     "fatal_duplicates_removed": 0,
     "fatal_total": 0,
     "fatal_derived": 0,

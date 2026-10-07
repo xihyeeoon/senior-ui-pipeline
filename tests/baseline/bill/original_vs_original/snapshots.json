@@ -428,16 +428,16 @@
             "검찰청 벌과금"
           ],
           "pw": [
-            "2",
             "1",
-            "5",
-            "3",
-            "6",
+            "9",
             "7",
             "0",
             "8",
+            "3",
             "4",
-            "9"
+            "6",
+            "2",
+            "5"
           ]
         },
         "contrast": [
@@ -1716,16 +1716,16 @@
             "검찰청 벌과금"
           ],
           "pw": [
-            "2",
             "1",
-            "5",
-            "3",
-            "6",
+            "9",
             "7",
             "0",
             "8",
+            "3",
             "4",
-            "9"
+            "6",
+            "2",
+            "5"
           ]
         },
         "contrast": [
@@ -4418,16 +4418,16 @@
             "검찰청 벌과금"
           ],
           "pw": [
-            "2",
             "1",
-            "5",
-            "3",
-            "6",
+            "9",
             "7",
             "0",
             "8",
+            "3",
             "4",
-            "9"
+            "6",
+            "2",
+            "5"
           ]
         },
         "contrast": [
@@ -4901,16 +4901,16 @@
             "검찰청 벌과금"
           ],
           "pw": [
-            "2",
             "1",
-            "5",
-            "3",
-            "6",
+            "9",
             "7",
             "0",
             "8",
+            "3",
             "4",
-            "9"
+            "6",
+            "2",
+            "5"
           ]
         },
         "contrast": [
@@ -5805,16 +5805,16 @@
             "검찰청 벌과금"
           ],
           "pw": [
-            "2",
             "1",
-            "5",
-            "3",
-            "6",
+            "9",
             "7",
             "0",
             "8",
+            "3",
             "4",
-            "9"
+            "6",
+            "2",
+            "5"
           ]
         },
         "contrast": [],
@@ -6277,16 +6277,16 @@
             "검찰청 벌과금"
           ],
           "pw": [
-            "2",
             "1",
-            "5",
-            "3",
-            "6",
+            "9",
             "7",
             "0",
             "8",
+            "3",
             "4",
-            "9"
+            "6",
+            "2",
+            "5"
           ]
         },
         "contrast": [
@@ -6460,7 +6460,7 @@
           "done"
         ],
         "onclicks": [],
-        "text": "4:31\n67\n✕\n계좌 비밀번호\n5\n1\n0\n8\n9\n6\n4\n7\n2\n재배열\n3\n⌫",
+        "text": "4:31\n67\n✕\n계좌 비밀번호\n0\n9\n1\n3\n8\n2\n7\n5\n6\n재배열\n4\n⌫",
         "height": 844,
         "choices": {
           "menu-tab": [
@@ -6846,16 +6846,16 @@
             "검찰청 벌과금"
           ],
           "pw": [
-            "5",
-            "1",
             "0",
-            "8",
             "9",
-            "6",
-            "4",
-            "7",
+            "1",
+            "3",
+            "8",
             "2",
-            "3"
+            "7",
+            "5",
+            "6",
+            "4"
           ]
         },
         "contrast": [],
@@ -7297,16 +7297,16 @@
             "검찰청 벌과금"
           ],
           "pw": [
-            "5",
-            "1",
             "0",
-            "8",
             "9",
-            "6",
-            "4",
-            "7",
+            "1",
+            "3",
+            "8",
             "2",
-            "3"
+            "7",
+            "5",
+            "6",
+            "4"
           ]
         },
         "contrast": [],
@@ -7467,167 +7467,264 @@
       "oos-message": {
         "visible": true,
         "text": "",
-        "aria": "메시지"
+        "aria": "메시지",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-wallet": {
         "visible": true,
         "text": "",
-        "aria": "지갑"
+        "aria": "지갑",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-alarm": {
         "visible": true,
         "text": "",
-        "aria": "알림"
+        "aria": "알림",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-transfer": {
         "visible": true,
         "text": "이체",
-        "aria": "이체"
+        "aria": "이체",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-irp": {
         "visible": true,
         "text": "절세혜택과 안정적인 노후, IRP로 준비하세요",
-        "aria": "IRP 안내"
+        "aria": "IRP 안내",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-appcard": {
         "visible": true,
         "text": "앱카드 가입",
-        "aria": "앱카드 가입"
+        "aria": "앱카드 가입",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-get-coupon": {
         "visible": true,
         "text": "바로받기",
-        "aria": "바로받기"
+        "aria": "바로받기",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-event": {
         "visible": true,
         "text": "이벤트",
-        "aria": "이벤트"
+        "aria": "이벤트",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-coupon": {
         "visible": true,
         "text": "쿠폰",
-        "aria": "쿠폰"
+        "aria": "쿠폰",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-point": {
         "visible": true,
         "text": "포인트",
-        "aria": "포인트"
+        "aria": "포인트",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-spend-detail": {
         "visible": true,
         "text": "›",
-        "aria": "소비 상세"
+        "aria": "소비 상세",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-my-point": {
         "visible": true,
         "text": "카드 쓸때마다 쌓이고, 현금처럼 쓰는 마이신한포인트 시작하기",
-        "aria": "마이신한포인트"
+        "aria": "마이신한포인트",
+        "scroll_px": 87,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-connect-event": {
         "visible": true,
         "text": "더 많은 금융자산 모두 연결하면 커피쿠폰 즉시지급! 이벤트 바로가기 ›",
-        "aria": "자산 연결 이벤트"
+        "aria": "자산 연결 이벤트",
+        "scroll_px": 471,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-easy-home": {
         "visible": true,
         "text": "쉬운홈",
-        "aria": "쉬운홈"
+        "aria": "쉬운홈",
+        "scroll_px": 782,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-home-setting": {
         "visible": true,
         "text": "홈화면 설정",
-        "aria": "홈화면 설정"
+        "aria": "홈화면 설정",
+        "scroll_px": 782,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-hide-amount": {
         "visible": true,
         "text": "금액 숨기기",
-        "aria": "금액 숨기기"
+        "aria": "금액 숨기기",
+        "scroll_px": 782,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-tab-home": {
         "visible": true,
         "text": "홈",
-        "aria": "홈"
+        "aria": "홈",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-tab-finance": {
         "visible": true,
         "text": "금융",
-        "aria": "금융"
+        "aria": "금융",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-tab-goods": {
         "visible": true,
         "text": "상품",
-        "aria": "상품"
+        "aria": "상품",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-tab-benefit": {
         "visible": true,
         "text": "혜택",
-        "aria": "혜택"
+        "aria": "혜택",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-tab-stock": {
         "visible": true,
         "text": "주식",
-        "aria": "주식"
+        "aria": "주식",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-chat": {
         "visible": true,
         "text": "",
-        "aria": "고객센터 채팅"
+        "aria": "고객센터 채팅",
+        "scroll_px": 0,
+        "visit": "menu",
+        "reveal": 0
       },
       "oos-settings": {
         "visible": true,
         "text": "",
-        "aria": "설정"
+        "aria": "설정",
+        "scroll_px": 0,
+        "visit": "menu",
+        "reveal": 0
       },
       "oos-logout": {
         "visible": true,
         "text": "",
-        "aria": "로그아웃"
+        "aria": "로그아웃",
+        "scroll_px": 0,
+        "visit": "menu",
+        "reveal": 0
       },
       "oos-search-submit": {
         "visible": true,
         "text": "",
-        "aria": "검색"
+        "aria": "검색",
+        "scroll_px": 0,
+        "visit": "search",
+        "reveal": 0
       },
       "oos-support": {
         "visible": true,
         "text": "",
-        "aria": "고객센터"
+        "aria": "고객센터",
+        "scroll_px": 0,
+        "visit": "bill-home",
+        "reveal": 0
       },
       "oos-home": {
         "visible": true,
         "text": "",
-        "aria": "홈"
+        "aria": "홈",
+        "scroll_px": 0,
+        "visit": "bill-home",
+        "reveal": 0
       },
       "oos-bill-inquiry": {
         "visible": true,
         "text": "조회하기 전자고지서로 간편하게 확인",
-        "aria": "조회하기"
+        "aria": "조회하기",
+        "scroll_px": 0,
+        "visit": "bill-home",
+        "reveal": 0
       },
       "oos-giro-register": {
         "visible": true,
         "text": "자주쓰는 지로번호 등록해보세요! ›",
-        "aria": "자주쓰는 지로번호 등록"
+        "aria": "자주쓰는 지로번호 등록",
+        "scroll_px": 0,
+        "visit": "bill-home",
+        "reveal": 0
       },
       "oos-info-support": {
         "visible": true,
         "text": "",
-        "aria": "고객센터"
+        "aria": "고객센터",
+        "scroll_px": 0,
+        "visit": "info",
+        "reveal": 0
       },
       "oos-info-home": {
         "visible": true,
         "text": "",
-        "aria": "홈"
+        "aria": "홈",
+        "scroll_px": 0,
+        "visit": "info",
+        "reveal": 0
       },
       "oos-done-support": {
         "visible": true,
         "text": "",
-        "aria": "고객센터"
+        "aria": "고객센터",
+        "scroll_px": 0,
+        "visit": "done",
+        "reveal": 0
       },
       "oos-ask-ai": {
         "visible": false,
         "text": "찾는 내용이 없다면, AI에게 물어볼까요?",
-        "aria": "AI에게 물어보기"
+        "aria": "AI에게 물어보기",
+        "scroll_px": null
       }
     },
     "truth": {
@@ -8071,16 +8168,16 @@
             "검찰청 벌과금"
           ],
           "pw": [
-            "2",
-            "1",
-            "5",
-            "6",
-            "9",
-            "0",
-            "4",
             "3",
+            "2",
+            "6",
+            "4",
+            "9",
+            "5",
+            "0",
             "8",
-            "7"
+            "7",
+            "1"
           ]
         },
         "contrast": [
@@ -9359,16 +9456,16 @@
             "검찰청 벌과금"
           ],
           "pw": [
-            "2",
-            "1",
-            "5",
-            "6",
-            "9",
-            "0",
-            "4",
             "3",
+            "2",
+            "6",
+            "4",
+            "9",
+            "5",
+            "0",
             "8",
-            "7"
+            "7",
+            "1"
           ]
         },
         "contrast": [
@@ -12061,16 +12158,16 @@
             "검찰청 벌과금"
           ],
           "pw": [
-            "2",
-            "1",
-            "5",
-            "6",
-            "9",
-            "0",
-            "4",
             "3",
+            "2",
+            "6",
+            "4",
+            "9",
+            "5",
+            "0",
             "8",
-            "7"
+            "7",
+            "1"
           ]
         },
         "contrast": [
@@ -12544,16 +12641,16 @@
             "검찰청 벌과금"
           ],
           "pw": [
-            "2",
-            "1",
-            "5",
-            "6",
-            "9",
-            "0",
-            "4",
             "3",
+            "2",
+            "6",
+            "4",
+            "9",
+            "5",
+            "0",
             "8",
-            "7"
+            "7",
+            "1"
           ]
         },
         "contrast": [
@@ -13448,16 +13545,16 @@
             "검찰청 벌과금"
           ],
           "pw": [
-            "2",
-            "1",
-            "5",
-            "6",
-            "9",
-            "0",
-            "4",
             "3",
+            "2",
+            "6",
+            "4",
+            "9",
+            "5",
+            "0",
             "8",
-            "7"
+            "7",
+            "1"
           ]
         },
         "contrast": [],
@@ -13920,16 +14017,16 @@
             "검찰청 벌과금"
           ],
           "pw": [
-            "2",
-            "1",
-            "5",
-            "6",
-            "9",
-            "0",
-            "4",
             "3",
+            "2",
+            "6",
+            "4",
+            "9",
+            "5",
+            "0",
             "8",
-            "7"
+            "7",
+            "1"
           ]
         },
         "contrast": [
@@ -14103,7 +14200,7 @@
           "done"
         ],
         "onclicks": [],
-        "text": "4:31\n67\n✕\n계좌 비밀번호\n2\n1\n7\n8\n9\n6\n4\n5\n0\n재배열\n3\n⌫",
+        "text": "4:31\n67\n✕\n계좌 비밀번호\n9\n8\n1\n3\n0\n4\n6\n2\n5\n재배열\n7\n⌫",
         "height": 844,
         "choices": {
           "menu-tab": [
@@ -14489,16 +14586,16 @@
             "검찰청 벌과금"
           ],
           "pw": [
-            "2",
-            "1",
-            "7",
-            "8",
             "9",
-            "6",
-            "4",
-            "5",
+            "8",
+            "1",
+            "3",
             "0",
-            "3"
+            "4",
+            "6",
+            "2",
+            "5",
+            "7"
           ]
         },
         "contrast": [],
@@ -14940,16 +15037,16 @@
             "검찰청 벌과금"
           ],
           "pw": [
-            "2",
-            "1",
-            "7",
-            "8",
             "9",
-            "6",
-            "4",
-            "5",
+            "8",
+            "1",
+            "3",
             "0",
-            "3"
+            "4",
+            "6",
+            "2",
+            "5",
+            "7"
           ]
         },
         "contrast": [],
@@ -15110,167 +15207,264 @@
       "oos-message": {
         "visible": true,
         "text": "",
-        "aria": "메시지"
+        "aria": "메시지",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-wallet": {
         "visible": true,
         "text": "",
-        "aria": "지갑"
+        "aria": "지갑",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-alarm": {
         "visible": true,
         "text": "",
-        "aria": "알림"
+        "aria": "알림",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-transfer": {
         "visible": true,
         "text": "이체",
-        "aria": "이체"
+        "aria": "이체",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-irp": {
         "visible": true,
         "text": "절세혜택과 안정적인 노후, IRP로 준비하세요",
-        "aria": "IRP 안내"
+        "aria": "IRP 안내",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-appcard": {
         "visible": true,
         "text": "앱카드 가입",
-        "aria": "앱카드 가입"
+        "aria": "앱카드 가입",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-get-coupon": {
         "visible": true,
         "text": "바로받기",
-        "aria": "바로받기"
+        "aria": "바로받기",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-event": {
         "visible": true,
         "text": "이벤트",
-        "aria": "이벤트"
+        "aria": "이벤트",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-coupon": {
         "visible": true,
         "text": "쿠폰",
-        "aria": "쿠폰"
+        "aria": "쿠폰",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-point": {
         "visible": true,
         "text": "포인트",
-        "aria": "포인트"
+        "aria": "포인트",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-spend-detail": {
         "visible": true,
         "text": "›",
-        "aria": "소비 상세"
+        "aria": "소비 상세",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-my-point": {
         "visible": true,
         "text": "카드 쓸때마다 쌓이고, 현금처럼 쓰는 마이신한포인트 시작하기",
-        "aria": "마이신한포인트"
+        "aria": "마이신한포인트",
+        "scroll_px": 87,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-connect-event": {
         "visible": true,
         "text": "더 많은 금융자산 모두 연결하면 커피쿠폰 즉시지급! 이벤트 바로가기 ›",
-        "aria": "자산 연결 이벤트"
+        "aria": "자산 연결 이벤트",
+        "scroll_px": 471,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-easy-home": {
         "visible": true,
         "text": "쉬운홈",
-        "aria": "쉬운홈"
+        "aria": "쉬운홈",
+        "scroll_px": 782,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-home-setting": {
         "visible": true,
         "text": "홈화면 설정",
-        "aria": "홈화면 설정"
+        "aria": "홈화면 설정",
+        "scroll_px": 782,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-hide-amount": {
         "visible": true,
         "text": "금액 숨기기",
-        "aria": "금액 숨기기"
+        "aria": "금액 숨기기",
+        "scroll_px": 782,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-tab-home": {
         "visible": true,
         "text": "홈",
-        "aria": "홈"
+        "aria": "홈",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-tab-finance": {
         "visible": true,
         "text": "금융",
-        "aria": "금융"
+        "aria": "금융",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-tab-goods": {
         "visible": true,
         "text": "상품",
-        "aria": "상품"
+        "aria": "상품",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-tab-benefit": {
         "visible": true,
         "text": "혜택",
-        "aria": "혜택"
+        "aria": "혜택",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-tab-stock": {
         "visible": true,
         "text": "주식",
-        "aria": "주식"
+        "aria": "주식",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-chat": {
         "visible": true,
         "text": "",
-        "aria": "고객센터 채팅"
+        "aria": "고객센터 채팅",
+        "scroll_px": 0,
+        "visit": "menu",
+        "reveal": 0
       },
       "oos-settings": {
         "visible": true,
         "text": "",
-        "aria": "설정"
+        "aria": "설정",
+        "scroll_px": 0,
+        "visit": "menu",
+        "reveal": 0
       },
       "oos-logout": {
         "visible": true,
         "text": "",
-        "aria": "로그아웃"
+        "aria": "로그아웃",
+        "scroll_px": 0,
+        "visit": "menu",
+        "reveal": 0
       },
       "oos-search-submit": {
         "visible": true,
         "text": "",
-        "aria": "검색"
+        "aria": "검색",
+        "scroll_px": 0,
+        "visit": "search",
+        "reveal": 0
       },
       "oos-support": {
         "visible": true,
         "text": "",
-        "aria": "고객센터"
+        "aria": "고객센터",
+        "scroll_px": 0,
+        "visit": "bill-home",
+        "reveal": 0
       },
       "oos-home": {
         "visible": true,
         "text": "",
-        "aria": "홈"
+        "aria": "홈",
+        "scroll_px": 0,
+        "visit": "bill-home",
+        "reveal": 0
       },
       "oos-bill-inquiry": {
         "visible": true,
         "text": "조회하기 전자고지서로 간편하게 확인",
-        "aria": "조회하기"
+        "aria": "조회하기",
+        "scroll_px": 0,
+        "visit": "bill-home",
+        "reveal": 0
       },
       "oos-giro-register": {
         "visible": true,
         "text": "자주쓰는 지로번호 등록해보세요! ›",
-        "aria": "자주쓰는 지로번호 등록"
+        "aria": "자주쓰는 지로번호 등록",
+        "scroll_px": 0,
+        "visit": "bill-home",
+        "reveal": 0
       },
       "oos-info-support": {
         "visible": true,
         "text": "",
-        "aria": "고객센터"
+        "aria": "고객센터",
+        "scroll_px": 0,
+        "visit": "info",
+        "reveal": 0
       },
       "oos-info-home": {
         "visible": true,
         "text": "",
-        "aria": "홈"
+        "aria": "홈",
+        "scroll_px": 0,
+        "visit": "info",
+        "reveal": 0
       },
       "oos-done-support": {
         "visible": true,
         "text": "",
-        "aria": "고객센터"
+        "aria": "고객센터",
+        "scroll_px": 0,
+        "visit": "done",
+        "reveal": 0
       },
       "oos-ask-ai": {
         "visible": false,
         "text": "찾는 내용이 없다면, AI에게 물어볼까요?",
-        "aria": "AI에게 물어보기"
+        "aria": "AI에게 물어보기",
+        "scroll_px": null
       }
     },
     "truth": {

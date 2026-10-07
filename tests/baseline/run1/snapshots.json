@@ -148,16 +148,16 @@
             "0"
           ],
           "pw": [
+            "6",
+            "0",
             "5",
+            "1",
             "7",
+            "8",
+            "2",
             "3",
             "4",
-            "1",
-            "0",
-            "9",
-            "8",
-            "6",
-            "2"
+            "9"
           ]
         },
         "contrast": [
@@ -729,16 +729,16 @@
             "0"
           ],
           "pw": [
+            "6",
+            "0",
             "5",
+            "1",
             "7",
+            "8",
+            "2",
             "3",
             "4",
-            "1",
-            "0",
-            "9",
-            "8",
-            "6",
-            "2"
+            "9"
           ]
         },
         "contrast": [
@@ -961,16 +961,16 @@
             "0"
           ],
           "pw": [
+            "6",
+            "0",
             "5",
+            "1",
             "7",
+            "8",
+            "2",
             "3",
             "4",
-            "1",
-            "0",
-            "9",
-            "8",
-            "6",
-            "2"
+            "9"
           ]
         },
         "contrast": [
@@ -1187,16 +1187,16 @@
             "0"
           ],
           "pw": [
+            "6",
+            "0",
             "5",
+            "1",
             "7",
+            "8",
+            "2",
             "3",
             "4",
-            "1",
-            "0",
-            "9",
-            "8",
-            "6",
-            "2"
+            "9"
           ]
         },
         "contrast": [
@@ -1463,16 +1463,16 @@
             "0"
           ],
           "pw": [
+            "6",
+            "0",
             "5",
+            "1",
             "7",
+            "8",
+            "2",
             "3",
             "4",
-            "1",
-            "0",
-            "9",
-            "8",
-            "6",
-            "2"
+            "9"
           ]
         },
         "contrast": [
@@ -2100,16 +2100,16 @@
             "0"
           ],
           "pw": [
+            "6",
+            "0",
             "5",
+            "1",
             "7",
+            "8",
+            "2",
             "3",
             "4",
-            "1",
-            "0",
-            "9",
-            "8",
-            "6",
-            "2"
+            "9"
           ]
         },
         "contrast": [
@@ -2355,16 +2355,16 @@
             "0"
           ],
           "pw": [
+            "6",
+            "0",
             "5",
+            "1",
             "7",
+            "8",
+            "2",
             "3",
             "4",
-            "1",
-            "0",
-            "9",
-            "8",
-            "6",
-            "2"
+            "9"
           ]
         },
         "contrast": [
@@ -2548,7 +2548,7 @@
           "err-bank"
         ],
         "onclicks": [],
-        "text": "4:31\n67\n✕\n계좌 비밀번호\n4\n0\n1\n7\n9\n3\n2\n5\n6\n재배열\n8\n⌫",
+        "text": "4:31\n67\n✕\n계좌 비밀번호\n8\n2\n1\n4\n6\n0\n3\n7\n9\n재배열\n5\n⌫",
         "height": 844,
         "choices": {
           "pick-bank": [
@@ -2652,16 +2652,16 @@
             "0"
           ],
           "pw": [
-            "4",
-            "0",
+            "8",
+            "2",
             "1",
+            "4",
+            "6",
+            "0",
+            "3",
             "7",
             "9",
-            "3",
-            "2",
-            "5",
-            "6",
-            "8"
+            "5"
           ]
         },
         "contrast": [],
@@ -2822,16 +2822,16 @@
             "0"
           ],
           "pw": [
-            "4",
-            "0",
+            "8",
+            "2",
             "1",
+            "4",
+            "6",
+            "0",
+            "3",
             "7",
             "9",
-            "3",
-            "2",
-            "5",
-            "6",
-            "8"
+            "5"
           ]
         },
         "contrast": [],
@@ -2988,157 +2988,250 @@
       "oos-message": {
         "visible": true,
         "text": "",
-        "aria": "메시지"
+        "aria": "메시지",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-wallet": {
         "visible": true,
         "text": "",
-        "aria": "지갑"
+        "aria": "지갑",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-alarm": {
         "visible": true,
         "text": "",
-        "aria": "알림"
+        "aria": "알림",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-menu": {
         "visible": true,
         "text": "",
-        "aria": "전체메뉴"
+        "aria": "전체메뉴",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-irp": {
         "visible": true,
         "text": "절세혜택과 안정적인 노후, IRP로 준비하세요",
-        "aria": "IRP 안내"
+        "aria": "IRP 안내",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-appcard": {
         "visible": true,
         "text": "앱카드 가입",
-        "aria": "앱카드 가입"
+        "aria": "앱카드 가입",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-get-coupon": {
         "visible": true,
         "text": "바로받기",
-        "aria": "바로받기"
+        "aria": "바로받기",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-event": {
         "visible": true,
         "text": "이벤트",
-        "aria": "이벤트"
+        "aria": "이벤트",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-coupon": {
         "visible": true,
         "text": "쿠폰",
-        "aria": "쿠폰"
+        "aria": "쿠폰",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-point": {
         "visible": true,
         "text": "포인트",
-        "aria": "포인트"
+        "aria": "포인트",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-spend-detail": {
         "visible": true,
         "text": "›",
-        "aria": "소비 상세"
+        "aria": "소비 상세",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-my-point": {
         "visible": true,
         "text": "카드 쓸때마다 쌓이고, 현금처럼 쓰는 마이신한포인트 시작하기",
-        "aria": "마이신한포인트"
+        "aria": "마이신한포인트",
+        "scroll_px": 87,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-connect-event": {
         "visible": true,
         "text": "더 많은 금융자산 모두 연결하면 커피쿠폰 즉시지급! 이벤트 바로가기 ›",
-        "aria": "자산 연결 이벤트"
+        "aria": "자산 연결 이벤트",
+        "scroll_px": 471,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-easy-home": {
         "visible": true,
         "text": "쉬운홈",
-        "aria": "쉬운홈"
+        "aria": "쉬운홈",
+        "scroll_px": 782,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-home-setting": {
         "visible": true,
         "text": "홈화면 설정",
-        "aria": "홈화면 설정"
+        "aria": "홈화면 설정",
+        "scroll_px": 782,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-hide-amount": {
         "visible": true,
         "text": "금액 숨기기",
-        "aria": "금액 숨기기"
+        "aria": "금액 숨기기",
+        "scroll_px": 782,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-tab-home": {
         "visible": true,
         "text": "홈",
-        "aria": "홈"
+        "aria": "홈",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-tab-finance": {
         "visible": true,
         "text": "금융",
-        "aria": "금융"
+        "aria": "금융",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-tab-goods": {
         "visible": true,
         "text": "상품",
-        "aria": "상품"
+        "aria": "상품",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-tab-benefit": {
         "visible": true,
         "text": "혜택",
-        "aria": "혜택"
+        "aria": "혜택",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-tab-stock": {
         "visible": true,
         "text": "주식",
-        "aria": "주식"
+        "aria": "주식",
+        "scroll_px": 0,
+        "visit": "home",
+        "reveal": 0
       },
       "oos-multi-transfer": {
         "visible": true,
         "text": "다건이체",
-        "aria": "다건이체"
+        "aria": "다건이체",
+        "scroll_px": 0,
+        "visit": "recipient",
+        "reveal": 0
       },
       "oos-payee-manage": {
         "visible": true,
         "text": "",
-        "aria": "받는 사람 관리"
+        "aria": "받는 사람 관리",
+        "scroll_px": 0,
+        "visit": "recipient",
+        "reveal": 0
       },
       "oos-search": {
         "visible": true,
         "text": "",
-        "aria": "검색"
+        "aria": "검색",
+        "scroll_px": 0,
+        "visit": "recipient",
+        "reveal": 0
       },
       "oos-frequent": {
         "visible": true,
         "text": "자주쓰는 계좌 편집 0개 ⌄",
-        "aria": "자주쓰는 계좌"
+        "aria": "자주쓰는 계좌",
+        "scroll_px": 0,
+        "visit": "recipient",
+        "reveal": 0
       },
       "oos-my-accounts": {
         "visible": true,
         "text": "내 계좌 0개 ⌄",
-        "aria": "내 계좌"
+        "aria": "내 계좌",
+        "scroll_px": 0,
+        "visit": "recipient",
+        "reveal": 0
       },
       "oos-recent": {
         "visible": true,
         "text": "최근 0개 ⌄",
-        "aria": "최근"
+        "aria": "최근",
+        "scroll_px": 0,
+        "visit": "recipient",
+        "reveal": 0
       },
       "oos-from-account": {
         "visible": true,
         "text": "[금융거래한도계좌2]신한 주거래 우대통장 계좌에서 ⌄",
-        "aria": "출금계좌 변경"
+        "aria": "출금계좌 변경",
+        "scroll_px": 0,
+        "visit": "amount",
+        "reveal": 0
       },
       "oos-more-transfer": {
         "visible": true,
         "text": "추가이체",
-        "aria": "추가이체"
+        "aria": "추가이체",
+        "scroll_px": 0,
+        "visit": "done",
+        "reveal": 0
       },
       "oos-detail": {
         "visible": true,
         "text": "상세보기",
-        "aria": "상세보기"
+        "aria": "상세보기",
+        "scroll_px": 0,
+        "visit": "done",
+        "reveal": 0
       },
       "oos-share": {
         "visible": true,
         "text": "공유",
-        "aria": "공유"
+        "aria": "공유",
+        "scroll_px": 0,
+        "visit": "done",
+        "reveal": 0
       }
     },
     "truth": {

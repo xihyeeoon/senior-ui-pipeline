@@ -576,6 +576,14 @@ CHOICE_GROUPS = r"""
 # 그 요소의 글자 · aria-label 을 모은다 - 글자는 판정에 쓰지 않는다 (11-7b).
 # 같은 이름이 여럿이면 보이는 것 하나를 고른다. 문서 전체를 보지만 숨은 화면 안의
 # 요소는 크기가 0 이라 보이지 않는 것이 된다 - 그 화면에 도착한 걸음에서 보인다.
+#
+# 보이는 요소에는 `scroll_px` 도 잰다 (11-8, 기록만 - 검사 K 의 entrance_distance). 그
+# 화면 맨 위에서(모든 스크롤을 0 으로 되돌린 자리에서) 요소 전체가 창 안에 들어오기까지
+# 내려야 하는 거리다. 첫 화면 안이면 0. 실제로 스크롤하지 않는다 - 지금 위치에 조상들의
+# scrollTop 을 더해 셈한다 (걷기가 버튼을 누르느라 내려가 있어도 같은 값). 고정(fixed ·
+# sticky)된 것은 스크롤과 함께 움직이지 않으므로 0 이다. 세로만 잰다 - 옆으로 넘기는
+# 띠 안의 위치와 덮개에 가려진 것은 재지 않는다. 같은 이름이 여럿 보이면 덜 내려도 되는
+# 것을 고른다. 보이지 않는 요소는 null 이다.
 ENTRANCE_PREFIX = "oos-"
 ENTRANCES = r"""
 () => {
@@ -589,6 +597,39 @@ ENTRANCES = r"""
     const r = e.getBoundingClientRect();
     return r.width >= 1 && r.height >= 1;
   };
+  const docY = () => (document.scrollingElement || document.documentElement).scrollTop;
+  /* el 을 담은, 지금 스크롤할 수 있는 조상들 */
+  const scrollers = el => {
+    const got = [];
+    for (let n = el.parentElement; n && n !== document.body
+         && n !== document.documentElement; n = n.parentElement) {
+      if (/(auto|scroll|overlay)/.test(getComputedStyle(n).overflowY)
+          && n.scrollHeight > n.clientHeight + 1) got.push(n);
+    }
+    return got;
+  };
+  const pinned = el => {
+    for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
+      if (/^(fixed|sticky)$/.test(getComputedStyle(n).position)) return true;
+    }
+    return false;
+  };
+  /* 모든 스크롤이 0 일 때의 세로 위치로 옮기는 값 */
+  const shift = el => scrollers(el).reduce((s, n) => s + n.scrollTop, 0) + docY();
+  const scrollPx = el => {
+    if (pinned(el)) return 0;
+    const r = el.getBoundingClientRect(), d = shift(el);
+    const top = r.top + d, bottom = r.bottom + d;
+    let viewTop = 0, viewBottom = window.innerHeight;
+    for (const n of scrollers(el)) {
+      const nr = n.getBoundingClientRect();
+      const nt = nr.top + shift(n) + n.clientTop;
+      viewTop = Math.max(viewTop, nt);
+      viewBottom = Math.min(viewBottom, nt + n.clientHeight);
+    }
+    /* 아래 끝이 창 아래 끝에 닿을 때까지. 창보다 큰 요소는 위 끝이 창 위 끝에 올 때까지 */
+    return Math.max(0, Math.round(Math.min(bottom - viewBottom, top - viewTop)));
+  };
   document.querySelectorAll('[data-action^="__PREFIX__"]').forEach(el => {
     const a = el.getAttribute('data-action');
     const parts = [];
@@ -597,9 +638,13 @@ ENTRANCES = r"""
       const t = clean(n.nodeValue);
       if (t) parts.push(t);
     }
-    const row = {visible: shown(el), text: parts.join(' '),
-                 aria: clean(el.getAttribute('aria-label'))};
-    if (!out[a] || (row.visible && !out[a].visible)) out[a] = row;
+    const visible = shown(el);
+    const row = {visible: visible, text: parts.join(' '),
+                 aria: clean(el.getAttribute('aria-label')),
+                 scroll_px: visible ? scrollPx(el) : null};
+    const old = out[a];
+    if (!old || (row.visible && !old.visible)
+        || (row.visible && old.visible && row.scroll_px < old.scroll_px)) out[a] = row;
   });
   return out;
 }

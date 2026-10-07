@@ -245,5 +245,6 @@
     "audit_failures": 0
   },
   "original": "inputs/original_transfer.html",
-  "original_sha256": "f76a8b2f9226e20bfc521325c0b0d0cb040d3ce3f958c9a3376377a7b6141e63"
+  "original_sha256": "f76a8b2f9226e20bfc521325c0b0d0cb040d3ce3f958c9a3376377a7b6141e63",
+  "entrance_distance": null
 }

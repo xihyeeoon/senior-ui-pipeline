@@ -27,6 +27,14 @@ OutOfScope 로 처리되는 탭 대상, 연구자가 확정한 목록이다. 원
 메뉴 항목 "이체결과 조회" 가 홈의 [이체] 로 (outputs/11-7_entrance_collisions.txt).
 
 입구를 눌렀을 때 무슨 일이 일어나는지는 보지 않는다 - 원본도 아무 일도 하지 않는다.
+
+입구까지의 거리 (11-8, 기록만 - 판정 · 고르기 문지기에 쓰지 않는다).
+남아 있는 것과 찾을 수 있는 것은 다르다 (Findlater, McGrenere 2007).
+그래서 입구마다 원본과 생성물에서 각각 처음 누를 수 있게 보인 방문, 그 입구를 보려고 누른
+펼치기(reveal) 횟수, 그 화면 맨 위에서 입구가 창 안에 들어오기까지의 스크롤 거리를 지표
+`entrance_distance` 로 남긴다 (distance()).
+위의 판정이 걷는 걸음과 reveal 에서 잰 것이다 - 새 걷기는 없다. 기준선 · 합격선은 정하지
+않는다 - 정하면 그것이 또 규칙이 된다.
 """
 from ... import tasks as T
 from ..flow import task_of
@@ -61,6 +69,41 @@ def shown(state, action):
     return bool((state.get(action) or {}).get("visible"))
 
 
+def first_seen(snapshot, action, visits=()):
+    """그 입구가 처음 누를 수 있게 보인 자리 `{visit, reveal, scroll_px}` (+ 펼치기로 보였으면
+    `via` = 그 reveal 의 이름). 한 번도 보이지 않았으면 None. 기록만 한다.
+
+    정답 걸음에서 보였으면 그것이다 - 바로 보이므로 펼치기는 0 이고, 방문은 처음 보인
+    걸음이다 (drive.merge_entrances 가 처음 것을 남긴다). 정답 걸음에서는 보이지 않고
+    펼치기 뒤에만 보였으면, 누른 횟수가 가장 적은 reveal 의 것이다 (같으면 흐름에서 앞선
+    방문, 그다음 이름순). 수집이 이 칸들을 남기기 전의 스냅샷이면 칸은 null 이다."""
+    main = (snapshot.get("entrances_seen") or {}).get(action) or {}
+    if main.get("visible"):
+        return {"visit": main.get("visit"), "reveal": 0, "scroll_px": main.get("scroll_px")}
+    order = list(visits)
+    best = None
+    for key, res in sorted((snapshot.get("revealed") or {}).items()):
+        got = ((res or {}).get("entrances_seen") or {}).get(action) or {}
+        if not got.get("visible"):
+            continue
+        visit = got.get("visit") or (res or {}).get("at")
+        clicks = got.get("reveal")
+        rank = (clicks if isinstance(clicks, int) else float("inf"),
+                order.index(visit) if visit in order else len(order), key)
+        if best is None or rank < best[0]:
+            best = (rank, {"visit": visit, "reveal": clicks, "via": key,
+                           "scroll_px": got.get("scroll_px")})
+    return best[1] if best else None
+
+
+def distance(items, orig, rep, visits=()):
+    """입구마다 원본과 생성물에서 처음 보인 자리 (first_seen), 과제 파일의 순서대로."""
+    return [{"id": e["id"], "label": e.get("label"), "action": e["action"],
+             "original": first_seen(orig, e["action"]),
+             "build": first_seen(rep, e["action"], visits)}
+            for e in items]
+
+
 def run(ctx):
     items = entrances(ctx.flow)
     if not items:
@@ -87,6 +130,8 @@ def run(ctx):
     m["entrances_shown_as"] = {e["id"]: {"text": rep[e["action"]].get("text") or "",
                                          "aria": rep[e["action"]].get("aria") or ""}
                                for e in in_orig if e not in missing}
+    # 기록만 한다 - 처음 보인 방문 · 펼치기 횟수 · 스크롤 거리, 원본과 나란히 (distance())
+    m["entrance_distance"] = distance(items, ctx.orig, ctx.rep, ctx.want)
     if not_in_orig and in_orig:
         # 원본이 이 과제의 원본인데 목록의 일부가 보이지 않았다 - 목록이나 원본이
         # 바뀌었다. 판정에서는 빼고 사람이 볼 줄을 남긴다.

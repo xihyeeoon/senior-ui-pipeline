@@ -1344,6 +1344,23 @@ def attempt(r, n, stage=None, mock=None):
 # --------------------------------------------------------------------------- #
 # 요약
 # --------------------------------------------------------------------------- #
+def entrance_distance(summary):
+    """최종 빌드의 과제 밖 입구 거리 (검사 K 의 지표 entrance_distance) - 입구마다 원본과
+    생성물에서 처음 보인 방문 · 펼치기 횟수 · 스크롤 거리. 기록만 한다 (11-8): 판정 ·
+    고르기 문지기에 쓰지 않는다. 최종 리포트가 없거나 검사 K 가 물러났으면 None.
+
+    최종 리포트 파일에서 읽는다 - 다듬기가 떨어져 직전 통과 빌드로 되돌리면 final 이 그
+    빌드를 가리키므로, 시도마다 적어 두는 것보다 끝에 한 번 읽는 것이 맞는 빌드를 본다."""
+    path = (summary.get("final") or {}).get("audit")
+    if not path or not os.path.exists(path):
+        return None
+    try:
+        report = json.load(io.open(path, encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return (report.get("metrics") or {}).get("entrance_distance")
+
+
 def log_trend(r):
     """시도마다 fatal 이 줄었는지. 숫자 하나만 보면 알 수 없는 것이다."""
     if not r.summary["trend"]:
@@ -1931,6 +1948,7 @@ def run(args):
         # 사용자가 끊는다) 남아야 한다 - 밖에 두면 그런 실행은 run.log 조각
         # 말고는 아무것도 남기지 않는다.
         r.summary["budget"] = r.budget.as_dict()
+        r.summary["entrance_distance"] = entrance_distance(r.summary)
         r.summary["tokens"] = tally_tokens(r)
         log_tokens(r)
         r.summary["cost"] = tally_cost(r)

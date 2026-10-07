@@ -335,6 +335,7 @@ API 없이: `--mock pass --mock-refine improve` (1회차에 다듬은 빌드가 
 | `attempts[].calls[].waited_for_tokens` | 남은 토큰이 모자라 그 호출 전에 더 기다린 초 (추론형, 기다렸을 때만) |
 | `cost` | 시도별·전체 예상 금액 (USD) |
 | `original` · `original_sha256` | 이 실행이 쓴 원본 HTML (루트 기준 경로)과 그 지문 — 줄끝을 LF 로 맞춘 sha256 (`tasks.fingerprint`). `run.log` 첫 줄에도 `original_sha256=… (경로)` 로 남는다. 시작하지 못한 실행에도 있다. 고르기의 문지기 `original` 이 지금 원본과 견준다 (11-11) |
+| `entrance_distance` | 최종 빌드의 과제 밖 입구마다 원본 · 생성물에서 처음 누를 수 있게 보인 방문(`visit`), 그 입구를 보려고 누른 펼치기 횟수(`reveal`, 바로 보이면 0, 펼치기로 보였으면 그 reveal 이름 `via`), 그 화면 맨 위에서 입구 전체가 창 안에 들어오기까지의 스크롤 거리(`scroll_px`, 첫 화면 안이면 0). 보이지 않았으면 `null`. 검사 K 의 지표를 옮긴 것이고 **기록만** 한다 — 판정 · 고르기 문지기에 쓰지 않고 기준선 · 합격선도 없다. 남아 있는 것과 찾을 수 있는 것은 다르다 (Findlater, McGrenere 2007). 설명서의 "과제 밖 입구" 표가 같은 값이다 (11-8) |
 
 **가격 표**는 `senior_ui/config.py` 의 `MODEL_PRICES` 한 곳이다 — 100만 토큰당
 `{"input", "output"}`. 채운 것은 셋이다 — `gpt-4o` 2.50 / 10.00, `gpt-6.1-sol`
@@ -732,7 +733,7 @@ in `metrics.flow_notes`. It does not silently accept the mismatch.
 | H | classes the markup uses that no stylesheet defines | warning |
 | I | values the original offered as choices must still exist somewhere in the build | fatal |
 | J | each required wrong input (the task's `required_error_paths`) brings up an error state with new text and `recover` leads back to a screen where it can be fixed; warns when the text has none of the task's words | fatal |
-| K | 과제 밖 입구 — 과제 파일 `entrances` 의 메뉴 · 버튼 (더미앱 A1 의 OutOfScope 탭 대상, 연구자 확정)이 빌드 어딘가에 남아 있다. 원본의 `data-action` 이름(`oos-*`)을 그대로 가진 요소가 걷는 동안(reveal 포함) 누를 수 있게 보이면 있다 (그려져 있고 disabled 가 아니다, 같은 화면이 아니어도 된다). 원본을 걷는 동안 보인 입구만 센다. 글자 · `aria-label` 은 기록만 한다 (`entrances_shown_as`) | fatal |
+| K | 과제 밖 입구 — 과제 파일 `entrances` 의 메뉴 · 버튼 (더미앱 A1 의 OutOfScope 탭 대상, 연구자 확정)이 빌드 어딘가에 남아 있다. 원본의 `data-action` 이름(`oos-*`)을 그대로 가진 요소가 걷는 동안(reveal 포함) 누를 수 있게 보이면 있다 (그려져 있고 disabled 가 아니다, 같은 화면이 아니어도 된다). 원본을 걷는 동안 보인 입구만 센다. 글자 · `aria-label` 은 기록만 한다 (`entrances_shown_as`). 처음 보인 방문 · 펼치기 횟수 · 스크롤 거리도 기록만 한다 (`entrance_distance`, 11-8) | fatal |
 
 H is not in the original brief. It was added because it is the shared root cause
 of two rendering failures: example1's `bg-primary`/`text-primary` and the
