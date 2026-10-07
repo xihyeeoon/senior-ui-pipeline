@@ -1,0 +1,4009 @@
+{
+  "schema": 1,
+  "generated": {
+    "at": "<at>",
+    "tool_commit": "<tool_commit>",
+    "seconds": "<seconds>"
+  },
+  "task": {
+    "id": "transfer",
+    "label": "이체",
+    "description": "아래는 은행 앱의 이체 화면을 HTML 한 파일로 만든 것이다 (8화면). 60대 이상 고령 사용자가\n**이체 과업 — 받는 사람 정하기, 계좌번호와 은행 넣기, 금액 넣기, 확인, 본인 확인, 완료 —\n을 혼자서 끝낼 수 있도록** 이 화면들을 다시 설계하라."
+  },
+  "changes": [
+    {
+      "id": "C1",
+      "what": "홈 첫 화면의 출금 계좌 바로 아래에 넓은 '이체하기' 버튼을 둔다. 계좌 상품명은 줄바꿈해 읽을 수 있게 하고, 앱카드·쿠폰·이벤트 등은 그 아래 별도 영역으로 구분한다. 이체 버튼과 광고성 버튼이 한 묶음으로 보이지 않게 한다.",
+      "why": "이체 시작점을 먼저 발견하고 다른 가입·혜택 버튼과 혼동하지 않게 한다.",
+      "addresses": [
+        {
+          "id": "D1",
+          "screen": "home",
+          "problem": "이체를 시작하려는 사용자가 작은 이체 버튼을 찾는 동안 앱카드 가입이나 쿠폰 받기처럼 더 넓게 보이는 다른 버튼을 누를 수 있다."
+        }
+      ],
+      "from_screens": [
+        "home"
+      ],
+      "to_screens": [
+        "home"
+      ]
+    },
+    {
+      "id": "C2",
+      "what": "상단 아이콘에 메시지·지갑·알림·전체메뉴라는 글자를 붙이고 누를 영역을 넓힌다. 쉬운홈과 홈화면 설정을 홈 상단에서 접근할 수 있게 옮긴다. 하단 홈·금융·상품·혜택·주식은 진한 글씨로 표시한다. 원본의 자산, IRP 안내, 앱카드 가입, 땡겨요와 바로받기·이벤트·쿠폰·포인트, 소비와 소비 상세, 마이신한포인트와 시작하기, 추천서비스, 자산 연결 이벤트, 신한금융그룹, 금액 숨기기 및 모든 기존 메뉴·버튼은 유지한다. 접어 묶더라도 해당 항목에 도달해 사용할 수 있게 하며 이체 화면으로 대신 연결하지 않는다.",
+      "why": "불명확한 아이콘과 작은 메뉴를 읽을 수 있게 하면서 기존 기능을 없애지 않는다.",
+      "addresses": [
+        {
+          "id": "D1",
+          "screen": "home",
+          "problem": "이체를 시작하려는 사용자가 작은 이체 버튼을 찾는 동안 앱카드 가입이나 쿠폰 받기처럼 더 넓게 보이는 다른 버튼을 누를 수 있다."
+        },
+        {
+          "id": "D2",
+          "screen": "home",
+          "problem": "상단 아이콘이 무엇을 여는지 알아보기 어렵고, 쉬운 화면을 찾는 사용자는 맨 아래까지 내려야 쉬운홈을 발견한다. 작은 메뉴 글씨도 읽기 어렵다."
+        }
+      ],
+      "from_screens": [
+        "home"
+      ],
+      "to_screens": [
+        "home"
+      ]
+    },
+    {
+      "id": "C3",
+      "what": "받는 사람 선택 화면의 첫 동작을 진한 글씨의 넓은 '새 계좌번호 입력' 버튼으로 만든다. 자주 쓰는 계좌·내 계좌·최근은 각각 제목과 개수를 표시하고, 비어 있으면 '등록된 계좌가 없습니다. 새 계좌번호를 입력해 주세요'라고 설명한다. 기존 편집·검색·받는 사람 관리·다건이체는 글자 이름이 있는 별도 버튼으로 모두 남긴다. 직접 입력 줄에 있던 기호는 별도 기능으로 임의 해석하지 않고 원래의 계좌 입력 진입 기능에 포함한다.",
+      "why": "목록이 비어 있어도 다음 행동을 알 수 있고 관리·검색과 송금 대상 선택을 구분할 수 있게 한다.",
+      "addresses": [
+        {
+          "id": "D3",
+          "screen": "recipient",
+          "problem": "계좌를 새로 입력해야 하는 사용자가 옅은 안내를 입력 가능한 기능으로 알아채지 못하고, 모두 0개인 목록을 눌러 받는 사람을 찾으려 할 수 있다."
+        },
+        {
+          "id": "D4",
+          "screen": "recipient",
+          "problem": "검색과 사람 모양 아이콘의 용도를 구분하기 어렵다. 뒤로와 닫기가 이체를 어디까지 되돌리는지도 화면에서 알 수 없다."
+        }
+      ],
+      "from_screens": [
+        "recipient"
+      ],
+      "to_screens": [
+        "recipient"
+      ]
+    },
+    {
+      "id": "C4",
+      "what": "계좌 입력부터 본인 확인까지 상단에 '받는 계좌 → 금액 → 확인 → 본인 확인'의 현재 위치를 글자로 표시한다. 뒤로는 '이전'으로, 닫기는 '이체 취소'로 구분한다. 이전은 입력값을 보존하고 직전 작업 화면으로 돌아간다. 취소는 '이체를 그만둘까요?'를 묻고 '계속 이체'와 '취소하고 홈으로'를 제공한다. 본인 확인 화면에도 확인 내용으로 돌아가는 이전 버튼을 둔다.",
+      "why": "되돌아가기와 이체 종료를 구분하고, 실수로 닫더라도 작업을 이어갈 수 있게 한다.",
+      "addresses": [
+        {
+          "id": "D4",
+          "screen": "recipient",
+          "problem": "검색과 사람 모양 아이콘의 용도를 구분하기 어렵다. 뒤로와 닫기가 이체를 어디까지 되돌리는지도 화면에서 알 수 없다."
+        },
+        {
+          "id": "D15",
+          "screen": "password",
+          "problem": "마지막 숫자를 잘못 눌러도 삭제할 틈 없이 완료로 넘어간다. 확인 화면으로 돌아갈 버튼은 없고 닫기만 있어 송금 내용을 다시 확인하기 어렵다."
+        },
+        {
+          "id": "D19",
+          "screen": "account",
+          "problem": "같은 X라도 어떤 화면에서는 받는 사람 선택으로, 다른 화면에서는 홈으로 이동한다. 사용자가 단순히 한 단계 돌아가려다 이체 화면을 벗어날 수 있다."
+        }
+      ],
+      "from_screens": [
+        "recipient",
+        "account",
+        "bank",
+        "amount",
+        "confirm",
+        "password"
+      ],
+      "to_screens": [
+        "recipient",
+        "account",
+        "bank",
+        "amount",
+        "review",
+        "verify"
+      ]
+    },
+    {
+      "id": "C5",
+      "what": "계좌 입력 화면을 '받는 계좌를 입력해 주세요'로 명명한다. 계좌번호 칸의 고정 안내를 '하이픈(-) 없이 숫자만 입력'으로 고치고, 은행 칸은 항상 '받는 은행 또는 증권사'라는 이름을 보이게 한다. 입력 전에도 안내가 충분히 진하게 보이도록 한다. 하단은 '계좌 확인하고 다음'으로 표시하고, 부족한 조건을 '계좌번호를 입력해 주세요' 또는 '은행 또는 증권사를 선택해 주세요'로 버튼 위에 보여 준다. 번호 유무와 은행 선택을 갖추면 진행 가능하게 하되 실제 정답 여부는 다음을 누를 때 검증한다.",
+      "why": "입력 방식과 진행 조건을 화면에서 이해하게 하고, 형식 입력과 실제 계좌 검증을 혼동하지 않게 한다.",
+      "addresses": [
+        {
+          "id": "D5",
+          "screen": "account",
+          "problem": "계좌번호 안내가 불완전해서 무엇을 빼고 입력하라는 뜻인지 이해하기 어렵다. 다음이 회색인 이유도 없어 은행을 골라야 하는지, 번호가 덜 입력됐는지 구분하기 어렵다."
+        }
+      ],
+      "from_screens": [
+        "account"
+      ],
+      "to_screens": [
+        "account"
+      ]
+    },
+    {
+      "id": "C6",
+      "what": "계좌 숫자판은 window.PRESERVED.ACC_KEYS의 모든 값을 참조해 그린다. 각 키를 경계가 보이는 큰 버튼으로 만들고 '한 자리 지우기'와 '전체 지우기'를 구분한다. 전체 지우기는 입력값이 있을 때 제공하고 잘못 눌렀을 때 복구할 수 있게 한다. 계좌번호는 크게 표시하고 긴 번호도 끝자리가 잘리지 않게 한다. 최대 길이에 도달하면 숫자만 더 들어가지 않는 이유를 안내하되 길이에 도달했다는 이유만으로 계좌 오류라고 표시하지 않는다.",
+      "why": "누를 위치와 삭제 범위를 분명히 하고 입력한 번호를 확인하기 쉽게 한다.",
+      "addresses": [
+        {
+          "id": "D5",
+          "screen": "account",
+          "problem": "계좌번호 안내가 불완전해서 무엇을 빼고 입력하라는 뜻인지 이해하기 어렵다. 다음이 회색인 이유도 없어 은행을 골라야 하는지, 번호가 덜 입력됐는지 구분하기 어렵다."
+        },
+        {
+          "id": "D6",
+          "screen": "account",
+          "problem": "숫자들이 경계 없이 떨어져 있어 누를 영역을 가늠하기 어렵고, 지우기 기호가 한 자리 삭제인지 전체 삭제인지 알아보기 어렵다."
+        }
+      ],
+      "from_screens": [
+        "account"
+      ],
+      "to_screens": [
+        "account"
+      ]
+    },
+    {
+      "id": "C7",
+      "what": "계좌번호·은행·금액을 하나의 진행 상태로 보관한다. 이전, 은행 선택 취소, 오류 수정, 받는 사람 화면에서 같은 입력 경로로 재진입할 때 값을 지우지 않는다. 새 이체를 명시적으로 시작하거나 취소를 확정할 때만 초기화한다. 확인 화면의 수정 버튼으로 들어온 경우 수정 완료 후 review로 복귀한다. 계좌 수정 후에도 금액을 보존하되 계좌와 은행을 다시 검증한다.",
+      "why": "수정하려다 처음부터 다시 입력하는 일을 막고 오류에서 회복하는 경로를 짧게 한다.",
+      "addresses": [
+        {
+          "id": "D7",
+          "screen": "account",
+          "problem": "앞 화면에서 입력 방법을 다시 확인한 뒤 돌아오면 이미 입력한 계좌번호와 은행이 사라져 처음부터 다시 해야 한다."
+        },
+        {
+          "id": "D11",
+          "screen": "amount",
+          "problem": "한도를 넘는 숫자를 누르면 반응이 없어 키가 안 눌린 것으로 오해할 수 있다. 빠른 금액은 한도로 조정되지만 이유가 표시되지 않으며, 계좌를 고친 뒤에는 금액이 지워진다."
+        },
+        {
+          "id": "D13",
+          "screen": "confirm",
+          "problem": "계좌나 금액이 틀렸음을 알아도 해당 항목 옆에 수정 수단이 없다. 보내기가 곧 송금 완료인지 본인 확인으로 가는 버튼인지도 알기 어렵다."
+        },
+        {
+          "id": "D18",
+          "screen": "err-bank",
+          "problem": "은행을 잘못 골랐는데 과목코드와 계좌번호를 확인하라고 하므로 맞는 계좌번호를 고치려 할 수 있다. 확인 화면으로 돌아가도 은행을 직접 고칠 버튼이 없다."
+        }
+      ],
+      "from_screens": [
+        "recipient",
+        "account",
+        "bank",
+        "amount",
+        "confirm",
+        "err-bank"
+      ],
+      "to_screens": [
+        "recipient",
+        "account",
+        "bank",
+        "amount",
+        "review"
+      ]
+    },
+    {
+      "id": "C8",
+      "what": "기관 선택은 제목·검색창·은행/증권사 탭·목록을 갖춘 전체 화면으로 만든다. window.PRESERVED.BANKS와 window.PRESERVED.SECS를 참조해 모든 선택지를 큰 글씨의 한 열 행으로 그린다. 선택 화면을 열 때 두 목록의 모든 항목을 DOM에 넣고, 비활성 탭과 검색 불일치 항목만 숨긴다. 검색어가 비면 전체 목록을 다시 표시한다. 검색 결과 없음에는 검색어 지우기를 제공한다. 기관 선택은 account로 돌아가 선택한 이름을 보여 주며, review에서 오류 수정으로 들어왔으면 계좌 확인 후 review로 돌아간다. 닫기는 원래 화면으로 돌아가며 값은 유지한다.",
+      "why": "작은 세 열 목록을 훑는 부담을 줄이고 모든 기관을 검색 또는 탐색으로 선택할 수 있게 한다.",
+      "addresses": [
+        {
+          "id": "D8",
+          "screen": "bank",
+          "problem": "긴 목록에서 작은 기관명을 읽으며 세 열을 훑어야 한다. 이름을 아는 사용자가 바로 찾아갈 검색 수단이 없고, 길이가 긴 이름은 한 칸에 빽빽하게 보인다."
+        },
+        {
+          "id": "D18",
+          "screen": "err-bank",
+          "problem": "은행을 잘못 골랐는데 과목코드와 계좌번호를 확인하라고 하므로 맞는 계좌번호를 고치려 할 수 있다. 확인 화면으로 돌아가도 은행을 직접 고칠 버튼이 없다."
+        }
+      ],
+      "from_screens": [
+        "bank",
+        "account",
+        "confirm",
+        "err-bank"
+      ],
+      "to_screens": [
+        "bank",
+        "account",
+        "review"
+      ]
+    },
+    {
+      "id": "C9",
+      "what": "금액 화면 상단에 '보내는 계좌'와 '받는 계좌'를 별도 묶음으로 표시한다. 받는 은행과 전체 계좌번호를 크게 보여 주고 출금계좌 변경 기능은 이름 있는 버튼으로 유지한다. '보낼 금액'이라는 고정 이름 아래 입력 금액과 한글 금액을 함께 표시한다. 입력 전 질문과 출금가능금액도 진하게 표시한다. 계좌 조회에서 실제 예금주 이름을 제공받을 수 있으면 '받는 사람'으로 표시하되 원본의 메모 이름을 예금주로 사용하지 않는다.",
+      "why": "금액을 입력하는 동안 송금 방향과 자릿수를 확인하고 메모를 계좌 소유자 정보로 오해하지 않게 한다.",
+      "addresses": [
+        {
+          "id": "D9",
+          "screen": "amount",
+          "problem": "출금 계좌의 긴 설명은 여러 줄을 차지하지만 받는 계좌는 작게 표시된다. 사용자가 지금 누구에게 보내는 금액을 입력하는지 확신하기 어렵다."
+        },
+        {
+          "id": "D10",
+          "screen": "amount",
+          "problem": "입력해야 할 금액 안내와 보낼 수 있는 한도가 옅어 읽기 어렵다. 전액과 더하기 버튼을 일반 숫자 입력처럼 눌러 의도보다 큰 금액을 만들 수 있다."
+        },
+        {
+          "id": "D12",
+          "screen": "confirm",
+          "problem": "송금 대상이 '아래 계좌'로만 불리고 은행의 첫 글자가 크게 보인다. 메모에 적힌 이름을 실제 계좌 소유자 이름으로 오해하거나 작은 계좌번호를 충분히 확인하지 못할 수 있다."
+        }
+      ],
+      "from_screens": [
+        "amount",
+        "confirm"
+      ],
+      "to_screens": [
+        "amount",
+        "review"
+      ]
+    },
+    {
+      "id": "C10",
+      "what": "금액 숫자판은 window.PRESERVED.AMT_KEYS, 빠른 금액은 window.PRESERVED.QUICK을 참조해 모든 값을 그린다. 숫자 키에 경계를 주고 한 자리 지우기를 글자로 설명한다. 빠른 금액 영역은 '금액 더하기'로 묶고 각 선택의 의미를 풀어 표시한다. 전액은 '출금가능금액 전부 입력'임을 명시하며 선택 후 전체 금액과 전액 선택 안내를 보여 준다. 한도를 넘는 숫자나 빠른 금액 입력은 조용히 무시하거나 한도로 바꾸지 않고, 기존 금액을 유지한 채 초과 이유와 입력 가능한 한도를 알린다. 다음은 '입력한 금액 확인'으로 표시한다.",
+      "why": "빠른 입력의 누적·전액 의미를 이해시키고 한도 초과 시 키가 고장 난 것처럼 느끼지 않게 한다.",
+      "addresses": [
+        {
+          "id": "D6",
+          "screen": "account",
+          "problem": "숫자들이 경계 없이 떨어져 있어 누를 영역을 가늠하기 어렵고, 지우기 기호가 한 자리 삭제인지 전체 삭제인지 알아보기 어렵다."
+        },
+        {
+          "id": "D10",
+          "screen": "amount",
+          "problem": "입력해야 할 금액 안내와 보낼 수 있는 한도가 옅어 읽기 어렵다. 전액과 더하기 버튼을 일반 숫자 입력처럼 눌러 의도보다 큰 금액을 만들 수 있다."
+        },
+        {
+          "id": "D11",
+          "screen": "amount",
+          "problem": "한도를 넘는 숫자를 누르면 반응이 없어 키가 안 눌린 것으로 오해할 수 있다. 빠른 금액은 한도로 조정되지만 이유가 표시되지 않으며, 계좌를 고친 뒤에는 금액이 지워진다."
+        }
+      ],
+      "from_screens": [
+        "amount"
+      ],
+      "to_screens": [
+        "amount"
+      ]
+    },
+    {
+      "id": "C11",
+      "what": "확인 화면의 중심을 은행 첫 글자 장식 대신 받는 은행·전체 계좌번호·보낼 금액과 한글 금액으로 구성한다. 보내는 계좌와 수수료도 읽기 쉬운 행으로 표시한다. 받는 계좌 옆에는 '계좌·은행 수정', 금액 옆에는 '금액 수정'을 둔다. 받는분 메모와 내통장 메모는 '메모는 받는 사람 이름 확인 정보가 아닙니다'라는 안내와 함께 별도 영역에 유지하고 연필 대신 이름 있는 메모 수정 버튼을 둔다. 주 버튼은 '확인했어요 · 본인 확인으로'로 바꾸고 '아직 송금되지 않았습니다'를 함께 표시한다.",
+      "why": "송금 대상을 정확히 확인하고 잘못된 항목을 바로 고치며 본인 확인 전에는 돈이 나가지 않았음을 이해하게 한다.",
+      "addresses": [
+        {
+          "id": "D12",
+          "screen": "confirm",
+          "problem": "송금 대상이 '아래 계좌'로만 불리고 은행의 첫 글자가 크게 보인다. 메모에 적힌 이름을 실제 계좌 소유자 이름으로 오해하거나 작은 계좌번호를 충분히 확인하지 못할 수 있다."
+        },
+        {
+          "id": "D13",
+          "screen": "confirm",
+          "problem": "계좌나 금액이 틀렸음을 알아도 해당 항목 옆에 수정 수단이 없다. 보내기가 곧 송금 완료인지 본인 확인으로 가는 버튼인지도 알기 어렵다."
+        },
+        {
+          "id": "D18",
+          "screen": "err-bank",
+          "problem": "은행을 잘못 골랐는데 과목코드와 계좌번호를 확인하라고 하므로 맞는 계좌번호를 고치려 할 수 있다. 확인 화면으로 돌아가도 은행을 직접 고칠 버튼이 없다."
+        }
+      ],
+      "from_screens": [
+        "confirm",
+        "err-bank"
+      ],
+      "to_screens": [
+        "review",
+        "account",
+        "amount"
+      ]
+    },
+    {
+      "id": "C12",
+      "what": "본인 확인 화면에 출금 계좌와 '이 계좌의 비밀번호 4자리를 입력해 주세요'를 표시한다. 입력 내용은 숨기되 '4자리 중 몇 자리 입력'을 글자로 알려 준다. window.PRESERVED.PW_KEYS를 참조해 모든 숫자 키를 그리고 보안용 임의 배열과 재배열 기능을 유지한다. 배열이 앞 화면과 다름을 안내하고 각 키의 경계를 보이게 한다. 한 자리 지우기를 글자로 표시한다. 네 자리를 입력해도 자동 완료하지 않고 '본인 확인하고 송금' 버튼을 활성화한다. 버튼 위에는 받을 계좌와 금액을 다시 보여 주며 비밀번호는 이전·취소·완료 때 지운다.",
+      "why": "비밀번호의 대상과 입력 상태를 이해하고 마지막 자리 오입력을 수정한 뒤 의도적으로 송금하도록 한다.",
+      "addresses": [
+        {
+          "id": "D14",
+          "screen": "password",
+          "problem": "어느 계좌의 비밀번호인지, 몇 자리를 입력해야 하는지 글로 안내되지 않는다. 앞서 쓰던 숫자판과 배열이 달라 이전 위치를 기억해 누르면 잘못 입력할 수 있다."
+        },
+        {
+          "id": "D15",
+          "screen": "password",
+          "problem": "마지막 숫자를 잘못 눌러도 삭제할 틈 없이 완료로 넘어간다. 확인 화면으로 돌아갈 버튼은 없고 닫기만 있어 송금 내용을 다시 확인하기 어렵다."
+        }
+      ],
+      "from_screens": [
+        "password"
+      ],
+      "to_screens": [
+        "verify"
+      ]
+    },
+    {
+      "id": "C13",
+      "what": "완료 화면은 '이체가 완료되었습니다' 아래 실제 보낸 은행·전체 계좌번호·금액·수수료를 표시한다. 추가이체·상세보기·공유는 모두 유지하고 누를 영역을 넓힌다. 기존 확인 버튼은 '홈으로'로 바꾸며, 완료 결과와 다른 이체를 시작하는 기능을 구분한다.",
+      "why": "사용자가 다른 화면을 열지 않고도 송금 성공과 대상을 확인하고 안심하고 종료할 수 있게 한다.",
+      "addresses": [
+        {
+          "id": "D16",
+          "screen": "done",
+          "problem": "금액은 보이지만 어느 은행의 어느 계좌로 보냈는지 없어 완료 결과를 혼자 확인하기 어렵다. 확인 버튼이 결과 확인인지 홈으로 나가는 것인지도 불명확하다."
+        }
+      ],
+      "from_screens": [
+        "done"
+      ],
+      "to_screens": [
+        "done"
+      ]
+    },
+    {
+      "id": "C14",
+      "what": "계좌 오류는 account의 입력 칸 바로 아래에, 은행 오류는 review의 받는 계좌 영역 위에 표시한다. 오류 코드보다 무엇을 고쳐야 하는지 먼저 보여 준다. 계좌 오류에는 '계좌번호 다시 입력', 은행 오류에는 '은행 다시 선택'이라는 복구 버튼을 둔다. 입력값과 금액은 유지하고, 오류를 단순히 닫는 것으로 다음 단계에 넘어갈 수 없게 한다. 수정 후 관련 검증을 다시 실행하며 정답이 아닌 모든 계좌번호와 모든 은행 선택에 동일한 오류 처리를 적용한다.",
+      "why": "기술 코드나 잘못된 안내 대신 실제 수정 대상을 알려 주고, 사용자가 스스로 정상 경로로 복귀하게 한다.",
+      "addresses": [
+        {
+          "id": "D17",
+          "screen": "err-account",
+          "problem": "오류 코드가 가장 먼저 강조되고, 확인을 누른 뒤 무엇을 해야 하는지 버튼 이름으로 알 수 없다. 팝업에서 틀린 번호와 입력 칸을 함께 비교할 수도 없다."
+        },
+        {
+          "id": "D18",
+          "screen": "err-bank",
+          "problem": "은행을 잘못 골랐는데 과목코드와 계좌번호를 확인하라고 하므로 맞는 계좌번호를 고치려 할 수 있다. 확인 화면으로 돌아가도 은행을 직접 고칠 버튼이 없다."
+        }
+      ],
+      "from_screens": [
+        "err-account",
+        "err-bank",
+        "account",
+        "confirm"
+      ],
+      "to_screens": [
+        "account",
+        "review",
+        "bank"
+      ]
+    }
+  ],
+  "diagnosis": {
+    "count": 19,
+    "evidence_kinds": {
+      "screen": 8,
+      "both": 9,
+      "code": 2
+    },
+    "by_screen": {
+      "home": 2,
+      "recipient": 2,
+      "account": 4,
+      "bank": 1,
+      "amount": 3,
+      "confirm": 2,
+      "password": 2,
+      "done": 1,
+      "err-account": 1,
+      "err-bank": 1
+    },
+    "items": [
+      {
+        "id": "D1",
+        "screen": "home",
+        "element": "자산 카드의 이체 버튼",
+        "problem": "이체를 시작하려는 사용자가 작은 이체 버튼을 찾는 동안 앱카드 가입이나 쿠폰 받기처럼 더 넓게 보이는 다른 버튼을 누를 수 있다.",
+        "evidence_kind": "screen"
+      },
+      {
+        "id": "D2",
+        "screen": "home",
+        "element": "상단 아이콘, 하단 메뉴, 쉬운홈",
+        "problem": "상단 아이콘이 무엇을 여는지 알아보기 어렵고, 쉬운 화면을 찾는 사용자는 맨 아래까지 내려야 쉬운홈을 발견한다. 작은 메뉴 글씨도 읽기 어렵다.",
+        "evidence_kind": "screen"
+      },
+      {
+        "id": "D3",
+        "screen": "recipient",
+        "element": "계좌번호 직접 입력과 비어 있는 계좌 목록",
+        "problem": "계좌를 새로 입력해야 하는 사용자가 옅은 안내를 입력 가능한 기능으로 알아채지 못하고, 모두 0개인 목록을 눌러 받는 사람을 찾으려 할 수 있다.",
+        "evidence_kind": "screen"
+      },
+      {
+        "id": "D4",
+        "screen": "recipient",
+        "element": "검색, 받는 사람 관리, 뒤로, 닫기",
+        "problem": "검색과 사람 모양 아이콘의 용도를 구분하기 어렵다. 뒤로와 닫기가 이체를 어디까지 되돌리는지도 화면에서 알 수 없다.",
+        "evidence_kind": "both"
+      },
+      {
+        "id": "D5",
+        "screen": "account",
+        "element": "계좌번호 안내와 다음 버튼",
+        "problem": "계좌번호 안내가 불완전해서 무엇을 빼고 입력하라는 뜻인지 이해하기 어렵다. 다음이 회색인 이유도 없어 은행을 골라야 하는지, 번호가 덜 입력됐는지 구분하기 어렵다.",
+        "evidence_kind": "both"
+      },
+      {
+        "id": "D6",
+        "screen": "account",
+        "element": "숫자판과 지우기",
+        "problem": "숫자들이 경계 없이 떨어져 있어 누를 영역을 가늠하기 어렵고, 지우기 기호가 한 자리 삭제인지 전체 삭제인지 알아보기 어렵다.",
+        "evidence_kind": "screen"
+      },
+      {
+        "id": "D7",
+        "screen": "account",
+        "element": "받는 사람 화면으로 돌아간 뒤 재입력",
+        "problem": "앞 화면에서 입력 방법을 다시 확인한 뒤 돌아오면 이미 입력한 계좌번호와 은행이 사라져 처음부터 다시 해야 한다.",
+        "evidence_kind": "code"
+      },
+      {
+        "id": "D8",
+        "screen": "bank",
+        "element": "은행·증권사 선택 목록",
+        "problem": "긴 목록에서 작은 기관명을 읽으며 세 열을 훑어야 한다. 이름을 아는 사용자가 바로 찾아갈 검색 수단이 없고, 길이가 긴 이름은 한 칸에 빽빽하게 보인다.",
+        "evidence_kind": "screen"
+      },
+      {
+        "id": "D9",
+        "screen": "amount",
+        "element": "보내는 계좌와 받는 계좌 정보",
+        "problem": "출금 계좌의 긴 설명은 여러 줄을 차지하지만 받는 계좌는 작게 표시된다. 사용자가 지금 누구에게 보내는 금액을 입력하는지 확신하기 어렵다.",
+        "evidence_kind": "screen"
+      },
+      {
+        "id": "D10",
+        "screen": "amount",
+        "element": "금액 안내, 출금가능금액, 빠른 금액 버튼",
+        "problem": "입력해야 할 금액 안내와 보낼 수 있는 한도가 옅어 읽기 어렵다. 전액과 더하기 버튼을 일반 숫자 입력처럼 눌러 의도보다 큰 금액을 만들 수 있다.",
+        "evidence_kind": "screen"
+      },
+      {
+        "id": "D11",
+        "screen": "amount",
+        "element": "한도 초과 입력과 금액 수정 후 복귀",
+        "problem": "한도를 넘는 숫자를 누르면 반응이 없어 키가 안 눌린 것으로 오해할 수 있다. 빠른 금액은 한도로 조정되지만 이유가 표시되지 않으며, 계좌를 고친 뒤에는 금액이 지워진다.",
+        "evidence_kind": "code"
+      },
+      {
+        "id": "D12",
+        "screen": "confirm",
+        "element": "받는 사람과 계좌 확인 정보",
+        "problem": "송금 대상이 '아래 계좌'로만 불리고 은행의 첫 글자가 크게 보인다. 메모에 적힌 이름을 실제 계좌 소유자 이름으로 오해하거나 작은 계좌번호를 충분히 확인하지 못할 수 있다.",
+        "evidence_kind": "both"
+      },
+      {
+        "id": "D13",
+        "screen": "confirm",
+        "element": "정보 수정과 보내기",
+        "problem": "계좌나 금액이 틀렸음을 알아도 해당 항목 옆에 수정 수단이 없다. 보내기가 곧 송금 완료인지 본인 확인으로 가는 버튼인지도 알기 어렵다.",
+        "evidence_kind": "both"
+      },
+      {
+        "id": "D14",
+        "screen": "password",
+        "element": "계좌 비밀번호 안내와 숫자판",
+        "problem": "어느 계좌의 비밀번호인지, 몇 자리를 입력해야 하는지 글로 안내되지 않는다. 앞서 쓰던 숫자판과 배열이 달라 이전 위치를 기억해 누르면 잘못 입력할 수 있다.",
+        "evidence_kind": "both"
+      },
+      {
+        "id": "D15",
+        "screen": "password",
+        "element": "비밀번호 입력 완료와 화면 이동",
+        "problem": "마지막 숫자를 잘못 눌러도 삭제할 틈 없이 완료로 넘어간다. 확인 화면으로 돌아갈 버튼은 없고 닫기만 있어 송금 내용을 다시 확인하기 어렵다.",
+        "evidence_kind": "both"
+      },
+      {
+        "id": "D16",
+        "screen": "done",
+        "element": "완료 메시지와 확인 버튼",
+        "problem": "금액은 보이지만 어느 은행의 어느 계좌로 보냈는지 없어 완료 결과를 혼자 확인하기 어렵다. 확인 버튼이 결과 확인인지 홈으로 나가는 것인지도 불명확하다.",
+        "evidence_kind": "both"
+      },
+      {
+        "id": "D17",
+        "screen": "err-account",
+        "element": "계좌번호 오류 팝업",
+        "problem": "오류 코드가 가장 먼저 강조되고, 확인을 누른 뒤 무엇을 해야 하는지 버튼 이름으로 알 수 없다. 팝업에서 틀린 번호와 입력 칸을 함께 비교할 수도 없다.",
+        "evidence_kind": "screen"
+      },
+      {
+        "id": "D18",
+        "screen": "err-bank",
+        "element": "은행 오류 설명과 복귀 위치",
+        "problem": "은행을 잘못 골랐는데 과목코드와 계좌번호를 확인하라고 하므로 맞는 계좌번호를 고치려 할 수 있다. 확인 화면으로 돌아가도 은행을 직접 고칠 버튼이 없다.",
+        "evidence_kind": "both"
+      },
+      {
+        "id": "D19",
+        "screen": "account",
+        "element": "뒤로와 닫기의 구분",
+        "problem": "같은 X라도 어떤 화면에서는 받는 사람 선택으로, 다른 화면에서는 홈으로 이동한다. 사용자가 단순히 한 단계 돌아가려다 이체 화면을 벗어날 수 있다.",
+        "evidence_kind": "both"
+      }
+    ]
+  },
+  "run": {
+    "id": "<id>",
+    "task": "transfer",
+    "model": "saved:refine_102041",
+    "model_source": "fixture",
+    "mock": null,
+    "stage": "wireframe",
+    "final_attempt": 1,
+    "final_label": "저장된 답 (refine.response.txt)",
+    "commit": "<commit>",
+    "dirty": "<dirty>",
+    "original": {
+      "path": "inputs/original_transfer.html",
+      "sha256": "8f91e1abcb62783d48d1aa3ccb4b5a917b1d833def3db5a75f3051f74aeacc8a",
+      "source": "<source>",
+      "same_as_now": "<same_as_now>"
+    },
+    "cost_usd": null
+  },
+  "flow": {
+    "steps": [
+      {
+        "step": 1,
+        "visit": "home",
+        "sheet": "scr-home",
+        "screen": "home",
+        "how": []
+      },
+      {
+        "step": 2,
+        "visit": "recipient",
+        "sheet": "scr-recipient",
+        "screen": "recipient",
+        "how": [
+          {
+            "type": "click",
+            "selector": "[data-action='go-recipient']",
+            "item": "e7",
+            "text": "이체하기"
+          }
+        ]
+      },
+      {
+        "step": 3,
+        "visit": "account",
+        "sheet": "scr-account",
+        "screen": "account",
+        "how": [
+          {
+            "type": "click",
+            "selector": "[data-action='go-account']",
+            "item": "e3",
+            "text": "새 계좌번호 입력"
+          }
+        ]
+      },
+      {
+        "step": 4,
+        "visit": "bank",
+        "sheet": "scr-bank",
+        "screen": "bank",
+        "how": [
+          {
+            "type": "type",
+            "value": "{ACCOUNT}"
+          },
+          {
+            "type": "click",
+            "selector": "[data-action='open-bank']",
+            "item": "e3",
+            "text": "은행 또는 증권사 선택"
+          }
+        ]
+      },
+      {
+        "step": 5,
+        "visit": "amount",
+        "sheet": "scr-amount",
+        "screen": "amount",
+        "how": [
+          {
+            "type": "click",
+            "selector": "[data-action='pick-bank'][data-bank='{BANK}']",
+            "item": "e7",
+            "text": "신한"
+          },
+          {
+            "type": "click",
+            "selector": "#acc-next"
+          }
+        ]
+      },
+      {
+        "step": 6,
+        "visit": "review",
+        "sheet": "scr-review",
+        "screen": "review",
+        "how": [
+          {
+            "type": "type",
+            "value": "{AMOUNT}"
+          },
+          {
+            "type": "click",
+            "selector": "#amt-next",
+            "item": "e7",
+            "text": "입력한 금액 확인"
+          }
+        ]
+      },
+      {
+        "step": 7,
+        "visit": "verify",
+        "sheet": "scr-verify",
+        "screen": "verify",
+        "how": [
+          {
+            "type": "click",
+            "selector": "[data-action='send']",
+            "item": "e7",
+            "text": "확인했어요 · 본인 확인으로"
+          }
+        ]
+      },
+      {
+        "step": 8,
+        "visit": "done",
+        "sheet": "scr-done",
+        "screen": "done",
+        "how": [
+          {
+            "type": "click",
+            "selector": "#pwpad [data-action='pw']",
+            "repeat": 4,
+            "item": "e3",
+            "text": "9"
+          },
+          {
+            "type": "click",
+            "selector": "#verify-send",
+            "item": "e6",
+            "text": "본인 확인하고 송금"
+          }
+        ]
+      }
+    ],
+    "errors": [
+      {
+        "id": "wrong-account",
+        "about": "계좌번호가 틀렸다 (원본 오류 코드 ELB00016)",
+        "condition": "계좌번호를 넣고 [다음]을 눌렀는데 받는 사람의 계좌번호가 아니다. 원본은 오류 팝업을 띄우고, [확인]을 누르면 계좌 화면으로 돌아가 다시 넣게 한다.",
+        "uses": [
+          "ACCOUNT_WRONG"
+        ],
+        "from_sheet": "scr-account",
+        "sheet": "scr-account--error-wrong-account",
+        "inputs": [
+          {
+            "type": "type",
+            "value": "{ACCOUNT_WRONG}"
+          },
+          {
+            "type": "click",
+            "selector": "[data-action='open-bank']",
+            "item": "e3",
+            "text": "은행 또는 증권사 선택"
+          },
+          {
+            "type": "click",
+            "selector": "[data-action='pick-bank'][data-bank='{BANK}']"
+          },
+          {
+            "type": "click",
+            "selector": "#acc-next",
+            "item": "e6",
+            "text": "계좌 확인하고 다음"
+          }
+        ],
+        "recover": [
+          {
+            "type": "click",
+            "selector": "[data-action='retry-account']",
+            "item": "e4",
+            "text": "계좌번호 다시 입력"
+          }
+        ],
+        "back_to": "account",
+        "back_to_sheet": "scr-account"
+      },
+      {
+        "id": "wrong-bank",
+        "about": "계좌번호는 맞는데 은행이 틀렸다 (원본 오류 코드 ETA00325)",
+        "condition": "계좌번호는 맞지만 받는 사람의 은행이 아닌 은행을 고른 채 금액까지 넣고 확인 화면에서 [보내기]를 눌렀다. 원본은 오류 팝업을 띄우고, [확인]을 누르면 확인 화면으로 돌아간다.",
+        "uses": [
+          "BANK_WRONG"
+        ],
+        "from_sheet": "scr-review",
+        "sheet": "scr-review--error-wrong-bank",
+        "inputs": [
+          {
+            "type": "click",
+            "selector": "[data-action='edit-account']",
+            "item": "e3",
+            "text": "계좌·은행 수정"
+          },
+          {
+            "type": "click",
+            "selector": "[data-action='open-bank']"
+          },
+          {
+            "type": "click",
+            "selector": "[data-action='pick-bank'][data-bank='{BANK_WRONG}']"
+          },
+          {
+            "type": "click",
+            "selector": "#acc-next"
+          },
+          {
+            "type": "click",
+            "selector": "[data-action='send']",
+            "item": "e7",
+            "text": "확인했어요 · 본인 확인으로"
+          }
+        ],
+        "recover": [
+          {
+            "type": "click",
+            "selector": "[data-action='retry-bank']",
+            "item": "e3",
+            "text": "은행 다시 선택"
+          }
+        ],
+        "back_to": "bank",
+        "back_to_sheet": "scr-bank"
+      }
+    ],
+    "reveals": []
+  },
+  "choice_groups": [
+    "acc-num",
+    "num",
+    "pick-bank",
+    "pw",
+    "quick"
+  ],
+  "counts": {
+    "sheets": 10,
+    "main_sheets": 8,
+    "items": 91,
+    "elements": 159,
+    "clicks": 91
+  },
+  "sheets": [
+    {
+      "id": "scr-home",
+      "screen": "home",
+      "state": "visit:home",
+      "kind": "visit",
+      "main": true,
+      "expected_screen": "home",
+      "purpose": "출금 계좌를 확인하고 이체를 시작한다. 기존의 다른 금융·생활 기능도 이용한다.",
+      "from_original": [
+        "home"
+      ],
+      "picture": "shots/visit-home.png",
+      "marked": "shots/visit-home.marked.png",
+      "size": [
+        390,
+        2493
+      ],
+      "scale": 2,
+      "grown": 1649,
+      "clipped": 0,
+      "covered": 0,
+      "dialogs": [],
+      "error": null,
+      "items": [
+        {
+          "kind": "element",
+          "action": "oos-message",
+          "text": "메시지",
+          "aria": null,
+          "value": "메시지",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            60,
+            175,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e1",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '메시지' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-wallet",
+          "text": "지갑",
+          "aria": null,
+          "value": "지갑",
+          "id": null,
+          "tag": "button",
+          "box": [
+            199,
+            60,
+            175,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e2",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '지갑' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-alarm",
+          "text": "알림",
+          "aria": null,
+          "value": "알림",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            120,
+            175,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e3",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '알림' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-menu",
+          "text": "전체메뉴",
+          "aria": null,
+          "value": "전체메뉴",
+          "id": null,
+          "tag": "button",
+          "box": [
+            199,
+            120,
+            175,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e4",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '전체메뉴' 외 8줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-easy-home",
+          "text": "쉬운홈",
+          "aria": null,
+          "value": "쉬운홈",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            180,
+            175,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e5",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '쉬운홈' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-home-setting",
+          "text": "홈화면 설정",
+          "aria": null,
+          "value": "홈화면 설정",
+          "id": null,
+          "tag": "button",
+          "box": [
+            199,
+            180,
+            175,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e6",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '홈화면 설정' 외 3줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "go-recipient",
+          "text": "이체하기",
+          "aria": null,
+          "value": "이체하기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            31,
+            467,
+            328,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e7",
+          "result": {
+            "kind": "screen",
+            "to": "recipient",
+            "to_id": "scr-recipient"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-hide-amount",
+          "text": "금액 숨기기",
+          "aria": null,
+          "value": "금액 숨기기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            31,
+            527,
+            160,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e8",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '금액 보이기' 외 1줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "service",
+          "text": "자산 보기",
+          "aria": null,
+          "value": "자산",
+          "id": null,
+          "tag": "button",
+          "box": [
+            199,
+            527,
+            160,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e9",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '자산' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-irp",
+          "text": "개인형 퇴직연금 안내",
+          "aria": null,
+          "value": "개인형 퇴직연금 안내",
+          "id": null,
+          "tag": "button",
+          "box": [
+            31,
+            671,
+            201,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e10",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '개인형 퇴직연금 안내' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-appcard",
+          "text": "앱카드 가입",
+          "aria": null,
+          "value": "앱카드 가입",
+          "id": null,
+          "tag": "button",
+          "box": [
+            31,
+            927,
+            328,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e11",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '앱카드 가입' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-get-coupon",
+          "text": "바로받기",
+          "aria": null,
+          "value": "바로받기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            31,
+            1105,
+            98,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e12",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '쿠폰 바로받기' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-event",
+          "text": "이벤트",
+          "aria": null,
+          "value": "이벤트",
+          "id": null,
+          "tag": "button",
+          "box": [
+            31,
+            1165,
+            104,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e13",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '이벤트' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-coupon",
+          "text": "쿠폰",
+          "aria": null,
+          "value": "쿠폰",
+          "id": null,
+          "tag": "button",
+          "box": [
+            143,
+            1165,
+            104,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e14",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '쿠폰' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-point",
+          "text": "포인트",
+          "aria": null,
+          "value": "포인트",
+          "id": null,
+          "tag": "button",
+          "box": [
+            255,
+            1165,
+            104,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e15",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '포인트' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-spend-detail",
+          "text": "소비 상세",
+          "aria": null,
+          "value": "소비 상세",
+          "id": null,
+          "tag": "button",
+          "box": [
+            31,
+            1351,
+            104,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e16",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '7월 소비 상세' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-my-point",
+          "text": "포인트 보기",
+          "aria": null,
+          "value": "포인트 보기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            31,
+            1553,
+            160,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e17",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '마이신한포인트' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-my-point",
+          "text": "시작하기",
+          "aria": null,
+          "value": "시작하기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            199,
+            1553,
+            160,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e18",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '마이신한포인트' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "service",
+          "text": "쏠패밀리 · 가족 금융생활",
+          "aria": null,
+          "value": "쏠패밀리",
+          "id": null,
+          "tag": "button",
+          "box": [
+            31,
+            1705,
+            328,
+            58
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e19",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '쏠패밀리' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "service",
+          "text": "급여클럽 · 급여이체 우대 혜택",
+          "aria": null,
+          "value": "급여클럽",
+          "id": null,
+          "tag": "button",
+          "box": [
+            31,
+            1771,
+            328,
+            58
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e20",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '급여클럽' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "service",
+          "text": "내 카드 승인내역",
+          "aria": null,
+          "value": "내 카드 승인내역",
+          "id": null,
+          "tag": "button",
+          "box": [
+            31,
+            1837,
+            328,
+            58
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e21",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '내 카드 승인내역' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-connect-event",
+          "text": "이벤트 바로가기",
+          "aria": null,
+          "value": "이벤트 바로가기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            31,
+            2045,
+            158,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e22",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '자산 연결 이벤트' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "service",
+          "text": "신한카드 · 카드 찾기",
+          "aria": null,
+          "value": "신한카드",
+          "id": null,
+          "tag": "button",
+          "box": [
+            31,
+            2189,
+            328,
+            58
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e23",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '신한카드' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "service",
+          "text": "신한투자증권 · 주식 보기",
+          "aria": null,
+          "value": "신한투자증권",
+          "id": null,
+          "tag": "button",
+          "box": [
+            31,
+            2255,
+            328,
+            58
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e24",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '신한투자증권' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "service",
+          "text": "신한라이프 · 보장분석",
+          "aria": null,
+          "value": "신한라이프",
+          "id": null,
+          "tag": "button",
+          "box": [
+            31,
+            2321,
+            328,
+            58
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e25",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '신한라이프' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-tab-home",
+          "text": "홈",
+          "aria": null,
+          "value": "홈",
+          "id": null,
+          "tag": "button",
+          "box": [
+            5,
+            2433,
+            73,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e26",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-tab-finance",
+          "text": "금융",
+          "aria": null,
+          "value": "금융",
+          "id": null,
+          "tag": "button",
+          "box": [
+            82,
+            2433,
+            73,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e27",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '금융' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-tab-goods",
+          "text": "상품",
+          "aria": null,
+          "value": "상품",
+          "id": null,
+          "tag": "button",
+          "box": [
+            159,
+            2433,
+            73,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e28",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '상품' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-tab-benefit",
+          "text": "혜택",
+          "aria": null,
+          "value": "혜택",
+          "id": null,
+          "tag": "button",
+          "box": [
+            235,
+            2433,
+            73,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e29",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '혜택' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-tab-stock",
+          "text": "주식",
+          "aria": null,
+          "value": "주식",
+          "id": null,
+          "tag": "button",
+          "box": [
+            312,
+            2433,
+            73,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e30",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '주식' 외 2줄"
+          }
+        }
+      ],
+      "regions": [
+        {
+          "no": 1,
+          "name": "영역 1",
+          "description": "(mock) 요소 e1, e2, e3, e4, e5, e6",
+          "elements": [
+            "e1",
+            "e2",
+            "e3",
+            "e4",
+            "e5",
+            "e6"
+          ],
+          "box": [
+            16,
+            60,
+            358,
+            172
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 2,
+          "name": "영역 2",
+          "description": "(mock) 요소 e7, e8, e9",
+          "elements": [
+            "e7",
+            "e8",
+            "e9"
+          ],
+          "box": [
+            31,
+            467,
+            328,
+            112
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 3,
+          "name": "영역 3",
+          "description": "(mock) 요소 e10",
+          "elements": [
+            "e10"
+          ],
+          "box": [
+            31,
+            671,
+            201,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 4,
+          "name": "영역 4",
+          "description": "(mock) 요소 e11",
+          "elements": [
+            "e11"
+          ],
+          "box": [
+            31,
+            927,
+            328,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 5,
+          "name": "영역 5",
+          "description": "(mock) 요소 e12, e13, e14, e15",
+          "elements": [
+            "e12",
+            "e13",
+            "e14",
+            "e15"
+          ],
+          "box": [
+            31,
+            1105,
+            328,
+            112
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 6,
+          "name": "영역 6",
+          "description": "(mock) 요소 e16",
+          "elements": [
+            "e16"
+          ],
+          "box": [
+            31,
+            1351,
+            104,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 7,
+          "name": "영역 7",
+          "description": "(mock) 요소 e17, e18",
+          "elements": [
+            "e17",
+            "e18"
+          ],
+          "box": [
+            31,
+            1553,
+            328,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 8,
+          "name": "영역 8",
+          "description": "(mock) 요소 e19, e20, e21",
+          "elements": [
+            "e19",
+            "e20",
+            "e21"
+          ],
+          "box": [
+            31,
+            1705,
+            328,
+            190
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 9,
+          "name": "영역 9",
+          "description": "(mock) 요소 e22",
+          "elements": [
+            "e22"
+          ],
+          "box": [
+            31,
+            2045,
+            158,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 10,
+          "name": "영역 10",
+          "description": "(mock) 요소 e23, e24, e25",
+          "elements": [
+            "e23",
+            "e24",
+            "e25"
+          ],
+          "box": [
+            31,
+            2189,
+            328,
+            190
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 11,
+          "name": "영역 11",
+          "description": "(mock) 요소 e26, e27, e28, e29, e30",
+          "elements": [
+            "e26",
+            "e27",
+            "e28",
+            "e29",
+            "e30"
+          ],
+          "box": [
+            5,
+            2433,
+            380,
+            52
+          ],
+          "source": "mock"
+        }
+      ],
+      "conditions": [],
+      "of": null,
+      "condition": null
+    },
+    {
+      "id": "scr-recipient",
+      "screen": "recipient",
+      "state": "visit:recipient",
+      "kind": "visit",
+      "main": true,
+      "expected_screen": "recipient",
+      "purpose": "새 계좌로 보내기 또는 자주 쓰는 계좌·내 계좌·최근 계좌에서 받는 대상을 정한다.",
+      "from_original": [
+        "recipient"
+      ],
+      "picture": "shots/visit-recipient.png",
+      "marked": "shots/visit-recipient.marked.png",
+      "size": [
+        390,
+        953
+      ],
+      "scale": 2,
+      "grown": 109,
+      "clipped": 0,
+      "covered": 0,
+      "dialogs": [],
+      "error": null,
+      "items": [
+        {
+          "kind": "element",
+          "action": "previous",
+          "text": "이전",
+          "aria": null,
+          "value": "이전",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            12,
+            62,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e1",
+          "result": {
+            "kind": "screen",
+            "to": "home",
+            "to_id": "scr-home"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "cancel",
+          "text": "이체 취소",
+          "aria": null,
+          "value": "이체 취소",
+          "id": null,
+          "tag": "button",
+          "box": [
+            270,
+            12,
+            104,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e2",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '이체를 그만둘까요?' 외 3줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "go-account",
+          "text": "새 계좌번호 입력",
+          "aria": null,
+          "value": "새 계좌번호 입력",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            151,
+            358,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e3",
+          "result": {
+            "kind": "screen",
+            "to": "account",
+            "to_id": "scr-account"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-search",
+          "text": "계좌 검색",
+          "aria": null,
+          "value": "계좌 검색",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            211,
+            175,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e4",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '계좌 검색' 외 2줄 · 입력 칸 값이 바뀜: ''"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-payee-manage",
+          "text": "받는 사람 관리",
+          "aria": null,
+          "value": "받는 사람 관리",
+          "id": null,
+          "tag": "button",
+          "box": [
+            199,
+            211,
+            175,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e5",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '받는 사람 관리' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-multi-transfer",
+          "text": "다건이체",
+          "aria": null,
+          "value": "다건이체",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            271,
+            98,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e6",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '다건이체' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-frequent",
+          "text": "목록 보기",
+          "aria": null,
+          "value": "목록 보기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            31,
+            444,
+            160,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e7",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '자주 쓰는 계좌 · 0개' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-frequent",
+          "text": "편집",
+          "aria": null,
+          "value": "편집",
+          "id": null,
+          "tag": "button",
+          "box": [
+            199,
+            444,
+            160,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e8",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '자주 쓰는 계좌 · 0개' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-my-accounts",
+          "text": "내 계좌 보기",
+          "aria": null,
+          "value": "내 계좌 보기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            31,
+            654,
+            129,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e9",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '내 계좌 · 0개' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-recent",
+          "text": "최근 계좌 보기",
+          "aria": null,
+          "value": "최근 계좌 보기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            31,
+            856,
+            147,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e10",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '최근 계좌 · 0개' 외 2줄"
+          }
+        }
+      ],
+      "regions": [
+        {
+          "no": 1,
+          "name": "영역 1",
+          "description": "(mock) 요소 e1, e2",
+          "elements": [
+            "e1",
+            "e2"
+          ],
+          "box": [
+            16,
+            12,
+            358,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 2,
+          "name": "영역 2",
+          "description": "(mock) 요소 e3, e4, e5, e6",
+          "elements": [
+            "e3",
+            "e4",
+            "e5",
+            "e6"
+          ],
+          "box": [
+            16,
+            151,
+            358,
+            172
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 3,
+          "name": "영역 3",
+          "description": "(mock) 요소 e7, e8",
+          "elements": [
+            "e7",
+            "e8"
+          ],
+          "box": [
+            31,
+            444,
+            328,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 4,
+          "name": "영역 4",
+          "description": "(mock) 요소 e9",
+          "elements": [
+            "e9"
+          ],
+          "box": [
+            31,
+            654,
+            129,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 5,
+          "name": "영역 5",
+          "description": "(mock) 요소 e10",
+          "elements": [
+            "e10"
+          ],
+          "box": [
+            31,
+            856,
+            147,
+            52
+          ],
+          "source": "mock"
+        }
+      ],
+      "conditions": [],
+      "of": null,
+      "condition": null
+    },
+    {
+      "id": "scr-account",
+      "screen": "account",
+      "state": "visit:account",
+      "kind": "visit",
+      "main": true,
+      "expected_screen": "account",
+      "purpose": "받는 계좌번호를 입력하고 은행 또는 증권사를 선택한다. 계좌번호 오류를 같은 자리에서 고친다.",
+      "from_original": [
+        "account",
+        "err-account"
+      ],
+      "picture": "shots/visit-account.png",
+      "marked": "shots/visit-account.marked.png",
+      "size": [
+        390,
+        844
+      ],
+      "scale": 2,
+      "grown": 0,
+      "clipped": 0,
+      "covered": 0,
+      "dialogs": [],
+      "error": null,
+      "items": [
+        {
+          "kind": "element",
+          "action": "previous",
+          "text": "이전",
+          "aria": null,
+          "value": "이전",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            12,
+            62,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e1",
+          "result": {
+            "kind": "screen",
+            "to": "recipient",
+            "to_id": "scr-recipient"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "cancel",
+          "text": "이체 취소",
+          "aria": null,
+          "value": "이체 취소",
+          "id": null,
+          "tag": "button",
+          "box": [
+            270,
+            12,
+            104,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e2",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '이체를 그만둘까요?' 외 3줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "open-bank",
+          "text": "은행 또는 증권사 선택",
+          "aria": null,
+          "value": "은행 또는 증권사 선택",
+          "id": "picked-bank",
+          "tag": "button",
+          "box": [
+            16,
+            381,
+            207,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e3",
+          "result": {
+            "kind": "screen",
+            "to": "bank",
+            "to_id": "scr-bank"
+          }
+        },
+        {
+          "kind": "group",
+          "action": "acc-num",
+          "text": "1",
+          "aria": null,
+          "value": "1",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            471,
+            358,
+            241
+          ],
+          "disabled": false,
+          "entrance": false,
+          "group": {
+            "count": 10,
+            "values": [
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ]
+          },
+          "no": "e4",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '전체 지우기' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "acc-del",
+          "text": "한 자리 지우기",
+          "aria": "한 자리 지우기",
+          "value": "한 자리 지우기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            138,
+            657,
+            115,
+            55
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e5",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "account-next",
+          "text": "계좌 확인하고 다음",
+          "aria": null,
+          "value": "계좌 확인하고 다음",
+          "id": "acc-next",
+          "tag": "button",
+          "box": [
+            16,
+            776,
+            358,
+            52
+          ],
+          "disabled": true,
+          "entrance": false,
+          "no": "e6",
+          "result": {
+            "kind": "disabled"
+          }
+        }
+      ],
+      "regions": [
+        {
+          "no": 1,
+          "name": "영역 1",
+          "description": "(mock) 요소 e1, e2",
+          "elements": [
+            "e1",
+            "e2"
+          ],
+          "box": [
+            16,
+            12,
+            358,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 2,
+          "name": "영역 2",
+          "description": "(mock) 요소 e3",
+          "elements": [
+            "e3"
+          ],
+          "box": [
+            16,
+            381,
+            207,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 3,
+          "name": "영역 3",
+          "description": "(mock) 요소 e4, e5",
+          "elements": [
+            "e4",
+            "e5"
+          ],
+          "box": [
+            16,
+            471,
+            358,
+            241
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 4,
+          "name": "영역 4",
+          "description": "(mock) 요소 e6",
+          "elements": [
+            "e6"
+          ],
+          "box": [
+            16,
+            776,
+            358,
+            52
+          ],
+          "source": "mock"
+        }
+      ],
+      "conditions": [
+        "scr-account--error-wrong-account"
+      ],
+      "of": null,
+      "condition": null
+    },
+    {
+      "id": "scr-account--error-wrong-account",
+      "screen": "account",
+      "state": "error:wrong-account",
+      "kind": "error",
+      "main": false,
+      "expected_screen": "account",
+      "purpose": "받는 계좌번호를 입력하고 은행 또는 증권사를 선택한다. 계좌번호 오류를 같은 자리에서 고친다.",
+      "from_original": [
+        "account",
+        "err-account"
+      ],
+      "picture": "shots/error-wrong-account.png",
+      "marked": "shots/error-wrong-account.marked.png",
+      "size": [
+        390,
+        844
+      ],
+      "scale": 2,
+      "grown": 0,
+      "clipped": 0,
+      "covered": 0,
+      "dialogs": [],
+      "error": null,
+      "items": [
+        {
+          "kind": "element",
+          "action": "previous",
+          "text": "이전",
+          "aria": null,
+          "value": "이전",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            12,
+            62,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e1",
+          "result": {
+            "kind": "screen",
+            "to": "recipient",
+            "to_id": "scr-recipient"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "cancel",
+          "text": "이체 취소",
+          "aria": null,
+          "value": "이체 취소",
+          "id": null,
+          "tag": "button",
+          "box": [
+            270,
+            12,
+            104,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e2",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '이체를 그만둘까요?' 외 3줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "acc-clear",
+          "text": "전체 지우기",
+          "aria": null,
+          "value": "전체 지우기",
+          "id": "acc-clear",
+          "tag": "button",
+          "box": [
+            29,
+            287,
+            332,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e3",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '지운 번호 복구' 외 13줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "retry-account",
+          "text": "계좌번호 다시 입력",
+          "aria": null,
+          "value": "계좌번호 다시 입력",
+          "id": null,
+          "tag": "button",
+          "box": [
+            30,
+            521,
+            330,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e4",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '1' 외 12줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "open-bank",
+          "text": "신한",
+          "aria": null,
+          "value": "신한",
+          "id": "picked-bank",
+          "tag": "button",
+          "box": [
+            16,
+            629,
+            62,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e5",
+          "result": {
+            "kind": "screen",
+            "to": "bank",
+            "to_id": "scr-bank"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "account-next",
+          "text": "계좌 확인하고 다음",
+          "aria": null,
+          "value": "계좌 확인하고 다음",
+          "id": "acc-next",
+          "tag": "button",
+          "box": [
+            16,
+            776,
+            358,
+            52
+          ],
+          "disabled": true,
+          "entrance": false,
+          "no": "e6",
+          "result": {
+            "kind": "disabled"
+          }
+        }
+      ],
+      "regions": [
+        {
+          "no": 1,
+          "name": "영역 1",
+          "description": "(mock) 요소 e1, e2",
+          "elements": [
+            "e1",
+            "e2"
+          ],
+          "box": [
+            16,
+            12,
+            358,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 2,
+          "name": "영역 2",
+          "description": "(mock) 요소 e3",
+          "elements": [
+            "e3"
+          ],
+          "box": [
+            29,
+            287,
+            332,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 3,
+          "name": "영역 3",
+          "description": "(mock) 요소 e4",
+          "elements": [
+            "e4"
+          ],
+          "box": [
+            30,
+            521,
+            330,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 4,
+          "name": "영역 4",
+          "description": "(mock) 요소 e5",
+          "elements": [
+            "e5"
+          ],
+          "box": [
+            16,
+            629,
+            62,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 5,
+          "name": "영역 5",
+          "description": "(mock) 요소 e6",
+          "elements": [
+            "e6"
+          ],
+          "box": [
+            16,
+            776,
+            358,
+            52
+          ],
+          "source": "mock"
+        }
+      ],
+      "conditions": [],
+      "of": "scr-account",
+      "condition": "오류 경로 'wrong-account' (계좌번호가 틀렸다 (원본 오류 코드 ELB00016)) — scr-account 에서 잘못된 값(ACCOUNT_WRONG)을 넣은 뒤 (흐름 명세 error_paths)"
+    },
+    {
+      "id": "scr-bank",
+      "screen": "bank",
+      "state": "visit:bank",
+      "kind": "visit",
+      "main": true,
+      "expected_screen": "bank",
+      "purpose": "기관 이름을 검색하거나 은행·증권사 전체 목록에서 선택한다.",
+      "from_original": [
+        "bank"
+      ],
+      "picture": "shots/visit-bank.png",
+      "marked": "shots/visit-bank.marked.png",
+      "size": [
+        390,
+        2909
+      ],
+      "scale": 2,
+      "grown": 2065,
+      "clipped": 0,
+      "covered": 0,
+      "dialogs": [],
+      "error": null,
+      "items": [
+        {
+          "kind": "element",
+          "action": "close-bank",
+          "text": "이전",
+          "aria": null,
+          "value": "이전",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            12,
+            62,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e1",
+          "result": {
+            "kind": "screen",
+            "to": "account",
+            "to_id": "scr-account"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "close-bank",
+          "text": "선택 닫기",
+          "aria": null,
+          "value": "선택 닫기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            122,
+            12,
+            104,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e2",
+          "result": {
+            "kind": "screen",
+            "to": "account",
+            "to_id": "scr-account"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "cancel",
+          "text": "이체 취소",
+          "aria": null,
+          "value": "이체 취소",
+          "id": null,
+          "tag": "button",
+          "box": [
+            270,
+            12,
+            104,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e3",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '이체를 그만둘까요?' 외 3줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "search-clear",
+          "text": "검색어 지우기",
+          "aria": null,
+          "value": "검색어 지우기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            269,
+            140,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e4",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "tab-bank",
+          "text": "은행",
+          "aria": null,
+          "value": "은행",
+          "id": "tab-bank",
+          "tag": "button",
+          "box": [
+            16,
+            331,
+            175,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e5",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "tab-sec",
+          "text": "증권사",
+          "aria": null,
+          "value": "증권사",
+          "id": "tab-sec",
+          "tag": "button",
+          "box": [
+            199,
+            331,
+            175,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e6",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '신한투자증권' 외 28줄"
+          }
+        },
+        {
+          "kind": "group",
+          "action": "pick-bank",
+          "text": "신한",
+          "aria": null,
+          "value": "신한",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            393,
+            358,
+            2500
+          ],
+          "disabled": false,
+          "entrance": false,
+          "group": {
+            "count": 38,
+            "values": [
+              "BNP파리바",
+              "BOA",
+              "HSBC",
+              "JP모간",
+              "SC",
+              "경남",
+              "관세",
+              "광주",
+              "국고금",
+              "국민",
+              "국세",
+              "기업",
+              "농협",
+              "도이치",
+              "부산",
+              "산림조합",
+              "산업",
+              "새마을",
+              "수협",
+              "신한",
+              "신협",
+              "아이엠뱅크(대구)",
+              "우리",
+              "우체국",
+              "저축은행",
+              "전북",
+              "제주",
+              "중국",
+              "중국건설",
+              "중국공상",
+              "지방세",
+              "지역농.축협",
+              "카카오뱅크",
+              "케이뱅크",
+              "토스뱅크",
+              "하나",
+              "한국씨티",
+              "회원수협"
+            ]
+          },
+          "no": "e7",
+          "result": {
+            "kind": "screen",
+            "to": "account",
+            "to_id": "scr-account"
+          }
+        }
+      ],
+      "regions": [
+        {
+          "no": 1,
+          "name": "영역 1",
+          "description": "(mock) 요소 e1, e2, e3",
+          "elements": [
+            "e1",
+            "e2",
+            "e3"
+          ],
+          "box": [
+            16,
+            12,
+            358,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 2,
+          "name": "영역 2",
+          "description": "(mock) 요소 e4, e5, e6, e7",
+          "elements": [
+            "e4",
+            "e5",
+            "e6",
+            "e7"
+          ],
+          "box": [
+            16,
+            269,
+            358,
+            2624
+          ],
+          "source": "mock"
+        }
+      ],
+      "conditions": [],
+      "of": null,
+      "condition": null
+    },
+    {
+      "id": "scr-amount",
+      "screen": "amount",
+      "state": "visit:amount",
+      "kind": "visit",
+      "main": true,
+      "expected_screen": "amount",
+      "purpose": "출금 계좌와 받는 계좌를 확인하면서 보낼 금액을 입력한다.",
+      "from_original": [
+        "amount"
+      ],
+      "picture": "shots/visit-amount.png",
+      "marked": "shots/visit-amount.marked.png",
+      "size": [
+        390,
+        1088
+      ],
+      "scale": 2,
+      "grown": 244,
+      "clipped": 0,
+      "covered": 0,
+      "dialogs": [],
+      "error": null,
+      "items": [
+        {
+          "kind": "element",
+          "action": "previous",
+          "text": "이전",
+          "aria": null,
+          "value": "이전",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            12,
+            62,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e1",
+          "result": {
+            "kind": "screen",
+            "to": "account",
+            "to_id": "scr-account"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "cancel",
+          "text": "이체 취소",
+          "aria": null,
+          "value": "이체 취소",
+          "id": null,
+          "tag": "button",
+          "box": [
+            270,
+            12,
+            104,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e2",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '이체를 그만둘까요?' 외 3줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-from-account",
+          "text": "출금계좌 변경",
+          "aria": null,
+          "value": "출금계좌 변경",
+          "id": null,
+          "tag": "button",
+          "box": [
+            27,
+            260,
+            140,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e3",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '출금계좌 선택' 외 2줄"
+          }
+        },
+        {
+          "kind": "group",
+          "action": "quick",
+          "text": "일만 원 더하기",
+          "aria": null,
+          "value": "10000",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            497,
+            359,
+            127
+          ],
+          "disabled": false,
+          "entrance": false,
+          "group": {
+            "count": 4,
+            "values": [
+              "10000",
+              "100000",
+              "50000",
+              "all"
+            ]
+          },
+          "no": "e4",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '10,000원' 외 1줄"
+          }
+        },
+        {
+          "kind": "group",
+          "action": "num",
+          "text": "1",
+          "aria": null,
+          "value": "1",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            760,
+            358,
+            241
+          ],
+          "disabled": false,
+          "entrance": false,
+          "group": {
+            "count": 11,
+            "values": [
+              "0",
+              "00",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ]
+          },
+          "no": "e5",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '1원' 외 1줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "del",
+          "text": "한 자리 지우기",
+          "aria": "한 자리 지우기",
+          "value": "한 자리 지우기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            259,
+            946,
+            115,
+            55
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e6",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "amount-next",
+          "text": "입력한 금액 확인",
+          "aria": null,
+          "value": "입력한 금액 확인",
+          "id": "amt-next",
+          "tag": "button",
+          "box": [
+            16,
+            1020,
+            358,
+            52
+          ],
+          "disabled": true,
+          "entrance": false,
+          "no": "e7",
+          "result": {
+            "kind": "disabled"
+          }
+        }
+      ],
+      "regions": [
+        {
+          "no": 1,
+          "name": "영역 1",
+          "description": "(mock) 요소 e1, e2",
+          "elements": [
+            "e1",
+            "e2"
+          ],
+          "box": [
+            16,
+            12,
+            358,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 2,
+          "name": "영역 2",
+          "description": "(mock) 요소 e3",
+          "elements": [
+            "e3"
+          ],
+          "box": [
+            27,
+            260,
+            140,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 3,
+          "name": "영역 3",
+          "description": "(mock) 요소 e4",
+          "elements": [
+            "e4"
+          ],
+          "box": [
+            16,
+            497,
+            359,
+            127
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 4,
+          "name": "영역 4",
+          "description": "(mock) 요소 e5, e6, e7",
+          "elements": [
+            "e5",
+            "e6",
+            "e7"
+          ],
+          "box": [
+            16,
+            760,
+            358,
+            312
+          ],
+          "source": "mock"
+        }
+      ],
+      "conditions": [],
+      "of": null,
+      "condition": null
+    },
+    {
+      "id": "scr-review",
+      "screen": "review",
+      "state": "visit:review",
+      "kind": "visit",
+      "main": true,
+      "expected_screen": "review",
+      "purpose": "받는 계좌·금액·수수료를 확인하고 필요하면 직접 수정한다. 은행 오류도 이곳에서 알린다.",
+      "from_original": [
+        "confirm",
+        "err-bank"
+      ],
+      "picture": "shots/visit-review.png",
+      "marked": "shots/visit-review.marked.png",
+      "size": [
+        390,
+        1167
+      ],
+      "scale": 2,
+      "grown": 323,
+      "clipped": 0,
+      "covered": 0,
+      "dialogs": [],
+      "error": null,
+      "items": [
+        {
+          "kind": "element",
+          "action": "previous",
+          "text": "이전",
+          "aria": null,
+          "value": "이전",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            12,
+            62,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e1",
+          "result": {
+            "kind": "screen",
+            "to": "amount",
+            "to_id": "scr-amount"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "cancel",
+          "text": "이체 취소",
+          "aria": null,
+          "value": "이체 취소",
+          "id": null,
+          "tag": "button",
+          "box": [
+            270,
+            12,
+            104,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e2",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '이체를 그만둘까요?' 외 3줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "edit-account",
+          "text": "계좌·은행 수정",
+          "aria": null,
+          "value": "계좌·은행 수정",
+          "id": null,
+          "tag": "button",
+          "box": [
+            31,
+            303,
+            145,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e3",
+          "result": {
+            "kind": "screen",
+            "to": "account",
+            "to_id": "scr-account"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "edit-amount",
+          "text": "금액 수정",
+          "aria": null,
+          "value": "금액 수정",
+          "id": null,
+          "tag": "button",
+          "box": [
+            31,
+            521,
+            104,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e4",
+          "result": {
+            "kind": "screen",
+            "to": "amount",
+            "to_id": "scr-amount"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "edit-memo",
+          "text": "받는분 메모 수정",
+          "aria": null,
+          "value": "to",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            879,
+            165,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e5",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '받는분 메모 수정' 외 3줄 · 입력 칸 값이 바뀜: '김철수'"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "edit-memo",
+          "text": "내통장 메모 수정",
+          "aria": null,
+          "value": "me",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            975,
+            165,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e6",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '내통장 메모 수정' 외 3줄 · 입력 칸 값이 바뀜: '김철수'"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "send",
+          "text": "확인했어요 · 본인 확인으로",
+          "aria": null,
+          "value": "확인했어요 · 본인 확인으로",
+          "id": "send",
+          "tag": "button",
+          "box": [
+            16,
+            1099,
+            358,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e7",
+          "result": {
+            "kind": "screen",
+            "to": "verify",
+            "to_id": "scr-verify"
+          }
+        }
+      ],
+      "regions": [
+        {
+          "no": 1,
+          "name": "영역 1",
+          "description": "(mock) 요소 e1, e2",
+          "elements": [
+            "e1",
+            "e2"
+          ],
+          "box": [
+            16,
+            12,
+            358,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 2,
+          "name": "영역 2",
+          "description": "(mock) 요소 e3",
+          "elements": [
+            "e3"
+          ],
+          "box": [
+            31,
+            303,
+            145,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 3,
+          "name": "영역 3",
+          "description": "(mock) 요소 e4",
+          "elements": [
+            "e4"
+          ],
+          "box": [
+            31,
+            521,
+            104,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 4,
+          "name": "영역 4",
+          "description": "(mock) 요소 e5",
+          "elements": [
+            "e5"
+          ],
+          "box": [
+            16,
+            879,
+            165,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 5,
+          "name": "영역 5",
+          "description": "(mock) 요소 e6",
+          "elements": [
+            "e6"
+          ],
+          "box": [
+            16,
+            975,
+            165,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 6,
+          "name": "영역 6",
+          "description": "(mock) 요소 e7",
+          "elements": [
+            "e7"
+          ],
+          "box": [
+            16,
+            1099,
+            358,
+            52
+          ],
+          "source": "mock"
+        }
+      ],
+      "conditions": [
+        "scr-review--error-wrong-bank"
+      ],
+      "of": null,
+      "condition": null
+    },
+    {
+      "id": "scr-review--error-wrong-bank",
+      "screen": "review",
+      "state": "error:wrong-bank",
+      "kind": "error",
+      "main": false,
+      "expected_screen": "review",
+      "purpose": "받는 계좌·금액·수수료를 확인하고 필요하면 직접 수정한다. 은행 오류도 이곳에서 알린다.",
+      "from_original": [
+        "confirm",
+        "err-bank"
+      ],
+      "picture": "shots/error-wrong-bank.png",
+      "marked": "shots/error-wrong-bank.marked.png",
+      "size": [
+        390,
+        1395
+      ],
+      "scale": 2,
+      "grown": 551,
+      "clipped": 0,
+      "covered": 0,
+      "dialogs": [],
+      "error": null,
+      "items": [
+        {
+          "kind": "element",
+          "action": "previous",
+          "text": "이전",
+          "aria": null,
+          "value": "이전",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            12,
+            62,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e1",
+          "result": {
+            "kind": "screen",
+            "to": "amount",
+            "to_id": "scr-amount"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "cancel",
+          "text": "이체 취소",
+          "aria": null,
+          "value": "이체 취소",
+          "id": null,
+          "tag": "button",
+          "box": [
+            270,
+            12,
+            104,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e2",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '이체를 그만둘까요?' 외 3줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "retry-bank",
+          "text": "은행 다시 선택",
+          "aria": null,
+          "value": "은행 다시 선택",
+          "id": null,
+          "tag": "button",
+          "box": [
+            30,
+            334,
+            330,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e3",
+          "result": {
+            "kind": "screen",
+            "to": "bank",
+            "to_id": "scr-bank"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "edit-account",
+          "text": "계좌·은행 수정",
+          "aria": null,
+          "value": "계좌·은행 수정",
+          "id": null,
+          "tag": "button",
+          "box": [
+            31,
+            531,
+            145,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e4",
+          "result": {
+            "kind": "screen",
+            "to": "account",
+            "to_id": "scr-account"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "edit-amount",
+          "text": "금액 수정",
+          "aria": null,
+          "value": "금액 수정",
+          "id": null,
+          "tag": "button",
+          "box": [
+            31,
+            750,
+            104,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e5",
+          "result": {
+            "kind": "screen",
+            "to": "amount",
+            "to_id": "scr-amount"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "edit-memo",
+          "text": "받는분 메모 수정",
+          "aria": null,
+          "value": "to",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            1107,
+            165,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e6",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '받는분 메모 수정' 외 3줄 · 입력 칸 값이 바뀜: '김철수'"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "edit-memo",
+          "text": "내통장 메모 수정",
+          "aria": null,
+          "value": "me",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            1203,
+            165,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e7",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '내통장 메모 수정' 외 3줄 · 입력 칸 값이 바뀜: '김철수'"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "send",
+          "text": "확인했어요 · 본인 확인으로",
+          "aria": null,
+          "value": "확인했어요 · 본인 확인으로",
+          "id": "send",
+          "tag": "button",
+          "box": [
+            16,
+            1327,
+            358,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e8",
+          "result": {
+            "kind": "none"
+          }
+        }
+      ],
+      "regions": [
+        {
+          "no": 1,
+          "name": "영역 1",
+          "description": "(mock) 요소 e1, e2",
+          "elements": [
+            "e1",
+            "e2"
+          ],
+          "box": [
+            16,
+            12,
+            358,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 2,
+          "name": "영역 2",
+          "description": "(mock) 요소 e3",
+          "elements": [
+            "e3"
+          ],
+          "box": [
+            30,
+            334,
+            330,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 3,
+          "name": "영역 3",
+          "description": "(mock) 요소 e4",
+          "elements": [
+            "e4"
+          ],
+          "box": [
+            31,
+            531,
+            145,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 4,
+          "name": "영역 4",
+          "description": "(mock) 요소 e5",
+          "elements": [
+            "e5"
+          ],
+          "box": [
+            31,
+            750,
+            104,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 5,
+          "name": "영역 5",
+          "description": "(mock) 요소 e6",
+          "elements": [
+            "e6"
+          ],
+          "box": [
+            16,
+            1107,
+            165,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 6,
+          "name": "영역 6",
+          "description": "(mock) 요소 e7",
+          "elements": [
+            "e7"
+          ],
+          "box": [
+            16,
+            1203,
+            165,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 7,
+          "name": "영역 7",
+          "description": "(mock) 요소 e8",
+          "elements": [
+            "e8"
+          ],
+          "box": [
+            16,
+            1327,
+            358,
+            52
+          ],
+          "source": "mock"
+        }
+      ],
+      "conditions": [],
+      "of": "scr-review",
+      "condition": "오류 경로 'wrong-bank' (계좌번호는 맞는데 은행이 틀렸다 (원본 오류 코드 ETA00325)) — scr-review 에서 잘못된 값(BANK_WRONG)을 넣은 뒤 (흐름 명세 error_paths)"
+    },
+    {
+      "id": "scr-verify",
+      "screen": "verify",
+      "state": "visit:verify",
+      "kind": "visit",
+      "main": true,
+      "expected_screen": "verify",
+      "purpose": "출금 계좌 비밀번호로 본인 확인을 하고 최종 송금을 실행한다.",
+      "from_original": [
+        "password"
+      ],
+      "picture": "shots/visit-verify.png",
+      "marked": "shots/visit-verify.marked.png",
+      "size": [
+        390,
+        844
+      ],
+      "scale": 2,
+      "grown": 0,
+      "clipped": 0,
+      "covered": 0,
+      "dialogs": [],
+      "error": null,
+      "items": [
+        {
+          "kind": "element",
+          "action": "previous",
+          "text": "이전",
+          "aria": null,
+          "value": "이전",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            12,
+            62,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e1",
+          "result": {
+            "kind": "screen",
+            "to": "review",
+            "to_id": "scr-review"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "cancel",
+          "text": "이체 취소",
+          "aria": null,
+          "value": "이체 취소",
+          "id": null,
+          "tag": "button",
+          "box": [
+            270,
+            12,
+            104,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e2",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '이체를 그만둘까요?' 외 3줄"
+          }
+        },
+        {
+          "kind": "group",
+          "action": "pw",
+          "text": "9",
+          "aria": null,
+          "value": "9",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            516,
+            358,
+            241
+          ],
+          "disabled": false,
+          "entrance": false,
+          "group": {
+            "count": 10,
+            "values": [
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ]
+          },
+          "no": "e3",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '●○○○' 외 1줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "pw-shuffle",
+          "text": "재배열",
+          "aria": null,
+          "value": "재배열",
+          "id": null,
+          "tag": "button",
+          "box": [
+            138,
+            702,
+            115,
+            55
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e4",
+          "result": {
+            "kind": "same",
+            "detail": "보이는 글의 순서가 바뀜"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "pw-del",
+          "text": "한 자리 지우기",
+          "aria": "한 자리 지우기",
+          "value": "한 자리 지우기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            259,
+            702,
+            115,
+            55
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e5",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "verify-send",
+          "text": "본인 확인하고 송금",
+          "aria": null,
+          "value": "본인 확인하고 송금",
+          "id": "verify-send",
+          "tag": "button",
+          "box": [
+            16,
+            776,
+            358,
+            52
+          ],
+          "disabled": true,
+          "entrance": false,
+          "no": "e6",
+          "result": {
+            "kind": "disabled"
+          }
+        }
+      ],
+      "regions": [
+        {
+          "no": 1,
+          "name": "영역 1",
+          "description": "(mock) 요소 e1, e2",
+          "elements": [
+            "e1",
+            "e2"
+          ],
+          "box": [
+            16,
+            12,
+            358,
+            52
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 2,
+          "name": "영역 2",
+          "description": "(mock) 요소 e3, e4, e5, e6",
+          "elements": [
+            "e3",
+            "e4",
+            "e5",
+            "e6"
+          ],
+          "box": [
+            16,
+            516,
+            358,
+            312
+          ],
+          "source": "mock"
+        }
+      ],
+      "conditions": [],
+      "of": null,
+      "condition": null
+    },
+    {
+      "id": "scr-done",
+      "screen": "done",
+      "state": "visit:done",
+      "kind": "visit",
+      "main": true,
+      "expected_screen": "done",
+      "purpose": "송금 완료와 실제 보낸 계좌·금액을 확인하고 추가이체·상세보기·공유·홈 이동을 선택한다.",
+      "from_original": [
+        "done"
+      ],
+      "picture": "shots/visit-done.png",
+      "marked": "shots/visit-done.marked.png",
+      "size": [
+        390,
+        844
+      ],
+      "scale": 2,
+      "grown": 0,
+      "clipped": 0,
+      "covered": 0,
+      "dialogs": [],
+      "error": null,
+      "items": [
+        {
+          "kind": "element",
+          "action": "oos-detail",
+          "text": "상세보기",
+          "aria": null,
+          "value": "상세보기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            478,
+            175,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e1",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '이체 상세' 외 2줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-share",
+          "text": "공유",
+          "aria": null,
+          "value": "공유",
+          "id": null,
+          "tag": "button",
+          "box": [
+            199,
+            478,
+            175,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e2",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '이체 결과 공유' 외 3줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-more-transfer",
+          "text": "추가이체",
+          "aria": null,
+          "value": "추가이체",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            538,
+            98,
+            52
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e3",
+          "result": {
+            "kind": "screen",
+            "to": "recipient",
+            "to_id": "scr-recipient"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "finish",
+          "text": "홈으로",
+          "aria": null,
+          "value": "홈으로",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            776,
+            358,
+            52
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e4",
+          "result": {
+            "kind": "screen",
+            "to": "home",
+            "to_id": "scr-home"
+          }
+        }
+      ],
+      "regions": [
+        {
+          "no": 1,
+          "name": "영역 1",
+          "description": "(mock) 요소 e1, e2, e3",
+          "elements": [
+            "e1",
+            "e2",
+            "e3"
+          ],
+          "box": [
+            16,
+            478,
+            358,
+            112
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 2,
+          "name": "영역 2",
+          "description": "(mock) 요소 e4",
+          "elements": [
+            "e4"
+          ],
+          "box": [
+            16,
+            776,
+            358,
+            52
+          ],
+          "source": "mock"
+        }
+      ],
+      "conditions": [],
+      "of": null,
+      "condition": null
+    }
+  ],
+  "regions_call": {
+    "model": null,
+    "mock": "regions",
+    "calls": [
+      {
+        "phase": "first",
+        "images": 10,
+        "tokens": null,
+        "cost_usd": 0.0,
+        "seconds": "<seconds>",
+        "finish_reason": "mock",
+        "problems": [],
+        "prompt": "regions.prompt.txt",
+        "response": "regions.response.txt"
+      }
+    ],
+    "problems": [],
+    "fallback": {},
+    "cost_usd": 0.0,
+    "error": null,
+    "reasoning_effort": null
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "storyboard-actions",
+  "steps": [
+    {"screen": "a"},
+    {"screen": "b", "click": "[data-action='go-b']"}
+  ],
+  "error_paths": [
+    {"id": "bad", "from_step": "b",
+     "inputs": [{"click": "[data-action='err']"}],
+     "expect_screen": "b",
+     "recover": [{"click": "[data-action='back-a']"}],
+     "back_to": "a"}
+  ],
+  "reveal": {
+    "pick": {"at": "a", "do": [{"click": "[data-action='show-note']"}]}
+  },
+  "expect": {}
+}

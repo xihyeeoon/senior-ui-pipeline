@@ -64,7 +64,10 @@
 | `test_no_original.py` | 검사기는 원본 없이 통과를 내지 않는다 (11-9b) - 원본을 열지 못했거나 화면을 하나도 읽지 못하면 CLI 는 종료 2 (빌드는 걷지 않는다), 재구성 루프는 시작에서 cannot_start. `-m browser` 에서는 아무도 듣지 않는 포트의 원본 URL 로 CLI 를 실제로 돌린다 |
 | `test_group_source.py` | 선택지 무리는 원본이 정한다 (11-9b) - 원본에서 무리였던 이름(`i_choices.original_groups`, 선언된 not_choices 는 뺀다)만 넘기는지, 생성물은 보지 않는지. `-m browser` 에서는 `fixtures/pages/i_one_per_section` 을 실제로 걸어 (가) 분류마다 하나씩 놓인 원본 무리의 값을 이전 규칙은 놓치고 새 규칙은 걸음마다 · reveal 에서 모두 세는지, (나) 화면마다 하나씩인 뒤로가기는 무리가 되지 않는지 본다 |
 | `test_choice_roles.py` | 선택지 아님 선언(과제 파일 `not_choices`, 11-9) - 과제 파일의 모양, 판정 입력이 붙이고 모델의 것은 버리는지, 검사 I 가 선언된 무리를 판정에서 빼고 `choice_groups_not_choices` 로 남기는지, 프롬프트 · 형식 검사가 그 무리만 받치는 `MENU_TABS` 의 참조를 요구하지 않는지, 설명서의 표. `-m browser` 에서는 저장된 공과금 답 셋(`fixtures/real_runs/bill_sol`)을 바뀐 검사기로 판정한다 (11-9 에서는 셋 다 I 하나 - 항목이 하나뿐인 분류의 메뉴 항목 6개, 무리를 원본이 정한 11-9b 부터 셋 다 fatal 없음) |
-| `fixtures/real_runs/` | 실제 실행의 답 그대로 (`sol` = `outputs/restructure_auto/20261006-124055`, `astra` = `20261006-124838`, `bill_sol` = `20261007-103023-bill` 의 시도 2 · 3 · 4, `refine_215902` · `refine_102041` = 두 실행의 다듬기 답 `refine.response.txt` 와 그때의 계획). `attempt_N.response.txt` · 첫 계획(`plan.json`) · 도구가 넣은 선택지 데이터(`preserved.json`, `attempt_N.html` 의 블록) |
+| `test_storyboard.py` | 화면설계서 (`python -m senior_ui.storyboard`, 11-12) - 보이는 요소를 번호 매긴 항목으로 (선택지 무리는 하나, 대표는 읽는 순서의 첫 것), 누르기 결과의 말 (다른 화면 · 같은 화면 · 아무 일 없음 · 꺼짐), 영역 묶기의 검사 · 한 번 다시 묻기 · "기타" · mock 의 정해진 답 · mock 은 키를 읽지 않음 · 모델 호출 기록 (가짜 호출), 단 나누기 · 동작 문구, 통과하지 못한 실행은 만들지 않음 (종료 2), 원본 지문의 줄끝. `-m browser` 에서는 (가) `fixtures/storyboard/actions.html` 로 동작 확인 - 다른 화면 · 같은 화면 · 아무 일 없음 · 무리 · 꺼짐 · 과제 밖 입구 · 가려진 요소 · 늦게 넘어가는 화면 · 스크롤 화면 한 장 · 오류 · 펼침, (나) mock pass 실행 · 저장된 이체 답 · 저장된 공과금 답으로 끝까지 만들어 `baseline/storyboard/` 와 견주고, 실행 폴더의 원래 파일이 바이트까지 그대로인지 · `index.html` 이 `storyboard.json` 만으로 다시 그려지는지 본다 |
+| `storyboard_fixture.py` | 저장된 실제 답(`fixtures/real_runs/`)으로 실행 폴더를 꾸민다 - 루프와 같은 순서로 답을 받고 검사도 루프의 길로 돌려 `summary.json` 까지. 설계서 기준값과 시험이 쓴다 |
+| `fixtures/storyboard/` | 설계서 동작 확인용 작은 HTML 과 그 흐름 명세 (`actions.html` · `actions.flow.json`) |
+| `fixtures/real_runs/` | 실제 실행의 답 그대로 (`sol` = `outputs/restructure_auto/20261006-124055`, `astra` = `20261006-124838`, `bill_sol` = `20261007-103023-bill` 의 시도 2 · 3 · 4, `refine_215902` · `refine_102041` = 두 실행의 다듬기 답 `refine.response.txt` 와 그때의 계획). `attempt_N.response.txt` · 첫 계획(`plan.json`) · 도구가 넣은 선택지 데이터(`preserved.json`, `attempt_N.html` 의 블록). 설계서의 맨 앞장에 쓰려고 그 실행의 진단(`diagnosis.json` - `refine_102041` · `bill_sol`)과 `bill_sol` 의 계획(`plan.json`, 시도 4 의 것)을 실행 폴더에서 그대로 더했다 (11-12) |
 | `fake_openai.py` | `openai.OpenAI` 의 대역 (with_raw_response 의 헤더 · Responses · models.list · 429 · 400) |
 | `baseline/` | 기준값. 마지막 캡처 실행의 결과다 |
 | `fixtures/sessions/` | `session_report` 용 가짜 세션 4건 |
@@ -133,6 +136,15 @@
   `tests/capture_baseline.py --only bill` — 이체 기준값은 건드리지 않는다. 실행마다
   흔들리는 것은 이체와 같이 비밀번호 숫자판뿐이다 (`ignore.SNAPSHOT`, 두 번 뽑아
   견줘 확인했다)
+- `storyboard/` — 화면설계서의 `storyboard.json` 셋 (그림은 두지 않는다). `mock_pass`
+  (`--mock pass --attempts 1` 실행 - 장 11 · 항목 85), `refine_102041` (저장된 이체 답 -
+  장 10 · 항목 91), `bill_sol_4` (저장된 공과금 답 - 장 18 · 항목 404). 영역은 `--mock` 의
+  정해진 답이다. 저장 전에 만든 시각 · 도구 커밋 · 걸린 시간 · 실행 id · 커밋 · dirty ·
+  원본 지문의 출처(값은 비교한다) · 호출 시간을 자리만 남긴다
+  (`capture_baseline.strip_storyboard`). 설계서의 페이지는 시각과 난수를 고정하므로
+  (`walk.FIXED_TIME` · `SEEDED_RANDOM`) 비밀번호 숫자판도 흔들리지 않는다 - 두 번 만들어
+  기준값과 같았다. 이것만 다시 뽑을 때는 `tests/capture_baseline.py --only storyboard`
+  (다른 기준값은 건드리지 않는다)
 - `report/four_runs.md` / `report/four_runs.details.md` —
   `senior_ui.audit.report` 가 `fixtures/report/` 의 audit JSON 네 개를 나란히
   놓은 md (`--details` 를 붙인 것과 안 붙인 것)

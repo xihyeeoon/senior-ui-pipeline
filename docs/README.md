@@ -6,11 +6,18 @@
 
 ```
 캡처 → 원본 HTML → LLM 재구성 (와이어프레임) → 검사기 → C 후보 고르기
-     → 설명서 (designer_brief.md) → Flutter 더미앱의 C 조건 → 실험 (A1 · A2 · C)
+     → 화면설계서 (storyboard/) · 설명서 (designer_brief.md)
+     → Flutter 더미앱의 C 조건 → 실험 (A1 · A2 · C)
 ```
 
 산출물은 **와이어프레임 수준의 구조 시안**이고 시각 디테일은 디자이너가 채운다.
 그 전제가 아래 모든 것을 — 특히 검사를 두 단계로 나눈 것을 — 결정한다.
+
+**도구의 결과물은 화면설계서다. 재구성 HTML 은 검증용 속 재료다.** 루프가 만드는 HTML 은
+검사기가 걸어 보고 판정하기 위한 것이고, 디자이너가 받는 것은 검사를 통과한 HTML 에서
+뽑은 화면설계서(`python -m senior_ui.storyboard <실행 폴더>`)다 — 화면마다 화면 ID · 회색
+와이어프레임 그림 · 그림 위의 번호 영역 · 설명 표(영역별 요소 · 누르면 가는 곳 · 조건별
+상태). 아래 '화면설계서' 절과 `docs/storyboard.md`.
 
 2026-09-30 에 DesignRepair 를 연구에서 뺐고, 관련 코드와 자료는 커밋 `66186fe`
 까지의 히스토리에 있다.
@@ -38,7 +45,7 @@ LLM 을 부르는 것은 재구성 루프 하나뿐이고, 키는 `.envs` 의 `O
 
 | Path | What | Tracked |
 |---|---|---|
-| `senior_ui/` | 이 프로젝트에서 쓴 코드 전부 — 재구성 루프, 검사기, 뷰어 색인, 실험 서버. 모두 `python -m senior_ui.…` 로 실행한다. | yes |
+| `senior_ui/` | 이 프로젝트에서 쓴 코드 전부 — 재구성 루프, 검사기, 고르기, 화면설계서, 뷰어 색인, 실험 서버. 모두 `python -m senior_ui.…` 로 실행한다. | yes |
 | `web/` | 브라우저에서 열리는 것 — `dashboard.html`(내부 확인용 4화면), `session.html`(HTML 실험 장치 - 본실험에 쓰지 않는다. `--session` 을 줄 때만 서빙된다). | yes |
 | `flows/` | 흐름 파일. 검사기가 화면을 어떤 순서로 어떻게 몰고 다니는지의 명세. `original.json` 과 재구성본별 `restructured`·`run2`·`run3`·`run4`. `allowed_removals.json` 은 그것들과 다르다 — 과제별로 "빼도 되는 선택지" 를 적는 곳이고, **연구자만** 손으로 고친다 (아래 참고). `selection_rule.json` 은 C 후보를 고르는 규칙이다 (아래 'C 후보 고르기'). | yes |
 | `tasks/` | 과제 정의 — `transfer.json`(이체) · `bill.json`(공과금). 프롬프트의 과제 문단, 원본 HTML · 원본 흐름, 완료 화면 값, 필수 오류 경로, 과제 밖 입구(`entrances`, 검사 K)가 과제마다 여기 있다 (`senior_ui/tasks.py`). | yes |
@@ -188,6 +195,7 @@ API 없이: `--mock pass --mock-refine improve` (1회차에 다듬은 빌드가 
 나머지:
 
 ```powershell
+.\.venv\Scripts\python.exe -m senior_ui.storyboard outputs\restructure_auto\<실행> --mock   # 화면설계서
 .\.venv\Scripts\python.exe -m senior_ui.viewer.build_index --print    # 뷰어 색인
 .\.venv\Scripts\python.exe -m senior_ui.collect_results               # outputs -> results
 .\.venv\Scripts\python.exe -m senior_ui.experiment.server             # 대시보드 서버 (또는 시작.bat)
@@ -459,6 +467,38 @@ API 없이 확인하려면 `--mock errors-undeclared` (오류 경로를 적지 �
 - 이체 과제는 선언할 것이 없다 (`"not_choices": {}`) — `tab-bank` · `tab-sec` 는
   이름이 달라 한 무리가 아니다. 칸이 없는 과제 파일도 빈 선언이다. 이유가 빈
   선언은 받지 않고 멈춘다.
+
+## 화면설계서 (`python -m senior_ui.storyboard`)
+
+검사를 통과한 실행 하나에서 디자이너가 볼 설계서를 만든다. 실행 폴더를 **읽기만** 하고
+(재구성 · 검사 · 고르기는 바꾸지 않는다) `<실행 폴더>/storyboard/` 에 `index.html` ·
+`storyboard.pdf`(Chromium 인쇄, 가로 A4) · 화면별 그림 · `storyboard.json`(그림 말고는 이것으로
+다시 그린다)을 쓴다. 통과하지 못한 실행은 만들지 않고 이유를 찍는다 (종료 2).
+
+```powershell
+.\.venv\Scripts\python.exe -m senior_ui.storyboard outputs\restructure_auto\<실행> --model gpt-6.1-sol
+.\.venv\Scripts\python.exe -m senior_ui.storyboard outputs\restructure_auto\<실행> --mock    # API 없이
+```
+
+"누르면 어디로 가는가" 는 **도구가 실제로 눌러서 확인한 것만** 적는다 — 요소마다 새
+페이지에서 그 상태까지 흐름 명세대로 다시 걸은 뒤 최종 HTML 을 누른다. 모델은 영역 묶기와
+설명 문장만 쓴다 (실행마다 호출 한 번, 어긋나면 한 번 더, 그래도면 "기타"). 설계서의 칸마다
+출처가 붙는다:
+
+| 칸 | 출처 |
+|---|---|
+| 화면 ID · 와이어프레임 그림 · 요소 번호/글자/위치 | 도구 확인 (흐름 명세대로 걸어 찍고 모은 것) |
+| **요소와 동작** — "선택 시 [scr-amount] 로 이동" · 같은 화면에서 바뀜 · 아무 일 없음 · 꺼져 있음 | **도구 확인** (눌러 본 결과) |
+| 선택지 무리 "N개 중 하나 선택" · 과제 밖 입구 표시 | 도구 확인 (무리 = 최종 검사의 `choice_groups_original`, 입구 = `oos-*`) |
+| 조건별 화면과 그 조건 | 흐름 명세 (`error_paths` · `reveal` · 두 번째 방문) · 과제의 오류 정의 |
+| **영역 이름 · 설명** | **모델 설명** (`--mock` 은 정해진 답, 모델이 빠뜨린 요소는 "도구 묶음") |
+| 화면 목적 · 변경 목록 · 진단 요약 | 재구성 실행의 계획 · 진단 (그대로 옮김) |
+| 실행 정보 | `summary.json` · git (원본 지문 = 실행 커밋의 원본 파일, 줄끝을 LF 로 맞춘 sha256) |
+
+예상 금액은 이체 실행 하나에 약 $0.08, 공과금 약 $0.19 (gpt-6.1-sol, 다시 묻기까지 가면
+두 배 가까이). 걸리는 시간은 이체 1분 남짓 · 공과금 3분 남짓 (거의 다 눌러 보기). 자세한 것 —
+상태와 다시 걷는 법, 덮개, 긴 화면, 무리의 대표, 시각 · 난수 고정, `storyboard.json` 의 칸,
+한계 — 은 `docs/storyboard.md`.
 
 ## C 후보 고르기 (`python -m senior_ui.select`)
 
@@ -836,3 +876,4 @@ flags as optimistic.
 | `restructure-changelog.md` | Run 1 의 변경 내역과 KB 규칙 사후 대조. |
 | `defect-types.md` | 생성물에 반복해 나타나는 결함 유형. 검사기에 넣을 후보. |
 | `input-contract.md` | 앞단(스크린샷 → HTML)이 지켜야 할 입력 HTML 의 약속. 뒤쪽이 무엇을 읽고 그중 무엇이 스크린샷에서 오는가. |
+| `storyboard.md` | 화면설계서 — 결과물의 칸마다 출처, 만드는 법, `storyboard.json`, 시간 · 비용, 한계. |

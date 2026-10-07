@@ -15,6 +15,8 @@ senior_ui/ 는 한 줄도 건드리지 않는다. 전부 tests/_api.py 를 거�
   [6] 가짜 세션 4건으로 session_report
   [7] senior_ui.audit.report (여러 audit 를 나란히 놓는 md, --details 포함)
   [8] 공과금 과제 (baseline/bill/): 원본 대 원본 · 프롬프트 · mock bill-identity
+  [9] 화면설계서 (baseline/storyboard/): mock pass 실행 · 저장된 이체 답 · 저장된 공과금
+      답의 storyboard.json (영역은 --mock 의 정해진 답, 그림은 기준값으로 두지 않는다)
 
 빌드는 results/ 를 쓴다. outputs/ 는 .gitignore 에 있어 PC 마다 내용이 달라서
 기준값의 입력으로 쓸 수 없다.
@@ -24,8 +26,8 @@ Usage:
   .\.venv\Scripts\python.exe tests/capture_baseline.py --out <다른 폴더>
   .\.venv\Scripts\python.exe tests/capture_baseline.py --only bill
 
---only bill 은 baseline/bill/ 만 지우고 다시 뽑는다. 이체 기준값은 건드리지
-않는다 - 전체를 다시 뽑으면 원본의 비밀번호 숫자판이 다시 섞여 스냅샷 파일이
+--only bill 은 baseline/bill/ 만, --only storyboard 는 baseline/storyboard/ 만 지우고
+다시 뽑는다. 이체 기준값은 건드리지 않는다 - 전체를 다시 뽑으면 원본의 비밀번호 숫자판이 다시 섞여 스냅샷 파일이
 바이트 단위로 달라진다 (비교에서는 빼는 값이지만 파일은 바뀐다).
 """
 import argparse
@@ -800,14 +802,70 @@ def capture_bill(out):
 
 
 # --------------------------------------------------------------------- #
+# [9] 화면설계서 (baseline/storyboard/)
+# --------------------------------------------------------------------- #
+STORYBOARD = "storyboard"
+STORYBOARD_MOCK_ARGS = ["--mock", "pass", "--attempts", "1"]
+# 저장된 실제 답 - tests/storyboard_fixture.py 의 SAVED 와 같은 이름
+STORYBOARD_SAVED = ("refine_102041", "bill_sol_4")
+
+
+def strip_storyboard(data):
+    """storyboard.json 에서 실행마다 바뀌는 값을 자리만 남긴다: 만든 시각 · 도구 커밋 ·
+    걸린 시간, 실행 id(mock 은 시각이 든다) · 커밋 · dirty, 원본 지문을 어디서 읽었는가
+    (실행 커밋이 있으면 그 커밋, 없으면 지금 파일 - 지문 값 자체는 비교한다), 호출의
+    걸린 시간."""
+    d = copy.deepcopy(data)
+    d["generated"] = {k: "<%s>" % k for k in d.get("generated") or {}}
+    run = d.get("run") or {}
+    for k in ("id", "commit", "dirty"):
+        if k in run:
+            run[k] = "<%s>" % k
+    orig = run.get("original") or {}
+    for k in ("source", "same_as_now"):
+        if k in orig:
+            orig[k] = "<%s>" % k
+    for c in (d.get("regions_call") or {}).get("calls") or []:
+        c["seconds"] = "<seconds>"
+    return d
+
+
+def capture_storyboard(out):
+    import storyboard_fixture as SF
+    d = os.path.join(out, STORYBOARD)
+    os.makedirs(d, exist_ok=True)
+    runs = []
+    say("  storyboard/mock_pass: python -m senior_ui.restructure %s"
+        % " ".join(STORYBOARD_MOCK_ARGS))
+    ensure_mock_input()
+    summary, _code = run_mock(STORYBOARD_MOCK_ARGS)
+    runs.append(("mock_pass", summary["run_dir"]))
+    for name in STORYBOARD_SAVED:
+        say("  storyboard/%s: 저장된 답으로 실행 폴더" % name)
+        runs.append((name, SF.make_saved_run(name, BASE_URL)))
+    for name, run_dir in runs:
+        say("  storyboard/%s: python -m senior_ui.storyboard <실행> --mock" % name)
+        code = _api.storyboard_main([run_dir, "--mock"])
+        if code != 0:
+            raise SystemExit("설계서를 만들지 못했다 (%s, 종료 %d)" % (name, code))
+        data = json.load(io.open(os.path.join(run_dir, "storyboard", "storyboard.json"),
+                                 encoding="utf-8"))
+        dump(os.path.join(d, "%s.json" % name), strip_storyboard(data))
+        say("    -> 장 %d · 항목 %d · 누르기 %d" % (data["counts"]["sheets"],
+                                               data["counts"]["items"],
+                                               data["counts"]["clicks"]))
+
+
+# --------------------------------------------------------------------- #
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=os.path.join(HERE, "baseline"),
                     help="기준값을 쓸 폴더 (기본: tests/baseline)")
     ap.add_argument("--fixtures",
                     default=os.path.join(HERE, "fixtures", "sessions"))
-    ap.add_argument("--only", choices=["all", BILL], default="all",
-                    help="bill: baseline/bill/ 만 다시 뽑는다 (이체 기준값은 그대로)")
+    ap.add_argument("--only", choices=["all", BILL, STORYBOARD], default="all",
+                    help="bill: baseline/bill/ 만, storyboard: baseline/storyboard/ 만 다시 "
+                         "뽑는다 (이체 기준값은 그대로)")
     ap.add_argument("--port", type=int, default=_api.config_module.AUTO_PORT,
                     help="서버 포트. 주지 않으면 빈 포트 (mock 실행은 저마다 빈 포트를 잡는다)")
     args = ap.parse_args()
@@ -815,6 +873,21 @@ def main():
         sys.stdout.reconfigure(encoding="utf-8")
 
     out = os.path.abspath(args.out)
+    if args.only == STORYBOARD:
+        d = os.path.join(out, STORYBOARD)
+        if os.path.isdir(d):
+            shutil.rmtree(d)
+        say("설계서 기준값 -> %s" % d)
+        server = start_server(args.port)
+        try:
+            capture_storyboard(out)
+        finally:
+            server.terminate()
+            server.wait()
+            say("서버: 종료 (pid %s)" % (server.pid or "재사용 - 끄지 않음"))
+        say("")
+        say("끝. 기준값: %s" % d)
+        return 0
     if args.only == BILL:
         d = os.path.join(out, BILL)
         if os.path.isdir(d):
@@ -850,6 +923,8 @@ def main():
         copied = capture_mock(out)
         say("[+] 공과금 과제")
         capture_bill(out)
+        say("[+] 화면설계서")
+        capture_storyboard(out)
     finally:
         server.terminate()
         server.wait()
