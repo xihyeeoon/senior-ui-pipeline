@@ -711,6 +711,93 @@ def test_the_feature_table_page():
     assert "숫자판" in page and "입력 칸" in page and "err-amount → amount" in page
 
 
+def saved_storyboard():
+    """이미 모델로 만든 설계서(storyboard.json)의 모양 - 영역 둘(모델 · 도구 묶음),
+    화면 이름, 빈 상태 표시."""
+    a, b = sheet(), sheet("scr-b", n=2)
+    return {"run": {"id": "20261007-102041"}, "generated": {"at": "2026-10-07 15:49:29"},
+            "regions_call": {"model": "gpt-6.1-sol", "mock": None, "cost_usd": 0.0649,
+                             "reasoning_effort": "medium"},
+            "sheets": [dict(a, title="받는 사람 고르기", regions=[
+                {"no": 1, "name": "버튼들", "description": "위 버튼", "elements": ["e1", "e2"],
+                 "box": [0, 0, 1, 1], "source": "model", "empty": True},
+                {"no": 2, "name": R.OTHER_NAME, "description": R.OTHER_DESC,
+                 "elements": ["e3"], "box": [0, 0, 1, 1], "source": "tool_group"}]),
+                dict(b, title=None, regions=[
+                    {"no": 1, "name": "둘", "description": "", "elements": ["e1", "e2"],
+                     "box": [0, 0, 1, 1], "source": "model"}])]}
+
+
+def test_saved_regions_are_reused_without_calling_the_model(monkeypatch):
+    """--regions-from: 저장된 영역 답을 그대로 쓰고 모델을 부르지 않는다 (키도 읽지 않는다).
+    출처 꼬리표 · 화면 이름 · 빈 상태 표시는 저장된 것 그대로, 테두리는 이번 위치로."""
+    def boom(*a, **k):
+        raise AssertionError("모델을 불렀다")
+    monkeypatch.setattr(M, "load_env", boom)
+    monkeypatch.setattr(M, "call_model", boom)
+    shs = [sheet(), sheet("scr-b", n=2)]
+    rec = R.reuse(shs, saved_storyboard(), "x/storyboard.json", log=lambda m: None)
+    assert [(r["name"], r["elements"], r["source"], r.get("empty")) for r in shs[0]["regions"]] \
+        == [("버튼들", ["e1", "e2"], "model", True), (R.OTHER_NAME, ["e3"], "tool_group", None)]
+    assert shs[0]["regions"][0]["box"] == [0, 10, 100, 70]           # 이번 요소 위치로
+    assert [s["title"] for s in shs] == ["받는 사람 고르기", None]
+    assert rec["model"] == "gpt-6.1-sol" and rec["calls"] == [] and rec["cost_usd"] == 0.0
+    assert rec["reused"] == {"path": "x/storyboard.json", "run": "20261007-102041",
+                             "at": "2026-10-07 15:49:29", "cost_usd": 0.0649}
+    assert rec["fallback"] == {} and rec["error"] is None
+
+
+@pytest.mark.parametrize("shs,needle", [
+    (lambda: [sheet()], "저장된 답의 scr-b 장이 이번에는 없다"),
+    (lambda: [sheet(), sheet("scr-b", n=2), sheet("scr-c")], "저장된 답에 scr-c 장이 없다"),
+    (lambda: [sheet(), sheet("scr-b", n=3)],
+     "scr-b 의 요소가 다르다 - 저장된 답 2개 · 이번 3개, 처음 다른 곳: 저장된 답 없음 / 이번 "
+     "e3 요소 'x2'"),
+])
+def test_saved_regions_are_refused_when_the_numbers_differ(shs, needle):
+    """요소 번호가 이번 걷기와 다르면 멈추고 이유를 적는다 - 아무것도 넣지 않는다."""
+    got = shs()
+    with pytest.raises(R.ReuseMismatch) as e:
+        R.reuse(got, saved_storyboard(), "x", log=lambda m: None)
+    assert needle in str(e.value)
+    assert all("regions" not in s for s in got)
+
+
+def test_a_changed_action_under_the_same_number_is_a_mismatch():
+    saved = saved_storyboard()
+    saved["sheets"][1]["items"][1]["action"] = "other"
+    assert R.reuse_problems(saved, [sheet(), sheet("scr-b", n=2)]) == [
+        "scr-b 의 요소가 다르다 - 저장된 답 2개 · 이번 2개, 처음 다른 곳: 저장된 답 e2 요소 "
+        "'other' / 이번 e2 요소 'x1'"]
+
+
+def test_an_unreadable_saved_storyboard_is_refused(tmp_path):
+    bad = tmp_path / "storyboard.json"
+    bad.write_text("{", encoding="utf-8")
+    with pytest.raises(R.ReuseMismatch):
+        R.read_saved(str(bad))
+    with pytest.raises(R.ReuseMismatch):
+        R.read_saved(str(tmp_path / "none.json"))
+
+
+def test_regions_from_cannot_go_with_model_or_mock():
+    for other in (["--model", "m"], ["--mock"]):
+        with pytest.raises(SystemExit):
+            _api.storyboard_cli_parser().parse_args(["x", "--regions-from", "s.json"] + other)
+    args = _api.storyboard_cli_parser().parse_args(["x", "--regions-from", "s.json"])
+    assert args.regions_from == "s.json" and args.mock is None and args.model is None
+
+
+def test_the_cli_exits_2_when_the_saved_regions_do_not_fit(tmp_path, monkeypatch, capsys):
+    def make(run_dir, **kw):
+        assert kw["regions_from"] == "s.json"
+        raise R.ReuseMismatch("저장된 영역 답의 요소 번호가 이번 걷기와 다르다 - x")
+    monkeypatch.setattr(_api.storyboard_cli_module, "make", make)
+    assert _api.storyboard_main([str(tmp_path), "--regions-from", "s.json"]) == 2
+    err = capsys.readouterr().err
+    assert "만들지 않았다" in err and "요소 번호가 이번 걷기와 다르다" in err
+
+
 def test_result_text_links_to_the_sheet():
     it = {"kind": "element", "result": {"kind": "screen", "to": "b", "to_id": "scr-b"}}
     assert RD.result_text(it, True, {"scr-b"}) == '클릭 시 → <a href="#scr-b">[scr-b]</a> 이동'
@@ -1100,3 +1187,52 @@ def test_storyboard_of_a_saved_reply(server, name):
     for sh in data["sheets"]:
         nos = [e for r in sh["regions"] for e in r["elements"]]
         assert sorted(nos) == sorted(it["no"] for it in sh["items"]), sh["id"]
+
+
+@pytest.mark.browser
+def test_storyboard_redrawn_from_saved_regions(server, monkeypatch):
+    """--regions-from (11-12b) - 이미 만든 설계서의 영역 답으로 모델 없이 다시 뽑는다. 그
+    파일이 그 실행의 storyboard/ 안에 있어도 된다 (지우기 전에 읽고 사본을 남긴다). 요소
+    번호가 다르면 만들지 않고 이유를 적는다."""
+    import storyboard_fixture as SF
+
+    def boom(*a, **k):
+        raise AssertionError("모델을 불렀다")
+    monkeypatch.setattr(M, "load_env", boom)
+    monkeypatch.setattr(M, "call_model", boom)
+    d = SF.make_saved_run("refine_102041", C.BASE_URL)
+    assert _api.storyboard_main([d, "--mock", "--no-pdf"]) == 0
+    out = os.path.join(d, B.OUT_DIR)
+    path = os.path.join(out, B.JSON_NAME)
+    first = json.load(io.open(path, encoding="utf-8"))
+    # 모델이 쓴 답인 것처럼 - 영역 이름 · 화면 이름 · 호출 기록을 바꿔 둔다
+    first["sheets"][0]["regions"][0]["name"] = "저장된 영역"
+    first["sheets"][0]["regions"][0]["source"] = "model"
+    first["sheets"][0]["title"] = "저장된 화면 이름"
+    first["regions_call"].update(model="gpt-6.1-sol", mock=None, cost_usd=0.0649)
+    io.open(path, "w", encoding="utf-8").write(json.dumps(first, ensure_ascii=False))
+    regions = lambda data: [(s["id"], [(r["name"], r["elements"], r["source"])
+                                       for r in s["regions"]]) for s in data["sheets"]]
+
+    assert _api.storyboard_main([d, "--regions-from", path, "--no-pdf"]) == 0
+    again = json.load(io.open(path, encoding="utf-8"))
+    assert regions(again) == regions(first)
+    assert (again["sheets"][0]["name"], again["sheets"][0]["name_source"]) == (
+        "저장된 화면 이름", "model")
+    call = again["regions_call"]
+    assert call["reused"]["path"] == path and call["reused"]["cost_usd"] == 0.0649
+    assert call["model"] == "gpt-6.1-sol" and call["calls"] == [] and call["cost_usd"] == 0.0
+    assert json.load(io.open(os.path.join(out, B.REUSED_NAME), encoding="utf-8")) == first
+    page = io.open(os.path.join(out, "index.html"), encoding="utf-8").read()
+    assert "저장된 영역 답을 다시 씀" in page and "저장된 영역" in page
+
+    bad = dict(again, sheets=[dict(s) for s in again["sheets"]])
+    bad["sheets"][0]["items"] = bad["sheets"][0]["items"][:-1]
+    other = os.path.join(UNIT_OUT, "bad.storyboard.json")
+    os.makedirs(UNIT_OUT, exist_ok=True)
+    io.open(other, "w", encoding="utf-8").write(json.dumps(bad, ensure_ascii=False))
+    assert _api.storyboard_main([d, "--regions-from", other, "--no-pdf"]) == 2
+    assert not os.path.exists(path)                     # 만들지 않았다
+    log = io.open(os.path.join(out, "storyboard.log"), encoding="utf-8").read()
+    assert "요소 번호가 이번 걷기와 다르다" in log and "scr-home 의 요소가 다르다" in log
+    assert os.path.exists(os.path.join(out, B.REUSED_NAME))

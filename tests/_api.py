@@ -214,4 +214,5 @@ storyboard_render = _sb_render
 storyboard_run = _sb_run
 storyboard_features = _sb_features
 storyboard_main = _sb_cli.main
+storyboard_cli_module = _sb_cli
 storyboard_cli_parser = _sb_cli.build_parser

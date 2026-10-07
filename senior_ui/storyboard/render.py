@@ -408,6 +408,25 @@ def render_cover(data, ids):
         out.append("</table>")
 
     out.append("<h2>실행 정보</h2><table class=\"kv\">")
+    reused = call.get("reused")
+    if reused:
+        regions_row = ("저장된 영역 답을 다시 씀 - <span class=\"mono\">%s</span> (그때 %s · "
+                       "실행 %s · %s · 그때 비용 %s) · 이번에는 모델을 부르지 않음" % (
+                           esc(reused.get("path")),
+                           "mock (%s)" % esc(call.get("mock")) if call.get("mock")
+                           else esc(call.get("model")),
+                           esc(reused.get("run")), esc(reused.get("at")),
+                           "$%.4f" % reused["cost_usd"] if reused.get("cost_usd") is not None
+                           else "-"))
+    else:
+        regions_row = "%s%s · 비용 %s%s" % (
+            "mock (%s)" % esc(call.get("mock")) if call.get("mock") else esc(call.get("model")),
+            " · reasoning_effort %s" % esc(call["reasoning_effort"])
+            if call.get("reasoning_effort") else "",
+            "$%.4f" % call["cost_usd"] if call.get("cost_usd") is not None else "-",
+            ' · <span class="warn">%s</span>' % esc(call["error"]) if call.get("error") else
+            (' · <span class="warn">어긋나 "기타" 로 묶은 장 %d</span>' % len(call["fallback"])
+             if call.get("fallback") else ""))
     rows = [
         ("실행 id", '<span class="mono">%s</span>' % esc(run.get("id"))),
         ("과제", "%s (%s)" % (esc(task.get("label")), esc(task.get("id")))),
@@ -426,14 +445,7 @@ def render_cover(data, ids):
             ' <span class="warn">(커밋하지 않은 수정이 있었다)</span>' if run.get("dirty")
             else "")),
         ("생성 비용", "$%.4f" % run["cost_usd"] if run.get("cost_usd") is not None else "-"),
-        ("영역 묶기", "%s%s · 비용 %s%s" % (
-            "mock (%s)" % esc(call.get("mock")) if call.get("mock") else esc(call.get("model")),
-            " · reasoning_effort %s" % esc(call["reasoning_effort"])
-            if call.get("reasoning_effort") else "",
-            "$%.4f" % call["cost_usd"] if call.get("cost_usd") is not None else "-",
-            ' · <span class="warn">%s</span>' % esc(call["error"]) if call.get("error") else
-            (' · <span class="warn">어긋나 "기타" 로 묶은 장 %d</span>' % len(call["fallback"])
-             if call.get("fallback") else ""))),
+        ("영역 묶기", regions_row),
         ("설계서", "장 %d (화면 %d) · 항목 %d · 누르기 %d번 · 그림 %s초 · 누르기 %s초 · %s"
          % (data["counts"]["sheets"], data["counts"]["main_sheets"], data["counts"]["items"],
             data["counts"]["clicks"], esc((gen.get("seconds") or {}).get("pictures")),

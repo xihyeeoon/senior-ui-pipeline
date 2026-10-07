@@ -9,6 +9,7 @@ storyboard/ 에 남는 것:
   shots/<상태>.marked.png 요소 번호를 얹은 그림 (모델에게 보낸 것, 1배)
   wireframe.html         그림용 사본 - 최종 HTML 에 로우파이 덮개만 넣었다
   regions.prompt.txt · regions.response.txt (+ regions.retry.*)  영역 묶기 호출 기록
+  regions.from.json      --regions-from 으로 다시 쓴 저장된 설계서의 사본
   storyboard.log         한 줄씩 무엇을 했는지
 
 실행 폴더의 다른 파일은 고치지 않는다.
@@ -33,6 +34,9 @@ from .run import head_commit, load_run, original_fingerprint
 
 OUT_DIR = "storyboard"
 JSON_NAME = "storyboard.json"
+# --regions-from 으로 다시 쓴 저장된 설계서의 사본 (원래 파일이 이 폴더 안에 있었으면
+# 지워지므로, 읽은 것을 그대로 남긴다)
+REUSED_NAME = "regions.from.json"
 # 2: 장마다 화면 이름(title · name · name_source)과 경로(path), 원본 걷기(original) ·
 #    기능-화면 표(features) (11-12b)
 SCHEMA = 2
@@ -482,15 +486,21 @@ def inspect(build_url, wire_url, flow, groups, shots_dir, log=print,
 
 
 def make(run_dir, port=config.AUTO_PORT, model=None, mock=None, log_echo=True,
-         pdf=True, reasoning_effort=None, concurrency=W.CONCURRENCY):
+         pdf=True, reasoning_effort=None, concurrency=W.CONCURRENCY, regions_from=None):
     """실행 폴더 하나의 설계서. 돌려주는 것은 `(code, storyboard_or_reason)`.
 
     0 = 만들었다, 1 = 만들었지만 영역 묶기를 모델로 하지 못했다 (화면마다 "기타"),
-    2 = 만들 수 없는 실행이다 (load_run 의 NotReady) - 아무것도 쓰지 않는다."""
+    2 = 만들 수 없는 실행이다 (load_run 의 NotReady) - 아무것도 쓰지 않는다.
+
+    regions_from 은 저장된 설계서(storyboard.json)다. 주면 영역 묶기를 부르지 않고 그
+    영역 답을 쓴다 - 요소 번호가 이번 걷기와 다르면 R.ReuseMismatch. 그 파일이 이
+    실행의 storyboard/ 안에 있어도 되도록 폴더를 지우기 전에 읽고, 사본(regions.from.json)
+    을 새 폴더에 남긴다."""
     run = load_run(run_dir)                     # NotReady 는 부르는 쪽이 받는다
     if not config.inside_root(run["dir"]):
         raise R.CannotRun("실행 폴더가 저장소 밖이다 (%s) - 서버가 그 파일을 주지 못한다"
                           % run["dir"])
+    saved = R.read_saved(regions_from) if regions_from else None
     out = os.path.join(run["dir"], OUT_DIR)
     if os.path.isdir(out):
         shutil.rmtree(out)
@@ -499,6 +509,11 @@ def make(run_dir, port=config.AUTO_PORT, model=None, mock=None, log_echo=True,
     t0 = time.time()
     log("실행 %s · 과제 %s · 최종 시도 %s" % (run["name"], run["task"],
                                           (run["final"] or {}).get("attempt")))
+    if saved is not None:
+        with io.open(os.path.join(out, REUSED_NAME), "w", encoding="utf-8",
+                     newline="\n") as f:
+            json.dump(saved, f, ensure_ascii=False, indent=1)
+        log("저장된 영역 답: %s (사본 %s)" % (regions_from, REUSED_NAME))
     html = io.open(run["html"], encoding="utf-8").read()
     wire_path = os.path.join(out, "wireframe.html")
     with io.open(wire_path, "w", encoding="utf-8", newline="\n") as f:
@@ -531,8 +546,16 @@ def make(run_dir, port=config.AUTO_PORT, model=None, mock=None, log_echo=True,
                sum(len(s["items"]) for s in sheets), walked.get("click_count", 0),
                walked["seconds"].get("pictures", 0), walked["seconds"].get("clicks", 0)))
 
-        call = R.group(sheets, model=model, mock=mock, out_dir=out, log=log,
-                       reasoning_effort=reasoning_effort)
+        if saved is not None:
+            try:
+                call = R.reuse(sheets, saved, regions_from, log=log)
+            except R.ReuseMismatch as e:
+                log("만들지 않았다 - %s" % e)
+                raise R.ReuseMismatch("%s - 읽은 설계서의 사본: %s"
+                                      % (e, os.path.join(out, REUSED_NAME)))
+        else:
+            call = R.group(sheets, model=model, mock=mock, out_dir=out, log=log,
+                           reasoning_effort=reasoning_effort)
         name_sheets(sheets)
         survey = walked.get("original") or {}
         where = F.where_in_original(survey)
