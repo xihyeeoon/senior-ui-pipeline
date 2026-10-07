@@ -1,0 +1,3190 @@
+{
+  "schema": 1,
+  "generated": {
+    "at": "<at>",
+    "tool_commit": "<tool_commit>",
+    "seconds": "<seconds>"
+  },
+  "task": {
+    "id": "transfer",
+    "label": "이체",
+    "description": "아래는 은행 앱의 이체 화면을 HTML 한 파일로 만든 것이다 (8화면). 60대 이상 고령 사용자가\n**이체 과업 — 받는 사람 정하기, 계좌번호와 은행 넣기, 금액 넣기, 확인, 본인 확인, 완료 —\n을 혼자서 끝낼 수 있도록** 이 화면들을 다시 설계하라."
+  },
+  "changes": [
+    {
+      "id": "C1",
+      "what": "첫 화면을 잔액 한 줄과 버튼 둘로 줄인다",
+      "why": "시작점이 화면에서 하나만 보이게",
+      "addresses": [
+        {
+          "id": "D1",
+          "screen": "home",
+          "problem": "이체 버튼이 첫 카드 안의 작은 버튼 하나라 시작점을 찾지 못한다"
+        }
+      ],
+      "from_screens": [
+        "home"
+      ],
+      "to_screens": [
+        "start"
+      ]
+    },
+    {
+      "id": "C2",
+      "what": "받는 사람 목록의 중복 행을 없앤다",
+      "why": "같은 이름 두 줄에서 멈추지 않게",
+      "addresses": [
+        {
+          "id": "D2",
+          "screen": "recipient",
+          "problem": "같은 이름이 두 번 나와 무엇이 다른지에서 멈춘다"
+        }
+      ],
+      "from_screens": [
+        "recipient"
+      ],
+      "to_screens": [
+        "who"
+      ]
+    },
+    {
+      "id": "C3",
+      "what": "계좌번호 입력과 은행 선택을 두 화면으로 나눈다",
+      "why": "한 화면에 한 가지 일만",
+      "addresses": [
+        {
+          "id": "D4",
+          "screen": "account",
+          "problem": "13자리를 넣는 동안 자릿수를 놓치고, 은행을 먼저 고르지 않으면 다음이 말없이 꺼져 있다"
+        }
+      ],
+      "from_screens": [
+        "account",
+        "bank"
+      ],
+      "to_screens": [
+        "accno",
+        "bank"
+      ]
+    },
+    {
+      "id": "C4",
+      "what": "은행 화면에 검색을 두고 window.PRESERVED.BANKS · SECS 전체를 그 아래에 둔다",
+      "why": "67개를 훑지 않고 찾게",
+      "addresses": [
+        {
+          "id": "D3",
+          "screen": "bank",
+          "problem": "67개를 눈으로 훑어야 해서 찾다가 멈춘다"
+        }
+      ],
+      "from_screens": [
+        "bank"
+      ],
+      "to_screens": [
+        "bank"
+      ]
+    },
+    {
+      "id": "C5",
+      "what": "받는 사람 확인 화면을 더한다",
+      "why": "잘못 보내기 전에 이름으로 한 번 확인",
+      "addresses": [
+        {
+          "id": "D4",
+          "screen": "account",
+          "problem": "13자리를 넣는 동안 자릿수를 놓치고, 은행을 먼저 고르지 않으면 다음이 말없이 꺼져 있다"
+        }
+      ],
+      "from_screens": [],
+      "to_screens": [
+        "whoconfirm"
+      ]
+    },
+    {
+      "id": "C6",
+      "what": "확인 화면에서 메모 행을 뺀다",
+      "why": "확인할 것만 남긴다",
+      "addresses": [
+        {
+          "id": "D5",
+          "screen": "confirm",
+          "problem": "메모 두 줄이 섞여 무엇을 확인해야 하는지 흐려진다"
+        }
+      ],
+      "from_screens": [
+        "confirm"
+      ],
+      "to_screens": [
+        "review"
+      ]
+    },
+    {
+      "id": "C7",
+      "what": "완료 화면의 버튼을 [처음으로] 하나로 줄인다",
+      "why": "끝났다는 것이 분명하게",
+      "addresses": [
+        {
+          "id": "D6",
+          "screen": "done",
+          "problem": "끝난 건지, 무엇을 더 해야 하는지에서 멈춘다"
+        }
+      ],
+      "from_screens": [
+        "done"
+      ],
+      "to_screens": [
+        "done"
+      ]
+    },
+    {
+      "id": "C8",
+      "what": "오류 팝업 두 개를 그 화면 안의 쉬운 안내 글로 바꾼다",
+      "why": "무엇이 틀렸고 무엇을 하면 되는지 그 자리에서 알게",
+      "addresses": [
+        {
+          "id": "D7",
+          "screen": "err-account",
+          "problem": "오류 코드와 은행 용어만 보여 무엇이 틀렸는지 모른다"
+        }
+      ],
+      "from_screens": [
+        "err-account",
+        "err-bank"
+      ],
+      "to_screens": [
+        "accno",
+        "review"
+      ]
+    }
+  ],
+  "diagnosis": {
+    "count": 7,
+    "evidence_kinds": {
+      "missing": 7
+    },
+    "by_screen": {
+      "home": 1,
+      "recipient": 1,
+      "bank": 1,
+      "account": 1,
+      "confirm": 1,
+      "done": 1,
+      "err-account": 1
+    },
+    "items": [
+      {
+        "id": "D1",
+        "screen": "home",
+        "element": "이체 입구",
+        "problem": "이체 버튼이 첫 카드 안의 작은 버튼 하나라 시작점을 찾지 못한다",
+        "evidence_kind": null
+      },
+      {
+        "id": "D2",
+        "screen": "recipient",
+        "element": "받는 사람 목록",
+        "problem": "같은 이름이 두 번 나와 무엇이 다른지에서 멈춘다",
+        "evidence_kind": null
+      },
+      {
+        "id": "D3",
+        "screen": "bank",
+        "element": "은행·증권사 타일 격자",
+        "problem": "67개를 눈으로 훑어야 해서 찾다가 멈춘다",
+        "evidence_kind": null
+      },
+      {
+        "id": "D4",
+        "screen": "account",
+        "element": "계좌번호 입력",
+        "problem": "13자리를 넣는 동안 자릿수를 놓치고, 은행을 먼저 고르지 않으면 다음이 말없이 꺼져 있다",
+        "evidence_kind": null
+      },
+      {
+        "id": "D5",
+        "screen": "confirm",
+        "element": "확인 표",
+        "problem": "메모 두 줄이 섞여 무엇을 확인해야 하는지 흐려진다",
+        "evidence_kind": null
+      },
+      {
+        "id": "D6",
+        "screen": "done",
+        "element": "완료 버튼 4개",
+        "problem": "끝난 건지, 무엇을 더 해야 하는지에서 멈춘다",
+        "evidence_kind": null
+      },
+      {
+        "id": "D7",
+        "screen": "err-account",
+        "element": "오류 팝업",
+        "problem": "오류 코드와 은행 용어만 보여 무엇이 틀렸는지 모른다",
+        "evidence_kind": null
+      }
+    ]
+  },
+  "run": {
+    "id": "<id>",
+    "task": "transfer",
+    "model": "gpt-6.1-sol",
+    "model_source": "config.DEFAULT_MODEL",
+    "mock": "pass",
+    "stage": "wireframe",
+    "final_attempt": 1,
+    "final_label": "생성",
+    "commit": "<commit>",
+    "dirty": "<dirty>",
+    "original": {
+      "path": "inputs/original_transfer.html",
+      "sha256": "8f91e1abcb62783d48d1aa3ccb4b5a917b1d833def3db5a75f3051f74aeacc8a",
+      "source": "<source>",
+      "same_as_now": "<same_as_now>"
+    },
+    "cost_usd": null
+  },
+  "flow": {
+    "steps": [
+      {
+        "step": 1,
+        "visit": "start",
+        "sheet": "scr-start",
+        "screen": "start",
+        "how": []
+      },
+      {
+        "step": 2,
+        "visit": "who",
+        "sheet": "scr-who",
+        "screen": "who",
+        "how": [
+          {
+            "type": "click",
+            "selector": "[data-action='go-who']",
+            "item": "e1",
+            "text": "돈 보내기"
+          }
+        ]
+      },
+      {
+        "step": 3,
+        "visit": "accno",
+        "sheet": "scr-accno",
+        "screen": "accno",
+        "how": [
+          {
+            "type": "click",
+            "selector": "[data-action='go-accno']",
+            "item": "e7",
+            "text": "처음 보내는 곳"
+          }
+        ]
+      },
+      {
+        "step": 4,
+        "visit": "bank",
+        "sheet": "scr-bank",
+        "screen": "bank",
+        "how": [
+          {
+            "type": "type",
+            "value": "{ACCOUNT}"
+          },
+          {
+            "type": "click",
+            "selector": "#acc-next",
+            "item": "e4",
+            "text": "다음"
+          }
+        ]
+      },
+      {
+        "step": 5,
+        "visit": "whoconfirm",
+        "sheet": "scr-whoconfirm",
+        "screen": "whoconfirm",
+        "how": [
+          {
+            "type": "click",
+            "selector": "[data-action='bank-yes']",
+            "item": "e2",
+            "text": "네, 맞아요"
+          }
+        ]
+      },
+      {
+        "step": 6,
+        "visit": "amount",
+        "sheet": "scr-amount",
+        "screen": "amount",
+        "how": [
+          {
+            "type": "click",
+            "selector": "[data-action='who-yes']",
+            "item": "e2",
+            "text": "네, 맞아요"
+          }
+        ]
+      },
+      {
+        "step": 7,
+        "visit": "review",
+        "sheet": "scr-review",
+        "screen": "review",
+        "how": [
+          {
+            "type": "type",
+            "value": "{AMOUNT}"
+          },
+          {
+            "type": "click",
+            "selector": "#amt-next",
+            "item": "e18",
+            "text": "다음"
+          }
+        ]
+      },
+      {
+        "step": 8,
+        "visit": "auth",
+        "sheet": "scr-auth",
+        "screen": "auth",
+        "how": [
+          {
+            "type": "click",
+            "selector": "[data-action='send']",
+            "item": "e4",
+            "text": "보내기"
+          }
+        ]
+      },
+      {
+        "step": 9,
+        "visit": "done",
+        "sheet": "scr-done",
+        "screen": "done",
+        "how": [
+          {
+            "type": "click",
+            "selector": "[data-action='use-pw']",
+            "item": "e3",
+            "text": "비밀번호로 확인"
+          },
+          {
+            "type": "click",
+            "selector": "#pwpad [data-action='pw']",
+            "repeat": 4
+          }
+        ]
+      }
+    ],
+    "errors": [
+      {
+        "id": "wrong-account",
+        "about": "계좌번호가 틀렸다 (원본 오류 코드 ELB00016)",
+        "condition": "계좌번호를 넣고 [다음]을 눌렀는데 받는 사람의 계좌번호가 아니다. 원본은 오류 팝업을 띄우고, [확인]을 누르면 계좌 화면으로 돌아가 다시 넣게 한다.",
+        "uses": [
+          "ACCOUNT_WRONG"
+        ],
+        "from_sheet": "scr-accno",
+        "sheet": "scr-accno--error-wrong-account",
+        "inputs": [
+          {
+            "type": "type",
+            "value": "{ACCOUNT_WRONG}"
+          },
+          {
+            "type": "click",
+            "selector": "#acc-next",
+            "item": "e4",
+            "text": "다음"
+          }
+        ],
+        "recover": [
+          {
+            "type": "click",
+            "selector": "[data-action='acc-del']",
+            "item": "e3",
+            "text": "지우기"
+          }
+        ],
+        "back_to": "accno",
+        "back_to_sheet": "scr-accno"
+      },
+      {
+        "id": "wrong-bank",
+        "about": "계좌번호는 맞는데 은행이 틀렸다 (원본 오류 코드 ETA00325)",
+        "condition": "계좌번호는 맞지만 받는 사람의 은행이 아닌 은행을 고른 채 금액까지 넣고 확인 화면에서 [보내기]를 눌렀다. 원본은 오류 팝업을 띄우고, [확인]을 누르면 확인 화면으로 돌아간다.",
+        "uses": [
+          "BANK_WRONG"
+        ],
+        "from_sheet": "scr-accno",
+        "sheet": "scr-review--error-wrong-bank",
+        "inputs": [
+          {
+            "type": "type",
+            "value": "{ACCOUNT}"
+          },
+          {
+            "type": "click",
+            "selector": "#acc-next",
+            "item": "e4",
+            "text": "다음"
+          },
+          {
+            "type": "click",
+            "selector": "[data-action='bank-other']"
+          },
+          {
+            "type": "click",
+            "selector": "[data-action='pick-bank'][data-bank='{BANK_WRONG}']"
+          },
+          {
+            "type": "click",
+            "selector": "[data-action='who-yes']"
+          },
+          {
+            "type": "type",
+            "value": "{AMOUNT}"
+          },
+          {
+            "type": "click",
+            "selector": "#amt-next"
+          },
+          {
+            "type": "click",
+            "selector": "[data-action='send']"
+          }
+        ],
+        "recover": [
+          {
+            "type": "click",
+            "selector": "[data-action='edit-who']",
+            "item": "e2",
+            "text": "고치기"
+          }
+        ],
+        "back_to": "accno",
+        "back_to_sheet": "scr-accno"
+      }
+    ],
+    "reveals": []
+  },
+  "choice_groups": [
+    "acc-num",
+    "num",
+    "pick-bank",
+    "pw",
+    "quick"
+  ],
+  "counts": {
+    "sheets": 11,
+    "main_sheets": 9,
+    "items": 85,
+    "elements": 103,
+    "clicks": 85
+  },
+  "sheets": [
+    {
+      "id": "scr-start",
+      "screen": "start",
+      "state": "visit:start",
+      "kind": "visit",
+      "main": true,
+      "expected_screen": "start",
+      "purpose": "잔액을 보고 보내기를 시작한다",
+      "from_original": [
+        "home"
+      ],
+      "picture": "shots/visit-start.png",
+      "marked": "shots/visit-start.marked.png",
+      "size": [
+        390,
+        847
+      ],
+      "scale": 2,
+      "grown": 0,
+      "clipped": 0,
+      "covered": 0,
+      "dialogs": [],
+      "error": null,
+      "items": [
+        {
+          "kind": "element",
+          "action": "go-who",
+          "text": "돈 보내기",
+          "aria": null,
+          "value": "돈 보내기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            221,
+            358,
+            73
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e1",
+          "result": {
+            "kind": "screen",
+            "to": "who",
+            "to_id": "scr-who"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "noop",
+          "text": "쓴 내역 보기",
+          "aria": null,
+          "value": "쓴 내역 보기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            310,
+            358,
+            71
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e2",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-message",
+          "text": "메시지",
+          "aria": "메시지",
+          "value": "메시지",
+          "id": null,
+          "tag": "button",
+          "box": [
+            0,
+            395,
+            56,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e3",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-wallet",
+          "text": "지갑",
+          "aria": "지갑",
+          "value": "지갑",
+          "id": null,
+          "tag": "button",
+          "box": [
+            56,
+            395,
+            43,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e4",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-alarm",
+          "text": "알림",
+          "aria": "알림",
+          "value": "알림",
+          "id": null,
+          "tag": "button",
+          "box": [
+            99,
+            395,
+            43,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e5",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-irp",
+          "text": "IRP 안내",
+          "aria": "IRP 안내",
+          "value": "IRP 안내",
+          "id": null,
+          "tag": "button",
+          "box": [
+            141,
+            395,
+            68,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e6",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-appcard",
+          "text": "앱카드 가입",
+          "aria": "앱카드 가입",
+          "value": "앱카드 가입",
+          "id": null,
+          "tag": "button",
+          "box": [
+            210,
+            395,
+            86,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e7",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-get-coupon",
+          "text": "바로받기",
+          "aria": "바로받기",
+          "value": "바로받기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            296,
+            395,
+            69,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e8",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-event",
+          "text": "이벤트",
+          "aria": "이벤트",
+          "value": "이벤트",
+          "id": null,
+          "tag": "button",
+          "box": [
+            0,
+            419,
+            56,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e9",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-coupon",
+          "text": "쿠폰",
+          "aria": "쿠폰",
+          "value": "쿠폰",
+          "id": null,
+          "tag": "button",
+          "box": [
+            56,
+            419,
+            43,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e10",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-point",
+          "text": "포인트",
+          "aria": "포인트",
+          "value": "포인트",
+          "id": null,
+          "tag": "button",
+          "box": [
+            99,
+            419,
+            56,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e11",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-spend-detail",
+          "text": "소비 상세",
+          "aria": "소비 상세",
+          "value": "소비 상세",
+          "id": null,
+          "tag": "button",
+          "box": [
+            155,
+            419,
+            73,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e12",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-my-point",
+          "text": "마이신한포인트",
+          "aria": "마이신한포인트",
+          "value": "마이신한포인트",
+          "id": null,
+          "tag": "button",
+          "box": [
+            228,
+            419,
+            109,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e13",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-connect-event",
+          "text": "자산 연결 이벤트",
+          "aria": "자산 연결 이벤트",
+          "value": "자산 연결 이벤트",
+          "id": null,
+          "tag": "button",
+          "box": [
+            0,
+            443,
+            117,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e14",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-home-setting",
+          "text": "홈화면 설정",
+          "aria": "홈화면 설정",
+          "value": "홈화면 설정",
+          "id": null,
+          "tag": "button",
+          "box": [
+            117,
+            443,
+            86,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e15",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-hide-amount",
+          "text": "금액 숨기기",
+          "aria": "금액 숨기기",
+          "value": "금액 숨기기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            203,
+            443,
+            86,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e16",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-tab-finance",
+          "text": "금융",
+          "aria": "금융",
+          "value": "금융",
+          "id": null,
+          "tag": "button",
+          "box": [
+            289,
+            443,
+            43,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e17",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-tab-goods",
+          "text": "상품",
+          "aria": "상품",
+          "value": "상품",
+          "id": null,
+          "tag": "button",
+          "box": [
+            332,
+            443,
+            43,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e18",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-tab-benefit",
+          "text": "혜택",
+          "aria": "혜택",
+          "value": "혜택",
+          "id": null,
+          "tag": "button",
+          "box": [
+            0,
+            467,
+            43,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e19",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-tab-stock",
+          "text": "주식",
+          "aria": "주식",
+          "value": "주식",
+          "id": null,
+          "tag": "button",
+          "box": [
+            43,
+            467,
+            43,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e20",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-multi-transfer",
+          "text": "다건이체",
+          "aria": "다건이체",
+          "value": "다건이체",
+          "id": null,
+          "tag": "button",
+          "box": [
+            85,
+            467,
+            69,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e21",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-payee-manage",
+          "text": "받는 사람 관리",
+          "aria": "받는 사람 관리",
+          "value": "받는 사람 관리",
+          "id": null,
+          "tag": "button",
+          "box": [
+            155,
+            467,
+            103,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e22",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-search",
+          "text": "검색",
+          "aria": "검색",
+          "value": "검색",
+          "id": null,
+          "tag": "button",
+          "box": [
+            258,
+            467,
+            43,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e23",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-frequent",
+          "text": "자주쓰는 계좌",
+          "aria": "자주쓰는 계좌",
+          "value": "자주쓰는 계좌",
+          "id": null,
+          "tag": "button",
+          "box": [
+            0,
+            491,
+            100,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e24",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-my-accounts",
+          "text": "내 계좌",
+          "aria": "내 계좌",
+          "value": "내 계좌",
+          "id": null,
+          "tag": "button",
+          "box": [
+            100,
+            491,
+            60,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e25",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-recent",
+          "text": "최근",
+          "aria": "최근",
+          "value": "최근",
+          "id": null,
+          "tag": "button",
+          "box": [
+            159,
+            491,
+            43,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e26",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-from-account",
+          "text": "출금계좌 변경",
+          "aria": "출금계좌 변경",
+          "value": "출금계좌 변경",
+          "id": null,
+          "tag": "button",
+          "box": [
+            202,
+            491,
+            100,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e27",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-more-transfer",
+          "text": "추가이체",
+          "aria": "추가이체",
+          "value": "추가이체",
+          "id": null,
+          "tag": "button",
+          "box": [
+            302,
+            491,
+            69,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e28",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-detail",
+          "text": "상세보기",
+          "aria": "상세보기",
+          "value": "상세보기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            0,
+            515,
+            69,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e29",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-share",
+          "text": "공유",
+          "aria": "공유",
+          "value": "공유",
+          "id": null,
+          "tag": "button",
+          "box": [
+            69,
+            515,
+            43,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e30",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-menu",
+          "text": "전체메뉴",
+          "aria": "전체메뉴",
+          "value": "전체메뉴",
+          "id": null,
+          "tag": "button",
+          "box": [
+            112,
+            515,
+            69,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e31",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-easy-home",
+          "text": "쉬운홈",
+          "aria": "쉬운홈",
+          "value": "쉬운홈",
+          "id": null,
+          "tag": "button",
+          "box": [
+            181,
+            515,
+            56,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e32",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "oos-tab-home",
+          "text": "홈",
+          "aria": "홈",
+          "value": "홈",
+          "id": null,
+          "tag": "button",
+          "box": [
+            237,
+            515,
+            29,
+            24
+          ],
+          "disabled": false,
+          "entrance": true,
+          "no": "e33",
+          "result": {
+            "kind": "none"
+          }
+        }
+      ],
+      "regions": [
+        {
+          "no": 1,
+          "name": "영역 1",
+          "description": "(mock) 요소 e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11, e12, e13, e14, e15, e16, e17, e18, e19, e20, e21, e22, e23, e24, e25, e26, e27, e28, e29, e30, e31, e32, e33",
+          "elements": [
+            "e1",
+            "e2",
+            "e3",
+            "e4",
+            "e5",
+            "e6",
+            "e7",
+            "e8",
+            "e9",
+            "e10",
+            "e11",
+            "e12",
+            "e13",
+            "e14",
+            "e15",
+            "e16",
+            "e17",
+            "e18",
+            "e19",
+            "e20",
+            "e21",
+            "e22",
+            "e23",
+            "e24",
+            "e25",
+            "e26",
+            "e27",
+            "e28",
+            "e29",
+            "e30",
+            "e31",
+            "e32",
+            "e33"
+          ],
+          "box": [
+            0,
+            221,
+            375,
+            318
+          ],
+          "source": "mock"
+        }
+      ],
+      "conditions": [],
+      "of": null,
+      "condition": null
+    },
+    {
+      "id": "scr-who",
+      "screen": "who",
+      "state": "visit:who",
+      "kind": "visit",
+      "main": true,
+      "expected_screen": "who",
+      "purpose": "받는 사람을 고르거나 새 계좌로 간다",
+      "from_original": [
+        "recipient"
+      ],
+      "picture": "shots/visit-who.png",
+      "marked": "shots/visit-who.marked.png",
+      "size": [
+        390,
+        847
+      ],
+      "scale": 2,
+      "grown": 0,
+      "clipped": 0,
+      "covered": 0,
+      "dialogs": [],
+      "error": null,
+      "items": [
+        {
+          "kind": "element",
+          "action": "back-start",
+          "text": "← 이전",
+          "aria": null,
+          "value": "← 이전",
+          "id": null,
+          "tag": "button",
+          "box": [
+            14,
+            42,
+            98,
+            50
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e1",
+          "result": {
+            "kind": "screen",
+            "to": "start",
+            "to_id": "scr-start"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "pick-person",
+          "text": "김 김시현카카오뱅크 ····0000",
+          "aria": null,
+          "value": "김시현",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            201,
+            358,
+            88
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e2",
+          "result": {
+            "kind": "screen",
+            "to": "amount",
+            "to_id": "scr-amount"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "pick-person",
+          "text": "안 안성진신한 ····0000",
+          "aria": null,
+          "value": "안성진",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            299,
+            358,
+            88
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e3",
+          "result": {
+            "kind": "screen",
+            "to": "amount",
+            "to_id": "scr-amount"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "pick-person",
+          "text": "박 박정순농협 ····0000",
+          "aria": null,
+          "value": "박정순",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            397,
+            358,
+            88
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e4",
+          "result": {
+            "kind": "screen",
+            "to": "amount",
+            "to_id": "scr-amount"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "pick-person",
+          "text": "박 박숙자신한 ····0001",
+          "aria": null,
+          "value": "박숙자",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            495,
+            358,
+            88
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e5",
+          "result": {
+            "kind": "screen",
+            "to": "amount",
+            "to_id": "scr-amount"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "pick-person",
+          "text": "김 김명희신한 ····0002",
+          "aria": null,
+          "value": "김명희",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            593,
+            358,
+            88
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e6",
+          "result": {
+            "kind": "screen",
+            "to": "amount",
+            "to_id": "scr-amount"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "go-accno",
+          "text": "처음 보내는 곳",
+          "aria": null,
+          "value": "처음 보내는 곳",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            691,
+            358,
+            71
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e7",
+          "result": {
+            "kind": "screen",
+            "to": "accno",
+            "to_id": "scr-accno"
+          }
+        }
+      ],
+      "regions": [
+        {
+          "no": 1,
+          "name": "영역 1",
+          "description": "(mock) 요소 e1",
+          "elements": [
+            "e1"
+          ],
+          "box": [
+            14,
+            42,
+            98,
+            50
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 2,
+          "name": "영역 2",
+          "description": "(mock) 요소 e2, e3, e4, e5, e6, e7",
+          "elements": [
+            "e2",
+            "e3",
+            "e4",
+            "e5",
+            "e6",
+            "e7"
+          ],
+          "box": [
+            16,
+            201,
+            358,
+            561
+          ],
+          "source": "mock"
+        }
+      ],
+      "conditions": [],
+      "of": null,
+      "condition": null
+    },
+    {
+      "id": "scr-accno",
+      "screen": "accno",
+      "state": "visit:accno",
+      "kind": "visit",
+      "main": true,
+      "expected_screen": "accno",
+      "purpose": "계좌번호만 넣는다",
+      "from_original": [
+        "account"
+      ],
+      "picture": "shots/visit-accno.png",
+      "marked": "shots/visit-accno.marked.png",
+      "size": [
+        390,
+        847
+      ],
+      "scale": 2,
+      "grown": 0,
+      "clipped": 0,
+      "covered": 0,
+      "dialogs": [],
+      "error": null,
+      "items": [
+        {
+          "kind": "element",
+          "action": "back-who",
+          "text": "← 이전",
+          "aria": null,
+          "value": "← 이전",
+          "id": null,
+          "tag": "button",
+          "box": [
+            14,
+            42,
+            98,
+            50
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e1",
+          "result": {
+            "kind": "screen",
+            "to": "who",
+            "to_id": "scr-who"
+          }
+        },
+        {
+          "kind": "group",
+          "action": "acc-num",
+          "text": "1",
+          "aria": null,
+          "value": "1",
+          "id": null,
+          "tag": "button",
+          "box": [
+            10,
+            484,
+            370,
+            262
+          ],
+          "disabled": false,
+          "entrance": false,
+          "group": {
+            "count": 10,
+            "values": [
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ]
+          },
+          "no": "e2",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '1자리 눌렀습니다' 외 1줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "acc-del",
+          "text": "지우기",
+          "aria": null,
+          "value": "지우기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            258,
+            682,
+            122,
+            64
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e3",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "accno-next",
+          "text": "다음",
+          "aria": null,
+          "value": "다음",
+          "id": "acc-next",
+          "tag": "button",
+          "box": [
+            16,
+            758,
+            358,
+            73
+          ],
+          "disabled": true,
+          "entrance": false,
+          "no": "e4",
+          "result": {
+            "kind": "disabled"
+          }
+        }
+      ],
+      "regions": [
+        {
+          "no": 1,
+          "name": "영역 1",
+          "description": "(mock) 요소 e1",
+          "elements": [
+            "e1"
+          ],
+          "box": [
+            14,
+            42,
+            98,
+            50
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 2,
+          "name": "영역 2",
+          "description": "(mock) 요소 e2, e3, e4",
+          "elements": [
+            "e2",
+            "e3",
+            "e4"
+          ],
+          "box": [
+            10,
+            484,
+            370,
+            347
+          ],
+          "source": "mock"
+        }
+      ],
+      "conditions": [
+        "scr-accno--error-wrong-account"
+      ],
+      "of": null,
+      "condition": null
+    },
+    {
+      "id": "scr-accno--error-wrong-account",
+      "screen": "accno",
+      "state": "error:wrong-account",
+      "kind": "error",
+      "main": false,
+      "expected_screen": "accno",
+      "purpose": "계좌번호만 넣는다",
+      "from_original": [
+        "account"
+      ],
+      "picture": "shots/error-wrong-account.png",
+      "marked": "shots/error-wrong-account.marked.png",
+      "size": [
+        390,
+        847
+      ],
+      "scale": 2,
+      "grown": 0,
+      "clipped": 0,
+      "covered": 0,
+      "dialogs": [],
+      "error": null,
+      "items": [
+        {
+          "kind": "element",
+          "action": "back-who",
+          "text": "← 이전",
+          "aria": null,
+          "value": "← 이전",
+          "id": null,
+          "tag": "button",
+          "box": [
+            14,
+            42,
+            98,
+            50
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e1",
+          "result": {
+            "kind": "screen",
+            "to": "who",
+            "to_id": "scr-who"
+          }
+        },
+        {
+          "kind": "group",
+          "action": "acc-num",
+          "text": "1",
+          "aria": null,
+          "value": "1",
+          "id": null,
+          "tag": "button",
+          "box": [
+            10,
+            484,
+            370,
+            262
+          ],
+          "disabled": false,
+          "entrance": false,
+          "group": {
+            "count": 10,
+            "values": [
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ]
+          },
+          "no": "e2",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '1102 3456 7891 1' 외 1줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "acc-del",
+          "text": "지우기",
+          "aria": null,
+          "value": "지우기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            258,
+            682,
+            122,
+            64
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e3",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '1102 3456 789' 외 1줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "accno-next",
+          "text": "다음",
+          "aria": null,
+          "value": "다음",
+          "id": "acc-next",
+          "tag": "button",
+          "box": [
+            16,
+            758,
+            358,
+            73
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e4",
+          "result": {
+            "kind": "none"
+          }
+        }
+      ],
+      "regions": [
+        {
+          "no": 1,
+          "name": "영역 1",
+          "description": "(mock) 요소 e1",
+          "elements": [
+            "e1"
+          ],
+          "box": [
+            14,
+            42,
+            98,
+            50
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 2,
+          "name": "영역 2",
+          "description": "(mock) 요소 e2, e3, e4",
+          "elements": [
+            "e2",
+            "e3",
+            "e4"
+          ],
+          "box": [
+            10,
+            484,
+            370,
+            347
+          ],
+          "source": "mock"
+        }
+      ],
+      "conditions": [],
+      "of": "scr-accno",
+      "condition": "오류 경로 'wrong-account' (계좌번호가 틀렸다 (원본 오류 코드 ELB00016)) — scr-accno 에서 잘못된 값(ACCOUNT_WRONG)을 넣은 뒤 (흐름 명세 error_paths)"
+    },
+    {
+      "id": "scr-bank",
+      "screen": "bank",
+      "state": "visit:bank",
+      "kind": "visit",
+      "main": true,
+      "expected_screen": "bank",
+      "purpose": "은행을 고른다",
+      "from_original": [
+        "bank"
+      ],
+      "picture": "shots/visit-bank.png",
+      "marked": "shots/visit-bank.marked.png",
+      "size": [
+        390,
+        847
+      ],
+      "scale": 2,
+      "grown": 0,
+      "clipped": 0,
+      "covered": 0,
+      "dialogs": [],
+      "error": null,
+      "items": [
+        {
+          "kind": "element",
+          "action": "back-accno",
+          "text": "← 이전",
+          "aria": null,
+          "value": "← 이전",
+          "id": null,
+          "tag": "button",
+          "box": [
+            14,
+            42,
+            98,
+            50
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e1",
+          "result": {
+            "kind": "screen",
+            "to": "accno",
+            "to_id": "scr-accno"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "bank-yes",
+          "text": "네, 맞아요",
+          "aria": null,
+          "value": "네, 맞아요",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            453,
+            358,
+            73
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e2",
+          "result": {
+            "kind": "screen",
+            "to": "whoconfirm",
+            "to_id": "scr-whoconfirm"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "bank-other",
+          "text": "다른 은행이에요",
+          "aria": null,
+          "value": "다른 은행이에요",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            542,
+            358,
+            71
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e3",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '어느' 외 133줄 · 입력 칸 값이 바뀜: ''"
+          }
+        }
+      ],
+      "regions": [
+        {
+          "no": 1,
+          "name": "영역 1",
+          "description": "(mock) 요소 e1",
+          "elements": [
+            "e1"
+          ],
+          "box": [
+            14,
+            42,
+            98,
+            50
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 2,
+          "name": "영역 2",
+          "description": "(mock) 요소 e2, e3",
+          "elements": [
+            "e2",
+            "e3"
+          ],
+          "box": [
+            16,
+            453,
+            358,
+            160
+          ],
+          "source": "mock"
+        }
+      ],
+      "conditions": [],
+      "of": null,
+      "condition": null
+    },
+    {
+      "id": "scr-whoconfirm",
+      "screen": "whoconfirm",
+      "state": "visit:whoconfirm",
+      "kind": "visit",
+      "main": true,
+      "expected_screen": "whoconfirm",
+      "purpose": "받는 사람이 맞는지 확인한다",
+      "from_original": [],
+      "picture": "shots/visit-whoconfirm.png",
+      "marked": "shots/visit-whoconfirm.marked.png",
+      "size": [
+        390,
+        847
+      ],
+      "scale": 2,
+      "grown": 0,
+      "clipped": 0,
+      "covered": 0,
+      "dialogs": [],
+      "error": null,
+      "items": [
+        {
+          "kind": "element",
+          "action": "back-bank",
+          "text": "← 이전",
+          "aria": null,
+          "value": "← 이전",
+          "id": null,
+          "tag": "button",
+          "box": [
+            14,
+            42,
+            98,
+            50
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e1",
+          "result": {
+            "kind": "screen",
+            "to": "bank",
+            "to_id": "scr-bank"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "who-yes",
+          "text": "네, 맞아요",
+          "aria": null,
+          "value": "네, 맞아요",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            673,
+            358,
+            73
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e2",
+          "result": {
+            "kind": "screen",
+            "to": "amount",
+            "to_id": "scr-amount"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "who-no",
+          "text": "아니요, 다시 누를게요",
+          "aria": null,
+          "value": "아니요, 다시 누를게요",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            762,
+            358,
+            71
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e3",
+          "result": {
+            "kind": "screen",
+            "to": "accno",
+            "to_id": "scr-accno"
+          }
+        }
+      ],
+      "regions": [
+        {
+          "no": 1,
+          "name": "영역 1",
+          "description": "(mock) 요소 e1",
+          "elements": [
+            "e1"
+          ],
+          "box": [
+            14,
+            42,
+            98,
+            50
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 2,
+          "name": "영역 2",
+          "description": "(mock) 요소 e2, e3",
+          "elements": [
+            "e2",
+            "e3"
+          ],
+          "box": [
+            16,
+            673,
+            358,
+            160
+          ],
+          "source": "mock"
+        }
+      ],
+      "conditions": [],
+      "of": null,
+      "condition": null
+    },
+    {
+      "id": "scr-amount",
+      "screen": "amount",
+      "state": "visit:amount",
+      "kind": "visit",
+      "main": true,
+      "expected_screen": "amount",
+      "purpose": "금액을 넣는다",
+      "from_original": [
+        "amount"
+      ],
+      "picture": "shots/visit-amount.png",
+      "marked": "shots/visit-amount.marked.png",
+      "size": [
+        390,
+        847
+      ],
+      "scale": 2,
+      "grown": 0,
+      "clipped": 0,
+      "covered": 0,
+      "dialogs": [],
+      "error": null,
+      "items": [
+        {
+          "kind": "element",
+          "action": "back-from-amount",
+          "text": "← 이전",
+          "aria": null,
+          "value": "← 이전",
+          "id": null,
+          "tag": "button",
+          "box": [
+            14,
+            42,
+            98,
+            50
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e1",
+          "result": {
+            "kind": "screen",
+            "to": "whoconfirm",
+            "to_id": "scr-whoconfirm"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "amt-set",
+          "text": "1만원",
+          "aria": null,
+          "value": "10000",
+          "id": null,
+          "tag": "button",
+          "box": [
+            14,
+            275,
+            85,
+            55
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e2",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '10,000원' 외 1줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "amt-set",
+          "text": "5만원",
+          "aria": null,
+          "value": "50000",
+          "id": null,
+          "tag": "button",
+          "box": [
+            106,
+            275,
+            85,
+            55
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e3",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '50,000원' 외 1줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "amt-set",
+          "text": "10만원",
+          "aria": null,
+          "value": "100000",
+          "id": null,
+          "tag": "button",
+          "box": [
+            199,
+            275,
+            85,
+            55
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e4",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '100,000원' 외 1줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "amt-set",
+          "text": "전액",
+          "aria": null,
+          "value": "all",
+          "id": null,
+          "tag": "button",
+          "box": [
+            291,
+            275,
+            85,
+            55
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e5",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '100,000원' 외 1줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "amt-num",
+          "text": "1",
+          "aria": null,
+          "value": "1",
+          "id": null,
+          "tag": "button",
+          "box": [
+            10,
+            484,
+            122,
+            64
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e6",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '1원' 외 1줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "amt-num",
+          "text": "2",
+          "aria": null,
+          "value": "2",
+          "id": null,
+          "tag": "button",
+          "box": [
+            134,
+            484,
+            122,
+            64
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e7",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '2원' 외 1줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "amt-num",
+          "text": "3",
+          "aria": null,
+          "value": "3",
+          "id": null,
+          "tag": "button",
+          "box": [
+            258,
+            484,
+            122,
+            64
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e8",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '3원' 외 1줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "amt-num",
+          "text": "4",
+          "aria": null,
+          "value": "4",
+          "id": null,
+          "tag": "button",
+          "box": [
+            10,
+            550,
+            122,
+            64
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e9",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '4원' 외 1줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "amt-num",
+          "text": "5",
+          "aria": null,
+          "value": "5",
+          "id": null,
+          "tag": "button",
+          "box": [
+            134,
+            550,
+            122,
+            64
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e10",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '5원' 외 1줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "amt-num",
+          "text": "6",
+          "aria": null,
+          "value": "6",
+          "id": null,
+          "tag": "button",
+          "box": [
+            258,
+            550,
+            122,
+            64
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e11",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '6원' 외 1줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "amt-num",
+          "text": "7",
+          "aria": null,
+          "value": "7",
+          "id": null,
+          "tag": "button",
+          "box": [
+            10,
+            616,
+            122,
+            64
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e12",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '7원' 외 1줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "amt-num",
+          "text": "8",
+          "aria": null,
+          "value": "8",
+          "id": null,
+          "tag": "button",
+          "box": [
+            134,
+            616,
+            122,
+            64
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e13",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '8원' 외 1줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "amt-num",
+          "text": "9",
+          "aria": null,
+          "value": "9",
+          "id": null,
+          "tag": "button",
+          "box": [
+            258,
+            616,
+            122,
+            64
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e14",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '9원' 외 1줄"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "amt-num",
+          "text": "00",
+          "aria": null,
+          "value": "00",
+          "id": null,
+          "tag": "button",
+          "box": [
+            10,
+            682,
+            122,
+            64
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e15",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "amt-num",
+          "text": "0",
+          "aria": null,
+          "value": "0",
+          "id": null,
+          "tag": "button",
+          "box": [
+            134,
+            682,
+            122,
+            64
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e16",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "amt-del",
+          "text": "지우기",
+          "aria": null,
+          "value": "지우기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            258,
+            682,
+            122,
+            64
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e17",
+          "result": {
+            "kind": "none"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "amount-next",
+          "text": "다음",
+          "aria": null,
+          "value": "다음",
+          "id": "amt-next",
+          "tag": "button",
+          "box": [
+            16,
+            758,
+            358,
+            73
+          ],
+          "disabled": true,
+          "entrance": false,
+          "no": "e18",
+          "result": {
+            "kind": "disabled"
+          }
+        }
+      ],
+      "regions": [
+        {
+          "no": 1,
+          "name": "영역 1",
+          "description": "(mock) 요소 e1",
+          "elements": [
+            "e1"
+          ],
+          "box": [
+            14,
+            42,
+            98,
+            50
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 2,
+          "name": "영역 2",
+          "description": "(mock) 요소 e2, e3, e4, e5",
+          "elements": [
+            "e2",
+            "e3",
+            "e4",
+            "e5"
+          ],
+          "box": [
+            14,
+            275,
+            362,
+            55
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 3,
+          "name": "영역 3",
+          "description": "(mock) 요소 e6, e7, e8, e9, e10, e11, e12, e13, e14, e15, e16, e17, e18",
+          "elements": [
+            "e6",
+            "e7",
+            "e8",
+            "e9",
+            "e10",
+            "e11",
+            "e12",
+            "e13",
+            "e14",
+            "e15",
+            "e16",
+            "e17",
+            "e18"
+          ],
+          "box": [
+            10,
+            484,
+            370,
+            347
+          ],
+          "source": "mock"
+        }
+      ],
+      "conditions": [],
+      "of": null,
+      "condition": null
+    },
+    {
+      "id": "scr-review",
+      "screen": "review",
+      "state": "visit:review",
+      "kind": "visit",
+      "main": true,
+      "expected_screen": "review",
+      "purpose": "보낼 내용을 한 번 더 본다",
+      "from_original": [
+        "confirm"
+      ],
+      "picture": "shots/visit-review.png",
+      "marked": "shots/visit-review.marked.png",
+      "size": [
+        390,
+        847
+      ],
+      "scale": 2,
+      "grown": 0,
+      "clipped": 0,
+      "covered": 0,
+      "dialogs": [],
+      "error": null,
+      "items": [
+        {
+          "kind": "element",
+          "action": "back-amount",
+          "text": "← 이전",
+          "aria": null,
+          "value": "← 이전",
+          "id": null,
+          "tag": "button",
+          "box": [
+            14,
+            42,
+            98,
+            50
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e1",
+          "result": {
+            "kind": "screen",
+            "to": "amount",
+            "to_id": "scr-amount"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "edit-who",
+          "text": "고치기",
+          "aria": null,
+          "value": "고치기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            274,
+            211,
+            80,
+            47
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e2",
+          "result": {
+            "kind": "screen",
+            "to": "accno",
+            "to_id": "scr-accno"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "edit-amount",
+          "text": "고치기",
+          "aria": null,
+          "value": "고치기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            274,
+            347,
+            80,
+            47
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e3",
+          "result": {
+            "kind": "screen",
+            "to": "amount",
+            "to_id": "scr-amount"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "send",
+          "text": "보내기",
+          "aria": null,
+          "value": "보내기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            758,
+            358,
+            73
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e4",
+          "result": {
+            "kind": "screen",
+            "to": "auth",
+            "to_id": "scr-auth"
+          }
+        }
+      ],
+      "regions": [
+        {
+          "no": 1,
+          "name": "영역 1",
+          "description": "(mock) 요소 e1",
+          "elements": [
+            "e1"
+          ],
+          "box": [
+            14,
+            42,
+            98,
+            50
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 2,
+          "name": "영역 2",
+          "description": "(mock) 요소 e2",
+          "elements": [
+            "e2"
+          ],
+          "box": [
+            274,
+            211,
+            80,
+            47
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 3,
+          "name": "영역 3",
+          "description": "(mock) 요소 e3",
+          "elements": [
+            "e3"
+          ],
+          "box": [
+            274,
+            347,
+            80,
+            47
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 4,
+          "name": "영역 4",
+          "description": "(mock) 요소 e4",
+          "elements": [
+            "e4"
+          ],
+          "box": [
+            16,
+            758,
+            358,
+            73
+          ],
+          "source": "mock"
+        }
+      ],
+      "conditions": [
+        "scr-review--error-wrong-bank"
+      ],
+      "of": null,
+      "condition": null
+    },
+    {
+      "id": "scr-review--error-wrong-bank",
+      "screen": "review",
+      "state": "error:wrong-bank",
+      "kind": "error",
+      "main": false,
+      "expected_screen": "review",
+      "purpose": "보낼 내용을 한 번 더 본다",
+      "from_original": [
+        "confirm"
+      ],
+      "picture": "shots/error-wrong-bank.png",
+      "marked": "shots/error-wrong-bank.marked.png",
+      "size": [
+        390,
+        847
+      ],
+      "scale": 2,
+      "grown": 0,
+      "clipped": 0,
+      "covered": 0,
+      "dialogs": [],
+      "error": null,
+      "items": [
+        {
+          "kind": "element",
+          "action": "back-amount",
+          "text": "← 이전",
+          "aria": null,
+          "value": "← 이전",
+          "id": null,
+          "tag": "button",
+          "box": [
+            14,
+            42,
+            98,
+            50
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e1",
+          "result": {
+            "kind": "screen",
+            "to": "amount",
+            "to_id": "scr-amount"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "edit-who",
+          "text": "고치기",
+          "aria": null,
+          "value": "고치기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            274,
+            211,
+            80,
+            47
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e2",
+          "result": {
+            "kind": "screen",
+            "to": "accno",
+            "to_id": "scr-accno"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "edit-amount",
+          "text": "고치기",
+          "aria": null,
+          "value": "고치기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            274,
+            347,
+            80,
+            47
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e3",
+          "result": {
+            "kind": "screen",
+            "to": "amount",
+            "to_id": "scr-amount"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "send",
+          "text": "보내기",
+          "aria": null,
+          "value": "보내기",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            758,
+            358,
+            73
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e4",
+          "result": {
+            "kind": "none"
+          }
+        }
+      ],
+      "regions": [
+        {
+          "no": 1,
+          "name": "영역 1",
+          "description": "(mock) 요소 e1",
+          "elements": [
+            "e1"
+          ],
+          "box": [
+            14,
+            42,
+            98,
+            50
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 2,
+          "name": "영역 2",
+          "description": "(mock) 요소 e2",
+          "elements": [
+            "e2"
+          ],
+          "box": [
+            274,
+            211,
+            80,
+            47
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 3,
+          "name": "영역 3",
+          "description": "(mock) 요소 e3",
+          "elements": [
+            "e3"
+          ],
+          "box": [
+            274,
+            347,
+            80,
+            47
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 4,
+          "name": "영역 4",
+          "description": "(mock) 요소 e4",
+          "elements": [
+            "e4"
+          ],
+          "box": [
+            16,
+            758,
+            358,
+            73
+          ],
+          "source": "mock"
+        }
+      ],
+      "conditions": [],
+      "of": "scr-review",
+      "condition": "오류 경로 'wrong-bank' (계좌번호는 맞는데 은행이 틀렸다 (원본 오류 코드 ETA00325)) — scr-accno 에서 잘못된 값(BANK_WRONG)을 넣은 뒤 (흐름 명세 error_paths)"
+    },
+    {
+      "id": "scr-auth",
+      "screen": "auth",
+      "state": "visit:auth",
+      "kind": "visit",
+      "main": true,
+      "expected_screen": "auth",
+      "purpose": "비밀번호로 본인 확인",
+      "from_original": [
+        "password"
+      ],
+      "picture": "shots/visit-auth.png",
+      "marked": "shots/visit-auth.marked.png",
+      "size": [
+        390,
+        847
+      ],
+      "scale": 2,
+      "grown": 0,
+      "clipped": 0,
+      "covered": 0,
+      "dialogs": [],
+      "error": null,
+      "items": [
+        {
+          "kind": "element",
+          "action": "back-review",
+          "text": "← 이전",
+          "aria": null,
+          "value": "← 이전",
+          "id": null,
+          "tag": "button",
+          "box": [
+            14,
+            42,
+            98,
+            50
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e1",
+          "result": {
+            "kind": "screen",
+            "to": "review",
+            "to_id": "scr-review"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "bio",
+          "text": "지문으로 확인",
+          "aria": null,
+          "value": "지문으로 확인",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            372,
+            358,
+            73
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e2",
+          "result": {
+            "kind": "screen",
+            "to": "done",
+            "to_id": "scr-done"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "use-pw",
+          "text": "비밀번호로 확인",
+          "aria": null,
+          "value": "비밀번호로 확인",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            461,
+            358,
+            71
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e3",
+          "result": {
+            "kind": "same",
+            "detail": "새로 보임: '비밀번호' 외 12줄"
+          }
+        }
+      ],
+      "regions": [
+        {
+          "no": 1,
+          "name": "영역 1",
+          "description": "(mock) 요소 e1",
+          "elements": [
+            "e1"
+          ],
+          "box": [
+            14,
+            42,
+            98,
+            50
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 2,
+          "name": "영역 2",
+          "description": "(mock) 요소 e2, e3",
+          "elements": [
+            "e2",
+            "e3"
+          ],
+          "box": [
+            16,
+            372,
+            358,
+            160
+          ],
+          "source": "mock"
+        }
+      ],
+      "conditions": [],
+      "of": null,
+      "condition": null
+    },
+    {
+      "id": "scr-done",
+      "screen": "done",
+      "state": "visit:done",
+      "kind": "visit",
+      "main": true,
+      "expected_screen": "done",
+      "purpose": "보냈다는 것을 확인하고 처음으로",
+      "from_original": [
+        "done"
+      ],
+      "picture": "shots/visit-done.png",
+      "marked": "shots/visit-done.marked.png",
+      "size": [
+        390,
+        847
+      ],
+      "scale": 2,
+      "grown": 0,
+      "clipped": 0,
+      "covered": 0,
+      "dialogs": [],
+      "error": null,
+      "items": [
+        {
+          "kind": "element",
+          "action": "back-start",
+          "text": "← 처음으로",
+          "aria": null,
+          "value": "← 처음으로",
+          "id": null,
+          "tag": "button",
+          "box": [
+            14,
+            42,
+            134,
+            50
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e1",
+          "result": {
+            "kind": "screen",
+            "to": "start",
+            "to_id": "scr-start"
+          }
+        },
+        {
+          "kind": "element",
+          "action": "finish",
+          "text": "처음으로",
+          "aria": null,
+          "value": "처음으로",
+          "id": null,
+          "tag": "button",
+          "box": [
+            16,
+            758,
+            358,
+            73
+          ],
+          "disabled": false,
+          "entrance": false,
+          "no": "e2",
+          "result": {
+            "kind": "screen",
+            "to": "start",
+            "to_id": "scr-start"
+          }
+        }
+      ],
+      "regions": [
+        {
+          "no": 1,
+          "name": "영역 1",
+          "description": "(mock) 요소 e1",
+          "elements": [
+            "e1"
+          ],
+          "box": [
+            14,
+            42,
+            134,
+            50
+          ],
+          "source": "mock"
+        },
+        {
+          "no": 2,
+          "name": "영역 2",
+          "description": "(mock) 요소 e2",
+          "elements": [
+            "e2"
+          ],
+          "box": [
+            16,
+            758,
+            358,
+            73
+          ],
+          "source": "mock"
+        }
+      ],
+      "conditions": [],
+      "of": null,
+      "condition": null
+    }
+  ],
+  "regions_call": {
+    "model": null,
+    "mock": "regions",
+    "calls": [
+      {
+        "phase": "first",
+        "images": 11,
+        "tokens": null,
+        "cost_usd": 0.0,
+        "seconds": "<seconds>",
+        "finish_reason": "mock",
+        "problems": [],
+        "prompt": "regions.prompt.txt",
+        "response": "regions.response.txt"
+      }
+    ],
+    "problems": [],
+    "fallback": {},
+    "cost_usd": 0.0,
+    "error": null,
+    "reasoning_effort": null
+  }
+}

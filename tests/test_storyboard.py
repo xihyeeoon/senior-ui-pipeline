@@ -11,6 +11,9 @@ r"""화면설계서 (python -m senior_ui.storyboard, 11-12).
   5. 실행 폴더 - 통과하지 못한 실행은 만들지 않는다 (종료 2) · 원본 지문
   6. (-m browser) 작은 HTML 로 동작 확인 - 다른 화면 · 같은 화면 · 아무 일 없음 · 무리 ·
      꺼짐 · 과제 밖 입구 · 가려진 요소 · 늦게 넘어가는 화면 · 스크롤 화면 한 장 · 오류 · 펼침
+  7. (-m browser) 끝까지 - mock pass 실행 · 저장된 이체 답(refine_102041) · 저장된 공과금
+     답(bill_sol 시도 4)의 storyboard.json 을 기준값(baseline/storyboard/)과 견준다. 그림은
+     기준값으로 두지 않는다. 실행 폴더의 원래 파일은 바이트까지 그대로여야 한다.
 """
 import hashlib
 import io
@@ -501,3 +504,68 @@ def test_unit_error_and_reveal_states(unit):
 @pytest.mark.browser
 def test_unit_the_original_file_is_untouched(unit):
     assert unit["same_file"]
+
+
+# --------------------------------------------------------------------- #
+# 7. 끝까지 - 기준값 (pytest -m browser)
+# --------------------------------------------------------------------- #
+def tree_hashes(d):
+    out = {}
+    for base, dirs, files in os.walk(d):
+        if os.path.basename(base) == B.OUT_DIR or B.OUT_DIR in os.path.relpath(base, d).split(
+                os.sep):
+            continue
+        for f in files:
+            p = os.path.join(base, f)
+            out[os.path.relpath(p, d)] = hashlib.sha256(open(p, "rb").read()).hexdigest()
+    return out
+
+
+def make_and_compare(run_dir, name):
+    before = tree_hashes(run_dir)
+    code = _api.storyboard_main([run_dir, "--mock"])
+    assert code == 0
+    assert tree_hashes(run_dir) == before                 # 원래 파일은 그대로
+    out = os.path.join(run_dir, B.OUT_DIR)
+    data = json.load(io.open(os.path.join(out, B.JSON_NAME), encoding="utf-8"))
+    for f in ("index.html", "storyboard.pdf", "wireframe.html", "storyboard.log",
+              R.PROMPT_FILE, R.RESPONSE_FILE):
+        assert os.path.exists(os.path.join(out, f)), f
+    assert open(os.path.join(out, "storyboard.pdf"), "rb").read(5) == b"%PDF-"
+    for sh in data["sheets"]:
+        assert os.path.exists(os.path.join(out, sh["picture"])), sh["id"]
+    # storyboard.json 만으로 같은 설계서를 다시 그린다
+    page = io.open(os.path.join(out, "index.html"), encoding="utf-8").read()
+    assert RD.render(data) == page
+    want = json.load(io.open(os.path.join(C.HERE, "baseline", "storyboard", "%s.json" % name),
+                             encoding="utf-8"))
+    got = C.strip_storyboard(data)
+    assert got["counts"] == want["counts"]
+    assert got["flow"] == want["flow"]
+    for g, w in zip(got["sheets"], want["sheets"]):
+        assert g["id"] == w["id"]
+        assert [(i["no"], i["action"], i["result"]) for i in g["items"]] == \
+            [(i["no"], i["action"], i["result"]) for i in w["items"]], g["id"]
+    assert got == want
+    return data
+
+
+@pytest.mark.browser
+def test_storyboard_of_the_mock_pass_run(server):
+    C.ensure_mock_input()
+    summary, code = C.run_mock(C.STORYBOARD_MOCK_ARGS)
+    assert code == 0
+    data = make_and_compare(summary["run_dir"], "mock_pass")
+    assert data["regions_call"]["mock"] == "regions"
+
+
+@pytest.mark.browser
+@pytest.mark.parametrize("name", sorted(C.STORYBOARD_SAVED))
+def test_storyboard_of_a_saved_reply(server, name):
+    import storyboard_fixture as SF
+    d = SF.make_saved_run(name, C.BASE_URL)
+    data = make_and_compare(d, name)
+    # 모든 항목이 정확히 한 영역에 들어 있다
+    for sh in data["sheets"]:
+        nos = [e for r in sh["regions"] for e in r["elements"]]
+        assert sorted(nos) == sorted(it["no"] for it in sh["items"]), sh["id"]
