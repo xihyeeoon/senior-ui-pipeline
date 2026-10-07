@@ -51,7 +51,9 @@
 | `test_restructure_bugs.py` | 재구성 루프의 버그 재현. 모델도 브라우저도 부르지 않는다 |
 | `test_model_upgrade.py` | 모델 바꾸기 준비 - 기본값 · 모델별 부르는 방식 · 분당 한도 · 확인 명령 · 가격. 실제 API 는 부르지 않는다 |
 | `test_run_settings.py` | 12번 실행 설정 - 추론형의 출력 길이 · 호출 사이 대기(남은 토큰 확인) · reasoning_effort 를 늘 보내고 남기기. gpt-4o 는 그대로인지. 실제 API 는 부르지 않는다 |
-| `test_select.py` | C 후보 고르기 (`python -m senior_ui.select`) - 가짜 실행 폴더 다섯(통과 셋 · 실패 하나 · 도구가 고친 것 하나)으로 순위와 제외 이유, 규칙 파일의 문지기 · 순서 · 가중치, 결과에 남는 규칙과 커밋, 지난 결과와 나란히. `-m browser` 에서는 mock 실행(preserved-all · bill-identity)을 실제로 돌리고 그 폴더로 끝까지 돈다 |
+| `test_select.py` | C 후보 고르기 (`python -m senior_ui.select`) - 가짜 실행 폴더 다섯(통과 셋 · 실패 하나 · 도구가 고친 것 하나)으로 순위와 제외 이유, 규칙 파일의 문지기 · 순서 · 가중치, 결과에 남는 규칙과 커밋, 지난 결과와 나란히. `-m browser` 에서는 mock 실행(preserved-all · bill-identity)을 실제로 돌리고 그 폴더로 끝까지 돈다. 문지기 `original`(11-11) - 지금 원본과 다른 지문 · 지문 없는 옛 실행은 "다른 원본으로 만든 실행", 공과금은 공과금 원본과 견준다. 가짜 실행은 기본으로 지금 원본의 지문을 단다 |
+| `test_account_keypad.py` | 이체 원본의 계좌번호 키패드(11-11) - 입력란의 `data-action="acc-field"` 하나만 더했는지, 흐름이 account 바로 뒤에 입력란 누르기(`account#2`, `state`)를 걷고 오류 경로 둘도 숫자 전에 누르는지, `required_ids` 의 `acc-field` · `acc-pad`. `-m browser` 에서는 원본을 실제로 눌러 들어오면 닫힘 · 입력란 → 예전 자리 · 모양으로 열림 · [다음] 자리 그대로 · 은행 시트 · 오류 팝업 · 금액 ‹ 뒤 유지 · 다시 들어오면 닫힘 |
+| `test_original_fingerprint.py` | 원본 지문(11-11) - 재구성 실행이 쓴 원본 HTML 의 지문을 `summary.json` 의 `original` · `original_sha256` 과 `run.log` 첫 줄에 남기는지 (과제 원본 · `--original` · 시작 실패 · 공과금). 모델도 서버도 부르지 않는다 |
 | `test_preflight_loop.py` | 최신 모델(gpt-6.1-sol · gpt-6-astra) 첫 실행의 형식 검사 거짓 실패 - 실제 답을 `fixtures/real_runs/` 에 복사해 두고 다시 넣는다. 모델도 브라우저도 부르지 않는다 |
 | `test_judge_inputs.py` | 판정 입력(`audit/inputs.judged_flow`) - 모델이 쓴 truth · 완료 화면 값 · done_amount · derived_from_original · task · stage 가 판정을 바꾸지 못하는지, 같은 빌드를 루프와 검사기 CLI 가 같게 판정하는지, 오류 경로에서 뜬 대화상자를 판정하는지. 걷기만 가짜다 |
 | `test_entrances.py` | 과제 밖 입구 (검사 K) - 과제 파일의 확정 목록(이름은 탭 대상마다 하나), 원본의 data-action · aria-label · 무동작 분기, 판정(이름 + 누를 수 있게 보임 · 지운 빌드 fatal · 숨긴 것은 안 셈 · reveal 뒤 통과 · 글자는 기록만 · 겹침 사례 일곱), 프롬프트의 한 문장과 기술 계약 한 줄. `-m browser` 에서는 mock 넷(entrances-none · -reveal · -folded · pass)과, 실제 원본에서 입구 하나만 지운 빌드 일곱(같은 낱말은 남김)을 실제로 걷는다 |
