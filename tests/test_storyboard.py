@@ -15,10 +15,12 @@ r"""화면설계서 (python -m senior_ui.storyboard, 11-12).
      답(bill_sol 시도 4)의 storyboard.json 을 기준값(baseline/storyboard/)과 견준다. 그림은
      기준값으로 두지 않는다. 실행 폴더의 원래 파일은 바이트까지 그대로여야 한다.
 """
+import asyncio
 import hashlib
 import io
 import json
 import os
+import re
 import shutil
 
 import pytest
@@ -384,6 +386,44 @@ def test_the_wire_copy_only_adds_the_cover():
     assert wired[:start] + wired[end:] == html
 
 
+# 배치를 바꾸는 속성 - 로우파이 덮개는 이것을 하나도 쓰지 않는다 (11-12b)
+LAYOUT_PROPS = re.compile(
+    r"(?:^|[;{])\s*(font|font-size|font-weight|font-family|line-height|letter-spacing|"
+    r"width|height|min-width|min-height|max-width|max-height|margin[a-z-]*|padding[a-z-]*|"
+    r"display|position|top|left|right|bottom|border|border-width|border-style|"
+    r"border-(?:top|right|bottom|left)(?:-width|-style)?|flex[a-z-]*|grid[a-z-]*|"
+    r"transform|zoom|box-sizing|white-space|word-break)\s*:")
+
+
+def test_the_lofi_cover_strips_decoration_but_keeps_layout():
+    """실무 와이어프레임 관례 - 배경 · 채우기 · 그림자 · 그라데이션 · 둥근 모서리를 없애고
+    글자는 진회색 하나, 누를 수 있는 요소와 묶음 상자는 1px 회색 테두리, 꺼진 버튼은 점선.
+    위치 · 크기 · 글자 크기 · 굵기는 설계 결정이므로 남긴다 - 배치를 바꾸는 속성은 쓰지
+    않고, 테두리는 두께를 둔 채 색만 지운다 (상자는 outline)."""
+    css = W.WIRE_CSS
+    bad = LAYOUT_PROPS.search(css)
+    assert bad is None, bad.group(0)
+    for want in ("background-color:transparent", "background-image:none", "box-shadow:none",
+                 "text-shadow:none", "border-radius:0", "border-color:transparent",
+                 "color:#333", "-webkit-text-fill-color:#333", "outline:1px solid #999",
+                 "outline-style:dashed", "[data-sb-box]", "[data-sb-fill=solid]"):
+        assert want in css, want
+    for sel in ("[data-action]:disabled", '[data-action][aria-disabled="true"]',
+                "fieldset:disabled [data-action]"):
+        assert "html.sb-wire " + sel in css
+
+
+def test_the_lofi_cover_is_off_while_walking():
+    """덮개의 규칙은 모두 html.sb-wire 아래에 있고, 그 클래스는 그림을 찍기 직전에
+    __sbWire() 가 켠다 - 걷는 동안의 페이지는 원래 스타일 그대로다 (문서가 열릴 때
+    켜지 않는다)."""
+    for sel in re.findall(r"([^{}]+)\{[^{}]*\}", W.WIRE_CSS):
+        for part in sel.split(","):
+            assert part.strip().startswith("html.%s" % W.WIRE_CLASS), part
+    assert "DOMContentLoaded" not in W.WIRE_JS
+    assert "classList.add('%s')" % W.WIRE_CLASS in W.WIRE_JS
+
+
 def test_states_come_from_the_flow():
     flow = json.load(io.open(os.path.join(FIX, "actions.flow.json"), encoding="utf-8"))
     states = W.states_of(flow)
@@ -504,6 +544,68 @@ def test_unit_error_and_reveal_states(unit):
 @pytest.mark.browser
 def test_unit_the_original_file_is_untouched(unit):
     assert unit["same_file"]
+
+
+LOOK = r"""(sels) => sels.map(sel => {
+  const el = document.querySelector(sel);
+  const r = el.getBoundingClientRect(), cs = getComputedStyle(el);
+  return {sel: sel, box: [r.left, r.top, r.width, r.height], size: cs.fontSize,
+          weight: cs.fontWeight, bg: cs.backgroundColor, bgi: cs.backgroundImage,
+          color: cs.color, shadow: cs.boxShadow, radius: cs.borderTopLeftRadius,
+          outline: cs.outlineStyle + ' ' + cs.outlineWidth,
+          pic: el.hasAttribute('data-sb-pic'), box_mark: el.hasAttribute('data-sb-box')};
+})"""
+LOOKED = ["#go-b", "[data-action='next']", "[data-action='pick']", ".card", ".plain", "img",
+          ".pic", "#phone", ".bar"]
+
+
+async def _look_before_and_after(url):
+    from playwright.async_api import async_playwright
+    async with async_playwright() as pw:
+        browser = await pw.chromium.launch()
+        try:
+            page = await browser.new_page(viewport=dict(W.VIEWPORT))
+            await page.goto(url, wait_until="networkidle")
+            before = await page.evaluate(LOOK, LOOKED)
+            off = await page.evaluate("() => document.documentElement.className")
+            marks = await page.evaluate("() => window.__sbWire()")
+            after = await page.evaluate(LOOK, LOOKED)
+            return before, after, off, marks
+        finally:
+            await browser.close()
+
+
+@pytest.mark.browser
+def test_unit_the_lofi_cover(unit):
+    """그림용 사본에서 덮개를 켜기 전후 - 위치 · 크기 · 글자 크기 · 굵기는 그대로이고,
+    채우기 · 그림자 · 둥근 모서리는 없어지고, 누를 것 · 묶음 상자는 1px 회색 테두리,
+    꺼진 버튼은 점선, 그림 자리는 X 상자."""
+    url = "%s/%s" % (C.BASE_URL, os.path.relpath(os.path.join(UNIT_OUT, "wireframe.html"),
+                                                ROOT).replace(os.sep, "/"))
+    before, after, off, marks = asyncio.run(_look_before_and_after(url))
+    assert W.WIRE_CLASS not in off                      # 걷는 동안에는 꺼져 있다
+    for b, a in zip(before, after):
+        assert (a["box"], a["size"], a["weight"]) == (b["box"], b["size"], b["weight"]), a["sel"]
+    look = {a["sel"]: a for a in after}
+    gray, white = "rgb(51, 51, 51)", "rgb(255, 255, 255)"
+    for sel in ("#go-b", "[data-action='pick']", "[data-action='next']", ".card", ".plain"):
+        assert look[sel]["color"] == gray and look[sel]["shadow"] == "none", sel
+        assert look[sel]["radius"] == "0px", sel
+    # 원래 채워진 것은 흰 종이 (뒤를 가린다), 바탕 없던 것은 그대로 비어 있다
+    assert look["#go-b"]["bg"] == white and look[".card"]["bg"] == white
+    assert look[".plain"]["bg"] == "rgba(0, 0, 0, 0)"
+    assert look["#go-b"]["outline"] == "solid 1px"
+    assert look["[data-action='next']"]["outline"] == "dashed 1px"      # 꺼진 버튼
+    assert look[".card"]["box_mark"] and look[".card"]["outline"] == "solid 1px"
+    assert not look[".plain"]["box_mark"] and look[".plain"]["outline"].startswith("none")
+    assert not look["#phone"]["box_mark"]
+    assert look[".bar"]["outline"].startswith("none")       # 한 변 테두리는 상자가 아니다
+    assert look[".pic"]["pic"] and "linear-gradient" in look[".pic"]["bgi"]
+    assert "linear-gradient" in look["img"]["bgi"]
+    assert marks["pic"] == 1 and marks["box"] >= 1
+    # 원래 디자인은 달랐다 - 시험이 헛돌지 않는다
+    assert before[0]["bg"] != white and before[3]["shadow"] != "none"
+    assert before[3]["radius"] == "12px"
 
 
 # --------------------------------------------------------------------- #

@@ -185,8 +185,8 @@ def render_cover(data, ids):
     out = ['<section class="sheet cover" id="cover">',
            "<h1>화면설계서 · %s</h1>" % esc(task.get("label")),
            '<div class="sub">실행 <span class="mono">%s</span> · 최종 %s (시도 %s) · '
-           "검사를 통과한 HTML 에서 뽑았다. 색 · 모양은 디자이너의 몫이라 그림은 회색 "
-           "와이어프레임이다.</div>" % (esc(run.get("id")), esc(run.get("final_label")),
+           "검사를 통과한 HTML 에서 뽑았다. 색 · 모양은 디자이너의 몫이라 그림은 로우파이 "
+           "와이어프레임(회색 상자와 글자)이다.</div>" % (esc(run.get("id")), esc(run.get("final_label")),
                                      esc(run.get("final_attempt")))]
     out.append("<h2>과제</h2><p>%s</p>"
                % markdown_bold(esc(task.get("description"))).replace("\n", " "))
@@ -282,8 +282,8 @@ def render_cover(data, ids):
 
     out.append("<h2>칸마다 어디서 왔나</h2><table class=\"legend\">"
                "<tr><th>칸</th><th>출처</th><th>어떻게</th></tr>"
-               "<tr><td>그림</td><td>%s</td><td>최종 HTML 의 회색 덮개 사본을 흐름 명세대로 걸어 "
-               "찍었다</td></tr>"
+               "<tr><td>그림</td><td>%s</td><td>최종 HTML 의 로우파이 덮개 사본을 흐름 명세대로 "
+               "걸어 찍었다 (위치 · 크기 · 글자 크기 · 굵기는 그대로)</td></tr>"
                "<tr><td>요소 번호 · 글자 · 위치</td><td>%s</td><td>그 상태에서 보이는 "
                "data-action 요소를 모았다</td></tr>"
                "<tr><td>동작</td><td>%s</td><td>요소마다 새 페이지에서 그 상태까지 다시 걸은 뒤 "

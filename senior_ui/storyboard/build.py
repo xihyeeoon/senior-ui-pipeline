@@ -5,9 +5,9 @@ storyboard/ 에 남는 것:
   storyboard.json        설계서의 모든 내용 (그림 말고는 이것으로 다시 그린다 - render.py)
   index.html             설계서 (가로 A4 화면마다 한 장, 맨 앞장)
   storyboard.pdf         index.html 을 브라우저(Chromium)로 인쇄한 것
-  shots/<상태>.png       회색 와이어프레임 그림 (390px 폭, 2배 해상도)
+  shots/<상태>.png       로우파이 와이어프레임 그림 (390px 폭, 2배 해상도)
   shots/<상태>.marked.png 요소 번호를 얹은 그림 (모델에게 보낸 것, 1배)
-  wireframe.html         그림용 사본 - 최종 HTML 에 회색 덮개만 넣었다
+  wireframe.html         그림용 사본 - 최종 HTML 에 로우파이 덮개만 넣었다
   regions.prompt.txt · regions.response.txt (+ regions.retry.*)  영역 묶기 호출 기록
   storyboard.log         한 줄씩 무엇을 했는지
 

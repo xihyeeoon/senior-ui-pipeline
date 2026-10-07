@@ -12,8 +12,9 @@ recipe 를 처음부터 다시 걸어** 그 상태를 만든다. 걸음은 검�
 
 두 페이지가 다르다.
 
-  그림 페이지   회색 덮개 사본(storyboard/wireframe.html)을 연다. 모든 색을 회색조로,
-                사진 · 아이콘 자리는 X 표시 상자로 (WIRE_CSS). 스크롤되는 화면은
+  그림 페이지   로우파이 덮개 사본(storyboard/wireframe.html)을 연다. 그림을 찍기 직전에
+                덮개를 켠다 - 회색 상자와 글자만, 사진 · 아이콘 자리는 X 표시
+                상자로 (WIRE_CSS · __sbWire). 스크롤되는 화면은
                 #phone 을 내용 높이만큼 늘려 한 장으로 찍는다 (EXPAND).
   확인 페이지   실행 폴더의 최종 HTML 그대로를 연다. 요소마다 새 페이지에서 그 상태까지
                 다시 걸은 뒤 누르고, 무엇이 바뀌었는지 본다 (verify_one).
@@ -61,12 +62,30 @@ CHANGE_LINES = 1
 
 
 # --------------------------------------------------------------------------- #
-# 회색 덮개 - 그림용 사본에만 넣는다
+# 로우파이 덮개 - 그림용 사본에만 넣는다
 # --------------------------------------------------------------------------- #
-# 색 · 모양은 디자이너의 몫이라 설계서에는 넣지 않는다. 문서 전체를 회색조로 바꾸고
-# (뿌리 요소의 filter 는 고정 위치 요소의 기준을 바꾸지 않는다), 사진 · 아이콘 자리는
-# 내용을 감추고 X 표시 상자로 바꾼다. 배경 그림(background-image: url)을 쓴 요소는
-# __sbWire() 가 찾아 data-sb-pic 을 붙인다 - data-action 이 아니므로 요소 순번은 그대로다.
+# 실무 와이어프레임 관례를 따른다: 회색 상자와 글자만. 색 · 모양은 디자이너의 몫이라
+# 배경 · 채우기 · 그림자 · 그라데이션 · 둥근 모서리를 없애고 글자는 진회색 하나로 한다.
+# 누를 수 있는 요소(data-action)와 입력 칸, 원래 디자인에서 상자로 보이던 묶음(카드 ·
+# 띠 · 패널)은 1px 회색 테두리 상자로, 꺼진 버튼은 점선 테두리로 그린다. 사진 · 아이콘 ·
+# 로고 자리는 X 가 그어진 회색 상자다.
+#
+# 위치 · 크기 · 글자 크기 · 굵기는 그대로 둔다 - 위계와 크기는 설계 결정이므로 남긴다.
+# 그래서 이 덮개는 배치를 바꾸는 속성(크기 · 여백 · 테두리 두께 · 글꼴)을 하나도 쓰지
+# 않는다. 테두리는 두께를 둔 채 색만 지우고, 상자는 outline 으로 그린다 (outline 은
+# 배치에 들지 않는다).
+#
+# 덮개의 스타일은 모두 `html.sb-wire` 아래에 있다. 걷는 동안에는 꺼져 있고, 그림을
+# 찍기 직전에 __sbWire() 가 원래 스타일을 읽어 표시(data-sb-*)를 붙인 뒤 그 클래스를
+# 켠다 - 무엇이 상자였는지는 지우기 전의 배경 · 그림자 · 테두리로만 알 수 있다.
+# 표시는 data-action 이 아니므로 요소 순번은 그대로다.
+#
+#   data-sb-pic   배경 그림(url) · 가면 그림(mask url)을 쓴 요소 → X 상자
+#   data-sb-fill  solid = 불투명 바탕 → 흰 종이 (뒤에 깔린 것을 가린다)
+#                 veil  = 화면을 덮는 반투명 막(모달 뒤) → 옅은 흰 막
+#   data-sb-box   원래 디자인에서 상자로 보이던 묶음 → 1px 회색 테두리
+WIRE_CLASS = "sb-wire"
+_W = "html.%s " % WIRE_CLASS
 X_BOX = ("background-color:#eeeeee!important;"
          "background-image:"
          "linear-gradient(to top right,transparent calc(50% - 1px),#999 calc(50% - 1px),"
@@ -74,25 +93,106 @@ X_BOX = ("background-color:#eeeeee!important;"
          "linear-gradient(to bottom right,transparent calc(50% - 1px),#999 calc(50% - 1px),"
          "#999 calc(50% + 1px),transparent calc(50% + 1px))!important;"
          "background-size:100% 100%!important;background-repeat:no-repeat!important;"
+         "-webkit-mask:none!important;mask:none!important;"
          "outline:1px solid #999!important;outline-offset:-1px!important")
 PICTURE_SELECTOR = ('img,video,picture,canvas,iframe,object,embed,svg,[role="img"],'
                     '[data-sb-pic]')
-WIRE_CSS = ("html{filter:grayscale(1)!important}"
-            + PICTURE_SELECTOR + "{" + X_BOX + "}"
-            "img,video{object-position:-99999px -99999px!important}"
-            "svg *{visibility:hidden!important}"
-            '[role="img"]{color:transparent!important}')
+INK = "#333"
+LINE = "1px solid #999"
+PRESSABLE = "[data-action],input,textarea,select"
+DISABLED = ("[data-action]:disabled,[data-action][aria-disabled=\"true\"],"
+            "fieldset:disabled [data-action]")
+WIRE_CSS = (
+    "html.%s{filter:grayscale(1)!important;background:#fff!important}" % WIRE_CLASS
+    + _W + "body{background:#fff!important}"
+    + _W + "*," + _W + "*::before," + _W + "*::after{"
+    "background-color:transparent!important;background-image:none!important;"
+    "box-shadow:none!important;text-shadow:none!important;border-radius:0!important;"
+    "border-color:transparent!important;border-image:none!important;"
+    "outline:none!important;filter:none!important;backdrop-filter:none!important;"
+    "-webkit-backdrop-filter:none!important;mix-blend-mode:normal!important;"
+    "color:%s!important;-webkit-text-fill-color:%s!important;" % (INK, INK)
+    + "text-decoration-color:%s!important;transition:none!important}" % INK
+    + _W + "::placeholder{color:%s!important;-webkit-text-fill-color:%s!important;" % (INK, INK)
+    + "opacity:1!important}"
+    + _W + "[data-sb-fill=solid]{background-color:#fff!important}"
+    + _W + "[data-sb-fill=veil]{background-color:rgba(255,255,255,.8)!important}"
+    + ",".join(_W + s for s in (PRESSABLE + ",[data-sb-box]").split(","))
+    + "{outline:%s!important;outline-offset:-1px!important}" % LINE
+    + ",".join(_W + s for s in DISABLED.split(","))
+    + "{outline-style:dashed!important}"
+    + ",".join(_W + s for s in PICTURE_SELECTOR.split(",")) + "{" + X_BOX + "}"
+    + _W + "img," + _W + "video{object-position:-99999px -99999px!important}"
+    + _W + "svg *{visibility:hidden!important}"
+    + _W + '[role="img"]{color:transparent!important;'
+    "-webkit-text-fill-color:transparent!important}")
 WIRE_JS = r"""window.__sbWire = function () {
-  var n = 0;
-  document.querySelectorAll('body *').forEach(function (el) {
-    if (el.hasAttribute('data-sb-pic')) return;
-    var bg = getComputedStyle(el).backgroundImage || '';
-    if (bg.indexOf('url(') >= 0) { el.setAttribute('data-sb-pic', ''); n++; }
+  var root = document.documentElement;
+  root.classList.remove('%(cls)s');
+  ['data-sb-pic', 'data-sb-fill', 'data-sb-box'].forEach(function (a) {
+    document.querySelectorAll('[' + a + ']').forEach(function (e) { e.removeAttribute(a); });
   });
+  var phone = document.getElementById('phone');
+  var pr = phone ? phone.getBoundingClientRect()
+                 : {width: innerWidth, height: innerHeight};
+  var outer = [root, document.body];
+  for (var p = phone; p; p = p.parentElement) outer.push(p);
+  var rgba = function (c) {
+    var m = /rgba?\(([^)]*)\)/.exec(c || '');
+    if (!m) return null;
+    var v = m[1].split(/[\s,\/]+/).filter(Boolean).map(parseFloat);
+    return {rgb: v.slice(0, 3).join(','), a: v.length > 3 ? v[3] : 1};
+  };
+  // 원래 스타일로 본 바탕: solid (불투명) · tint (반투명) · grad (그라데이션) · null
+  var paint = new Map();
+  var paintOf = function (el) {
+    if (paint.has(el)) return paint.get(el);
+    var cs = getComputedStyle(el), c = rgba(cs.backgroundColor);
+    var out = null;
+    if ((cs.backgroundImage || '').indexOf('gradient(') >= 0) out = {kind: 'grad', rgb: 'grad'};
+    else if (c && c.a >= 0.9) out = {kind: 'solid', rgb: c.rgb};
+    else if (c && c.a > 0) out = {kind: 'tint', rgb: c.rgb};
+    paint.set(el, out);
+    return out;
+  };
+  var under = function (el) {          // 그 요소 뒤에 보이는 바탕 (가장 가까운 불투명 조상)
+    for (var q = el.parentElement; q; q = q.parentElement) {
+      var b = paintOf(q);
+      if (b && b.kind !== 'tint') return b.rgb;
+    }
+    return '255,255,255';
+  };
+  var lined = function (cs) {          // 네 변이 모두 보이는 테두리
+    return ['Top', 'Right', 'Bottom', 'Left'].every(function (s) {
+      var c = rgba(cs['border' + s + 'Color']);
+      return parseFloat(cs['border' + s + 'Width']) > 0 && c && c.a > 0
+        && ['none', 'hidden'].indexOf(cs['border' + s + 'Style']) < 0;
+    });
+  };
+  var skip = 'input,textarea,select,.screen,%(pics)s';
+  var n = {pic: 0, fill: 0, veil: 0, box: 0};
+  document.querySelectorAll('body *').forEach(function (el) {
+    var cs = getComputedStyle(el);
+    var bgi = cs.backgroundImage || '', mask = cs.webkitMaskImage || cs.maskImage || '';
+    if (bgi.indexOf('url(') >= 0 || mask.indexOf('url(') >= 0) {
+      el.setAttribute('data-sb-pic', ''); n.pic++; return;
+    }
+    var r = el.getBoundingClientRect();
+    var big = r.width >= pr.width - 2 && r.height >= pr.height * 0.5;
+    var b = paintOf(el);
+    if (b && b.kind === 'tint' && big) { el.setAttribute('data-sb-fill', 'veil'); n.veil++; }
+    else if (b && b.kind !== 'tint') { el.setAttribute('data-sb-fill', 'solid'); n.fill++; }
+    if (outer.indexOf(el) >= 0 || el.hasAttribute('data-action') || el.matches(skip)) return;
+    if (r.width < 4 || r.height < 4 || big) return;
+    var boxed = (cs.boxShadow && cs.boxShadow !== 'none') || lined(cs)
+      || (b && b.kind === 'tint')
+      || (b && (b.kind === 'grad' || b.rgb !== under(el)));
+    if (boxed) { el.setAttribute('data-sb-box', ''); n.box++; }
+  });
+  root.classList.add('%(cls)s');
   return n;
-};
-document.addEventListener('DOMContentLoaded', function () { window.__sbWire(); });"""
-WIRE_MARK = "<!-- storyboard: 회색 덮개 (그림용 사본) -->"
+};""" % {"cls": WIRE_CLASS, "pics": PICTURE_SELECTOR.replace("'", "\\'")}
+WIRE_MARK = "<!-- storyboard: 로우파이 덮개 (그림용 사본) -->"
 
 
 def wire_copy(html):
@@ -461,7 +561,7 @@ async def new_page(browser, scale=1):
 # --------------------------------------------------------------------------- #
 async def picture_state(browser, wire_url, flow, state, shots_dir, file_id, number,
                         selectors=()):
-    """회색 덮개 사본에서 그 상태까지 걷고 #phone 을 늘려 찍는다.
+    """로우파이 덮개 사본에서 그 상태까지 걷고, 덮개를 켜고, #phone 을 늘려 찍는다.
 
     `number(items) -> [(no, box)]` 는 모은 요소에 번호를 매기는 함수다 (build.number_items).
     번호를 안 뒤에 같은 페이지에서 번호 그림(모델에게 보낼 것)을 찍는다.
