@@ -154,7 +154,9 @@ from test_restructure_bugs import (GOOD_DIAGNOSIS, GOOD_PLAN, GOOD_REPLY,  # noq
 
 loop = _api.loop_module
 
-SNAPSHOT = {"screens": {}, "reached": [], "dialogs": [], "js_errors": [],
+# 가짜 원본 걷기의 결과 - 읽힌 화면이 하나 있어야 루프가 시작한다 (drive.nothing_read)
+SNAPSHOT = {"screens": {"home": {"landed_on": "home", "dom_screen": "home", "choices": {}}},
+            "reached": ["home"], "dialogs": [], "js_errors": [],
             "js_error_details": [], "missing_ids": [], "state_pairs": [],
             "undefined_classes": [], "notes": [], "load_failed": None}
 

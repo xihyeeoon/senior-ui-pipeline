@@ -55,7 +55,11 @@ def make_run(out_root, **kw):
     return r
 
 
-FAKE_SNAPSHOT = {"screens": {}, "reached": [], "dialogs": [], "js_errors": [],
+# 가짜 원본 걷기의 결과. 화면 하나는 읽힌 것이어야 한다 - 화면을 하나도 읽지 못한
+# 원본으로는 루프가 시작하지 않는다 (drive.nothing_read, test_no_original).
+FAKE_SNAPSHOT = {"screens": {"home": {"landed_on": "home", "dom_screen": "home",
+                                      "choices": {}}},
+                 "reached": ["home"], "dialogs": [], "js_errors": [],
                  "js_error_details": [], "missing_ids": [], "state_pairs": [],
                  "undefined_classes": [], "notes": [], "load_failed": None}
 

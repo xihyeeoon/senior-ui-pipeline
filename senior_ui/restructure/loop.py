@@ -33,7 +33,7 @@ from playwright.async_api import Error as PlaywrightError
 
 from senior_ui import audit as A
 from senior_ui import config
-from senior_ui.audit.drive import SHOT_SAFE
+from senior_ui.audit.drive import SHOT_SAFE, nothing_read
 from senior_ui.audit.flow import required_errors
 from senior_ui.audit.inputs import load_allowed_removals, model_claims
 from senior_ui.config import AUTO_PORT, OUTPUTS_ENV, ROOT, inside_root, outputs_dir, url_for
@@ -1820,6 +1820,17 @@ def run(args):
                                        want_shots=shots, see=r.see))
         except (PlaywrightError, OSError, ValueError) as e:
             why = "원본을 걷지 못했다: %s: %s" % (type(e).__name__, one_line(str(e)))
+            log("cannot start: %s" % why)
+            print("cannot start: %s" % why, file=sys.stderr)
+            r.summary["stopped_reason"] = "cannot_start"
+            r.summary["error"] = why
+            return exit_code(r.summary)
+        # 걸었지만 원본에서 화면을 하나도 읽지 못했다 - 비교 기준이 없다. 시도마다의
+        # 판정(run_audit)은 이 스냅샷을 쓰므로, 여기서 멈추지 않으면 원본 없이 판정해
+        # 원본과 견주는 검사가 빈 결과를 낸다 (drive.nothing_read).
+        unread = nothing_read(snap)
+        if unread:
+            why = "원본을 읽지 못했다 (%s): %s" % (r.original_url, unread)
             log("cannot start: %s" % why)
             print("cannot start: %s" % why, file=sys.stderr)
             r.summary["stopped_reason"] = "cannot_start"

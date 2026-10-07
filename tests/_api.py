@@ -55,6 +55,7 @@ _audit_drive = importlib.import_module("senior_ui.audit.drive")
 capture_see = _audit_drive.capture_see
 see_parts = _audit_drive.see_parts
 walk_reveal = _audit_drive.walk_reveal
+drive_module = _audit_drive
 
 # ---- senior_ui/audit/stage.py ------------------------------------------ #
 apply_stage = _audit_stage.apply_stage

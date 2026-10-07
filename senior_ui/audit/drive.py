@@ -351,6 +351,24 @@ async def drive(url, flow, want_shots=None, errors=True, see=False, original_gro
     return data
 
 
+def nothing_read(snapshot):
+    """그 걷기에서 화면을 하나도 읽지 못했으면 이유, 읽었으면 None.
+
+    원본을 걸은 뒤에 본다. 원본 없이 판정하면 원본과 견주는 검사가 할 말이 없어져
+    생성물이 통과한다 - 검사기 CLI 가 아무도 듣지 않는 원본 URL 을 열고도 입구를 다
+    지운 빌드에 "통과" 를 냈다 (11-9). 페이지를 열지 못했거나(load_failed), 열었어도
+    화면 기록(__screen)도 켜진 화면(.screen.on)도 읽힌 걸음이 하나도 없으면(서버의
+    404 같은 페이지) 읽지 못한 것이다."""
+    if snapshot.get("load_failed"):
+        return "페이지를 열지 못했다 - %s" % snapshot["load_failed"]
+    read = [v for v, row in (snapshot.get("screens") or {}).items()
+            if "error" not in row and (row.get("landed_on") or row.get("dom_screen"))]
+    if not read:
+        return ("화면을 하나도 읽지 못했다 (window.__screen() 도 .screen.on 도 없다 - "
+                "다른 문서이거나 서버가 그 파일을 주지 않았다)")
+    return None
+
+
 async def walk(page, flow, data, want_shots, url, see=False, original_groups=()):
     """한 페이지를 흐름대로 걷는다. 브라우저의 생명은 drive() 가 쥐고 있다."""
     seen = []

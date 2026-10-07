@@ -172,7 +172,8 @@ API 없이: `--mock pass --mock-refine improve` (1회차에 다듬은 빌드가 
 ```
 
 루프가 만든 빌드(모델 흐름 - `flows/` 밖의 흐름 파일)를 다시 검사할 때는 그 실행의
-과제를 `--task` 로 꼭 준다. 없으면 판정하지 않고 종료 2 다. 판정 기준(정답 · 완료
+과제를 `--task` 로 꼭 준다. 없으면 판정하지 않고 종료 2 다. 원본(`--original`, 주지
+않으면 `:3003` 의 과제 원본)을 읽지 못해도 판정하지 않고 종료 2 다. 판정 기준(정답 · 완료
 화면 값 · 오류 경로)은 흐름이 아니라 과제에서 오고, 루프와 같은 판정 입력
 (`senior_ui/audit/inputs.py` 의 `judged_flow`)을 거친다.
 
@@ -611,6 +612,10 @@ the same 8-screen task and diffs them. It prints machine-readable JSON and exits
 Exit 1 means it audited the build and the build failed. Exit 2 means the audit
 itself could not run - inputs or flow unreadable, no browser, anything that
 stops the drive - and the JSON then carries that reason as its single fatal.
+원본을 열지 못했거나 원본에서 화면을 하나도 읽지 못했을 때도 2 다 (11-9b,
+`drive.nothing_read`) — 원본 없이 판정하면 원본과 견주는 검사가 빈 결과를 내 생성물이
+"통과" 한다. `--original` 을 주지 않으면 원본은 `:3003` 에서 연다 (사람이 띄우는 서버).
+재구성 루프는 같은 경우 실행 시작에서 멈춘다 (`cannot_start`, 종료 2).
 The caller has to tell those two apart: a build that failed gets regenerated, an
 auditor that could not run does not.
 
