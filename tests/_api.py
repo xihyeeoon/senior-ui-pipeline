@@ -48,6 +48,7 @@ from senior_ui.storyboard import walk as _sb_walk            # noqa: E402
 from senior_ui.storyboard import regions as _sb_regions      # noqa: E402
 from senior_ui.storyboard import render as _sb_render        # noqa: E402
 from senior_ui.storyboard import run as _sb_run              # noqa: E402
+from senior_ui.storyboard import features as _sb_features    # noqa: E402
 from senior_ui.storyboard import __main__ as _sb_cli         # noqa: E402
 # ======================================================================= #
 
@@ -211,5 +212,6 @@ storyboard_walk = _sb_walk
 storyboard_regions = _sb_regions
 storyboard_render = _sb_render
 storyboard_run = _sb_run
+storyboard_features = _sb_features
 storyboard_main = _sb_cli.main
 storyboard_cli_parser = _sb_cli.build_parser

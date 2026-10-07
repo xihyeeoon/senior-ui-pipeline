@@ -579,15 +579,136 @@ def test_the_wireflow_fits_one_page_or_splits_by_band(n, reveals, pages):
     assert html.count('<a class="node') == n + len(reveals) + 1
 
 
-def test_the_wireflow_comes_right_after_the_cover():
+def test_the_wireflow_then_the_feature_table_come_right_after_the_cover():
     data = json.load(io.open(os.path.join(C.HERE, "baseline", "storyboard",
                                           "refine_102041.json"), encoding="utf-8"))
     data["generated"] = {"at": "-", "seconds": {}}        # 기준값은 이 칸을 자리만 남긴다
     for sh in data["sheets"]:
         sh.setdefault("name", sh["id"])
         sh.setdefault("path", [sh["id"]])
+    data["features"] = {"columns": [], "rows": [], "missing": []}
     page = RD.render(data)
-    assert page.index('id="cover"') < page.index('id="wireflow"') < page.index('id="scr-home"')
+    assert page.index('id="cover"') < page.index('id="wireflow"') < page.index('id="features"')         < page.index('id="scr-home"')
+
+
+F = _api.storyboard_features
+
+
+def gitem(no, action, values, result=None):
+    return {"no": no, "kind": "group", "action": action, "text": values[0], "aria": None,
+            "value": values[0], "tag": "button", "box": [0, 0, 10, 10], "disabled": False,
+            "entrance": False, "group": {"count": len(values), "values": sorted(values)},
+            "result": result or {"kind": "none"}}
+
+
+def feature_sheets():
+    """기능-화면 표 시험용 장들: 홈(입구 둘) · 은행(무리) · 금액(숫자판 · 입력 칸) ·
+    금액 다시 지남 · 금액 오류 · 홈 펼침(무리가 펼쳐야 보임)."""
+    home = rsheet("scr-home", items=[ritem("e1", "메시지", {"kind": "none"},
+                                           action="oos-message", entrance=True)],
+                  from_original=["home"])
+    bank = rsheet("scr-bank", items=[gitem("e1", "pick-bank", ["국민", "신한", "우리"])],
+                  from_original=["bank"])
+    amount = rsheet("scr-amount", items=[gitem("e1", "num", [str(i) for i in range(10)]),
+                                         ritem("e2", "메모", {"kind": "none"}, action="memo",
+                                               tag="input")],
+                    from_original=["amount"])
+    again = rsheet("scr-amount--visit-2", main=False, of="scr-amount",
+                   items=[gitem("e1", "num", [str(i) for i in range(10)])])
+    err = rsheet("scr-amount--error-x", kind="error", main=False, of="scr-amount",
+                 items=[ritem("e1", "다시", {"kind": "screen", "to": "amount"},
+                              action="retry")])
+    rev = rsheet("scr-home--reveal-quick", kind="reveal", main=False, of="scr-home",
+                 items=[gitem("e1", "quick", ["10000", "50000"])])
+    return [home, rev, bank, amount, again, err]
+
+
+def feature_flow():
+    return {"steps": [
+        {"step": 1, "sheet": "scr-home", "how": []},
+        {"step": 2, "sheet": "scr-bank", "how": [click("e7", "이체")]},
+        {"step": 3, "sheet": "scr-amount", "how": [click("e1", "신한")]},
+        {"step": 4, "sheet": "scr-amount--visit-2", "how": [click("e5", "다음")]}],
+        "errors": [{"id": "x", "about": "틀린 금액", "sheet": "scr-amount--error-x",
+                    "from_sheet": "scr-amount", "recover": [click("e1", "다시")],
+                    "back_to_sheet": "scr-amount"}],
+        "reveals": []}
+
+
+def feature_table():
+    survey = {"steps": [
+        {"visit": "home", "lit": "home", "actions": {"home": {"oos-message": 1, "go": 1}}},
+        {"visit": "bank", "lit": "bank", "actions": {"bank": {"pick-bank": 67},
+                                                     "home": {"oos-message": 1}}},
+        {"visit": "amount", "lit": "amount", "actions": {"amount": {"num": 11, "quick": 4}}}]}
+    where = F.where_in_original(survey)
+    return F.matrix(feature_sheets(), feature_flow(), ["num", "pick-bank", "quick", "wallet-pick"],
+                    {"num": 11, "pick-bank": 67, "quick": 4, "wallet-pick": 3},
+                    [{"id": "T1", "screen": "home", "action": "oos-message", "label": "메시지"},
+                     {"id": "T2", "screen": "home", "action": "oos-wallet", "label": "지갑"}],
+                    [{"id": "x", "expect_screen": "err-amount", "back_to": "amount"}], where)
+
+
+def test_where_in_the_original_lists_screens_in_walk_order():
+    where = F.where_in_original({"steps": [
+        {"actions": {"home": {"a": 1}, "menu": {"b": 2}}},
+        {"actions": {"bank": {"a": 3}, "home": {"a": 1}}}]})
+    assert where == {"a": ["home", "bank"], "b": ["menu"]}
+
+
+def test_the_feature_table_marks_where_each_feature_is():
+    """● 바로 보임 (본 장 · 다시 지남 · 오류 장) / ○ 펼쳐야 보임 (펼친 뒤 장에만). 칸은
+    본 장의 화면 ID. 표시는 장마다 보인 요소와 흐름 명세에서만."""
+    t = feature_table()
+    assert t["columns"] == ["scr-home", "scr-bank", "scr-amount"]
+    rows = {(r["section"], r["key"]): r for r in t["rows"]}
+    marks = lambda r: {c: v["mark"] for c, v in r["cells"].items()}
+    # 과제 단계 - 걸음의 장 (다시 지나는 장은 그 화면의 칸), 원본은 계획의 from
+    assert [marks(rows["steps", "step-%d" % i]) for i in (1, 2, 3, 4)] == [
+        {"scr-home": "●"}, {"scr-bank": "●"}, {"scr-amount": "●"}, {"scr-amount": "●"}]
+    assert rows["steps", "step-2"]["original"] == ["bank"]
+    assert rows["steps", "step-2"]["original_from"] == "plan"
+    # 선택지 무리 - 바로 보이면 ●, 펼친 뒤에만 보이면 ○, 원본은 원본을 걸어 본 화면
+    bank = rows["choices", "pick-bank"]
+    assert marks(bank) == {"scr-bank": "●"} and bank["cells"]["scr-bank"]["count"] == 3
+    assert bank["count_original"] == 67 and bank["original"] == ["bank"]
+    assert bank["original_from"] == "survey"
+    assert marks(rows["choices", "quick"]) == {"scr-home": "○"}
+    assert rows["choices", "quick"]["original"] == ["amount"]
+    # 입력 수단 - 값이 모두 숫자인 무리는 숫자판, data-action 이 붙은 input 은 입력 칸
+    num = rows["inputs", "num"]
+    assert num["kind"] == "keypad" and num["keys"] == 10 and marks(num) == {"scr-amount": "●"}
+    assert num["cells"]["scr-amount"]["sheets"] == ["scr-amount", "scr-amount--visit-2"]
+    assert rows["inputs", "memo"]["kind"] == "field"
+    # 오류 회복 - 오류 장의 화면, 원본은 과제의 원본 흐름
+    x = rows["errors", "x"]
+    assert marks(x) == {"scr-amount": "●"}
+    assert (x["original"], x["original_back_to"]) == (["err-amount"], "amount")
+    # 과제 밖 입구 - 이름은 과제 파일의 label (원본 aria-label), 원본은 과제 파일의 화면
+    t1 = rows["entrances", "T1"]
+    assert (t1["label"], marks(t1), t1["original"]) == ("메시지", {"scr-home": "●"}, ["home"])
+    # 어느 장에서도 보지 못한 기능은 표시가 없고 missing 에 남는다
+    assert rows["entrances", "T2"]["cells"] == {} and rows["choices", "wallet-pick"]["cells"] == {}
+    assert t["missing"] == ["choices:wallet-pick", "entrances:T2"]
+    assert [r["section"] for r in t["rows"]] == sorted(
+        (r["section"] for r in t["rows"]), key=F.SECTIONS.index)
+
+
+def test_the_feature_table_page():
+    data = {"sheets": feature_sheets(), "features": feature_table()}
+    for sh in data["sheets"]:
+        sh["name"] = sh["id"]
+    page = RD.render_features(data, {s["id"] for s in data["sheets"]})
+    assert page.startswith('<section class="sheet cover" id="features">')
+    assert '"기능은 줄이지 않는다" 의 확인표' in page
+    head = page.split("</thead>")[0]
+    assert [c for c in re.findall(r'href="#([^"]+)"', head)] == ["scr-home", "scr-bank",
+                                                                "scr-amount"]
+    for sec in ("과제 단계", "선택지 무리", "입력 수단", "오류 회복", "과제 밖 입구"):
+        assert sec in page
+    assert ">●<small>3</small><" in page and ">○<small>2</small><" in page
+    assert page.count('<tr class="miss">') == 2 and "표시가 없는 줄 2" in page
+    assert "숫자판" in page and "입력 칸" in page and "err-amount → amount" in page
 
 
 def test_result_text_links_to_the_sheet():
@@ -826,6 +947,32 @@ def test_unit_error_and_reveal_states(unit):
 @pytest.mark.browser
 def test_unit_the_original_file_is_untouched(unit):
     assert unit["same_file"]
+
+
+async def _survey(url, flow):
+    from playwright.async_api import async_playwright
+    async with async_playwright() as pw:
+        browser = await pw.chromium.launch()
+        try:
+            return await W.survey(browser, url, flow)
+        finally:
+            await browser.close()
+
+
+@pytest.mark.browser
+def test_unit_the_original_is_walked_once_for_the_feature_table(server):
+    """원본 걷기 (기능-화면 표의 원본 화면 칸) - 걸음마다 그려진 data-action 을 그 요소의
+    화면(가장 가까운 [data-screen])으로 센다. 꺼진 화면의 것은 세지 않는다."""
+    flow = json.load(io.open(os.path.join(FIX, "actions.flow.json"), encoding="utf-8"))
+    url = "%s/%s" % (C.BASE_URL, os.path.relpath(os.path.join(FIX, "actions.html"), ROOT)
+                     .replace(os.sep, "/"))
+    got = asyncio.run(_survey(url, flow))
+    assert got["error"] is None
+    assert [(s["visit"], s["lit"]) for s in got["steps"]] == [("a", "a"), ("b", "b")]
+    first, second = got["steps"][0]["actions"], got["steps"][1]["actions"]
+    assert list(first) == ["a"] and first["a"]["pick"] == 4 and "under" in first["a"]
+    assert list(second) == ["b"] and second["b"] == {"back-a": 1, "err": 1}
+    assert F.where_in_original(got)["pick"] == ["a"]
 
 
 LOOK = r"""(sels) => sels.map(sel => {

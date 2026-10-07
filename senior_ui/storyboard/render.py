@@ -3,7 +3,9 @@ r"""storyboard.json 하나로 설계서(index.html)를 그린다. 그림 말고�
 한 장 = 가로 A4. 맨 앞장(과제 · 화면 순서 · 변경 목록 · 진단 요약 · 실행 정보), 와이어플로
 (모든 장을 작은 그림으로 늘어놓고 정답 경로를 번호 붙은 화살표로, 오류 경로를 점선 갈래와
 되돌아가는 화살표로, 펼치기를 점선으로 잇는다 - 넘치면 띠마다 장을 나눈다. 화살표는 흐름
-명세의 걸음 · 오류 경로 · 펼치기에서만 만든다) 다음에 화면마다 한 장 - 맨 위에 정보칸 한 줄(화면 ID · 화면 이름 · 경로 · 바탕이 된 원본 화면 ·
+명세의 걸음 · 오류 경로 · 펼치기에서만 만든다), 기능-화면 표(줄은 기능 - 과제 단계 ·
+선택지 무리 · 입력 수단 · 오류 회복 · 과제 밖 입구, 칸은 화면. "기능은 줄이지 않는다" 의
+확인표 - features.py) 다음에 화면마다 한 장 - 맨 위에 정보칸 한 줄(화면 ID · 화면 이름 · 경로 · 바탕이 된 원본 화면 ·
 조건), 왼쪽은 와이어프레임 그림 위에 영역 테두리와 번호(굵게)와 요소 번호(가늘게),
 오른쪽은 화면 목적 · 영역 표 · 조건별 화면 링크. 조건별 화면은 그 화면 뒤에 같은 모양으로
 오고, 장 제목에 [오류] · [펼침] · [다시 지남] 꼬리표가
@@ -24,6 +26,8 @@ import asyncio
 import html as _html
 import math
 import re
+
+from .features import DIRECT, ORIGINAL_FROM, REVEALED, SECTION_LABEL, SECTIONS
 
 # 가로 A4 (297 x 210mm) - 여백 8mm. CSS 픽셀(1/96 인치)로 쓴 그림 칸.
 # 그림 칸의 높이는 장 맨 위의 정보칸 만큼 줄였다.
@@ -257,6 +261,19 @@ th { background: var(--soft); font-weight: 600; white-space: nowrap; }
 .node.error .thumb { outline-color: var(--err); }
 .edge-label { position: absolute; font: 7.5px/9px sans-serif; color: #333; overflow: hidden;
   background: rgba(255,255,255,.88); }
+/* 기능-화면 표 */
+.fm { table-layout: fixed; }
+.fm th, .fm td { padding: 2px 4px; font-size: 9.5px; }
+.fm th.f { width: 300px; } .fm th.o { width: 120px; }
+.fm th.v { height: 92px; vertical-align: bottom; text-align: center; padding: 3px 0; }
+.fm th.v div { writing-mode: vertical-rl; transform: rotate(180deg); margin: 0 auto;
+  font: 600 9px Consolas, monospace; white-space: nowrap; }
+.fm th.v a { color: inherit; }
+.fm td.m { text-align: center; font-size: 11px; }
+.fm td.m small { font-size: 7.5px; color: var(--muted); }
+.fm tr.sec td { background: var(--soft); font-weight: 700; }
+.fm tr.sec td .how { font-weight: 400; }
+.fm tr.miss td.f { color: #a61e4d; }
 .edge-label.c { text-align: center; }
 .edge-label.b { display: flex; flex-direction: column; justify-content: flex-end; }
 .edge-label.r { text-align: right; }
@@ -330,7 +347,8 @@ def render_cover(data, ids):
            "<h1>화면설계서 · %s</h1>" % esc(task.get("label")),
            '<div class="sub">실행 <span class="mono">%s</span> · 최종 %s (시도 %s) · '
            "검사를 통과한 HTML 에서 뽑았다. 색 · 모양은 디자이너의 몫이라 그림은 로우파이 "
-           "와이어프레임(회색 상자와 글자)이다. 다음 장이 와이어플로다.</div>" % (esc(run.get("id")), esc(run.get("final_label")),
+           "와이어프레임(회색 상자와 글자)이다. 다음 장이 와이어플로, 그다음이 기능-화면 "
+           "표다.</div>" % (esc(run.get("id")), esc(run.get("final_label")),
                                      esc(run.get("final_attempt")))]
     out.append("<h2>과제</h2><p>%s</p>"
                % markdown_bold(esc(task.get("description"))).replace("\n", " "))
@@ -738,6 +756,86 @@ def render_wireflow(data):
 
 
 # --------------------------------------------------------------------------- #
+# 기능-화면 표
+# --------------------------------------------------------------------------- #
+def _feature_label(row, by_id):
+    sec = row["section"]
+    if sec == "steps":
+        sh = by_id.get(row.get("sheet")) or {}
+        how = short_how(row.get("how"))
+        return "%d. %s%s" % (row["step"], esc(sh.get("name") or row.get("sheet")),
+                             ' <span class="how">← %s</span>' % esc(how) if how else "")
+    if sec == "choices":
+        return '<span class="mono">%s</span> · 원본 %s개' % (
+            esc(row["action"]), esc(row.get("count_original") or "?"))
+    if sec == "inputs" and row.get("kind") == "keypad":
+        return '숫자판 <span class="mono">%s</span> · 키 %d개 (원본 %s개)' % (
+            esc(row["action"]), row.get("keys") or 0, esc(row.get("count_original") or "?"))
+    if sec == "inputs":
+        return '입력 칸 <span class="mono">%s</span>%s' % (
+            esc(row["action"]), " '%s'" % esc(row.get("text") or row.get("aria"))
+            if row.get("text") or row.get("aria") else "")
+    if sec == "errors":
+        rec = short_how(row.get("recover"))
+        return ('<span class="mono">%s</span> %s%s' % (
+            esc(row["id"]), esc(_clip(row.get("about") or "", 30)),
+            ' <span class="how">— 회복 %s → [%s]</span>' % (esc(rec), esc(row.get("back_to_sheet")))
+            if rec else ""))
+    return '%s <span class="mono">%s</span>' % (esc(row.get("label") or "-"), esc(row["action"]))
+
+
+def render_features(data, ids):
+    table = data.get("features") or {}
+    by_id = {s["id"]: s for s in data["sheets"]}
+    cols = table.get("columns") or []
+    rows = table.get("rows") or []
+    missing = table.get("missing") or []
+    out = ['<section class="sheet cover" id="features">', "<h1>기능-화면 표</h1>",
+           '<p class="lead">이 표는 "기능은 줄이지 않는다" 의 확인표다 — 줄마다 그 기능이 '
+           "어느 화면에 있는지 표시하고, 표시가 하나도 없는 줄은 설계서의 어느 장에서도 보지 "
+           "못한 기능이다.</p>",
+           '<div class="sub">%s 바로 보임 (본 장 · 다시 지나는 장 · 오류 장) · %s 펼쳐야 보임 '
+           "(펼친 뒤 장에만) · 작은 수는 그 화면에 보인 개수. 표시는 모두 %s - 장마다 보인 "
+           "data-action 요소와 흐름 명세의 걸음 · 오류 경로. 원본 화면 칸의 출처는 무리마다 "
+           "적었다.%s</div>" % (
+               DIRECT, REVEALED, _src("tool"),
+               ' <span class="warn">표시가 없는 줄 %d</span>' % len(missing) if missing else
+               " 표시가 없는 줄은 없다.")]
+    out.append('<table class="fm"><thead><tr><th class="f">기능</th><th class="o">원본 화면'
+               "</th>%s</tr></thead><tbody>" % "".join(
+                   '<th class="v"><div>%s</div></th>' % _link(c, ids) for c in cols))
+    for sec in SECTIONS:
+        group = [r for r in rows if r["section"] == sec]
+        if not group:
+            continue
+        srcs = sorted({ORIGINAL_FROM.get(r.get("original_from"), r.get("original_from"))
+                       for r in group})
+        out.append('<tr class="sec"><td colspan="%d">%s %d <span class="how">— 원본 화면: '
+                   "%s</span></td></tr>" % (2 + len(cols), SECTION_LABEL[sec], len(group),
+                                            esc(" · ".join(srcs))))
+        for r in group:
+            miss = not r["cells"]
+            orig = ", ".join(r.get("original") or []) or "-"
+            if r["section"] == "errors" and r.get("original_back_to"):
+                orig += " → %s" % r["original_back_to"]
+            cells = []
+            for c in cols:
+                cell = r["cells"].get(c)
+                if not cell:
+                    cells.append('<td class="m"></td>')
+                    continue
+                count = cell.get("count")
+                cells.append('<td class="m" title="%s">%s%s</td>' % (
+                    esc(", ".join(cell.get("sheets") or [])), cell["mark"],
+                    "<small>%d</small>" % count if count and count > 1 else ""))
+            out.append('<tr class="%s"><td class="f">%s%s</td><td>%s</td>%s</tr>' % (
+                "miss" if miss else "", _feature_label(r, by_id),
+                " · 장에서 보지 못함" if miss else "", esc(orig), "".join(cells)))
+    out.append("</tbody></table></section>")
+    return "\n".join(out)
+
+
+# --------------------------------------------------------------------------- #
 # 화면마다 한 장
 # --------------------------------------------------------------------------- #
 def render_picture(sh):
@@ -871,7 +969,7 @@ def render(data):
     ids = {s["id"] for s in data["sheets"]}
     by_id = {s["id"]: s for s in data["sheets"]}
     title = "화면설계서 · %s · %s" % (data["task"].get("label"), data["run"].get("id"))
-    body = ([render_cover(data, ids), render_wireflow(data)]
+    body = ([render_cover(data, ids), render_wireflow(data), render_features(data, ids)]
             + [render_sheet(s, ids, by_id) for s in data["sheets"]])
     return ("<!doctype html>\n<html lang=\"ko\">\n<head>\n<meta charset=\"utf-8\">\n"
             "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"

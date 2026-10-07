@@ -10,7 +10,7 @@ r"""설계서의 브라우저 쪽 - 상태마다 다시 걷고, 그림을 찍고
 recipe 를 처음부터 다시 걸어** 그 상태를 만든다. 걸음은 검사기와 같은 함수
 (audit.drive.run_actions · settle)로 밟는다 - 검사기가 통과시킨 그 걸음이다.
 
-두 페이지가 다르다.
+두 페이지가 다르다 (그리고 기능-화면 표를 위해 원본을 한 번 걷는다 - survey).
 
   그림 페이지   로우파이 덮개 사본(storyboard/wireframe.html)을 연다. 그림을 찍기 직전에
                 덮개를 켠다 - 회색 상자와 글자만, 사진 · 아이콘 자리는 X 표시
@@ -322,6 +322,35 @@ ELEMENTS = r"""() => {
           landed_on: (window.__screen && window.__screen()) || null};
 }"""
 
+# 원본을 걸으며 걸음마다 그려진 data-action 이름과 그 수 (기능-화면 표의 "원본 화면" 칸).
+# 그려졌다 = display · visibility · 조상의 opacity 로 숨지 않고 크기가 있다 - 스크롤에
+# 가려진 것도 센다. 어느 화면의 것인지는 가장 가까운 [data-screen] 조상, 없으면(화면
+# 밖에 뜬 모달 같은 것) 그때 켜진 화면이다.
+SURVEY = r"""() => {
+  const on = document.querySelector('.screen.on');
+  const lit = on ? (on.dataset.screen || null)
+                 : ((window.__screen && window.__screen()) || null);
+  const hidden = el => {
+    for (let p = el; p; p = p.parentElement) {
+      const cs = getComputedStyle(p);
+      if (+cs.opacity === 0) return true;
+      if (p === el && (cs.display === 'none' || cs.visibility === 'hidden')) return true;
+    }
+    return false;
+  };
+  const out = {};
+  document.querySelectorAll('[data-action]').forEach(el => {
+    const r = el.getBoundingClientRect();
+    if (r.width < 1 || r.height < 1 || hidden(el)) return;
+    const home = el.closest('[data-screen]');
+    const screen = (home && home.dataset.screen) || lit || '?';
+    const a = el.getAttribute('data-action');
+    out[screen] = out[screen] || {};
+    out[screen][a] = (out[screen][a] || 0) + 1;
+  });
+  return {lit: lit, actions: out};
+}"""
+
 # 흐름 명세의 선택자가 가리키는 data-action 요소의 순번 (화면 순서 · 되돌아가기를
 # 요소 번호로 적으려고). 선택자의 요소가 data-action 이 아니면 가장 가까운 조상.
 SELECTOR_INDEX = r"""(sels) => {
@@ -517,6 +546,41 @@ async def replay(page, flow, state, url):
 def _short(e):
     s = "%s: %s" % (type(e).__name__, e) if isinstance(e, Exception) else str(e)
     return " ".join(s.split())[:200]
+
+
+async def survey(browser, url, flow):
+    """원본을 그 과제의 흐름대로 한 번 걸으며 걸음마다 그려진 data-action 을 센다
+    (SURVEY). 기능-화면 표의 "원본 화면" 칸 - 선택지 무리 · 입력 수단이 원본에서 어느
+    화면에 있었는가 - 에 쓴다. 판정은 하지 않는다.
+
+    돌려주는 것: `{"steps": [{"visit", "lit", "actions": {화면: {이름: 수}}}], "error"}`.
+    걷다가 막히면 거기까지와 error."""
+    out = {"steps": [], "error": None}
+    ctx, page = await new_page(browser)
+    attach_dialogs(page, [])
+    truth = truth_of(flow)
+    try:
+        await page.goto(url, wait_until="networkidle")
+        steps = flow.get("steps") or []
+        for step, visit in zip(steps, visit_keys(steps)):
+            try:
+                if "do" in step:
+                    await run_actions(page, step["do"], None, truth)
+                elif "click" in step:
+                    await run_actions(page, {"click": step["click"]}, None, truth)
+            except Exception as e:
+                out["error"] = "%s 걸음: %s" % (step.get("screen"), _short(e))
+                break
+            if not await settle(page, step.get("screen")):
+                out["error"] = "%s 화면이 켜지지 않았다" % step.get("screen")
+                break
+            got = await page.evaluate(SURVEY)
+            out["steps"].append({"visit": visit, "lit": got["lit"], "actions": got["actions"]})
+    except Exception as e:
+        out["error"] = _short(e)
+    finally:
+        await ctx.close()
+    return out
 
 
 def attach_dialogs(page, seen):
@@ -744,11 +808,17 @@ async def verify_one(browser, url, flow, state, target):
 # 전부
 # --------------------------------------------------------------------------- #
 async def _walk(build_url, wire_url, flow, states, shots_dir, number, selectors_for,
-                targets_for, log, concurrency):
+                targets_for, log, concurrency, original=None):
     out = {"states": {}, "seconds": {}}
     async with async_playwright() as pw:
         browser = await pw.chromium.launch()
         try:
+            if original:
+                t = time.time()
+                out["original"] = await survey(browser, original[0], original[1])
+                log("원본 걷기 - 걸음 %d · %s (%.1f초)"
+                    % (len(out["original"]["steps"]), out["original"]["error"] or "끝까지",
+                       time.time() - t))
             t0 = time.time()
             for i, st in enumerate(states):
                 got = await picture_state(browser, wire_url, flow, st, shots_dir,
@@ -789,15 +859,16 @@ async def _walk(build_url, wire_url, flow, states, shots_dir, number, selectors_
 
 
 def walk(build_url, wire_url, flow, states, shots_dir, number, selectors_for, targets_for,
-         log=print, concurrency=CONCURRENCY):
+         log=print, concurrency=CONCURRENCY, original=None):
     """그림 페이지로 상태마다 찍고 요소를 모은 뒤, 확인 페이지로 요소마다 눌러 본다.
 
     number(items)            -> [(no, box)]          번호 매기기 (번호 그림에 쓴다)
     selectors_for(state)     -> [선택자]              그 상태에서 순번을 알아낼 선택자
-    targets_for(state, got)  -> [(id, target)]        그 상태에서 눌러 볼 것"""
+    targets_for(state, got)  -> [(id, target)]        그 상태에서 눌러 볼 것
+    original                 -> (원본 URL, 원본 흐름)  주면 먼저 원본을 한 번 걷는다 (survey)"""
     os.makedirs(shots_dir, exist_ok=True)
     return asyncio.run(_walk(build_url, wire_url, flow, states, shots_dir, number,
-                             selectors_for, targets_for, log, concurrency))
+                             selectors_for, targets_for, log, concurrency, original))
 
 
 def is_entrance(action):

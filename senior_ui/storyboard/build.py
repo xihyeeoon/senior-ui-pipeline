@@ -3,7 +3,7 @@ r"""설계서 조립 - 실행 폴더를 읽고, 걷고, 영역을 묶고, storyb
 storyboard/ 에 남는 것:
 
   storyboard.json        설계서의 모든 내용 (그림 말고는 이것으로 다시 그린다 - render.py)
-  index.html             설계서 (가로 A4 화면마다 한 장, 맨 앞장)
+  index.html             설계서 (가로 A4 - 맨 앞장 · 와이어플로 · 기능-화면 표 · 화면마다 한 장)
   storyboard.pdf         index.html 을 브라우저(Chromium)로 인쇄한 것
   shots/<상태>.png       로우파이 와이어프레임 그림 (390px 폭, 2배 해상도)
   shots/<상태>.marked.png 요소 번호를 얹은 그림 (모델에게 보낸 것, 1배)
@@ -21,10 +21,11 @@ import shutil
 import time
 
 from senior_ui import config
-from senior_ui.audit.flow import visit_keys
+from senior_ui.audit.flow import load_flow, visit_keys
 from senior_ui.audit.inputs import judged_flow, read_flow
 from senior_ui.devserver import ensure_server
 
+from . import features as F
 from . import regions as R
 from . import render
 from . import walk as W
@@ -32,7 +33,8 @@ from .run import head_commit, load_run, original_fingerprint
 
 OUT_DIR = "storyboard"
 JSON_NAME = "storyboard.json"
-# 2: 장마다 화면 이름(title · name · name_source)과 경로(path) (11-12b)
+# 2: 장마다 화면 이름(title · name · name_source)과 경로(path), 원본 걷기(original) ·
+#    기능-화면 표(features) (11-12b)
 SCHEMA = 2
 # 화면 이름이 없을 때 쓰는 계획의 화면 목적 앞부분의 길이
 NAME_CHARS = 20
@@ -443,8 +445,9 @@ def public(sheets):
 
 
 def inspect(build_url, wire_url, flow, groups, shots_dir, log=print,
-            concurrency=W.CONCURRENCY):
-    """걷기만 - 상태들과 걸은 결과. 단위 시험이 작은 HTML 로 이것을 부른다."""
+            concurrency=W.CONCURRENCY, original=None):
+    """걷기만 - 상태들과 걸은 결과. 단위 시험이 작은 HTML 로 이것을 부른다.
+    original = (원본 URL, 원본 흐름) 이면 원본도 한 번 걷는다 (walked["original"])."""
     states = W.states_of(flow)
     for st in states:
         st["file_id"] = safe(st["key"].replace(":", "-"))
@@ -474,7 +477,7 @@ def inspect(build_url, wire_url, flow, groups, shots_dir, log=print,
         return [(it["no"], target_of(it)) for it in items]
 
     walked = W.walk(build_url, wire_url, flow, states, shots_dir, number, selectors_for,
-                    targets_for, log=log, concurrency=concurrency)
+                    targets_for, log=log, concurrency=concurrency, original=original)
     return states, walked
 
 
@@ -515,9 +518,12 @@ def make(run_dir, port=config.AUTO_PORT, model=None, mock=None, log_echo=True,
         rel = lambda p: os.path.relpath(p, config.ROOT).replace(os.sep, "/")
         build_url = "%s/%s" % (base, rel(run["html"]))
         wire_url = "%s/%s" % (base, rel(wire_path))
+        orig_rel = run["task_def"]["original"]
+        orig_flow = load_flow(None, task=run["task"])
         states, walked = inspect(build_url, wire_url, flow, groups,
                                  os.path.join(out, "shots"), log=log,
-                                 concurrency=concurrency)
+                                 concurrency=concurrency,
+                                 original=("%s/%s" % (base, orig_rel), orig_flow))
         sheets, flow_info = assemble(run, flow, states, walked, groups)
         front = front_matter(run, run.get("plan_data"), run.get("diagnosis_data"))
         log("장 %d (본 장 %d) · 항목 %d · 누르기 %d번 · 그림 %.1f초 · 누르기 %.1f초"
@@ -528,6 +534,14 @@ def make(run_dir, port=config.AUTO_PORT, model=None, mock=None, log_echo=True,
         call = R.group(sheets, model=model, mock=mock, out_dir=out, log=log,
                        reasoning_effort=reasoning_effort)
         name_sheets(sheets)
+        survey = walked.get("original") or {}
+        where = F.where_in_original(survey)
+        table = F.matrix(sheets, flow_info, groups, metrics.get("choice_groups_original"),
+                         (run["task_def"].get("entrances") or {}).get("items"),
+                         _task_errors(run["task"]), where)
+        if table["missing"]:
+            log("기능-화면 표: 어느 장에서도 보지 못한 줄 %d - %s"
+                % (len(table["missing"]), ", ".join(table["missing"])))
         data = {
             "schema": SCHEMA,
             "generated": {"at": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -537,6 +551,11 @@ def make(run_dir, port=config.AUTO_PORT, model=None, mock=None, log_echo=True,
                                       "total": None}},
             **front,
             "flow": flow_info,
+            "original": {"html": orig_rel,
+                         "steps": [{"visit": st["visit"], "lit": st["lit"]}
+                                   for st in survey.get("steps") or []],
+                         "error": survey.get("error"), "where": where},
+            "features": table,
             "choice_groups": groups,
             "counts": {"sheets": len(sheets),
                        "main_sheets": sum(1 for s in sheets if s["main"]),
