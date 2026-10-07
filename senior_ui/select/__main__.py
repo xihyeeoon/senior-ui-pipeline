@@ -123,7 +123,11 @@ def main(argv=None):
               % (args.task, len(dirs), len(other)), file=sys.stderr)
         return 2
 
-    ranked = rank(rows, rule)
+    try:
+        ranked = rank(rows, rule, args.task)
+    except RuleError as e:
+        print("cannot run: 규칙 - %s" % e, file=sys.stderr)
+        return 2
     result = build(args.task, rule, source, ranked,
                    {"default": args.runs is None, "patterns": [rel_path(p) for p in patterns],
                     "skipped_other_task": other})

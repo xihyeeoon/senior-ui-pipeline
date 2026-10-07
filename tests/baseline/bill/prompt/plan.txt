@@ -251,6 +251,15 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   .pwpad button{background:transparent; border:0; height:96px; color:#fff; font-size:26px; font-family:inherit;}
   .pwpad button.sm{font-size:16px;}
 
+  #phone .pic{color:transparent; border-radius:3px; box-shadow:inset 0 0 0 1px #B8BDC7;
+    background:
+      linear-gradient(to top right, transparent calc(50% - .75px), #9AA0A8 calc(50% - .75px),
+                      #9AA0A8 calc(50% + .75px), transparent calc(50% + .75px)),
+      linear-gradient(to bottom right, transparent calc(50% - .75px), #9AA0A8 calc(50% - .75px),
+                      #9AA0A8 calc(50% + .75px), transparent calc(50% + .75px)),
+      #E4E7EC;}
+  #phone .pic.em{display:inline-block; width:1em; height:1em; vertical-align:-.15em;}
+
 @media (max-width: 480px) {
   html, body { height: 100%; overflow: hidden; }
   #phone { width: 100vw; height: 100vh; height: 100dvh; box-shadow: none; }
@@ -264,13 +273,13 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="homehead">
     <div class="name"><span class="dot">C</span>홍길동님</div>
-    <div class="icons"><span data-action="oos-message" aria-label="메시지">☺</span><span data-action="oos-wallet" aria-label="지갑">▤</span><span data-action="oos-alarm" aria-label="알림">♤</span><span data-action="go-menu">⌕</span></div>
+    <div class="icons"><span data-action="oos-message" aria-label="메시지"><i class="pic em" role="img" aria-label="메시지 아이콘"></i></span><span data-action="oos-wallet" aria-label="지갑"><i class="pic em" role="img" aria-label="지갑 아이콘"></i></span><span data-action="oos-alarm" aria-label="알림"><i class="pic em" role="img" aria-label="알림 아이콘"></i></span><span data-action="go-menu"><i class="pic em" role="img" aria-label="전체메뉴 아이콘"></i></span></div>
   </div>
   <div class="body">
     <div class="card">
       <h3>자산 <span class="arr">›</span></h3>
       <div class="acctrow">
-        <div class="logo">S</div>
+        <div class="logo pic" role="img" aria-label="신한은행 로고"></div>
         <div style="flex:1">
           <div class="acctname">[금융거래한도계좌2]신한 주거래 우대통장<br>(저축예금)</div>
           <div class="acctamt">금액 숨김</div>
@@ -282,7 +291,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 
     <div class="card">
       <div class="acctrow">
-        <div class="logo" style="background:#E08A00">▭</div>
+        <div class="logo pic" role="img" aria-label="체크카드 아이콘"></div>
         <div style="flex:1">
           <div style="font-size:15px;font-weight:600">Pick E 체크캐릭터형(하리보)</div>
           <div class="acctamt">금액 숨김</div>
@@ -293,7 +302,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 
     <div class="card">
       <h3>땡겨요 <span class="arr">›</span></h3>
-      <div class="svc"><div class="sq">🍔</div>
+      <div class="svc"><div class="sq pic" role="img" aria-label="땡겨요 쿠폰 아이콘"></div>
         <div style="flex:1"><div class="t2">할인쿠폰 드려요</div><div class="t1">bhc치킨 최대 9,000원</div></div>
         <button class="btn-sm" data-action="oos-get-coupon" aria-label="바로받기">바로받기</button></div>
       <div class="rowlist"><span data-action="oos-event" aria-label="이벤트">이벤트</span><span data-action="oos-coupon" aria-label="쿠폰">쿠폰</span><span data-action="oos-point" aria-label="포인트">포인트</span></div>
@@ -301,7 +310,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 
     <div class="card">
       <h3>7월 소비 ↻ <span class="arr" data-action="oos-spend-detail" aria-label="소비 상세">›</span></h3>
-      <div style="font-size:13px;color:#6B7280">📅 오늘 쓴 돈</div>
+      <div style="font-size:13px;color:#6B7280"><i class="pic em" role="img" aria-label="오늘 쓴 돈 아이콘"></i> 오늘 쓴 돈</div>
       <div style="font-size:19px;font-weight:700">0원</div>
     </div>
 
@@ -312,9 +321,9 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 
     <div class="card">
       <h3>추천서비스 <span class="arr">›</span></h3>
-      <div class="svc"><div class="sq">⌂</div><div><div class="t1">SOL패밀리</div><div class="t2">가족과 함께하는 금융생활</div></div></div>
-      <div class="svc"><div class="sq">🅦</div><div><div class="t1">급여클럽+</div><div class="t2">급여이체 우대 혜택</div></div></div>
-      <div class="svc"><div class="sq">💳</div><div><div class="t1">내 카드 승인내역</div><div class="t2">모든 카드 실시간 승인내역</div></div></div>
+      <div class="svc"><div class="sq pic" role="img" aria-label="SOL패밀리 아이콘"></div><div><div class="t1">SOL패밀리</div><div class="t2">가족과 함께하는 금융생활</div></div></div>
+      <div class="svc"><div class="sq pic" role="img" aria-label="급여클럽+ 아이콘"></div><div><div class="t1">급여클럽+</div><div class="t2">급여이체 우대 혜택</div></div></div>
+      <div class="svc"><div class="sq pic" role="img" aria-label="내 카드 승인내역 아이콘"></div><div><div class="t1">내 카드 승인내역</div><div class="t2">모든 카드 실시간 승인내역</div></div></div>
     </div>
 
     <div class="card" data-action="oos-connect-event" aria-label="자산 연결 이벤트">
@@ -324,27 +333,27 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 
     <div class="card">
       <h3>신한금융그룹</h3>
-      <div class="svc"><div class="sq">💳</div><div><div class="t1">신한카드</div><div class="t2">나에게 맞는 카드 찾기</div></div></div>
-      <div class="svc"><div class="sq">📈</div><div><div class="t1">신한투자증권</div><div class="t2">지금 뜨는 주식 보러가기</div></div></div>
-      <div class="svc"><div class="sq">🛡</div><div><div class="t1">신한라이프</div><div class="t2">내게 필요한 보험, 보장분석으로 확인하기</div></div></div>
+      <div class="svc"><div class="sq pic" role="img" aria-label="신한카드 아이콘"></div><div><div class="t1">신한카드</div><div class="t2">나에게 맞는 카드 찾기</div></div></div>
+      <div class="svc"><div class="sq pic" role="img" aria-label="신한투자증권 아이콘"></div><div><div class="t1">신한투자증권</div><div class="t2">지금 뜨는 주식 보러가기</div></div></div>
+      <div class="svc"><div class="sq pic" role="img" aria-label="신한라이프 아이콘"></div><div><div class="t1">신한라이프</div><div class="t2">내게 필요한 보험, 보장분석으로 확인하기</div></div></div>
     </div>
 
     <div class="footlinks"><span data-action="oos-easy-home" aria-label="쉬운홈">쉬운홈</span><span data-action="oos-home-setting" aria-label="홈화면 설정">홈화면 설정</span><span data-action="oos-hide-amount" aria-label="금액 숨기기">금액 숨기기</span></div>
   </div>
   <div class="tabbar">
-    <div class="act" data-action="oos-tab-home" aria-label="홈"><span class="ti">⌂</span>홈</div>
-    <div data-action="oos-tab-finance" aria-label="금융"><span class="ti">Ⓦ</span>금융</div>
-    <div data-action="oos-tab-goods" aria-label="상품"><span class="ti">⌂</span>상품</div>
-    <div data-action="oos-tab-benefit" aria-label="혜택"><span class="ti">🎁</span>혜택</div>
-    <div data-action="oos-tab-stock" aria-label="주식"><span class="ti">📈</span>주식</div>
+    <div class="act" data-action="oos-tab-home" aria-label="홈"><span class="ti pic em" role="img" aria-label="홈 아이콘"></span>홈</div>
+    <div data-action="oos-tab-finance" aria-label="금융"><span class="ti pic em" role="img" aria-label="금융 아이콘"></span>금융</div>
+    <div data-action="oos-tab-goods" aria-label="상품"><span class="ti pic em" role="img" aria-label="상품 아이콘"></span>상품</div>
+    <div data-action="oos-tab-benefit" aria-label="혜택"><span class="ti pic em" role="img" aria-label="혜택 아이콘"></span>혜택</div>
+    <div data-action="oos-tab-stock" aria-label="주식"><span class="ti pic em" role="img" aria-label="주식 아이콘"></span>주식</div>
   </div>
 </section>
 
 <section class="screen menu" data-screen="menu">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="navbar"><span class="ico" data-action="back-home">‹</span><span class="sp"></span>
-    <span class="ico" data-action="oos-chat" aria-label="고객센터 채팅">💬</span><span class="ico" data-action="oos-settings" aria-label="설정">⚙</span><span class="ico" data-action="oos-logout" aria-label="로그아웃">⎋</span></div>
-  <div class="searchbar" data-action="open-search"><span>상품, 메뉴, 혜택 등을 검색해보세요</span><span>⌕</span></div>
+    <span class="ico" data-action="oos-chat" aria-label="고객센터 채팅"><i class="pic em" role="img" aria-label="고객센터 채팅 아이콘"></i></span><span class="ico" data-action="oos-settings" aria-label="설정"><i class="pic em" role="img" aria-label="설정 아이콘"></i></span><span class="ico" data-action="oos-logout" aria-label="로그아웃"><i class="pic em" role="img" aria-label="로그아웃 아이콘"></i></span></div>
+  <div class="searchbar" data-action="open-search"><span>상품, 메뉴, 혜택 등을 검색해보세요</span><span class="pic em" role="img" aria-label="검색 아이콘"></span></div>
   <div class="mtabs" id="menu-tabs"></div>
   <div class="body" id="menu-body"></div>
 </section>
@@ -355,7 +364,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
     <span class="ico" style="font-size:22px" data-action="back-menu">‹</span>
     <input id="search-input" type="text" placeholder="검색어를 입력하세요" autocomplete="off">
     <span class="sclear" id="search-clear" data-action="search-clear">ⓧ</span>
-    <span style="font-size:24px" data-action="oos-search-submit" aria-label="검색">⌕</span>
+    <span style="font-size:24px" data-action="oos-search-submit" aria-label="검색"><i class="pic em" role="img" aria-label="검색 아이콘"></i></span>
   </div>
   <div class="body" id="search-body"></div>
 </section>
@@ -363,9 +372,9 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 <section class="screen" data-screen="bill-home">
   <div class="statusbar" style="background:#EEF2FB"><span>4:31</span><span class="right">67</span></div>
   <div class="navbar" style="background:#EEF2FB"><span class="ico" data-action="back-bill-home">‹</span><span class="sp"></span>
-    <span class="ico" data-action="oos-support" aria-label="고객센터">💬</span><span class="ico" data-action="oos-home" aria-label="홈">⌂</span></div>
+    <span class="ico" data-action="oos-support" aria-label="고객센터"><i class="pic em" role="img" aria-label="고객센터 아이콘"></i></span><span class="ico" data-action="oos-home" aria-label="홈"><i class="pic em" role="img" aria-label="홈 아이콘"></i></span></div>
   <div class="body">
-    <div class="hero"><span>각종 세금/공과금 이제<br>간편하게 납부해보세요</span><span style="font-size:40px">🧾</span></div>
+    <div class="hero"><span>각종 세금/공과금 이제<br>간편하게 납부해보세요</span><span class="pic em" role="img" aria-label="고지서 아이콘" style="font-size:40px"></span></div>
     <div class="entry"><div class="box">
       <div class="two">
         <div class="half" data-action="pay-start"><div class="t">납부하기</div><div class="d">종이고지서 번호로 바로 납부</div></div>
@@ -388,7 +397,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 <section class="screen" data-screen="info">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="navbar"><span class="ico" data-action="to-bill-home">‹</span><span class="title">전기요금 납부</span>
-    <span class="ico" data-action="oos-info-support" aria-label="고객센터">💬</span><span class="ico" data-action="oos-info-home" aria-label="홈">⌂</span></div>
+    <span class="ico" data-action="oos-info-support" aria-label="고객센터"><i class="pic em" role="img" aria-label="고객센터 아이콘"></i></span><span class="ico" data-action="oos-info-home" aria-label="홈"><i class="pic em" role="img" aria-label="홈 아이콘"></i></span></div>
   <div class="body pad20">
     <div class="h2">납부정보</div>
     <div class="rule"></div>
@@ -400,7 +409,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
     <div class="kv"><span class="k">납부금액</span><span class="v blue"><span id="bi-amt">2,160</span>원</span></div>
     <div class="h2" style="margin-top:24px;font-size:21px">출금계좌</div>
     <div class="wcard">
-      <div class="top"><div class="logo">S</div>
+      <div class="top"><div class="logo pic" role="img" aria-label="신한은행 로고"></div>
         <div class="nm">[금융거래한도계좌2]신한 주거래 우대통장(저축예금)
           <div class="no" id="bi-acc">신한 110-000-000000</div></div>
         <span style="font-size:20px;color:#6A6A6F">⌄</span></div>
@@ -421,7 +430,7 @@ HTML 은 다음 단계에서 이 계획을 받아 만든다.
 
 <section class="screen" data-screen="done">
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
-  <div class="navbar"><span class="sp"></span><span class="ico" data-action="oos-done-support" aria-label="고객센터">💬</span><span class="ico" data-action="finish">⌂</span></div>
+  <div class="navbar"><span class="sp"></span><span class="ico" data-action="oos-done-support" aria-label="고객센터"><i class="pic em" role="img" aria-label="고객센터 아이콘"></i></span><span class="ico" data-action="finish"><i class="pic em" role="img" aria-label="홈 아이콘"></i></span></div>
   <div class="body pad20">
     <div class="okc">✓</div>
     <div class="donet">납부완료</div>
@@ -523,13 +532,13 @@ function renderSearch(){
   document.getElementById('search-clear').classList.toggle('on', S.query.length>0);
   const body = document.getElementById('search-body');
   if(!q){ body.innerHTML = '<div class="shint">찾으시는 메뉴를 입력해보세요</div>'; return; }
-  if(q.length < 2){ body.innerHTML = '<div class="shint big">🔍<br>검색버튼(돋보기)을<br>눌러주세요</div>'; return; }
+  if(q.length < 2){ body.innerHTML = '<div class="shint big"><i class="pic em" role="img" aria-label="돋보기 아이콘"></i><br>검색버튼(돋보기)을<br>눌러주세요</div>'; return; }
   const hits = SEARCH_ALL.filter(h=>h[0].includes(q));
   body.innerHTML = hits.map(h=>{
     const label = h[0].startsWith(q) ? `<b>${q}</b>${h[0].slice(q.length)}` : h[0];
     return `<div class="hit" data-action="search-hit" data-item="${h[0]}" data-route="${h[2]}">
       <div class="hl">${label}</div><div class="ht">${h[1]}</div></div>`;
-  }).join('') + '<div class="aifoot" data-action="oos-ask-ai" aria-label="AI에게 물어보기"><span style="font-size:24px">💬</span><div><div class="s">찾는 내용이 없다면,</div><div class="b">AI에게 물어볼까요?</div></div></div>';
+  }).join('') + '<div class="aifoot" data-action="oos-ask-ai" aria-label="AI에게 물어보기"><span class="pic em" role="img" aria-label="AI에게 물어보기 아이콘" style="font-size:24px"></span><div><div class="s">찾는 내용이 없다면,</div><div class="b">AI에게 물어볼까요?</div></div></div>';
 }
 document.getElementById('search-input').addEventListener('input', function(){
   S.query = this.value;
@@ -545,7 +554,7 @@ const BILL_SUB = { '지방세':'주민세, 재산세, 자동차세 등', '환경
   '세외수입':'과태료, 수수료, 기부금 등' };
 document.getElementById('bill-list').innerHTML = BILL_ITEMS.map(v=> v[0]==='#'
   ? `<div class="bsec">${v.slice(1)}</div>`
-  : `<div class="bi" data-action="pick-bill" data-bill="${v}"><span class="ic"></span>
+  : `<div class="bi" data-action="pick-bill" data-bill="${v}"><span class="ic pic" role="img" aria-label="${v} 아이콘"></span>
       <div class="l">${v}${BILL_SUB[v] ? `<div class="s">${BILL_SUB[v]}</div>` : ''}</div><span class="c">›</span></div>`).join('');
 
 const PW_KEYS = ['0','1','2','3','4','5','6','7','8','9'];

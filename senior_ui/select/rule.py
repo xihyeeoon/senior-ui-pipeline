@@ -18,11 +18,13 @@ import statistics
 import subprocess
 
 from senior_ui.config import FLOWS_DIR, ROOT
+from senior_ui.tasks import load_task, original_sha256
 
 DEFAULT_RULE = os.path.join(FLOWS_DIR, "selection_rule.json")
 
 GATES = ("passed", "no_redeclared", "no_truncated", "clean_tree", "not_mock", "model",
-         "no_warning_checks", "stage", "budget", "commit", "reverted", "no_internal_error")
+         "no_warning_checks", "stage", "budget", "commit", "reverted", "no_internal_error",
+         "original")
 
 # 실행 조건 문지기 (감사 B-04 · D-4 (가)). 값이 null 이거나 칸이 없으면 보지 않는다 -
 # 칸이 생기기 전의 규칙(지난 결과 JSON)을 다시 쓸 때 그 규칙 그대로 돈다.
@@ -32,6 +34,9 @@ GATES = ("passed", "no_redeclared", "no_truncated", "clean_tree", "not_mock", "m
 #   reverted 다듬기가 떨어져 직전 통과 빌드로 되돌린 실행을 어떻게 하나
 BUDGET_KEYS = (("format", "형식"), ("audit", "검사"), ("refine", "다듬기"))
 REVERTED = ("allow", "last", "exclude")
+#   original "current" 면 실행의 original_sha256 이 그 과제의 지금 원본 파일(과제 파일의
+#            original)의 지문과 같아야 한다. 값이 없는 옛 실행도 뺀다 (11-11)
+ORIGINAL = ("current",)
 COMMIT = re.compile(r"^[0-9a-f]{7,40}$")
 
 # 줄 세우기와 대표성에 쓸 수 있는 값 (collect.collect 의 칸).
@@ -91,6 +96,10 @@ def validate(rule):
             if v not in REVERTED:
                 raise RuleError("gates.reverted 는 %s 중 하나여야 한다"
                                 % " | ".join('"%s"' % x for x in REVERTED))
+        elif k == "original":
+            if v is not None and v not in ORIGINAL:
+                raise RuleError("gates.original 은 null 이거나 %s 여야 한다"
+                                % " | ".join('"%s"' % x for x in ORIGINAL))
         elif not isinstance(v, bool):
             raise RuleError("gates.%s 는 true/false 여야 한다" % k)
     ordering = rule.get("ordering")
@@ -172,8 +181,11 @@ def load_rule(path=None):
 # --------------------------------------------------------------------------- #
 # 문지기
 # --------------------------------------------------------------------------- #
-def gate_reasons(row, gates):
-    """이 실행이 어긴 문지기마다 이유 한 줄. 비어 있으면 후보다."""
+def gate_reasons(row, gates, original=None):
+    """이 실행이 어긴 문지기마다 이유 한 줄. 비어 있으면 후보다.
+
+    `original` 은 그 과제의 지금 원본 `{"path", "sha256"}` 이다 (original_basis) -
+    gates.original 이 켜져 있을 때만 쓴다."""
     if row.get("error"):
         return [row["error"]]
     out = []
@@ -210,6 +222,9 @@ def gate_reasons(row, gates):
     off = budget_mismatch(row, gates.get("budget"))
     if off:
         out.append("예산이 규칙과 다름: " + " · ".join(off))
+    why = original_reason(row, original) if gates.get("original") else None
+    if why:
+        out.append(why)
     if gates.get("no_internal_error") and row.get("internal_error"):
         out.append("도구 내부 오류로 끝남 (internal_error, 종료 2) - 통과한 빌드가 있어도 "
                    "뺀다")
@@ -217,6 +232,35 @@ def gate_reasons(row, gates):
         out.append("되돌린 실행 (다듬기 %s회차가 떨어져 시도 %s 이 최종)"
                    % (row["reverted"], row.get("reverted_to")))
     return out
+
+
+def original_basis(task, gates):
+    """그 과제의 지금 원본 `{"task", "path", "sha256"}` - gates.original 이 꺼져 있으면
+    None. 원본 파일은 과제 파일(tasks/<과제>.json 의 original)이 정한다 - 공과금이면
+    inputs/original_bill.html 이다. 지문은 재구성 루프가 남긴 것과 같은 함수로 잰다
+    (tasks.fingerprint - 줄끝을 LF 로 맞춘 sha256)."""
+    if not gates.get("original"):
+        return None
+    try:
+        return {"task": task, "path": load_task(task)["original"],
+                "sha256": original_sha256(task)}
+    except (OSError, ValueError) as e:
+        raise RuleError("과제 %s 의 원본 파일을 읽지 못했다 (gates.original): %s" % (task, e))
+
+
+def original_reason(row, basis):
+    """이 실행이 지금 원본으로 만든 것이 아니면 그 이유. 같으면 None.
+
+    값이 없는 실행은 원본 지문을 남기기 전(11-11 전)의 실행이다 - 어느 원본으로
+    만들었는지 모르므로 같은 이유로 뺀다."""
+    if basis is None:
+        return None
+    mine = row.get("original_sha256")
+    if mine == basis["sha256"]:
+        return None
+    return "다른 원본으로 만든 실행 (original_sha256 %s, 지금 %s %s)" % (
+        mine[:12] if mine else "기록 없음 - 원본 지문을 남기기 전의 실행",
+        basis["path"], basis["sha256"][:12])
 
 
 def budget_mismatch(row, want):
@@ -318,16 +362,22 @@ def _key_part(row, o, rep):
     return (0, v if o.get("order", "asc") == "asc" else -v)
 
 
-def rank(rows, rule):
+def rank(rows, rule, task=None):
     """규칙을 적용한 결과.
 
     {"candidates": [후보 행, 순위 순], "excluded": [제외 행],
+     "commit_basis", "original_basis",
      "representative": {"metrics", "stats", "by_run"} 또는 None}
-    행마다 "rank" (후보만) 와 "excluded_because" (제외만) 를 붙인다."""
+    행마다 "rank" (후보만) 와 "excluded_because" (제외만) 를 붙인다.
+
+    `task` 는 고르는 과제다 - gates.original 이 그 과제의 지금 원본과 견준다. 주지
+    않으면 첫 실행의 과제."""
     gates = rule["gates"]
+    task = task or next((r.get("task") for r in rows if r.get("task")), None)
+    original = original_basis(task, gates)
     candidates, excluded = [], []
     for row in rows:
-        reasons = gate_reasons(row, gates)
+        reasons = gate_reasons(row, gates, original)
         row = dict(row, excluded_because=reasons, rank=None)
         (excluded if reasons else candidates).append(row)
 
@@ -360,6 +410,6 @@ def rank(rows, rule):
         row["rank"] = i
     excluded.sort(key=lambda r: r["name"])
     return {"candidates": candidates, "excluded": excluded,
-            "commit_basis": basis,
+            "commit_basis": basis, "original_basis": original,
             "representative": None if not rep_rule else
             {"metrics": rep_rule["metrics"], "stats": stats}}

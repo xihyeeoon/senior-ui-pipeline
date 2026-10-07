@@ -237,7 +237,7 @@
     "dirty": "<dirty>",
     "original": {
       "path": "inputs/original_transfer.html",
-      "sha256": "8f91e1abcb62783d48d1aa3ccb4b5a917b1d833def3db5a75f3051f74aeacc8a",
+      "sha256": "f76a8b2f9226e20bfc521325c0b0d0cb040d3ce3f958c9a3376377a7b6141e63",
       "source": "<source>",
       "same_as_now": "<same_as_now>"
     },
@@ -486,6 +486,10 @@
         "lit": "account"
       },
       {
+        "visit": "account#2",
+        "lit": "account"
+      },
+      {
         "visit": "bank",
         "lit": "bank"
       },
@@ -607,16 +611,19 @@
       "close-account": [
         "account"
       ],
+      "acc-field": [
+        "account"
+      ],
       "open-bank": [
+        "account"
+      ],
+      "account-next": [
         "account"
       ],
       "acc-num": [
         "account"
       ],
       "acc-del": [
-        "account"
-      ],
-      "account-next": [
         "account"
       ],
       "close-bank": [

@@ -38,7 +38,7 @@ from senior_ui.audit.flow import required_errors
 from senior_ui.audit.inputs import load_allowed_removals, model_claims
 from senior_ui.config import AUTO_PORT, OUTPUTS_ENV, ROOT, inside_root, outputs_dir, url_for
 from senior_ui.devserver import ensure_server
-from senior_ui.tasks import DEFAULT_TASK, abs_path, load_task
+from senior_ui.tasks import DEFAULT_TASK, abs_path, file_sha256, load_task
 
 from .audit_call import run_audit
 from .brief import write_brief
@@ -137,16 +137,22 @@ def refine_choice(args):
 
 
 # 그림 이름표. 원본은 진단·계획 호출에, 빌드는 다듬기 호출에 들어간다.
-ORIGINAL_LABELS = {"screen": "원본 화면", "error": "원본 오류 상태"}
-BUILD_LABELS = {"screen": "화면", "error": "오류 상태"}
+#
+# `state` 는 흐름 걸음의 state(연구자가 적은 그 상태의 이름)를 이름표에 붙이는가다.
+# 원본에만 붙인다 - "원본 화면 account#2 — 키패드 열림 — 계좌번호 입력란을 누른 뒤".
+# 이 이름표가 모델에게 가는 "전환" 정보다 (docs/input-contract.md "입력 약속", 11-11).
+# 모델이 쓴 흐름 명세에 state 가 있어도 빌드 그림의 이름표에는 붙이지 않는다.
+ORIGINAL_LABELS = {"screen": "원본 화면", "error": "원본 오류 상태", "state": True}
+BUILD_LABELS = {"screen": "화면", "error": "오류 상태", "state": False}
 
 
 def see_images(shots, labels, error_ids=()):
     """찍어 둔 그림들을 `[{"label", "path"}]` 로. 화면은 see/index.json 순서,
     그 뒤에 오류 상태(audit_error_<id>.png, 과제의 오류 순서). 없는 것은 건너뛴다.
 
-    이름표에는 화면 이름과, 스크롤되는 화면이면 몇 번째 장인지와 몇 px 내린
-    모습인지를 적는다. 4장에서 끊긴 화면은 남은 높이도 적는다."""
+    이름표에는 화면 이름(방문 이름)과, 원본이면 그 걸음의 state, 스크롤되는 화면이면
+    몇 번째 장인지와 몇 px 내린 모습인지를 적는다. 4장에서 끊긴 화면은 남은 높이도
+    적는다."""
     if not shots:
         return []
     out = []
@@ -154,6 +160,8 @@ def see_images(shots, labels, error_ids=()):
     items = json.load(io.open(index, encoding="utf-8")) if os.path.exists(index) else []
     for it in items:
         label = "%s %s" % (labels["screen"], it["visit"])
+        if labels.get("state") and it.get("state"):
+            label += " — %s" % it["state"]
         if it["parts"] > 1:
             label += " — 스크롤 %d/%d (%s)" % (
                 it["part"], it["parts"],
@@ -398,6 +406,28 @@ def original_rel(path):
         raise RuntimeError("--original 은 저장소 안의 파일이어야 한다 (서버가 "
                            "서빙하는 범위 밖이다): %s" % path)
     return rel.replace(os.sep, "/")
+
+
+def original_of(args, task_name):
+    """`(원본 경로 - 저장소 루트 기준 '/', 지문)`. 이 실행이 쓸 원본 HTML 이다 -
+    --original 을 주었으면 그 파일, 아니면 과제 파일의 original.
+
+    지문(tasks.fingerprint - 줄끝을 LF 로 맞춘 sha256)은 summary.json 의
+    original_sha256 과 run.log 첫 줄에 남는다. 원본은 고쳐진다 (11-11: 이체 계좌
+    화면의 키패드) - 고르기의 문지기 original 이 이것을 지금 inputs 의 원본과 견줘
+    다른 원본으로 만든 실행을 뺀다. 과제나 파일을 읽지 못하면 지문은 None 이다 -
+    시작 실패는 그 이유로 따로 남는다."""
+    path = getattr(args, "original", None)
+    try:
+        path = path or abs_path(load_task(task_name)["original"])
+    except (OSError, ValueError):
+        return None, None
+    rel = os.path.relpath(os.path.abspath(path), ROOT)
+    rel = path if rel.startswith(os.pardir) or os.path.isabs(rel) else rel.replace(os.sep, "/")
+    try:
+        return rel, file_sha256(path)
+    except OSError:
+        return rel, None
 
 
 def port_choice(args):
@@ -1685,6 +1715,8 @@ def run(args):
     os.makedirs(run_dir, exist_ok=True)
     log = make_logger(os.path.join(run_dir, "run.log"))
     git = git_state()
+    # 이 실행이 쓸 원본과 그 지문 (original_of). 시작하지 못한 실행에도 남긴다.
+    orig_path, orig_sha = original_of(args, task_name)
 
     def cannot_start(why):
         """실행을 시작하지 못했다 (종료 2). Run 이 서기 전이라도 summary 를 남긴다 -
@@ -1692,7 +1724,8 @@ def run(args):
         log("cannot start: %s" % why)
         print("cannot start: %s" % why, file=sys.stderr)
         _dump({"run_dir": run_dir, "task": task_name, "passed": False, "attempts": [],
-               "stopped_reason": "cannot_start", "error": str(why), "git": git},
+               "stopped_reason": "cannot_start", "error": str(why), "git": git,
+               "original": orig_path, "original_sha256": orig_sha},
               os.path.join(run_dir, "summary.json"))
         log("summary: %s" % os.path.join(run_dir, "summary.json"))
         return 2
@@ -1711,6 +1744,9 @@ def run(args):
     #
     # 작업 트리가 깨끗하지 않으면 그 경고도 같은 첫 줄에 잇는다 - 그 사실 역시
     # run.log 를 여는 사람에게 가장 먼저 보여야 한다. 실행은 막지 않는다.
+    #
+    # 어느 원본으로 만든 실행인지(original_sha256)도 첫 줄이다 - 원본이 고쳐지면 같은
+    # 모델 · 같은 커밋이어도 다른 조건이다 (고르기의 문지기 original).
     model, source = model_choice(args)
     warning = dirty_warning(git)
     #
@@ -1726,6 +1762,7 @@ def run(args):
         % (model, source,
            " · reasoning_effort=%s (출처 %s)" % (effort, effort_source) if effort else "")
         + " | " + describe_settings((args.stage, args.stage_source), budget_choice(args))
+        + " | original_sha256=%s (%s)" % (orig_sha or "읽지 못함", orig_path or "?")
         + (" | " + warning if warning else ""))
     if mock:
         log(MOCK_ENV_NOTE % ", ".join(config.MODEL_ENV_VARS))
@@ -1781,6 +1818,8 @@ def run(args):
     except (OSError, RuntimeError, ValueError) as e:
         return cannot_start(e)
     r.summary["git"] = git
+    r.summary["original"] = orig_path
+    r.summary["original_sha256"] = orig_sha
     r.allowed_removals = allowed
     if allowed:
         log("선택지 제거 허용 (연구자 파일): %s" % ", ".join(sorted(allowed)))

@@ -30,6 +30,7 @@ flow.load_flow)이 흐름에 붙인다. 없으면 빈 선언이다. flows/allowe
 경로는 저장소 루트 기준이고 구분자는 '/' 다. 기본 과제는 이체다 - 과제를
 고르지 않은 실행은 전과 같아야 한다.
 """
+import hashlib
 import io
 import json
 import os
@@ -66,6 +67,28 @@ def abs_path(rel):
     if os.path.isabs(str(rel)):
         return str(rel)
     return os.path.join(ROOT, *str(rel).split("/"))
+
+
+def fingerprint(data):
+    """줄끝을 LF 로 맞춘 내용(bytes)의 sha256. Windows 작업 트리는 CRLF 로 체크아웃되고
+    (core.autocrlf) 저장소의 파일은 LF 라, 그대로 재면 같은 원본이 PC 마다 둘로 보인다."""
+    return hashlib.sha256(data.replace(b"\r\n", b"\n")).hexdigest()
+
+
+def file_sha256(path):
+    """파일 하나의 지문 (fingerprint). 읽지 못하면 OSError."""
+    with open(path, "rb") as f:
+        return fingerprint(f.read())
+
+
+def original_sha256(name=None):
+    """과제의 원본 HTML(과제 파일의 original)의 지금 지문.
+
+    재구성 실행은 쓴 원본의 지문을 summary.json 과 run.log 첫 줄에 남기고
+    (restructure/loop.py), 고르기의 문지기 original: "current" 가 그것을 이 값과
+    견준다 (select/rule.py) - 원본이 고쳐지면 고치기 전 원본으로 만든 실행은 같은
+    조건의 반복이 아니다."""
+    return file_sha256(abs_path(load_task(name)["original"]))
 
 
 def not_choices_of(task, path):

@@ -52,6 +52,14 @@ def test_original_vs_original_walks_both_error_paths(server):
     # 원본의 은행 오류 문구는 은행을 말하지 않는다 ("과목코드 오류") - warning.
     jw = [w for w in report["warning"] if w["check"] == "J"]
     assert [w["error_path"] for w in jw] == ["wrong-bank"]
+    # 계좌 화면은 두 번 찍힌다 - 들어온 모습(키패드 닫힘)과 입력란을 누른 뒤(열림,
+    # account#2). 숨은 요소는 innerText 에 들어오지 않는다 (11-11, test_account_keypad).
+    assert rep["screens"]["account"]["landed_on"] == "account"
+    assert rep["screens"]["account#2"]["landed_on"] == "account"
+    assert "⌫" not in rep["screens"]["account"]["text"]
+    assert "⌫" in rep["screens"]["account#2"]["text"]
+    # 키패드가 숨어 있어도 acc-num 버튼은 DOM 에 있다 - 원본 선택지는 그대로 10
+    assert report["metrics"]["choice_groups_original"]["acc-num"] == 10
 
 
 def inline_flow(inputs):

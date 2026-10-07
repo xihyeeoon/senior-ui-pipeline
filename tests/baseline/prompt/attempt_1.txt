@@ -554,6 +554,8 @@
   .accclear.on{display:block;}
   .accwarn{display:none; margin:-6px 22px 12px; font-size:14px; color:#D93A32;}
   .accwarn.on{display:block;}
+  #acc-pad{display:none;}
+  #acc-pad.on{display:grid;}
   .dimmer{position:absolute; inset:0; background:rgba(0,0,0,.45);}
   .dialog{position:absolute; left:28px; right:28px; top:50%; transform:translateY(-50%);
     background:#fff; border-radius:18px; padding:24px 22px 18px;}
@@ -561,6 +563,15 @@
   .dialog .emsg{font-size:17px; line-height:1.45; color:var(--ink); margin-top:12px; word-break:keep-all;}
   .dialog .ebtn{width:100%; margin-top:22px; background:var(--blue-deep); color:#fff; border:0; border-radius:12px;
     padding:16px; font-size:17px; font-weight:700; font-family:inherit;}
+
+  #phone .pic{color:transparent; border-radius:3px; box-shadow:inset 0 0 0 1px #B8BDC7;
+    background:
+      linear-gradient(to top right, transparent calc(50% - .75px), #9AA0A8 calc(50% - .75px),
+                      #9AA0A8 calc(50% + .75px), transparent calc(50% + .75px)),
+      linear-gradient(to bottom right, transparent calc(50% - .75px), #9AA0A8 calc(50% - .75px),
+                      #9AA0A8 calc(50% + .75px), transparent calc(50% + .75px)),
+      #E4E7EC;}
+  #phone .pic.em{display:inline-block; width:1em; height:1em; vertical-align:-.15em;}
 
 @media (max-width: 480px) {
   html, body { height: 100%; overflow: hidden; }
@@ -575,13 +586,13 @@
   <div class="statusbar"><span>4:31</span><span class="right">67</span></div>
   <div class="homehead">
     <div class="name"><span class="dot">C</span>홍길동님</div>
-    <div class="icons"><span data-action="oos-message" aria-label="메시지">☺</span><span data-action="oos-wallet" aria-label="지갑">▤</span><span data-action="oos-alarm" aria-label="알림">♤</span><span data-action="oos-menu" aria-label="전체메뉴">⌕</span></div>
+    <div class="icons"><span data-action="oos-message" aria-label="메시지"><i class="pic em" role="img" aria-label="메시지 아이콘"></i></span><span data-action="oos-wallet" aria-label="지갑"><i class="pic em" role="img" aria-label="지갑 아이콘"></i></span><span data-action="oos-alarm" aria-label="알림"><i class="pic em" role="img" aria-label="알림 아이콘"></i></span><span data-action="oos-menu" aria-label="전체메뉴"><i class="pic em" role="img" aria-label="전체메뉴 아이콘"></i></span></div>
   </div>
   <div class="body">
     <div class="card">
       <h3>자산 <span class="arr">›</span></h3>
       <div class="acctrow">
-        <div class="logo">S</div>
+        <div class="logo pic" role="img" aria-label="신한은행 로고"></div>
         <div style="flex:1">
           <div class="acctname">[금융거래한도계좌2]신한 주거래 우대통장<br>(저축예금)</div>
           <div class="acctamt">금액 숨김</div>
@@ -593,7 +604,7 @@
 
     <div class="card">
       <div class="acctrow">
-        <div class="logo" style="background:#E08A00">▭</div>
+        <div class="logo pic" role="img" aria-label="체크카드 아이콘"></div>
         <div style="flex:1">
           <div style="font-size:15px;font-weight:600">Pick E 체크캐릭터형(하리보)</div>
           <div class="acctamt">금액 숨김</div>
@@ -604,7 +615,7 @@
 
     <div class="card">
       <h3>땡겨요 <span class="arr">›</span></h3>
-      <div class="svc"><div class="sq">🍔</div>
+      <div class="svc"><div class="sq pic" role="img" aria-label="땡겨요 쿠폰 아이콘"></div>
         <div style="flex:1"><div class="t2">할인쿠폰 드려요</div><div class="t1">bhc치킨 최대 9,000원</div></div>
         <button class="btn-sm" data-action="oos-get-coupon" aria-label="바로받기">바로받기</button></div>
       <div class="rowlist"><span data-action="oos-event" aria-label="이벤트">이벤트</span><span data-action="oos-coupon" aria-label="쿠폰">쿠폰</span><span data-action="oos-point" aria-label="포인트">포인트</span></div>
@@ -612,7 +623,7 @@
 
     <div class="card">
       <h3>7월 소비 ↻ <span class="arr" data-action="oos-spend-detail" aria-label="소비 상세">›</span></h3>
-      <div style="font-size:13px;color:#6B7280">📅 오늘 쓴 돈</div>
+      <div style="font-size:13px;color:#6B7280"><i class="pic em" role="img" aria-label="오늘 쓴 돈 아이콘"></i> 오늘 쓴 돈</div>
       <div style="font-size:19px;font-weight:700">0원</div>
     </div>
 
@@ -623,9 +634,9 @@
 
     <div class="card">
       <h3>추천서비스 <span class="arr">›</span></h3>
-      <div class="svc"><div class="sq">⌂</div><div><div class="t1">SOL패밀리</div><div class="t2">가족과 함께하는 금융생활</div></div></div>
-      <div class="svc"><div class="sq">🅦</div><div><div class="t1">급여클럽+</div><div class="t2">급여이체 우대 혜택</div></div></div>
-      <div class="svc"><div class="sq">💳</div><div><div class="t1">내 카드 승인내역</div><div class="t2">모든 카드 실시간 승인내역</div></div></div>
+      <div class="svc"><div class="sq pic" role="img" aria-label="SOL패밀리 아이콘"></div><div><div class="t1">SOL패밀리</div><div class="t2">가족과 함께하는 금융생활</div></div></div>
+      <div class="svc"><div class="sq pic" role="img" aria-label="급여클럽+ 아이콘"></div><div><div class="t1">급여클럽+</div><div class="t2">급여이체 우대 혜택</div></div></div>
+      <div class="svc"><div class="sq pic" role="img" aria-label="내 카드 승인내역 아이콘"></div><div><div class="t1">내 카드 승인내역</div><div class="t2">모든 카드 실시간 승인내역</div></div></div>
     </div>
 
     <div class="card" data-action="oos-connect-event" aria-label="자산 연결 이벤트">
@@ -635,19 +646,19 @@
 
     <div class="card">
       <h3>신한금융그룹</h3>
-      <div class="svc"><div class="sq">💳</div><div><div class="t1">신한카드</div><div class="t2">나에게 맞는 카드 찾기</div></div></div>
-      <div class="svc"><div class="sq">📈</div><div><div class="t1">신한투자증권</div><div class="t2">지금 뜨는 주식 보러가기</div></div></div>
-      <div class="svc"><div class="sq">🛡</div><div><div class="t1">신한라이프</div><div class="t2">내게 필요한 보험, 보장분석으로 확인하기</div></div></div>
+      <div class="svc"><div class="sq pic" role="img" aria-label="신한카드 아이콘"></div><div><div class="t1">신한카드</div><div class="t2">나에게 맞는 카드 찾기</div></div></div>
+      <div class="svc"><div class="sq pic" role="img" aria-label="신한투자증권 아이콘"></div><div><div class="t1">신한투자증권</div><div class="t2">지금 뜨는 주식 보러가기</div></div></div>
+      <div class="svc"><div class="sq pic" role="img" aria-label="신한라이프 아이콘"></div><div><div class="t1">신한라이프</div><div class="t2">내게 필요한 보험, 보장분석으로 확인하기</div></div></div>
     </div>
 
     <div class="footlinks"><span data-action="oos-easy-home" aria-label="쉬운홈">쉬운홈</span><span data-action="oos-home-setting" aria-label="홈화면 설정">홈화면 설정</span><span data-action="oos-hide-amount" aria-label="금액 숨기기">금액 숨기기</span></div>
   </div>
   <div class="tabbar">
-    <div class="act" data-action="oos-tab-home" aria-label="홈"><span class="ti">⌂</span>홈</div>
-    <div data-action="oos-tab-finance" aria-label="금융"><span class="ti">Ⓦ</span>금융</div>
-    <div data-action="oos-tab-goods" aria-label="상품"><span class="ti">⌂</span>상품</div>
-    <div data-action="oos-tab-benefit" aria-label="혜택"><span class="ti">🎁</span>혜택</div>
-    <div data-action="oos-tab-stock" aria-label="주식"><span class="ti">📈</span>주식</div>
+    <div class="act" data-action="oos-tab-home" aria-label="홈"><span class="ti pic em" role="img" aria-label="홈 아이콘"></span>홈</div>
+    <div data-action="oos-tab-finance" aria-label="금융"><span class="ti pic em" role="img" aria-label="금융 아이콘"></span>금융</div>
+    <div data-action="oos-tab-goods" aria-label="상품"><span class="ti pic em" role="img" aria-label="상품 아이콘"></span>상품</div>
+    <div data-action="oos-tab-benefit" aria-label="혜택"><span class="ti pic em" role="img" aria-label="혜택 아이콘"></span>혜택</div>
+    <div data-action="oos-tab-stock" aria-label="주식"><span class="ti pic em" role="img" aria-label="주식 아이콘"></span>주식</div>
   </div>
 </section>
 
@@ -656,12 +667,12 @@
   <div class="navbar">
     <span class="ico" data-action="back-home">‹</span>
     <span class="mid" data-action="oos-multi-transfer" aria-label="다건이체">다건이체</span>
-    <span style="display:flex;gap:14px"><span class="ico" data-action="oos-payee-manage" aria-label="받는 사람 관리">👤</span><span class="ico" data-action="back-home">✕</span></span>
+    <span style="display:flex;gap:14px"><span class="ico" data-action="oos-payee-manage" aria-label="받는 사람 관리"><i class="pic em" role="img" aria-label="받는 사람 관리 아이콘"></i></span><span class="ico" data-action="back-home">✕</span></span>
   </div>
   <div class="body">
-    <div class="h1row"><div class="h1">누구에게 보낼까요?</div><span class="srch" data-action="oos-search" aria-label="검색">⌕</span></div>
+    <div class="h1row"><div class="h1">누구에게 보낼까요?</div><span class="srch" data-action="oos-search" aria-label="검색"><i class="pic em" role="img" aria-label="검색 아이콘"></i></span></div>
     <div class="inputline" data-action="go-account">
-      <span class="ph">계좌번호 직접 입력</span><span style="font-size:19px">▣</span>
+      <span class="ph">계좌번호 직접 입력</span><span class="pic em" role="img" aria-label="카메라 아이콘" style="font-size:19px"></span>
     </div>
     <div class="filterrow" data-action="oos-frequent" aria-label="자주쓰는 계좌"><span class="lbl">자주쓰는 계좌 <span class="tag">편집</span></span><span class="pill">0개 ⌄</span></div>
     <div class="filterrow" data-action="oos-my-accounts" aria-label="내 계좌"><span class="lbl">내 계좌</span><span class="pill">0개 ⌄</span></div>
@@ -691,7 +702,7 @@
   <div class="navbar"><span class="ico" data-action="back-recipient">‹</span><span></span><span class="ico" data-action="close-account">✕</span></div>
   <div class="body">
     <div class="h1">누구에게 보낼까요?</div>
-    <div class="accfield" id="acc-field">
+    <div class="accfield" id="acc-field" data-action="acc-field">
       <div class="lab">계좌번호</div>
       <div class="accrow">
         <div id="acc-input" class="val" data-empty="없이 숫자만 입력"></div>
@@ -729,7 +740,7 @@
   <div class="navbar"><span class="ico" data-action="back-amount">‹</span><span></span><span class="ico" data-action="back-home">✕</span></div>
   <div class="body">
     <div class="center">
-      <div class="bigav" id="cf-mark"></div>
+      <div class="bigav pic" id="cf-mark" role="img" aria-label="받는 은행 로고"></div>
       <div class="q2">아래 계좌로<br><span id="cf-amt">1</span>원 보낼까요?</div>
       <div class="fee">수수료 무료</div>
     </div>
@@ -801,7 +812,7 @@ const ANSWER_ACCOUNT = '110234567890';
 const BALANCE = 1000000;
 const ACC_MAX = 14;
 
-const S = { bank:null, account:'', amount:0, pw:'', errFrom:null };
+const S = { bank:null, account:'', amount:0, pw:'', errFrom:null, accPad:false };
 
 const ACC_KEYS = ['1','2','3','4','5','6','7','8','9','0'];
 const AMT_KEYS = ['1','2','3','4','5','6','7','8','9','00','0'];
@@ -834,12 +845,11 @@ const SECS = ['신한투자증권','교보증권','다올투자증권','대신�
   '삼성증권','상상인증권','신영증권','에스케이증권','유안타증권','유진투자증권','LS증권','카카오페이증권',
   '케이프투자증권','키움증권','토스증권','우리투자증권','하나증권','아이엠증권','한국투자증권','한화투자증권',
   '현대차증권','BNK투자증권','DB증권','IBK투자증권','KB증권','NH투자증권'];
-const COLORS = ['#1B4EE8','#0A4E9B','#E5484D','#F2A20C','#12A150','#6B7280','#3B7BF6','#111827'];
 
 function fillGrid(el, list){
-  el.innerHTML = list.map((n,i)=>
+  el.innerHTML = list.map(n=>
     `<div class="bk" data-action="pick-bank" data-bank="${n}">
-       <div class="bi" style="background:${COLORS[i%COLORS.length]}">${n[0]}</div>${n}
+       <div class="bi pic" role="img" aria-label="${n} 로고"></div>${n}
      </div>`).join('');
 }
 fillGrid(document.getElementById('grid-bank'), BANKS);
@@ -858,6 +868,7 @@ function renderAccount(){
   document.getElementById('acc-field').classList.toggle('max', atMax);
   document.getElementById('acc-warn').classList.toggle('on', atMax);
   document.getElementById('acc-clear').classList.toggle('on', S.account.length>0);
+  document.getElementById('acc-pad').classList.toggle('on', S.accPad);
   const pb = document.getElementById('picked-bank');
   pb.textContent = S.bank || '은행 또는 증권사 선택';
   pb.classList.toggle('set', !!S.bank);
@@ -897,7 +908,7 @@ document.getElementById('phone').addEventListener('click', function(e){
 
   if(a==='go-recipient') show('recipient');
   else if(a==='back-home') show('home');
-  else if(a==='go-account'){ S.account=''; S.bank=null; renderAccount(); show('account'); }
+  else if(a==='go-account'){ S.account=''; S.bank=null; S.accPad=false; renderAccount(); show('account'); }
   else if(a==='back-recipient') show('recipient');
   else if(a==='close-account') show('recipient');
   else if(a==='open-bank'){ bankTab(false); show('bank'); }
@@ -909,6 +920,7 @@ document.getElementById('phone').addEventListener('click', function(e){
     renderAccount();
     show('account');
   }
+  else if(a==='acc-field'){ S.accPad = true; renderAccount(); }
   else if(a==='acc-num'){
     if(S.account.length<ACC_MAX) S.account += el.dataset.v;
     renderAccount();
@@ -920,7 +932,7 @@ document.getElementById('phone').addEventListener('click', function(e){
     if(S.account !== ANSWER_ACCOUNT){ showError('err-account', 'account'); return; }
     document.getElementById('amt-bank').textContent = S.bank;
     document.getElementById('amt-acc').textContent = S.account;
-    document.getElementById('cf-mark').textContent = S.bank[0];
+    document.getElementById('cf-mark').setAttribute('aria-label', S.bank + ' 로고');
     document.getElementById('cf-bank').textContent = S.bank;
     document.getElementById('cf-acc').textContent = S.account;
     S.amount = 0; renderAmount();

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>그림 자리 이름 (설계서 시험용)</title>
+<style>
+  body{margin:0; display:flex; justify-content:center; background:#DFE3EA;}
+  #phone{width:390px; height:844px; background:#fff; position:relative; overflow:hidden;}
+  .screen{display:none; padding:20px;} .screen.on{display:block;}
+  .pic{display:inline-block; background:#E4E7EC;}
+  .big{width:84px; height:84px;} .mid{width:32px; height:32px;} .small{width:19px; height:19px;}
+  .strip{width:100px; height:40px; overflow:hidden; white-space:nowrap; margin-top:12px;}
+  .gap{display:inline-block; width:80px;}
+  button{font-size:16px; display:flex; align-items:center; gap:8px;}
+</style>
+</head>
+<body>
+<div id="phone">
+<section class="screen on" data-screen="a">
+  <div class="pic big" id="big" role="img" aria-label="받는 은행 로고"></div>
+  <button data-action="pick" data-bank="신한" id="pick"><span class="pic mid" id="mid" role="img" aria-label="신한 로고"></span>신한</button>
+  <span data-action="msg" aria-label="메시지" id="msg"><i class="pic small" id="small" role="img" aria-label="메시지 아이콘"></i></span>
+  <div class="pic mid" id="hidden" role="img" aria-label="숨은 로고" style="display:none"></div>
+  <div class="pic mid" id="noname" role="img"></div>
+  <div class="strip"><span class="gap"></span><span class="pic mid" id="clipped" role="img" aria-label="잘린 로고"></span></div>
+</section>
+</div>
+<script>
+window.__screen = () => document.querySelector('.screen.on').dataset.screen;
+document.getElementById('phone').addEventListener('click', e => {
+  const el = e.target.closest('[data-action]'); if (!el) return;
+  const a = el.dataset.action;
+  if (a === 'pick') {} else if (a === 'msg') {}
+});
+</script>
+</body>
+</html>
