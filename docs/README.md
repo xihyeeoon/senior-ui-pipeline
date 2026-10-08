@@ -334,7 +334,7 @@ API 없이: `--mock pass --mock-refine improve` (1회차에 다듬은 빌드가 
 | `attempts[].calls[].ratelimit` · `ratelimit` | 호출마다의 응답 헤더 `x-ratelimit-limit-tokens` · `-remaining-tokens` · `-limit-requests`, 그리고 마지막 값 |
 | `attempts[].calls[].waited_for_tokens` | 남은 토큰이 모자라 그 호출 전에 더 기다린 초 (추론형, 기다렸을 때만) |
 | `cost` | 시도별·전체 예상 금액 (USD) |
-| `audience` | 프롬프트가 말한 대상 — 과제 파일의 `audience` (지금 "60대 이상 고령 사용자"). 과제 설명과 다듬기 프롬프트의 `{{AUDIENCE}}` 자리에 들어간다. 값을 바꾸는 것은 연구자 결정이다 (11-8) |
+| `audience` | 프롬프트가 말한 대상 — 과제 파일의 `audience` (지금 "65세 이상 고령 사용자", 2026-10-08 전 실행은 "60대 이상 고령 사용자"). 과제 설명과 다듬기 프롬프트의 `{{AUDIENCE}}` 자리에 들어간다. 값을 바꾸는 것은 연구자 결정이다 (11-8) |
 | `original` · `original_sha256` | 이 실행이 쓴 원본 HTML (루트 기준 경로)과 그 지문 — 줄끝을 LF 로 맞춘 sha256 (`tasks.fingerprint`). `run.log` 첫 줄에도 `original_sha256=… (경로)` 로 남는다. 시작하지 못한 실행에도 있다. 고르기의 문지기 `original` 이 지금 원본과 견준다 (11-11) |
 | `entrance_distance` | 최종 빌드의 과제 밖 입구마다 원본 · 생성물에서 처음 누를 수 있게 보인 방문(`visit`), 그 입구를 보려고 누른 펼치기 횟수(`reveal`, 바로 보이면 0, 펼치기로 보였으면 그 reveal 이름 `via`), 그 화면 맨 위에서 입구 전체가 창 안에 들어오기까지의 스크롤 거리(`scroll_px`, 첫 화면 안이면 0). 보이지 않았으면 `null`. 검사 K 의 지표를 옮긴 것이고 **기록만** 한다 — 판정 · 고르기 문지기에 쓰지 않고 기준선 · 합격선도 없다. 남아 있는 것과 찾을 수 있는 것은 다르다 (Findlater, McGrenere 2007). 설명서의 "과제 밖 입구" 표가 같은 값이다 (11-8) |
 

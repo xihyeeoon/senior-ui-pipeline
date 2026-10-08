@@ -9,6 +9,9 @@ r"""모델에게 말하는 대상 문구를 과제 파일 한 칸으로 (11-8 4)
 기준값 tests/baseline/prompt · bill/prompt 가 그대로다 - test_baseline 이 본다). 다듬기
 프롬프트만 "60대 이상 사용자가" 가 "60대 이상 고령 사용자가" 로 바뀐다 (다듬기는 꺼 두었다).
 
+2026-10-08 (11-8b): 연구자가 값을 모집 기준에 맞춰 "65세 이상 고령 사용자" 로 바꿨다. 과제 파일의
+`note` 에 이전 값이 남는다.
+
   .\.venv\Scripts\python.exe -m pytest tests/test_audience.py
 """
 import io
@@ -23,7 +26,7 @@ import _api
 T = _api.tasks_module
 P = _api.prompt_module
 ROOT = _api.ROOT_DIR
-NOW = "60대 이상 고령 사용자"
+NOW = "65세 이상 고령 사용자"
 TASKS = ("transfer", "bill")
 
 
@@ -34,6 +37,8 @@ TASKS = ("transfer", "bill")
 def test_the_task_file_has_the_audience_as_it_was(task):
     raw = json.load(io.open(T.task_path(task), encoding="utf-8"))
     assert raw["audience"] == NOW
+    # 바꾼 날과 이전 값은 과제 파일의 note 에 (11-8b)
+    assert any("2026-10-08" in line and "60대 이상 고령 사용자" in line for line in raw["note"])
     # 설명에는 문구가 아니라 자리가 있다 - 문구는 한 칸에만 있다
     desc = "\n".join(raw["description"])
     assert "{{AUDIENCE}}" in desc and NOW not in desc
