@@ -763,7 +763,7 @@ def test_the_refine_prompt_asks_an_open_question_not_a_checklist():
     assert "어디서 멈추는가. 무엇을 못 읽는가. 무엇을 잘못 누르는가." in text
     assert "코드에서 짐작한 것이 아니라 그림에서 본 것으로 판단하라" in text
     # 비평 칸은 빈칸 틀이다
-    assert '"problem": "<고령 사용자가 어디서 왜 막히는가>"' in text
+    assert '"problem": "<65세 이상 고령 사용자가 어디서 왜 막히는가>"' in text
     assert '"seen": "<어느 그림의 어디에서 무엇을 보고>"' in text
     # 체크리스트 말이 없다 (글자 크기 · 터치 크기 같은 규칙) - 기술 계약(3절) 앞까지
     head = text.split("## 3.")[0]
