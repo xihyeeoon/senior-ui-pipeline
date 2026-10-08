@@ -172,6 +172,21 @@ def test_the_brief_says_the_gap_is_now_a_failure():
     assert "생성물에서 어느 상태에서도 보이지 않으면 검사 I 의 fatal 이다" in md
 
 
+# 기술 계약(생성 · 재시도 · 다듬기가 함께 쓴다)이 검사 I 의 판정과 같은 말을 한다 (11-8b 3).
+# 전에는 "(숨김·접힘은 괜찮다)" 까지만 말해, 접어 둔 목록을 펼치는 조작을 reveal 에 적으라는
+# 것은 떨어진 시도의 재시도 블록에서야 알았다.
+FOLDED = ("(숨김·접힘은 괜찮다). 다만 접거나 숨긴 값도 흐름 명세의 걸음이나 `reveal` 을 따라가면 "
+          "어느 상태에서든 실제로 누를 수 있게 보여야 한다 — 접은 묶음마다(값이 하나뿐인 묶음도) "
+          "펼치는 조작을 `reveal` 에 적어라.")
+
+
+@pytest.mark.parametrize("task", ["transfer", "bill"])
+def test_the_contract_says_folded_values_must_be_shown(task):
+    p = _api.prompt_module
+    for t in (p.load_template(task), p.load_refine_template(task)):
+        assert " ".join(t.split()).count(FOLDED) == 1
+
+
 # ===================================================================== #
 # 실제로 걷는다 (pytest -m browser)
 # ===================================================================== #
