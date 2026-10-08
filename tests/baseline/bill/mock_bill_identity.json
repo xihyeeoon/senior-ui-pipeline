@@ -15,7 +15,7 @@
   },
   "mock": "bill-identity",
   "task": "bill",
-  "audience": "60대 이상 고령 사용자",
+  "audience": "65세 이상 고령 사용자",
   "stage": "wireframe",
   "stage_source": "config.DEFAULT_STAGE",
   "budget_source": {
@@ -64,7 +64,7 @@
     "response_model": null,
     "system_fingerprint": null,
     "openai_sdk": "<sdk>",
-    "prompt_template_sha256": "0579b60f0caeb1d564accb9def8d6c4c1468894cb734df3b93a8942e48b9493f"
+    "prompt_template_sha256": "988130bbf220ada914f99272c91d1f0c6add4712849d727b8da526a038d3e9da"
   },
   "attempts": [
     {
@@ -77,13 +77,13 @@
         "response_model": null,
         "system_fingerprint": null,
         "openai_sdk": "<sdk>",
-        "prompt_template_sha256": "0579b60f0caeb1d564accb9def8d6c4c1468894cb734df3b93a8942e48b9493f"
+        "prompt_template_sha256": "988130bbf220ada914f99272c91d1f0c6add4712849d727b8da526a038d3e9da"
       },
       "plan": "<run>/attempt_1.plan.json",
       "calls": [
         {
           "stage": "plan",
-          "estimated_prompt": 21096,
+          "estimated_prompt": 21103,
           "method": "tiktoken:o200k_base(대체)",
           "max_tokens": 25000,
           "usage": null,
@@ -93,7 +93,7 @@
         },
         {
           "stage": "generate",
-          "estimated_prompt": 15922,
+          "estimated_prompt": 15995,
           "method": "tiktoken:o200k_base(대체)",
           "max_tokens": 32000,
           "usage": null,
@@ -212,7 +212,7 @@
     "by_stage": {
       "plan": {
         "calls": 1,
-        "estimated_prompt": 21096,
+        "estimated_prompt": 21103,
         "images": 15,
         "estimated_images": 6330,
         "max_tokens": 25000,
@@ -222,7 +222,7 @@
       },
       "generate": {
         "calls": 1,
-        "estimated_prompt": 15922,
+        "estimated_prompt": 15995,
         "images": 0,
         "estimated_images": 0,
         "max_tokens": 32000,
@@ -233,7 +233,7 @@
     },
     "total": {
       "calls": 2,
-      "estimated_prompt": 37018,
+      "estimated_prompt": 37098,
       "images": 15,
       "estimated_images": 6330,
       "max_tokens": 57000,
@@ -243,7 +243,7 @@
     },
     "first_attempt": {
       "calls": 2,
-      "estimated_prompt": 37018,
+      "estimated_prompt": 37098,
       "images": 15,
       "estimated_images": 6330,
       "max_tokens": 57000,
