@@ -1,0 +1,141 @@
+{
+  "name": "auto",
+  "note": "전체메뉴와 메뉴 검색을 거쳐 납부에 진입하고, 촬영 후 사진 확인 클릭으로 정보를 확인한 다음 비밀번호와 납부 버튼으로 완료한다.",
+  "derived_from_original": false,
+  "required_ids": [
+    "phone",
+    "menu-body",
+    "search-input",
+    "search-pay",
+    "start-capture",
+    "show-bills",
+    "shutter-button",
+    "photo-next",
+    "bi-eno",
+    "bi-name",
+    "bi-amt",
+    "bi-acc",
+    "pwpad",
+    "submit-payment",
+    "dn-paid",
+    "dn-eno"
+  ],
+  "steps": [
+    {
+      "screen": "home"
+    },
+    {
+      "screen": "menu",
+      "click": "[data-screen='home'] [data-action='go-menu']"
+    },
+    {
+      "screen": "search",
+      "click": "[data-screen='menu'] [data-action='open-search']"
+    },
+    {
+      "screen": "search",
+      "click": "[data-screen='search'] [data-action='oos-search-submit']"
+    },
+    {
+      "screen": "bill-start",
+      "click": "#search-pay"
+    },
+    {
+      "screen": "capture",
+      "click": "#start-capture"
+    },
+    {
+      "screen": "review",
+      "do": [
+        {
+          "click": "#shutter-button"
+        },
+        {
+          "wait": 0.7
+        },
+        {
+          "click": "#photo-next"
+        }
+      ]
+    },
+    {
+      "screen": "review",
+      "do": [
+        {
+          "click": "[data-screen='review'] [data-action='account-open']"
+        },
+        {
+          "click": "[data-screen='review'] [data-action='account-select']"
+        }
+      ]
+    },
+    {
+      "screen": "authenticate",
+      "click": "[data-screen='review'] [data-action='pay']"
+    },
+    {
+      "screen": "authenticate",
+      "do": [
+        {
+          "repeat": 4,
+          "click": "#pwpad [data-action='pw']",
+          "wait": 0.15
+        }
+      ]
+    },
+    {
+      "screen": "receipt",
+      "do": [
+        {
+          "click": "#submit-payment"
+        },
+        {
+          "wait": 0.9
+        }
+      ]
+    }
+  ],
+  "reveal": {
+    "menu-item": {
+      "at": "menu",
+      "do": [
+        {
+          "click": "[data-screen='menu'] [data-action='expand-all']"
+        }
+      ]
+    },
+    "pick-bill": {
+      "at": "bill-start",
+      "do": [
+        {
+          "click": "#show-bills"
+        }
+      ]
+    },
+    "pw": {
+      "at": "authenticate",
+      "do": [
+        {
+          "click": "#pwpad [data-action='pw-shuffle']"
+        }
+      ]
+    },
+    "account-select": {
+      "at": "review",
+      "do": [
+        {
+          "click": "[data-screen='review'] [data-action='account-open']"
+        }
+      ]
+    },
+    "more-toggle": {
+      "at": "menu",
+      "do": [
+        {
+          "click": "[data-screen='menu'] [data-action='more-toggle']"
+        }
+      ]
+    }
+  },
+  "expect": {}
+}

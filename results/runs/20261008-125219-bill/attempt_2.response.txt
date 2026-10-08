@@ -1,0 +1,831 @@
+```json
+{
+  "cause": "화면 전환 클릭과 선택지 공개 조작을 흐름 명세에 명확히 연결하지 않아 검사기가 다음 화면과 목록에 도달하지 못했다.",
+  "plan_changes": [],
+  "keep": ["C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10", "C11", "C12", "C13", "home", "menu", "search", "bill-start", "capture", "review", "authenticate", "receipt"]
+}
+```
+
+```html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>세금·공과금 납부</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;background:#e4e9ef;color:#172333;font-family:"맑은 고딕","Apple SD Gothic Neo",sans-serif}
+body{display:flex;justify-content:center}
+#phone{width:390px;height:844px;position:relative;overflow:hidden;background:#fff}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;background:#fff}
+.screen.on{display:flex}
+button,input{font:inherit}
+button{min-height:52px;border:1px solid #b8c4d3;border-radius:12px;background:#fff;color:#172333;padding:12px 14px;font-size:19px;font-weight:700;cursor:pointer;line-height:1.4}
+button:focus-visible,input:focus-visible{outline:3px solid #d67900;outline-offset:2px}
+button:disabled{background:#e1e6ed;color:#586475;border-color:#cbd3df;cursor:default}
+[hidden]{display:none!important}
+h1{font-size:24px;line-height:1.35;margin:0}
+h2{font-size:23px;margin:8px 0 14px}
+h3{font-size:20px;margin:16px 0 10px}
+p{font-size:18px;line-height:1.55;margin:10px 0}
+.header{flex:none;padding:16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #d6dfe9;background:#fff}
+.header h1{flex:1}
+.header button{font-size:18px;min-height:48px;padding:10px}
+.body{flex:1;min-height:0;overflow-y:auto;padding:16px;scroll-behavior:smooth}
+.footer{flex:none;padding:12px 16px 16px;border-top:1px solid #d6dfe9;background:#fff}
+.footer button{width:100%}
+.primary{background:#064fbc;border-color:#064fbc;color:#fff}
+.primary:disabled{background:#e1e6ed;color:#586475;border-color:#cbd3df}
+.wide{width:100%;margin-bottom:10px;text-align:left}
+.secondary{background:#edf4ff;border-color:#abc5e9;color:#084d9e}
+.small{font-size:17px;font-weight:400;color:#4a5869;line-height:1.5}
+.card{background:#fff;border:1px solid #cbd5e1;border-radius:14px;padding:16px;margin-bottom:16px}
+.tinted{background:#f1f6ff}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.row button{flex:1;min-width:92px;font-size:17px}
+.notice{padding:14px;border-radius:12px;background:#edf4ff;color:#173d70;font-size:18px;line-height:1.55;margin:12px 0}
+.amount{font-size:32px;font-weight:800;color:#064fbc;margin:10px 0}
+.field{border-bottom:1px solid #dbe2eb;padding:12px 0}
+.field dt{font-size:17px;color:#4a5869;margin-bottom:6px}
+.field dd{margin:0;font-size:21px;font-weight:700;line-height:1.45;overflow-wrap:anywhere}
+dl{margin:0}
+.nav{display:flex;flex:none;padding:6px;border-top:1px solid #cbd5e1;gap:4px}
+.nav button{flex:1;border:0;padding:8px 2px;font-size:17px;min-width:0}
+.more{margin:16px 0}
+.more-content{border:1px solid #cbd5e1;padding:12px;border-radius:12px;margin-top:10px;background:#f7f9fc}
+.more-content button{display:block;width:100%;text-align:left;margin-bottom:8px}
+.group{margin:12px 0;border:1px solid #cbd5e1;border-radius:12px}
+.group-toggle{width:100%;border:0;border-radius:12px;text-align:left;background:#edf4ff}
+.group-content{padding:10px}
+.group-tools{position:sticky;top:0;background:#fff;padding:8px 0;border-bottom:1px solid #cbd5e1;z-index:1}
+.group-tools strong{font-size:21px;display:block;margin-bottom:8px}
+.chips{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.chips button{font-size:17px;text-align:left;background:#f7f9fc}
+.menu-heading{padding:16px 6px 8px;color:#364b64;font-size:20px}
+.choice{width:100%;display:block;text-align:left;margin-bottom:8px;overflow-wrap:anywhere}
+.choice .path{display:block;font-size:16px;font-weight:400;color:#4a5869;margin-top:5px;line-height:1.5}
+label{display:block;font-size:19px;font-weight:700;margin:12px 0 8px}
+input{width:100%;height:56px;border:2px solid #8093ab;border-radius:10px;padding:10px 12px;font-size:21px;background:#fff;color:#172333}
+.camera-body{background:#202d3d;padding:20px 16px}
+.frame{border:3px solid #fff;border-radius:14px;min-height:340px;display:flex;align-items:center;justify-content:center;padding:16px;color:#fff;text-align:center;font-size:21px;line-height:1.6}
+.paper{width:100%;background:#fff;color:#172333;text-align:left;padding:20px;border-radius:5px;box-shadow:0 4px 15px #0004}
+.paper h2{text-align:center;font-size:24px}
+.paper p{font-size:19px}
+.capture-notice{background:#fff;color:#172333;padding:16px;border-radius:12px;margin-top:18px}
+.capture-notice p{margin:0}
+.dots{display:flex;justify-content:center;gap:20px;margin:16px 0}
+.dots span{width:22px;height:22px;border:2px solid #728399;border-radius:50%;display:block}
+.dots .filled{background:#064fbc;border-color:#064fbc}
+.pwpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pwpad button{height:66px;font-size:27px;background:#f6f9fe;border:2px solid #8093ab}
+.pwpad .edit-key{font-size:17px}
+.center{text-align:center}
+.success{background:#e5f4ed;color:#145738;border:1px solid #93bda8;padding:16px;border-radius:12px;margin-bottom:16px}
+.success h2{margin:0 0 8px;font-size:28px}
+.overlay{position:absolute;inset:0;z-index:20;background:#17233399;display:flex;align-items:center;justify-content:center;padding:20px}
+.dialog{width:100%;max-height:730px;overflow-y:auto;background:#fff;border-radius:16px;padding:22px;box-shadow:0 10px 30px #0003}
+.dialog button{width:100%;margin-top:12px}
+.selected{border:3px solid #064fbc;background:#edf4ff}
+</style>
+</head>
+<body>
+<div id="phone">
+<section class="screen on" data-screen="home">
+  <header class="header"><h1>홍길동님, 안녕하세요</h1></header>
+  <main class="body">
+    <button class="wide primary" data-action="go-menu">전체메뉴</button>
+    <button class="wide secondary" data-action="open-search">메뉴 검색</button>
+    <button class="wide" data-action="oos-easy-home">쉬운홈</button>
+    <div class="row">
+      <button data-action="oos-message">메시지</button>
+      <button data-action="oos-wallet">지갑</button>
+      <button data-action="oos-alarm">알림</button>
+    </div>
+    <div class="card">
+      <h2>자산</h2>
+      <p>신한 주거래 우대통장</p>
+      <p class="small">[금융거래한도계좌2]<br>저축예금</p>
+      <p>금액 숨김</p>
+      <button class="wide" data-action="feature" data-title="자산">자산 자세히 보기</button>
+      <button class="wide secondary" data-action="oos-transfer">이체</button>
+      <button class="wide" data-action="oos-irp">개인형 퇴직연금 안내</button>
+      <p class="small">절세혜택과 안정적인 노후를 준비하세요.</p>
+    </div>
+    <div class="card">
+      <h2>카드</h2><p>픽 이 체크캐릭터형(하리보)</p><p>금액 숨김</p>
+      <button class="wide" data-action="oos-appcard">앱카드 가입</button>
+    </div>
+    <div class="card">
+      <h2>땡겨요</h2><p>비에이치씨 치킨 최대 9,000원 할인쿠폰</p>
+      <button class="wide" data-action="oos-get-coupon">바로받기</button>
+      <div class="row">
+        <button data-action="oos-event">이벤트</button>
+        <button data-action="oos-coupon">쿠폰</button>
+        <button data-action="oos-point">포인트</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>7월 소비</h2><p>오늘 쓴 돈 0원</p>
+      <button class="wide" data-action="oos-spend-detail">소비 상세</button>
+    </div>
+    <div class="card tinted">
+      <h2>마이신한포인트</h2>
+      <p class="small">카드 쓸 때마다 쌓이고, 현금처럼 쓰는 포인트</p>
+      <button class="wide" data-action="oos-my-point">시작하기</button>
+    </div>
+    <div class="card">
+      <h2>추천서비스</h2>
+      <button class="wide" data-action="feature" data-title="쏠패밀리">쏠패밀리<br><span class="small">가족과 함께하는 금융생활</span></button>
+      <button class="wide" data-action="feature" data-title="급여클럽 플러스">급여클럽 플러스<br><span class="small">급여이체 우대 혜택</span></button>
+      <button class="wide" data-action="feature" data-title="내 카드 승인내역">내 카드 승인내역<br><span class="small">모든 카드 실시간 승인내역</span></button>
+      <button class="wide" data-action="oos-connect-event">자산 연결 이벤트<br><span class="small">금융자산 연결하고 커피쿠폰 받기</span></button>
+    </div>
+    <div class="card">
+      <h2>신한금융그룹</h2>
+      <button class="wide" data-action="feature" data-title="신한카드">신한카드<br><span class="small">나에게 맞는 카드 찾기</span></button>
+      <button class="wide" data-action="feature" data-title="신한투자증권">신한투자증권<br><span class="small">지금 뜨는 주식 보러가기</span></button>
+      <button class="wide" data-action="feature" data-title="신한라이프">신한라이프<br><span class="small">내게 필요한 보험과 보장분석</span></button>
+    </div>
+    <button class="wide" data-action="oos-home-setting">홈화면 설정</button>
+    <button class="wide" data-action="oos-hide-amount">금액 숨기기</button>
+    <div class="more" data-more-for="home"></div>
+  </main>
+  <nav class="nav" aria-label="하단 메뉴">
+    <button data-action="oos-tab-home">홈</button>
+    <button data-action="oos-tab-finance">금융</button>
+    <button data-action="oos-tab-goods">상품</button>
+    <button data-action="oos-tab-benefit">혜택</button>
+    <button data-action="oos-tab-stock">주식</button>
+  </nav>
+</section>
+
+<section class="screen" data-screen="menu">
+  <header class="header"><button data-action="back-home">홈으로</button><h1>전체메뉴</h1></header>
+  <main class="body" id="menu-body">
+    <div id="menu-top">
+      <button id="menu-pay" class="wide primary" data-action="bill-entry">세금·공과금 납부</button>
+      <button class="wide secondary" data-action="open-search">메뉴 검색</button>
+      <p class="small">분야를 펼치면 해당 분야의 모든 메뉴를 볼 수 있어요.</p>
+      <button class="wide" data-action="expand-all">모든 분야 펼치기</button>
+      <div class="more" data-more-for="menu"></div>
+    </div>
+    <div id="menu-groups"></div>
+  </main>
+</section>
+
+<section class="screen" data-screen="search">
+  <header class="header"><button data-action="back-menu">전체메뉴</button><h1>메뉴 검색</h1></header>
+  <main class="body" id="search-body">
+    <label for="search-input">찾을 메뉴 이름</label>
+    <input id="search-input" data-action="search-input" type="search" placeholder="예: 공과금, 고지서" autocomplete="off">
+    <div class="row">
+      <button class="primary" data-action="oos-search-submit">검색</button>
+      <button data-action="search-clear">입력 지우기</button>
+    </div>
+    <button class="wide" data-action="search-all">전체 목록 보기</button>
+    <p id="search-status" class="small" aria-live="polite">검색어를 입력하거나 아래 메뉴를 선택하세요.</p>
+    <button id="search-pay" class="wide primary" data-action="bill-entry">세금·공과금 납부<br><span>종이 고지서 촬영으로 납부</span></button>
+    <div id="search-empty" class="notice" hidden>찾는 메뉴가 없습니다. 다른 검색어를 입력하거나 전체 목록 보기를 눌러 주세요.</div>
+    <button class="wide" data-action="oos-ask-ai">인공지능에게 물어보기</button>
+    <div class="more" data-more-for="search"></div>
+    <h2>메뉴 목록</h2>
+    <div id="search-list"></div>
+  </main>
+</section>
+
+<section class="screen" data-screen="bill-start">
+  <header class="header"><button data-action="back-bill-home">이전</button><h1>세금·공과금 납부</h1></header>
+  <main class="body">
+    <h2>종이 고지서를 준비하세요</h2>
+    <p>촬영 → 정보 확인 → 비밀번호 → 완료</p>
+    <button id="start-capture" class="wide primary" data-action="pay-start">종이 고지서 촬영하여 납부</button>
+    <button class="wide" data-action="oos-bill-inquiry">조회하기<br><span class="small">전자고지서 확인</span></button>
+    <button class="wide" data-action="oos-giro-register">자주 쓰는 지로번호 등록</button>
+    <button id="show-bills" class="wide" data-action="bill-show">공과금 종류 모두 보기</button>
+    <div class="more" data-more-for="bill-start"></div>
+    <h2 id="bill-heading">공과금 종류</h2>
+    <p class="small">종류를 선택하면 이용할 수 있는 기능을 안내해 드려요.</p>
+    <div id="bill-selection" class="notice" hidden aria-live="polite"></div>
+    <div id="bill-list"></div>
+  </main>
+</section>
+
+<section class="screen" data-screen="capture">
+  <header class="header"><h1>1단계 · 고지서 촬영</h1></header>
+  <main class="body camera-body">
+    <div class="frame">
+      <div id="camera-guide">고지서 전체가<br>이 사각형 안에 들어오도록<br>맞춰 주세요.</div>
+      <div id="capture-photo" class="paper" hidden>
+        <h2>전기요금 고지서</h2>
+        <p>고객명　홍길동</p><p>2026년 7월</p>
+        <p>전자납부번호<br><strong>1700000000</strong></p>
+        <p>납부금액　<strong>2,160원</strong></p>
+      </div>
+    </div>
+    <div class="capture-notice">
+      <p id="capture-status" aria-live="polite">밝은 곳에서 고지서 전체와 번호가 함께 선명하게 보이도록 찍어 주세요.</p>
+    </div>
+  </main>
+  <div class="footer">
+    <button id="shutter-button" class="primary" data-action="shutter">촬영하기</button>
+    <div id="photo-actions" hidden>
+      <button id="photo-next" class="primary" data-action="photo-next">이 사진으로 정보 확인</button>
+      <div class="row"><button data-action="retake">다시 촬영</button></div>
+    </div>
+    <div class="row"><button data-action="to-bill-home">촬영 취소</button></div>
+  </div>
+</section>
+
+<section class="screen" data-screen="review">
+  <header class="header"><button data-action="review-back">이전</button><h1>2단계 · 정보 확인</h1></header>
+  <main class="body">
+    <div class="card tinted">
+      <h2>전기요금</h2>
+      <p><strong id="bi-name">홍길동</strong>님 · 2026년 7월</p>
+      <div class="amount"><span id="bi-amt">2,160</span>원</div>
+      <p>종이 고지서의 이름·금액·번호와 같은지 확인하세요.</p>
+    </div>
+    <h2>납부정보</h2>
+    <dl>
+      <div class="field"><dt>전자납부번호(고객번호)</dt><dd id="bi-eno">1700000000</dd></div>
+      <div class="field"><dt>청구연월</dt><dd>2026년 7월</dd></div>
+      <div class="field"><dt>고객전용지정 계좌번호</dt><dd>31500000000000</dd></div>
+      <div class="field"><dt>고객주소</dt><dd>○○동 ●●●-●</dd></div>
+    </dl>
+    <h2>출금계좌</h2><p class="small">납부할 돈이 나갈 계좌입니다.</p>
+    <div class="card">
+      <p><strong id="bi-acc">신한 110-000-000000</strong></p>
+      <p>출금가능금액 <strong>1,000,000원</strong></p>
+      <p class="small">[금융거래한도계좌2]<br>신한 주거래 우대통장(저축예금)</p>
+      <button class="wide" data-action="account-open">출금계좌 확인·변경</button>
+      <div id="account-panel" hidden>
+        <p class="small">사용 가능한 출금계좌는 한 개입니다. 다른 출금계좌는 없습니다.</p>
+        <button class="wide selected" data-action="account-select">신한 110-000-000000<br><span class="small">현재 선택 · 출금가능금액 1,000,000원</span></button>
+        <button class="wide" data-action="account-close">계좌 목록 닫기</button>
+      </div>
+    </div>
+    <button class="wide" data-action="retake">다시 촬영</button>
+    <div class="more" data-more-for="review"></div>
+  </main>
+  <div class="footer">
+    <p class="small">아직 출금되지 않았습니다.</p>
+    <button class="primary" data-action="pay">정보 확인했어요 · 비밀번호 입력</button>
+  </div>
+</section>
+
+<section class="screen" data-screen="authenticate">
+  <header class="header">
+    <button data-action="close-password">이전</button><h1>3단계 · 비밀번호</h1>
+    <button data-action="close-password">닫기</button>
+  </header>
+  <main class="body">
+    <div class="card tinted">
+      <p><strong>전기요금 2,160원</strong></p>
+      <p>출금계좌<br><strong>신한 110-000-000000</strong></p>
+    </div>
+    <p class="center">이 계좌의 비밀번호<br><strong>네 자리</strong>를 입력하세요.</p>
+    <div class="dots" id="pw-dots" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+    <p class="center small" id="pw-progress" aria-live="polite">네 자리 중 0자리 입력</p>
+    <div class="pwpad" id="pwpad" aria-label="비밀번호 숫자판"></div>
+    <p class="small center" id="pay-status" aria-live="polite">입력한 뒤 납부하기를 눌러 주세요.</p>
+  </main>
+  <div class="footer"><button id="submit-payment" class="primary" data-action="submit-payment" disabled>2,160원 납부하기</button></div>
+</section>
+
+<section class="screen" data-screen="receipt">
+  <header class="header"><h1>4단계 · 납부 결과</h1><button data-action="finish">홈</button></header>
+  <main class="body">
+    <div class="success"><h2>납부 완료</h2><p>전기요금을 납부했습니다.</p></div>
+    <div class="card tinted">
+      <h2>전기요금 · 2026년 7월</h2>
+      <div class="amount"><span id="dn-paid">2,160</span>원</div>
+      <dl>
+        <div class="field"><dt>출금계좌</dt><dd id="dn-acc">신한 110-000-000000</dd></div>
+        <div class="field"><dt>납부일</dt><dd>2026.08.07 10:11</dd></div>
+      </dl>
+    </div>
+    <h2>납부 상세</h2>
+    <dl>
+      <div class="field"><dt>전자납부번호(고객번호)</dt><dd id="dn-eno">1700000000</dd></div>
+      <div class="field"><dt>고객명</dt><dd>홍길동</dd></div>
+      <div class="field"><dt>청구연월</dt><dd>2026년 7월</dd></div>
+      <div class="field"><dt>고객전용지정 계좌번호</dt><dd>31500000000000</dd></div>
+      <div class="field"><dt>고객주소</dt><dd>○○동 ●●●-●</dd></div>
+    </dl>
+    <div class="notice">입금할 수 없는 계좌인 경우 출금계좌로 재입금됩니다. 추가로 입금하지 말고 납부내역에서 처리 상태를 확인하세요.</div>
+    <button class="wide secondary" data-action="payment-history">납부내역 확인</button>
+    <div class="more" data-more-for="receipt"></div>
+  </main>
+  <div class="footer"><button class="primary" data-action="finish">홈으로 돌아가기</button></div>
+</section>
+
+<div id="feature-panel" class="overlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="feature-title">
+    <h2 id="feature-title"></h2><p id="feature-message"></p>
+    <button id="feature-inquiry" data-action="oos-bill-inquiry" hidden>조회하기 안내</button>
+    <button id="feature-capture" class="primary" data-action="pay-start" hidden>이 종류의 고지서 촬영하기</button>
+    <button class="secondary" data-action="panel-close">이전 화면으로 돌아가기</button>
+  </div>
+</div>
+</div>
+
+<script>
+(function(){
+  const phone=document.getElementById('phone');
+  const P=window.PRESERVED || {};
+  const groups=[
+    ['은행',P.MENU_BANK || []],
+    ['카드',P.MENU_CARD || []],
+    ['증권',P.MENU_STOCK || []],
+    ['보험',P.MENU_INSURE || []],
+    ['혜택',P.MENU_BENEFIT || []],
+    ['상품',P.MENU_GOODS || []],
+    ['고객센터',P.MENU_HELP || []]
+  ];
+  const bills=P.BILL_ITEMS || [];
+  const keys=P.PW_KEYS || [];
+  let current='home',billFrom='menu',password='',processing=false;
+  let photoState='ready',photoTimer=null,paymentTimer=null,lastPanelFocus=null;
+  const $=id=>document.getElementById(id);
+
+  const spoken={
+    'SOL':'쏠','MY':'마이','IRP':'개인형 퇴직연금','ISA':'개인종합자산관리',
+    'ETF':'상장지수펀드','AI':'인공지능','PC':'컴퓨터','PB':'자산관리',
+    'TV':'텔레비전','KT':'케이티','RP':'환매조건부채권','KRX':'한국거래소',
+    'ELS':'주가연계증권','DLS':'파생결합증권','Premier':'프리미어',
+    'MYCAR ZONE':'마이카 존','LOAN PARTNERSHIP':'대출 제휴',
+    'Eats More':'이츠 모어','The More':'더 모어'
+  };
+  const letterNames={
+    A:'에이',B:'비',C:'씨',D:'디',E:'이',F:'에프',G:'지',H:'에이치',
+    I:'아이',J:'제이',K:'케이',L:'엘',M:'엠',N:'엔',O:'오',P:'피',
+    Q:'큐',R:'알',S:'에스',T:'티',U:'유',V:'브이',W:'더블유',X:'엑스',Y:'와이',Z:'제트'
+  };
+  function ko(value){
+    let t=String(value);
+    Object.keys(spoken).sort((a,b)=>b.length-a.length).forEach(k=>{t=t.split(k).join(spoken[k]);});
+    return t.replace(/[A-Za-z]+/g,s=>s.toUpperCase().split('').map(c=>letterNames[c]).join(''));
+  }
+  function makeButton(text,action,cls){
+    const b=document.createElement('button');
+    b.type='button';b.textContent=text;b.dataset.action=action;
+    if(cls)b.className=cls;
+    return b;
+  }
+  function show(name,keep){
+    if(processing)return;
+    $('feature-panel').hidden=true;
+    phone.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.dataset.screen===name));
+    current=name;
+    const body=phone.querySelector('.screen.on .body');
+    if(body&&!keep)body.scrollTop=0;
+  }
+  window.__screen=()=>current;
+  function panel(title,message,options){
+    lastPanelFocus=document.activeElement;
+    $('feature-title').textContent=title;$('feature-message').textContent=message;
+    $('feature-inquiry').hidden=!(options&&options.inquiry);
+    $('feature-capture').hidden=!(options&&options.capture);
+    $('feature-panel').hidden=false;
+    $('feature-panel').querySelector('[data-action="panel-close"]').focus();
+  }
+  function closePanel(){
+    $('feature-panel').hidden=true;
+    if(lastPanelFocus&&lastPanelFocus.isConnected)lastPanelFocus.focus();
+  }
+  function unavailable(title){
+    panel(title,'이 화면에서는 '+title+' 기능을 이용할 수 없습니다. 이전 화면으로 돌아가 다른 메뉴를 선택해 주세요.');
+  }
+  const extras={
+    home:[['oos-support','고객센터'],['oos-chat','고객센터 채팅'],['oos-settings','설정'],['oos-logout','로그아웃']],
+    menu:[['oos-chat','고객센터 채팅'],['oos-settings','설정'],['oos-logout','로그아웃']],
+    search:[['oos-ask-ai','인공지능에게 물어보기'],['oos-support','고객센터']],
+    'bill-start':[['oos-support','고객센터'],['oos-home','홈']],
+    review:[['oos-info-support','고객센터'],['oos-info-home','홈']],
+    receipt:[['oos-done-support','고객센터'],['finish','홈']]
+  };
+  phone.querySelectorAll('[data-more-for]').forEach(holder=>{
+    const name=holder.dataset.moreFor;
+    const toggle=makeButton('기능 더보기','more-toggle','wide');
+    toggle.setAttribute('aria-expanded','false');toggle.dataset.target='more-'+name;
+    const content=document.createElement('div');
+    content.id='more-'+name;content.className='more-content';content.hidden=true;
+    extras[name].forEach(([a,label])=>content.appendChild(makeButton(label,a)));
+    const close=makeButton('더보기 닫기','more-close');
+    close.dataset.target=content.id;content.appendChild(close);
+    holder.append(toggle,content);
+  });
+
+  const allRows=[];
+  function choice(row,place){
+    const b=makeButton(ko(row.item),'menu-item','choice');
+    b.id='choice-'+place+'-'+row.key;
+    b.dataset.item=row.item;b.dataset.field=row.field;b.dataset.category=row.category;
+    b.dataset.choiceId=row.field+'::'+row.category+'::'+row.item+'::'+row.key;
+    b.dataset.payRoute=row.route?'yes':'no';
+    const path=document.createElement('span');path.className='path';
+    path.textContent=ko(row.field)+' › '+ko(row.category);b.appendChild(path);
+    return b;
+  }
+  groups.forEach(([field,list],gi)=>{
+    const sects=[];let active=null;
+    list.forEach(raw=>{
+      const v=String(raw);
+      if(v.startsWith('#')){
+        active={name:v.slice(1),items:[]};sects.push(active);
+      }else{
+        if(!active){active={name:field,items:[]};sects.push(active);}
+        active.items.push(v);
+      }
+    });
+    const group=document.createElement('div');group.className='group';group.id='group-'+gi;
+    const toggle=makeButton(field+' 펼치기','field-toggle','group-toggle');
+    toggle.dataset.target='field-'+gi;toggle.dataset.field=field;toggle.setAttribute('aria-expanded','false');
+    const content=document.createElement('div');content.className='group-content';content.id='field-'+gi;content.hidden=true;
+    const tools=document.createElement('div');tools.className='group-tools';
+    const title=document.createElement('strong');title.textContent=field;
+    tools.appendChild(title);tools.appendChild(makeButton('전체메뉴 처음으로','menu-top','wide'));
+    content.appendChild(tools);
+    const chips=document.createElement('div');chips.className='chips';
+    sects.forEach((sec,si)=>{
+      const chip=makeButton(ko(sec.name)+'로 이동','menu-chip');
+      chip.dataset.target='category-'+gi+'-'+si;chips.appendChild(chip);
+    });
+    content.appendChild(chips);
+    sects.forEach((sec,si)=>{
+      const h=document.createElement('h3');h.className='menu-heading';
+      h.id='category-'+gi+'-'+si;h.textContent=ko(sec.name);content.appendChild(h);
+      sec.items.forEach((item,ii)=>{
+        const route=field==='은행'&&sec.name.includes('세금')&&item==='납부하기';
+        const row={field,category:sec.name,item,route,key:gi+'-'+si+'-'+ii};
+        allRows.push(row);content.appendChild(choice(row,'menu'));
+      });
+    });
+    group.append(toggle,content);$('menu-groups').appendChild(group);
+  });
+  allRows.forEach(row=>$('search-list').appendChild(choice(row,'search')));
+  function normalize(t){return String(t).replace(/\s+/g,'').toLowerCase();}
+  function filterSearch(){
+    const q=normalize($('search-input').value);let count=0;
+    $('search-list').querySelectorAll('[data-action="menu-item"]').forEach(b=>{
+      const hay=normalize(b.dataset.item+b.dataset.field+b.dataset.category+b.textContent);
+      const match=!q||hay.includes(q);b.hidden=!match;if(match)count++;
+    });
+    const pay=!q||['공과금','세금','고지서','납부','전기요금','종이고지서'].some(word=>normalize(word).includes(q)||q.includes(normalize(word)));
+    $('search-pay').hidden=!pay;$('search-empty').hidden=count>0||pay;
+    $('search-status').textContent=q
+      ?'검색 결과 '+(count+(pay?1:0))+'개입니다. 메뉴 이름과 분류를 확인하세요.'
+      :'검색어를 입력하거나 아래 전체 메뉴에서 선택하세요.';
+  }
+  $('search-input').addEventListener('input',filterSearch);
+
+  let billCategory='';
+  bills.forEach((raw,i)=>{
+    const value=String(raw);
+    if(value.startsWith('#')){
+      billCategory=value.slice(1);
+      const h=document.createElement('h3');h.textContent=ko(billCategory);$('bill-list').appendChild(h);
+    }else{
+      const b=makeButton(ko(value),'pick-bill','choice');
+      b.id='bill-choice-'+i;b.dataset.bill=value;b.dataset.category=billCategory;
+      const path=document.createElement('span');path.className='path';path.textContent=ko(billCategory);
+      b.appendChild(path);$('bill-list').appendChild(b);
+    }
+  });
+  function buildPad(shuffle){
+    const ordered=keys.slice();
+    if(shuffle){
+      for(let i=ordered.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [ordered[i],ordered[j]]=[ordered[j],ordered[i]];
+      }
+    }
+    $('pwpad').replaceChildren();
+    ordered.forEach(value=>{
+      const b=makeButton(String(value),'pw');b.dataset.v=String(value);
+      b.setAttribute('aria-label','숫자 '+value);$('pwpad').appendChild(b);
+    });
+    $('pwpad').appendChild(makeButton('숫자 위치 바꾸기','pw-shuffle','edit-key'));
+    $('pwpad').appendChild(makeButton('한 자리 지우기','pw-del','edit-key'));
+    setPwState();
+  }
+  function setPwState(){
+    $('pw-dots').querySelectorAll('span').forEach((dot,i)=>dot.classList.toggle('filled',i<password.length));
+    $('pw-progress').textContent='네 자리 중 '+password.length+'자리 입력';
+    $('submit-payment').disabled=password.length!==4||processing;
+    $('pwpad').querySelectorAll('button').forEach(b=>b.disabled=processing);
+    phone.querySelectorAll('[data-action="close-password"]').forEach(b=>b.disabled=processing);
+  }
+  function resetCamera(){
+    clearTimeout(photoTimer);photoState='ready';
+    $('camera-guide').hidden=false;$('capture-photo').hidden=true;
+    $('shutter-button').hidden=false;$('shutter-button').disabled=false;
+    $('photo-actions').hidden=true;
+    $('capture-status').textContent='밝은 곳에서 고지서 전체와 번호가 함께 선명하게 보이도록 찍어 주세요.';
+  }
+  function startCamera(){resetCamera();show('capture');}
+  function enterBill(){billFrom=current==='search'?'search':'menu';show('bill-start');}
+  function chooseMenu(el){
+    if(el.dataset.payRoute==='yes'){enterBill();}
+    else unavailable(ko(el.dataset.item));
+  }
+
+  phone.addEventListener('click',function(e){
+    const el=e.target.closest('[data-action]');
+    if(!el||!phone.contains(el)||el.disabled)return;
+    const a = el.dataset.action;
+    if(a==='go-menu'){show('menu');}
+    else if(a==='back-home'){show('home');}
+    else if(a==='open-search'){$('search-input').value='';filterSearch();show('search');}
+    else if(a==='back-menu'){show('menu',true);}
+    else if(a==='bill-entry'){enterBill();}
+    else if(a==='field-toggle'){
+      const target=$(el.dataset.target);target.hidden=!target.hidden;
+      el.setAttribute('aria-expanded',String(!target.hidden));
+      el.textContent=el.dataset.field+(target.hidden?' 펼치기':' 접기');
+    }
+    else if(a==='expand-all'){
+      phone.querySelectorAll('.group-content').forEach(c=>c.hidden=false);
+      phone.querySelectorAll('[data-action="field-toggle"]').forEach(b=>{
+        b.setAttribute('aria-expanded','true');b.textContent=b.dataset.field+' 접기';
+      });
+    }
+    else if(a==='menu-chip'){$(el.dataset.target).scrollIntoView({block:'start'});}
+    else if(a==='menu-top'){$('menu-body').scrollTop=0;}
+    else if(a==='menu-item'){chooseMenu(el);}
+    else if(a==='search-input'){$('search-input').focus();}
+    else if(a==='search-clear'){$('search-input').value='';filterSearch();$('search-input').focus();}
+    else if(a==='search-all'){$('search-input').value='';filterSearch();$('search-body').scrollTop=0;}
+    else if(a==='oos-search-submit'){filterSearch();}
+    else if(a==='back-bill-home'){show(billFrom,true);}
+    else if(a==='bill-show'){
+      $('bill-list').hidden=false;
+      $('bill-heading').scrollIntoView({block:'start'});
+    }
+    else if(a==='pay-start'){$('feature-panel').hidden=true;startCamera();}
+    else if(a==='pick-bill'){
+      phone.querySelectorAll('[data-action="pick-bill"]').forEach(b=>{
+        const selected=b===el;b.classList.toggle('selected',selected);
+        b.setAttribute('aria-pressed',String(selected));
+      });
+      const name=ko(el.dataset.bill);
+      $('bill-selection').hidden=false;$('bill-selection').textContent='선택한 종류: '+name;
+      if(el.dataset.bill.includes('전기요금')){
+        panel(name,'이 종류는 종이 고지서를 촬영하여 납부할 수 있습니다. 고지서 전체와 전자납부번호를 준비하세요.',{capture:true});
+      }else{
+        panel(name,'이 종류는 이 화면에서 고지서 촬영을 지원하지 않습니다. 조회하기에서 해당 종류의 이용 안내를 확인하세요.',{inquiry:true});
+      }
+    }
+    else if(a==='to-bill-home'){clearTimeout(photoTimer);show('bill-start',true);}
+    else if(a==='shutter'){
+      if(photoState!=='ready')return;
+      photoState='reading';$('shutter-button').disabled=true;
+      $('camera-guide').hidden=true;$('capture-photo').hidden=false;
+      $('capture-status').textContent='고지서의 납부정보를 확인하고 있습니다.';
+      photoTimer=setTimeout(()=>{
+        photoState='checked';$('shutter-button').hidden=true;$('photo-actions').hidden=false;
+        $('capture-status').textContent='사진을 확인하세요. 고지서 전체와 번호가 선명하면 이 사진으로 정보 확인을 눌러 주세요.';
+      },450);
+    }
+    else if(a==='photo-next'){if(photoState==='checked')show('review');}
+    else if(a==='retake'){startCamera();}
+    else if(a==='review-back'){show('capture',true);}
+    else if(a==='account-open'){$('account-panel').hidden=false;}
+    else if(a==='account-close'){$('account-panel').hidden=true;}
+    else if(a==='account-select'){$('account-panel').hidden=true;$('bi-acc').textContent='신한 110-000-000000';}
+    else if(a==='pay'){
+      password='';processing=false;buildPad(false);
+      $('pay-status').textContent='입력한 뒤 납부하기를 눌러 주세요.';
+      $('submit-payment').textContent='2,160원 납부하기';show('authenticate');
+    }
+    else if(a==='close-password'){
+      if(processing)return;
+      password='';setPwState();show('review',true);
+    }
+    else if(a==='pw'){
+      if(processing||password.length>=4)return;
+      password+=el.dataset.v;setPwState();
+      $('pay-status').textContent=password.length===4
+        ?'네 자리를 입력했습니다. 금액을 확인하고 납부하기를 눌러 주세요.'
+        :'입력한 뒤 납부하기를 눌러 주세요.';
+    }
+    else if(a==='pw-del'){
+      if(processing)return;
+      password=password.slice(0,-1);setPwState();
+      $('pay-status').textContent='비밀번호를 수정한 뒤 납부하기를 눌러 주세요.';
+    }
+    else if(a==='pw-shuffle'){if(!processing)buildPad(true);}
+    else if(a==='submit-payment'){
+      if(processing||password.length!==4)return;
+      processing=true;setPwState();$('submit-payment').textContent='납부 처리 중';
+      $('pay-status').textContent='납부를 처리하고 있습니다. 잠시 기다려 주세요.';
+      clearTimeout(paymentTimer);
+      paymentTimer=setTimeout(()=>{
+        processing=false;password='';setPwState();show('receipt');
+      },600);
+    }
+    else if(a==='payment-history'){
+      show('menu');$('field-0').hidden=false;
+      const bankToggle=phone.querySelector('[data-action="field-toggle"][data-target="field-0"]');
+      bankToggle.textContent='은행 접기';bankToggle.setAttribute('aria-expanded','true');
+      const history=Array.from($('field-0').querySelectorAll('[data-action="menu-item"]')).find(b=>b.dataset.item==='납부내역 조회');
+      if(history)history.scrollIntoView({block:'center'});
+    }
+    else if(a==='more-toggle'){
+      const target=$(el.dataset.target);target.hidden=!target.hidden;
+      el.setAttribute('aria-expanded',String(!target.hidden));
+    }
+    else if(a==='more-close'){
+      $(el.dataset.target).hidden=true;
+      const toggle=phone.querySelector('[data-action="more-toggle"][data-target="'+el.dataset.target+'"]');
+      toggle.setAttribute('aria-expanded','false');toggle.focus();
+    }
+    else if(a==='panel-close'){closePanel();}
+    else if(a==='feature'){unavailable(el.dataset.title);}
+    else if(a==='finish'){show('home');}
+    else if(a==='oos-home'||a==='oos-info-home'||a==='oos-tab-home'){show('home');}
+    else if(a==='oos-bill-inquiry'){
+      panel('조회하기','이 화면에서는 전자고지서를 조회할 수 없습니다. 종이 고지서로 납부하려면 납부 시작 화면에서 촬영하여 납부를 선택하세요.');
+    }
+    else if(a==='oos-alarm'||
+            a==='oos-appcard'||
+            a==='oos-ask-ai'||
+            a==='oos-chat'||
+            a==='oos-connect-event'||
+            a==='oos-coupon'||
+            a==='oos-done-support'||
+            a==='oos-easy-home'||
+            a==='oos-event'||
+            a==='oos-get-coupon'||
+            a==='oos-giro-register'||
+            a==='oos-hide-amount'||
+            a==='oos-home-setting'||
+            a==='oos-info-support'||
+            a==='oos-irp'||
+            a==='oos-logout'||
+            a==='oos-message'||
+            a==='oos-my-point'||
+            a==='oos-point'||
+            a==='oos-settings'||
+            a==='oos-spend-detail'||
+            a==='oos-support'||
+            a==='oos-tab-benefit'||
+            a==='oos-tab-finance'||
+            a==='oos-tab-goods'||
+            a==='oos-tab-stock'||
+            a==='oos-transfer'||
+            a==='oos-wallet'){
+      unavailable(el.textContent.trim().split('\n')[0]);
+    }
+  });
+  filterSearch();buildPad(false);
+})();
+</script>
+</body>
+</html>
+```
+
+```json
+{
+  "name": "auto",
+  "note": "전체메뉴와 메뉴 검색을 거쳐 납부에 진입하고, 촬영 후 사진 확인 클릭으로 정보를 확인한 다음 비밀번호와 납부 버튼으로 완료한다.",
+  "derived_from_original": false,
+  "required_ids": [
+    "phone",
+    "menu-body",
+    "search-input",
+    "search-pay",
+    "start-capture",
+    "show-bills",
+    "shutter-button",
+    "photo-next",
+    "bi-eno",
+    "bi-name",
+    "bi-amt",
+    "bi-acc",
+    "pwpad",
+    "submit-payment",
+    "dn-paid",
+    "dn-eno"
+  ],
+  "steps": [
+    {
+      "screen": "home"
+    },
+    {
+      "screen": "menu",
+      "click": "[data-screen='home'] [data-action='go-menu']"
+    },
+    {
+      "screen": "search",
+      "click": "[data-screen='menu'] [data-action='open-search']"
+    },
+    {
+      "screen": "search",
+      "click": "[data-screen='search'] [data-action='oos-search-submit']"
+    },
+    {
+      "screen": "bill-start",
+      "click": "#search-pay"
+    },
+    {
+      "screen": "capture",
+      "click": "#start-capture"
+    },
+    {
+      "screen": "review",
+      "do": [
+        {
+          "click": "#shutter-button"
+        },
+        {
+          "wait": 0.7
+        },
+        {
+          "click": "#photo-next"
+        }
+      ]
+    },
+    {
+      "screen": "review",
+      "do": [
+        {
+          "click": "[data-screen='review'] [data-action='account-open']"
+        },
+        {
+          "click": "[data-screen='review'] [data-action='account-select']"
+        }
+      ]
+    },
+    {
+      "screen": "authenticate",
+      "click": "[data-screen='review'] [data-action='pay']"
+    },
+    {
+      "screen": "authenticate",
+      "do": [
+        {
+          "repeat": 4,
+          "click": "#pwpad [data-action='pw']",
+          "wait": 0.15
+        }
+      ]
+    },
+    {
+      "screen": "receipt",
+      "do": [
+        {
+          "click": "#submit-payment"
+        },
+        {
+          "wait": 0.9
+        }
+      ]
+    }
+  ],
+  "reveal": {
+    "menu-item": {
+      "at": "menu",
+      "do": [
+        {
+          "click": "[data-screen='menu'] [data-action='expand-all']"
+        }
+      ]
+    },
+    "pick-bill": {
+      "at": "bill-start",
+      "do": [
+        {
+          "click": "#show-bills"
+        }
+      ]
+    },
+    "pw": {
+      "at": "authenticate",
+      "do": [
+        {
+          "click": "#pwpad [data-action='pw-shuffle']"
+        }
+      ]
+    },
+    "account-select": {
+      "at": "review",
+      "do": [
+        {
+          "click": "[data-screen='review'] [data-action='account-open']"
+        }
+      ]
+    },
+    "more-toggle": {
+      "at": "menu",
+      "do": [
+        {
+          "click": "[data-screen='menu'] [data-action='more-toggle']"
+        }
+      ]
+    }
+  },
+  "expect": {}
+}
+```

@@ -1,0 +1,980 @@
+{
+  "run_dir": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill",
+  "model": "gpt-6.1-sol",
+  "model_source": "--model",
+  "response_models": [
+    "gpt-6.1-sol"
+  ],
+  "model_call": {
+    "api": "chat",
+    "reasoning": true,
+    "temperature": false,
+    "seed": true,
+    "family": "gpt-5+",
+    "known": true,
+    "length_param": "max_completion_tokens",
+    "encoding": "o200k_base(대체)",
+    "reasoning_effort": "medium"
+  },
+  "mock": null,
+  "task": "bill",
+  "audience": "65세 이상 고령 사용자",
+  "stage": "wireframe",
+  "stage_source": "config.DEFAULT_STAGE",
+  "budget_source": {
+    "format": "config.DEFAULT_BUDGET",
+    "audit": "config.DEFAULT_BUDGET",
+    "infra": "config.DEFAULT_BUDGET"
+  },
+  "preserved": {
+    "MENU_BANK": 79,
+    "MENU_CARD": 77,
+    "MENU_STOCK": 72,
+    "MENU_INSURE": 55,
+    "MENU_BENEFIT": 41,
+    "MENU_GOODS": 18,
+    "MENU_HELP": 12,
+    "BILL_ITEMS": 23,
+    "PW_KEYS": 10,
+    "MENU_TABS": 7
+  },
+  "plan": {
+    "attempt": 1,
+    "diagnosis": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\attempt_1.diagnosis.json",
+    "diagnosis_count": 17,
+    "evidence_kinds": {
+      "screen": 8,
+      "code": 2,
+      "both": 7,
+      "missing": 0
+    },
+    "screens": [
+      "home",
+      "menu",
+      "search",
+      "bill-start",
+      "capture",
+      "review",
+      "authenticate",
+      "receipt"
+    ],
+    "changes": 13,
+    "unaddressed": []
+  },
+  "repro": {
+    "temperature": null,
+    "seed": 20260101,
+    "response_model": null,
+    "system_fingerprint": null,
+    "openai_sdk": "3.8.0",
+    "prompt_template_sha256": "988130bbf220ada914f99272c91d1f0c6add4712849d727b8da526a038d3e9da"
+  },
+  "attempts": [
+    {
+      "n": 1,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt": 19930,
+        "completion": 11518,
+        "reasoning": 512
+      },
+      "seconds": 170.0,
+      "repro": {
+        "temperature": null,
+        "seed": 20260101,
+        "response_model": "gpt-6.1-sol",
+        "system_fingerprint": null,
+        "openai_sdk": "3.8.0",
+        "prompt_template_sha256": "988130bbf220ada914f99272c91d1f0c6add4712849d727b8da526a038d3e9da"
+      },
+      "plan": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\attempt_1.plan.json",
+      "calls": [
+        {
+          "stage": "plan",
+          "estimated_prompt": 21175,
+          "method": "tiktoken:o200k_base(대체)",
+          "max_tokens": 25000,
+          "usage": {
+            "prompt": 21162,
+            "completion": 7145,
+            "reasoning": 342
+          },
+          "images": 15,
+          "estimated_images": 6330,
+          "image_method": "patch x1.2",
+          "measured_images": 6317,
+          "ratelimit": {
+            "limit_tokens": 1000000,
+            "remaining_tokens": 976594,
+            "limit_requests": 5000
+          }
+        },
+        {
+          "stage": "generate",
+          "estimated_prompt": 19924,
+          "method": "tiktoken:o200k_base(대체)",
+          "max_tokens": 32000,
+          "usage": {
+            "prompt": 19930,
+            "completion": 11518,
+            "reasoning": 512
+          },
+          "images": 0,
+          "estimated_images": 0,
+          "ratelimit": {
+            "limit_tokens": 1000000,
+            "remaining_tokens": 982961,
+            "limit_requests": 5000
+          }
+        }
+      ],
+      "plan_call": {
+        "finish_reason": "stop",
+        "usage": {
+          "prompt": 21162,
+          "completion": 7145,
+          "reasoning": 342
+        },
+        "seconds": 127.3
+      },
+      "preserved": {
+        "injected": {
+          "MENU_BANK": 79,
+          "MENU_CARD": 77,
+          "MENU_STOCK": 72,
+          "MENU_INSURE": 55,
+          "MENU_BENEFIT": 41,
+          "MENU_GOODS": 18,
+          "MENU_HELP": 12,
+          "BILL_ITEMS": 23,
+          "PW_KEYS": 10,
+          "MENU_TABS": 7
+        },
+        "redeclared": [],
+        "read": [
+          "MENU_BANK",
+          "MENU_CARD",
+          "MENU_STOCK",
+          "MENU_INSURE",
+          "MENU_BENEFIT",
+          "MENU_GOODS",
+          "MENU_HELP",
+          "BILL_ITEMS",
+          "PW_KEYS"
+        ]
+      },
+      "html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\attempt_1.html",
+      "flow": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\attempt_1.flow.json",
+      "model_html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\attempt_1.model.html",
+      "stage": "flow",
+      "passed": false,
+      "fatal": 3
+    },
+    {
+      "n": 2,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt": 31505,
+        "completion": 11259,
+        "reasoning": 141
+      },
+      "seconds": 133.1,
+      "repro": {
+        "temperature": null,
+        "seed": 20260101,
+        "response_model": "gpt-6.1-sol",
+        "system_fingerprint": null,
+        "openai_sdk": "3.8.0",
+        "prompt_template_sha256": "988130bbf220ada914f99272c91d1f0c6add4712849d727b8da526a038d3e9da"
+      },
+      "plan": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\attempt_2.plan.json",
+      "calls": [
+        {
+          "stage": "retry",
+          "estimated_prompt": 31499,
+          "method": "tiktoken:o200k_base(대체)",
+          "max_tokens": 32000,
+          "usage": {
+            "prompt": 31505,
+            "completion": 11259,
+            "reasoning": 141
+          },
+          "images": 0,
+          "estimated_images": 0,
+          "ratelimit": {
+            "limit_tokens": 1000000,
+            "remaining_tokens": 972611,
+            "limit_requests": 5000
+          }
+        }
+      ],
+      "reflection": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\attempt_2.reflection.json",
+      "plan_changes": 0,
+      "preserved": {
+        "injected": {
+          "MENU_BANK": 79,
+          "MENU_CARD": 77,
+          "MENU_STOCK": 72,
+          "MENU_INSURE": 55,
+          "MENU_BENEFIT": 41,
+          "MENU_GOODS": 18,
+          "MENU_HELP": 12,
+          "BILL_ITEMS": 23,
+          "PW_KEYS": 10,
+          "MENU_TABS": 7
+        },
+        "redeclared": [],
+        "read": [
+          "MENU_BANK",
+          "MENU_CARD",
+          "MENU_STOCK",
+          "MENU_INSURE",
+          "MENU_BENEFIT",
+          "MENU_GOODS",
+          "MENU_HELP",
+          "BILL_ITEMS",
+          "PW_KEYS"
+        ]
+      },
+      "html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\attempt_2.html",
+      "flow": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\attempt_2.flow.json",
+      "model_html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\attempt_2.model.html",
+      "stage": "audit",
+      "passed": false,
+      "fatal": 1,
+      "warning": 0
+    },
+    {
+      "n": 3,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt": 31467,
+        "completion": 11593,
+        "reasoning": 202
+      },
+      "seconds": 140.9,
+      "repro": {
+        "temperature": null,
+        "seed": 20260101,
+        "response_model": "gpt-6.1-sol",
+        "system_fingerprint": null,
+        "openai_sdk": "3.8.0",
+        "prompt_template_sha256": "988130bbf220ada914f99272c91d1f0c6add4712849d727b8da526a038d3e9da"
+      },
+      "plan": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\attempt_3.plan.json",
+      "calls": [
+        {
+          "stage": "retry",
+          "estimated_prompt": 31461,
+          "method": "tiktoken:o200k_base(대체)",
+          "max_tokens": 32000,
+          "usage": {
+            "prompt": 31467,
+            "completion": 11593,
+            "reasoning": 202
+          },
+          "images": 0,
+          "estimated_images": 0,
+          "ratelimit": {
+            "limit_tokens": 1000000,
+            "remaining_tokens": 972661,
+            "limit_requests": 5000
+          }
+        }
+      ],
+      "reflection": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\attempt_3.reflection.json",
+      "plan_changes": 0,
+      "preserved": {
+        "injected": {
+          "MENU_BANK": 79,
+          "MENU_CARD": 77,
+          "MENU_STOCK": 72,
+          "MENU_INSURE": 55,
+          "MENU_BENEFIT": 41,
+          "MENU_GOODS": 18,
+          "MENU_HELP": 12,
+          "BILL_ITEMS": 23,
+          "PW_KEYS": 10,
+          "MENU_TABS": 7
+        },
+        "redeclared": [],
+        "read": [
+          "MENU_BANK",
+          "MENU_CARD",
+          "MENU_STOCK",
+          "MENU_INSURE",
+          "MENU_BENEFIT",
+          "MENU_GOODS",
+          "MENU_HELP",
+          "BILL_ITEMS",
+          "PW_KEYS"
+        ]
+      },
+      "html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\attempt_3.html",
+      "flow": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\attempt_3.flow.json",
+      "model_html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\attempt_3.model.html",
+      "stage": "audit",
+      "passed": true,
+      "fatal": 0,
+      "warning": 0
+    }
+  ],
+  "passed": true,
+  "final": {
+    "attempt": 3,
+    "html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\attempt_3.html",
+    "flow": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\attempt_3.flow.json",
+    "audit": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\attempt_3.audit.json",
+    "plan": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\attempt_3.plan.json",
+    "diagnosis": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\attempt_1.diagnosis.json",
+    "preserved": {
+      "injected": {
+        "MENU_BANK": 79,
+        "MENU_CARD": 77,
+        "MENU_STOCK": 72,
+        "MENU_INSURE": 55,
+        "MENU_BENEFIT": 41,
+        "MENU_GOODS": 18,
+        "MENU_HELP": 12,
+        "BILL_ITEMS": 23,
+        "PW_KEYS": 10,
+        "MENU_TABS": 7
+      },
+      "redeclared": [],
+      "read": [
+        "MENU_BANK",
+        "MENU_CARD",
+        "MENU_STOCK",
+        "MENU_INSURE",
+        "MENU_BENEFIT",
+        "MENU_GOODS",
+        "MENU_HELP",
+        "BILL_ITEMS",
+        "PW_KEYS"
+      ]
+    },
+    "model_html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\attempt_3.model.html",
+    "model_html_promoted": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructured_auto_bill.model.html",
+    "brief": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\designer_brief.md",
+    "brief_promoted": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructured_auto_bill.designer_brief.md"
+  },
+  "budget": {
+    "format_used": 1,
+    "format_budget": 5,
+    "audit_used": 1,
+    "audit_budget": 6,
+    "infra_used": 0,
+    "infra_budget": 3
+  },
+  "stopped_reason": null,
+  "trend": [
+    {
+      "attempt": 2,
+      "fatal_total": 1,
+      "fatal_root": 1,
+      "fatal_derived": 0,
+      "screens": "11/11",
+      "stopped_at": null
+    },
+    {
+      "attempt": 3,
+      "fatal_total": 0,
+      "fatal_root": 0,
+      "fatal_derived": 0,
+      "screens": "11/11",
+      "stopped_at": null
+    }
+  ],
+  "git": {
+    "commit": "3468b75658b79d80f4111ee986d2dc82ef21e7c8",
+    "branch": "main",
+    "dirty": false,
+    "dirty_files": []
+  },
+  "tokens": {
+    "method": "tiktoken:o200k_base(대체)",
+    "by_stage": {
+      "plan": {
+        "calls": 1,
+        "estimated_prompt": 21175,
+        "images": 15,
+        "estimated_images": 6330,
+        "max_tokens": 25000,
+        "prompt": 21162,
+        "completion": 7145,
+        "reasoning": 342
+      },
+      "generate": {
+        "calls": 1,
+        "estimated_prompt": 19924,
+        "images": 0,
+        "estimated_images": 0,
+        "max_tokens": 32000,
+        "prompt": 19930,
+        "completion": 11518,
+        "reasoning": 512
+      },
+      "retry": {
+        "calls": 2,
+        "estimated_prompt": 62960,
+        "images": 0,
+        "estimated_images": 0,
+        "max_tokens": 64000,
+        "prompt": 62972,
+        "completion": 22852,
+        "reasoning": 343
+      }
+    },
+    "total": {
+      "calls": 4,
+      "estimated_prompt": 104059,
+      "images": 15,
+      "estimated_images": 6330,
+      "max_tokens": 121000,
+      "prompt": 104064,
+      "completion": 41515,
+      "reasoning": 1197
+    },
+    "first_attempt": {
+      "calls": 2,
+      "estimated_prompt": 41099,
+      "images": 15,
+      "estimated_images": 6330,
+      "max_tokens": 57000,
+      "prompt": 41092,
+      "completion": 18663,
+      "reasoning": 854
+    }
+  },
+  "ratelimit": {
+    "limit_tokens": 1000000,
+    "remaining_tokens": 972661,
+    "limit_requests": 5000
+  },
+  "cost": {
+    "currency": "USD",
+    "price_model": "gpt-6.1-sol",
+    "per_million": {
+      "input": 2.0,
+      "output": 10.0
+    },
+    "by_attempt": [
+      {
+        "attempt": 1,
+        "usd": 0.268814
+      },
+      {
+        "attempt": 2,
+        "usd": 0.1756
+      },
+      {
+        "attempt": 3,
+        "usd": 0.178864
+      }
+    ],
+    "total_usd": 0.623278,
+    "note": "입력 x input + 출력(생각 포함) x output, 100만 토큰당. 캐시 할인 미반영 (상한)"
+  },
+  "see": {
+    "on": true,
+    "source": "기본값 (켜짐)",
+    "original_images": 15
+  },
+  "refine": {
+    "budget": 0,
+    "source": "config.DEFAULT_REFINE",
+    "rounds": [],
+    "final_from": "generate",
+    "final_label": "생성",
+    "reverted": null,
+    "format_failures": 0,
+    "audit_failures": 0
+  },
+  "original": "inputs/original_bill.html",
+  "original_sha256": "5d2f7e8bc94301d1e3651c8ea0e4ad259c892c2b4246bd979f22b14b850adfb9",
+  "entrance_distance": [
+    {
+      "id": "B1",
+      "label": "메시지",
+      "action": "oos-message",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "B2",
+      "label": "지갑",
+      "action": "oos-wallet",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "B3",
+      "label": "알림",
+      "action": "oos-alarm",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "B4",
+      "label": "IRP 안내",
+      "action": "oos-irp",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "B5",
+      "label": "앱카드 가입",
+      "action": "oos-appcard",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 233
+      }
+    },
+    {
+      "id": "B6",
+      "label": "바로받기",
+      "action": "oos-get-coupon",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 437
+      }
+    },
+    {
+      "id": "B7",
+      "label": "이벤트",
+      "action": "oos-event",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 509
+      }
+    },
+    {
+      "id": "B8",
+      "label": "쿠폰",
+      "action": "oos-coupon",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 509
+      }
+    },
+    {
+      "id": "B9",
+      "label": "포인트",
+      "action": "oos-point",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 509
+      }
+    },
+    {
+      "id": "B10",
+      "label": "소비 상세",
+      "action": "oos-spend-detail",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 712
+      }
+    },
+    {
+      "id": "B11",
+      "label": "마이신한포인트",
+      "action": "oos-my-point",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 87
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 939
+      }
+    },
+    {
+      "id": "B12",
+      "label": "자산 연결 이벤트",
+      "action": "oos-connect-event",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 471
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 1399
+      }
+    },
+    {
+      "id": "B13",
+      "label": "홈화면 설정",
+      "action": "oos-home-setting",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 782
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 1865
+      }
+    },
+    {
+      "id": "B14",
+      "label": "금액 숨기기",
+      "action": "oos-hide-amount",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 782
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 1927
+      }
+    },
+    {
+      "id": "B15",
+      "label": "금융",
+      "action": "oos-tab-finance",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "B16",
+      "label": "상품",
+      "action": "oos-tab-goods",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "B17",
+      "label": "혜택",
+      "action": "oos-tab-benefit",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "B18",
+      "label": "주식",
+      "action": "oos-tab-stock",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "B19",
+      "label": "고객센터 채팅",
+      "action": "oos-chat",
+      "original": {
+        "visit": "menu",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "menu",
+        "reveal": 1,
+        "via": "more-toggle",
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "B20",
+      "label": "설정",
+      "action": "oos-settings",
+      "original": {
+        "visit": "menu",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "menu",
+        "reveal": 1,
+        "via": "more-toggle",
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "B21",
+      "label": "로그아웃",
+      "action": "oos-logout",
+      "original": {
+        "visit": "menu",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "menu",
+        "reveal": 1,
+        "via": "more-toggle",
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "B22",
+      "label": "검색",
+      "action": "oos-search-submit",
+      "original": {
+        "visit": "search",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "search",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "B24",
+      "label": "고객센터",
+      "action": "oos-support",
+      "original": {
+        "visit": "bill-home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "bill-start",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "B25",
+      "label": "홈",
+      "action": "oos-home",
+      "original": {
+        "visit": "bill-home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "bill-start",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "B26",
+      "label": "조회하기",
+      "action": "oos-bill-inquiry",
+      "original": {
+        "visit": "bill-home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "bill-start",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "B27",
+      "label": "자주쓰는 지로번호 등록",
+      "action": "oos-giro-register",
+      "original": {
+        "visit": "bill-home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "bill-start",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "B28",
+      "label": "고객센터",
+      "action": "oos-info-support",
+      "original": {
+        "visit": "info",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "review",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "B29",
+      "label": "홈",
+      "action": "oos-info-home",
+      "original": {
+        "visit": "info",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "review",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "B30",
+      "label": "고객센터",
+      "action": "oos-done-support",
+      "original": {
+        "visit": "done",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "receipt",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "R2",
+      "label": "이체",
+      "action": "oos-transfer",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "R3",
+      "label": "쉬운홈",
+      "action": "oos-easy-home",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 782
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "R4",
+      "label": "홈",
+      "action": "oos-tab-home",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    }
+  ]
+}

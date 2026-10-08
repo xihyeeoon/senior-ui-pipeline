@@ -1,0 +1,137 @@
+{
+  "name": "auto",
+  "note": "전체메뉴에서 메뉴 검색으로 이동하여 납부를 찾고, 촬영 사진과 납부정보를 확인한 뒤 비밀번호 네 자리와 명시적 납부 버튼으로 완료한다.",
+  "derived_from_original": false,
+  "required_ids": [
+    "phone",
+    "menu-body",
+    "search-input",
+    "search-pay",
+    "start-capture",
+    "shutter-button",
+    "photo-next",
+    "bi-eno",
+    "bi-name",
+    "bi-amt",
+    "bi-acc",
+    "pwpad",
+    "submit-payment",
+    "dn-paid",
+    "dn-eno"
+  ],
+  "steps": [
+    {
+      "screen": "home"
+    },
+    {
+      "screen": "menu",
+      "click": "[data-screen='home'] [data-action='go-menu']"
+    },
+    {
+      "screen": "search",
+      "click": "[data-screen='menu'] [data-action='open-search']"
+    },
+    {
+      "screen": "search",
+      "do": [
+        {
+          "click": "[data-screen='search'] [data-action='oos-search-submit']"
+        }
+      ]
+    },
+    {
+      "screen": "bill-start",
+      "click": "#search-pay"
+    },
+    {
+      "screen": "capture",
+      "click": "#start-capture"
+    },
+    {
+      "screen": "capture",
+      "do": [
+        {
+          "click": "#shutter-button"
+        },
+        {
+          "wait": 0.7
+        }
+      ]
+    },
+    {
+      "screen": "review",
+      "click": "#photo-next"
+    },
+    {
+      "screen": "review",
+      "do": [
+        {
+          "click": "[data-screen='review'] [data-action='account-open']"
+        },
+        {
+          "click": "[data-screen='review'] [data-action='account-select']"
+        }
+      ]
+    },
+    {
+      "screen": "authenticate",
+      "click": "[data-screen='review'] [data-action='pay']"
+    },
+    {
+      "screen": "authenticate",
+      "do": [
+        {
+          "repeat": 4,
+          "click": "#pwpad [data-action='pw']",
+          "wait": 0.15
+        }
+      ]
+    },
+    {
+      "screen": "receipt",
+      "do": [
+        {
+          "click": "#submit-payment"
+        },
+        {
+          "wait": 0.9
+        }
+      ]
+    }
+  ],
+  "reveal": {
+    "menu-item": {
+      "at": "menu",
+      "do": [
+        {
+          "click": "[data-screen='menu'] [data-action='expand-all']"
+        }
+      ]
+    },
+    "pick-bill": {
+      "at": "bill-start",
+      "do": []
+    },
+    "pw": {
+      "at": "authenticate",
+      "do": []
+    },
+    "account-select": {
+      "at": "review",
+      "do": [
+        {
+          "click": "[data-screen='review'] [data-action='account-open']"
+        }
+      ]
+    },
+    "more-toggle": {
+      "at": "menu",
+      "do": [
+        {
+          "click": "[data-screen='menu'] [data-action='more-toggle']"
+        }
+      ]
+    }
+  },
+  "expect": {}
+}

@@ -1,0 +1,107 @@
+[
+ {
+  "visit": "home",
+  "file": "home.1.png",
+  "part": 1,
+  "parts": 3,
+  "offset": 0,
+  "more_px": 0
+ },
+ {
+  "visit": "home",
+  "file": "home.2.png",
+  "part": 2,
+  "parts": 3,
+  "offset": 590,
+  "more_px": 0
+ },
+ {
+  "visit": "home",
+  "file": "home.3.png",
+  "part": 3,
+  "parts": 3,
+  "offset": 804,
+  "more_px": 0
+ },
+ {
+  "visit": "recipient",
+  "file": "recipient.1.png",
+  "part": 1,
+  "parts": 1,
+  "offset": 0,
+  "more_px": 0
+ },
+ {
+  "visit": "account",
+  "file": "account.1.png",
+  "part": 1,
+  "parts": 1,
+  "offset": 0,
+  "more_px": 0
+ },
+ {
+  "visit": "account#2",
+  "file": "account_2.1.png",
+  "part": 1,
+  "parts": 1,
+  "offset": 0,
+  "more_px": 0,
+  "state": "키패드 열림 — 계좌번호 입력란을 누른 뒤"
+ },
+ {
+  "visit": "bank",
+  "file": "bank.1.png",
+  "part": 1,
+  "parts": 3,
+  "offset": 0,
+  "more_px": 0
+ },
+ {
+  "visit": "bank",
+  "file": "bank.2.png",
+  "part": 2,
+  "parts": 3,
+  "offset": 542,
+  "more_px": 0
+ },
+ {
+  "visit": "bank",
+  "file": "bank.3.png",
+  "part": 3,
+  "parts": 3,
+  "offset": 638,
+  "more_px": 0
+ },
+ {
+  "visit": "amount",
+  "file": "amount.1.png",
+  "part": 1,
+  "parts": 1,
+  "offset": 0,
+  "more_px": 0
+ },
+ {
+  "visit": "confirm",
+  "file": "confirm.1.png",
+  "part": 1,
+  "parts": 1,
+  "offset": 0,
+  "more_px": 0
+ },
+ {
+  "visit": "password",
+  "file": "password.1.png",
+  "part": 1,
+  "parts": 1,
+  "offset": 0,
+  "more_px": 0
+ },
+ {
+  "visit": "done",
+  "file": "done.1.png",
+  "part": 1,
+  "parts": 1,
+  "offset": 0,
+  "more_px": 0
+ }
+]

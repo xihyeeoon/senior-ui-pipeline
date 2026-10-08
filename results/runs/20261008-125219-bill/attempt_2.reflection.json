@@ -1,0 +1,27 @@
+{
+  "cause": "화면 전환 클릭과 선택지 공개 조작을 흐름 명세에 명확히 연결하지 않아 검사기가 다음 화면과 목록에 도달하지 못했다.",
+  "plan_changes": [],
+  "keep": [
+    "C1",
+    "C2",
+    "C3",
+    "C4",
+    "C5",
+    "C6",
+    "C7",
+    "C8",
+    "C9",
+    "C10",
+    "C11",
+    "C12",
+    "C13",
+    "home",
+    "menu",
+    "search",
+    "bill-start",
+    "capture",
+    "review",
+    "authenticate",
+    "receipt"
+  ]
+}

@@ -1,0 +1,122 @@
+[
+ {
+  "visit": "home",
+  "file": "home.1.png",
+  "part": 1,
+  "parts": 3,
+  "offset": 0,
+  "more_px": 0
+ },
+ {
+  "visit": "home",
+  "file": "home.2.png",
+  "part": 2,
+  "parts": 3,
+  "offset": 590,
+  "more_px": 0
+ },
+ {
+  "visit": "home",
+  "file": "home.3.png",
+  "part": 3,
+  "parts": 3,
+  "offset": 804,
+  "more_px": 0
+ },
+ {
+  "visit": "menu",
+  "file": "menu.1.png",
+  "part": 1,
+  "parts": 4,
+  "offset": 0,
+  "more_px": 0
+ },
+ {
+  "visit": "menu",
+  "file": "menu.2.png",
+  "part": 2,
+  "parts": 4,
+  "offset": 521,
+  "more_px": 0
+ },
+ {
+  "visit": "menu",
+  "file": "menu.3.png",
+  "part": 3,
+  "parts": 4,
+  "offset": 1042,
+  "more_px": 0
+ },
+ {
+  "visit": "menu",
+  "file": "menu.4.png",
+  "part": 4,
+  "parts": 4,
+  "offset": 1563,
+  "more_px": 17703
+ },
+ {
+  "visit": "search",
+  "file": "search.1.png",
+  "part": 1,
+  "parts": 1,
+  "offset": 0,
+  "more_px": 0
+ },
+ {
+  "visit": "bill-home",
+  "file": "bill-home.1.png",
+  "part": 1,
+  "parts": 3,
+  "offset": 0,
+  "more_px": 0
+ },
+ {
+  "visit": "bill-home",
+  "file": "bill-home.2.png",
+  "part": 2,
+  "parts": 3,
+  "offset": 648,
+  "more_px": 0
+ },
+ {
+  "visit": "bill-home",
+  "file": "bill-home.3.png",
+  "part": 3,
+  "parts": 3,
+  "offset": 1159,
+  "more_px": 0
+ },
+ {
+  "visit": "camera",
+  "file": "camera.1.png",
+  "part": 1,
+  "parts": 1,
+  "offset": 0,
+  "more_px": 0
+ },
+ {
+  "visit": "info",
+  "file": "info.1.png",
+  "part": 1,
+  "parts": 1,
+  "offset": 0,
+  "more_px": 0
+ },
+ {
+  "visit": "password",
+  "file": "password.1.png",
+  "part": 1,
+  "parts": 1,
+  "offset": 0,
+  "more_px": 0
+ },
+ {
+  "visit": "done",
+  "file": "done.1.png",
+  "part": 1,
+  "parts": 1,
+  "offset": 0,
+  "more_px": 0
+ }
+]

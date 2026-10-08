@@ -1,0 +1,853 @@
+{
+  "run_dir": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-131136",
+  "model": "gpt-6.1-sol",
+  "model_source": "--model",
+  "response_models": [
+    "gpt-6.1-sol"
+  ],
+  "model_call": {
+    "api": "chat",
+    "reasoning": true,
+    "temperature": false,
+    "seed": true,
+    "family": "gpt-5+",
+    "known": true,
+    "length_param": "max_completion_tokens",
+    "encoding": "o200k_base(대체)",
+    "reasoning_effort": "medium"
+  },
+  "mock": null,
+  "task": "transfer",
+  "audience": "65세 이상 고령 사용자",
+  "stage": "wireframe",
+  "stage_source": "config.DEFAULT_STAGE",
+  "budget_source": {
+    "format": "config.DEFAULT_BUDGET",
+    "audit": "config.DEFAULT_BUDGET",
+    "infra": "config.DEFAULT_BUDGET"
+  },
+  "preserved": {
+    "BANKS": 38,
+    "SECS": 29,
+    "AMT_KEYS": 11,
+    "ACC_KEYS": 10,
+    "PW_KEYS": 10,
+    "QUICK": 4
+  },
+  "plan": {
+    "attempt": 1,
+    "diagnosis": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-131136\\attempt_1.diagnosis.json",
+    "diagnosis_count": 19,
+    "evidence_kinds": {
+      "screen": 5,
+      "code": 4,
+      "both": 10,
+      "missing": 0
+    },
+    "screens": [
+      "home",
+      "recipient",
+      "account",
+      "bank",
+      "amount",
+      "confirm",
+      "password",
+      "done"
+    ],
+    "changes": 14,
+    "unaddressed": []
+  },
+  "repro": {
+    "temperature": null,
+    "seed": 20260101,
+    "response_model": null,
+    "system_fingerprint": null,
+    "openai_sdk": "3.8.0",
+    "prompt_template_sha256": "740790bea580eb8982a238510b48f0791eee4b3033dc488a0670bbdc075536cb"
+  },
+  "attempts": [
+    {
+      "n": 1,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt": 18685,
+        "completion": 10411,
+        "reasoning": 512
+      },
+      "seconds": 183.5,
+      "repro": {
+        "temperature": null,
+        "seed": 20260101,
+        "response_model": "gpt-6.1-sol",
+        "system_fingerprint": null,
+        "openai_sdk": "3.8.0",
+        "prompt_template_sha256": "740790bea580eb8982a238510b48f0791eee4b3033dc488a0670bbdc075536cb"
+      },
+      "plan": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-131136\\attempt_1.plan.json",
+      "calls": [
+        {
+          "stage": "plan",
+          "estimated_prompt": 19903,
+          "method": "tiktoken:o200k_base(대체)",
+          "max_tokens": 25000,
+          "usage": {
+            "prompt": 19886,
+            "completion": 7106,
+            "reasoning": 162
+          },
+          "images": 15,
+          "estimated_images": 6330,
+          "image_method": "patch x1.2",
+          "measured_images": 6313,
+          "ratelimit": {
+            "limit_tokens": 1000000,
+            "remaining_tokens": 977457,
+            "limit_requests": 5000
+          }
+        },
+        {
+          "stage": "generate",
+          "estimated_prompt": 18679,
+          "method": "tiktoken:o200k_base(대체)",
+          "max_tokens": 32000,
+          "usage": {
+            "prompt": 18685,
+            "completion": 10411,
+            "reasoning": 512
+          },
+          "images": 0,
+          "estimated_images": 0,
+          "ratelimit": {
+            "limit_tokens": 1000000,
+            "remaining_tokens": 983887,
+            "limit_requests": 5000
+          }
+        }
+      ],
+      "plan_call": {
+        "finish_reason": "stop",
+        "usage": {
+          "prompt": 19886,
+          "completion": 7106,
+          "reasoning": 162
+        },
+        "seconds": 126.5
+      },
+      "preserved": {
+        "injected": {
+          "BANKS": 38,
+          "SECS": 29,
+          "AMT_KEYS": 11,
+          "ACC_KEYS": 10,
+          "PW_KEYS": 10,
+          "QUICK": 4
+        },
+        "redeclared": [],
+        "read": [
+          "BANKS",
+          "SECS",
+          "AMT_KEYS",
+          "ACC_KEYS",
+          "PW_KEYS"
+        ]
+      },
+      "html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-131136\\attempt_1.html",
+      "flow": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-131136\\attempt_1.flow.json",
+      "model_html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-131136\\attempt_1.model.html",
+      "stage": "flow",
+      "passed": false,
+      "fatal": 1
+    },
+    {
+      "n": 2,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt": 29151,
+        "completion": 10133,
+        "reasoning": 113
+      },
+      "seconds": 118.6,
+      "repro": {
+        "temperature": null,
+        "seed": 20260101,
+        "response_model": "gpt-6.1-sol",
+        "system_fingerprint": null,
+        "openai_sdk": "3.8.0",
+        "prompt_template_sha256": "740790bea580eb8982a238510b48f0791eee4b3033dc488a0670bbdc075536cb"
+      },
+      "plan": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-131136\\attempt_2.plan.json",
+      "calls": [
+        {
+          "stage": "retry",
+          "estimated_prompt": 29145,
+          "method": "tiktoken:o200k_base(대체)",
+          "max_tokens": 32000,
+          "usage": {
+            "prompt": 29151,
+            "completion": 10133,
+            "reasoning": 113
+          },
+          "images": 0,
+          "estimated_images": 0,
+          "ratelimit": {
+            "limit_tokens": 1000000,
+            "remaining_tokens": 974929,
+            "limit_requests": 5000
+          }
+        }
+      ],
+      "reflection": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-131136\\attempt_2.reflection.json",
+      "plan_changes": 0,
+      "preserved": {
+        "injected": {
+          "BANKS": 38,
+          "SECS": 29,
+          "AMT_KEYS": 11,
+          "ACC_KEYS": 10,
+          "PW_KEYS": 10,
+          "QUICK": 4
+        },
+        "redeclared": [],
+        "read": [
+          "BANKS",
+          "SECS",
+          "AMT_KEYS",
+          "ACC_KEYS",
+          "PW_KEYS",
+          "QUICK"
+        ]
+      },
+      "html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-131136\\attempt_2.html",
+      "flow": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-131136\\attempt_2.flow.json",
+      "model_html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-131136\\attempt_2.model.html",
+      "stage": "audit",
+      "passed": true,
+      "fatal": 0,
+      "warning": 0
+    }
+  ],
+  "passed": true,
+  "final": {
+    "attempt": 2,
+    "html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-131136\\attempt_2.html",
+    "flow": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-131136\\attempt_2.flow.json",
+    "audit": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-131136\\attempt_2.audit.json",
+    "plan": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-131136\\attempt_2.plan.json",
+    "diagnosis": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-131136\\attempt_1.diagnosis.json",
+    "preserved": {
+      "injected": {
+        "BANKS": 38,
+        "SECS": 29,
+        "AMT_KEYS": 11,
+        "ACC_KEYS": 10,
+        "PW_KEYS": 10,
+        "QUICK": 4
+      },
+      "redeclared": [],
+      "read": [
+        "BANKS",
+        "SECS",
+        "AMT_KEYS",
+        "ACC_KEYS",
+        "PW_KEYS",
+        "QUICK"
+      ]
+    },
+    "model_html": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-131136\\attempt_2.model.html",
+    "model_html_promoted": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructured_auto.model.html",
+    "brief": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-131136\\designer_brief.md",
+    "brief_promoted": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructured_auto.designer_brief.md"
+  },
+  "budget": {
+    "format_used": 1,
+    "format_budget": 5,
+    "audit_used": 0,
+    "audit_budget": 6,
+    "infra_used": 0,
+    "infra_budget": 3
+  },
+  "stopped_reason": null,
+  "trend": [
+    {
+      "attempt": 2,
+      "fatal_total": 0,
+      "fatal_root": 0,
+      "fatal_derived": 0,
+      "screens": "9/9",
+      "stopped_at": null
+    }
+  ],
+  "git": {
+    "commit": "3468b75658b79d80f4111ee986d2dc82ef21e7c8",
+    "branch": "main",
+    "dirty": false,
+    "dirty_files": []
+  },
+  "tokens": {
+    "method": "tiktoken:o200k_base(대체)",
+    "by_stage": {
+      "plan": {
+        "calls": 1,
+        "estimated_prompt": 19903,
+        "images": 15,
+        "estimated_images": 6330,
+        "max_tokens": 25000,
+        "prompt": 19886,
+        "completion": 7106,
+        "reasoning": 162
+      },
+      "generate": {
+        "calls": 1,
+        "estimated_prompt": 18679,
+        "images": 0,
+        "estimated_images": 0,
+        "max_tokens": 32000,
+        "prompt": 18685,
+        "completion": 10411,
+        "reasoning": 512
+      },
+      "retry": {
+        "calls": 1,
+        "estimated_prompt": 29145,
+        "images": 0,
+        "estimated_images": 0,
+        "max_tokens": 32000,
+        "prompt": 29151,
+        "completion": 10133,
+        "reasoning": 113
+      }
+    },
+    "total": {
+      "calls": 3,
+      "estimated_prompt": 67727,
+      "images": 15,
+      "estimated_images": 6330,
+      "max_tokens": 89000,
+      "prompt": 67722,
+      "completion": 27650,
+      "reasoning": 787
+    },
+    "first_attempt": {
+      "calls": 2,
+      "estimated_prompt": 38582,
+      "images": 15,
+      "estimated_images": 6330,
+      "max_tokens": 57000,
+      "prompt": 38571,
+      "completion": 17517,
+      "reasoning": 674
+    }
+  },
+  "ratelimit": {
+    "limit_tokens": 1000000,
+    "remaining_tokens": 974929,
+    "limit_requests": 5000
+  },
+  "cost": {
+    "currency": "USD",
+    "price_model": "gpt-6.1-sol",
+    "per_million": {
+      "input": 2.0,
+      "output": 10.0
+    },
+    "by_attempt": [
+      {
+        "attempt": 1,
+        "usd": 0.252312
+      },
+      {
+        "attempt": 2,
+        "usd": 0.159632
+      }
+    ],
+    "total_usd": 0.411944,
+    "note": "입력 x input + 출력(생각 포함) x output, 100만 토큰당. 캐시 할인 미반영 (상한)"
+  },
+  "see": {
+    "on": true,
+    "source": "기본값 (켜짐)",
+    "original_images": 15
+  },
+  "refine": {
+    "budget": 0,
+    "source": "config.DEFAULT_REFINE",
+    "rounds": [],
+    "final_from": "generate",
+    "final_label": "생성",
+    "reverted": null,
+    "format_failures": 0,
+    "audit_failures": 0
+  },
+  "original": "inputs/original_transfer.html",
+  "original_sha256": "f76a8b2f9226e20bfc521325c0b0d0cb040d3ce3f958c9a3376377a7b6141e63",
+  "entrance_distance": [
+    {
+      "id": "T1",
+      "label": "메시지",
+      "action": "oos-message",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "T2",
+      "label": "지갑",
+      "action": "oos-wallet",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "T3",
+      "label": "알림",
+      "action": "oos-alarm",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "T4",
+      "label": "IRP 안내",
+      "action": "oos-irp",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "T5",
+      "label": "앱카드 가입",
+      "action": "oos-appcard",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 120
+      }
+    },
+    {
+      "id": "T6",
+      "label": "바로받기",
+      "action": "oos-get-coupon",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 299
+      }
+    },
+    {
+      "id": "T7",
+      "label": "이벤트",
+      "action": "oos-event",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 355
+      }
+    },
+    {
+      "id": "T8",
+      "label": "쿠폰",
+      "action": "oos-coupon",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 411
+      }
+    },
+    {
+      "id": "T9",
+      "label": "포인트",
+      "action": "oos-point",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 467
+      }
+    },
+    {
+      "id": "T10",
+      "label": "소비 상세",
+      "action": "oos-spend-detail",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 646
+      }
+    },
+    {
+      "id": "T11",
+      "label": "마이신한포인트",
+      "action": "oos-my-point",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 87
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 825
+      }
+    },
+    {
+      "id": "T12",
+      "label": "자산 연결 이벤트",
+      "action": "oos-connect-event",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 471
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 1312
+      }
+    },
+    {
+      "id": "T13",
+      "label": "홈화면 설정",
+      "action": "oos-home-setting",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 782
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 1,
+        "via": "oos-easy-home",
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "T14",
+      "label": "금액 숨기기",
+      "action": "oos-hide-amount",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 782
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 1,
+        "via": "oos-easy-home",
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "T15",
+      "label": "금융",
+      "action": "oos-tab-finance",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "T16",
+      "label": "상품",
+      "action": "oos-tab-goods",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "T17",
+      "label": "혜택",
+      "action": "oos-tab-benefit",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "T18",
+      "label": "주식",
+      "action": "oos-tab-stock",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "T19",
+      "label": "다건이체",
+      "action": "oos-multi-transfer",
+      "original": {
+        "visit": "recipient",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "recipient",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "T20",
+      "label": "받는 사람 관리",
+      "action": "oos-payee-manage",
+      "original": {
+        "visit": "recipient",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "recipient",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "T21",
+      "label": "검색",
+      "action": "oos-search",
+      "original": {
+        "visit": "recipient",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "recipient",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "T22",
+      "label": "자주쓰는 계좌",
+      "action": "oos-frequent",
+      "original": {
+        "visit": "recipient",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "recipient",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "T23",
+      "label": "내 계좌",
+      "action": "oos-my-accounts",
+      "original": {
+        "visit": "recipient",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "recipient",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "T24",
+      "label": "최근",
+      "action": "oos-recent",
+      "original": {
+        "visit": "recipient",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "recipient",
+        "reveal": 0,
+        "scroll_px": 41
+      }
+    },
+    {
+      "id": "T25",
+      "label": "출금계좌 변경",
+      "action": "oos-from-account",
+      "original": {
+        "visit": "amount",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "amount",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "T26",
+      "label": "추가이체",
+      "action": "oos-more-transfer",
+      "original": {
+        "visit": "done",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "done",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "T27",
+      "label": "상세보기",
+      "action": "oos-detail",
+      "original": {
+        "visit": "done",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "done",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "T28",
+      "label": "공유",
+      "action": "oos-share",
+      "original": {
+        "visit": "done",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "done",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "R1",
+      "label": "전체메뉴",
+      "action": "oos-menu",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "R3",
+      "label": "쉬운홈",
+      "action": "oos-easy-home",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 782
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 1,
+        "via": "oos-easy-home",
+        "scroll_px": 0
+      }
+    },
+    {
+      "id": "R4",
+      "label": "홈",
+      "action": "oos-tab-home",
+      "original": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      },
+      "build": {
+        "visit": "home",
+        "reveal": 0,
+        "scroll_px": 0
+      }
+    }
+  ]
+}

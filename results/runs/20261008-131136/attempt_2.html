@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>돈 보내기</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;background:#dfe5ed;color:#172331;font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif}
+body{display:flex;justify-content:center}
+#phone{width:390px;height:844px;position:relative;overflow:hidden;background:#fff}
+.screen{display:none;position:absolute;inset:0;background:#fff;flex-direction:column}
+.screen.on{display:flex}
+header{flex-shrink:0;padding:12px 16px;border-bottom:1px solid #d5dce5}
+header .row{justify-content:space-between}
+.body{flex:1;min-height:0;overflow-y:auto;padding:16px}
+h1{font-size:26px;line-height:1.4;margin:8px 0 16px;word-break:keep-all}
+h2{font-size:21px;margin:0 0 12px}
+h3{font-size:20px;margin:0 0 10px}
+p{margin:8px 0;line-height:1.55}
+button,input{font-family:inherit;font-size:19px}
+button{min-height:48px;padding:10px 12px;border:1px solid #aab8ca;border-radius:10px;background:#fff;color:#172331;cursor:pointer;line-height:1.35;white-space:normal}
+button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:3px solid #e49100;outline-offset:2px}
+button:disabled{background:#e3e8ee;color:#586575;border-color:#cbd4df;cursor:default}
+.primary{background:#0757c8;border-color:#0757c8;color:#fff;font-weight:700;width:100%;min-height:56px}
+.wide{width:100%;text-align:left;margin-top:8px}
+.row{display:flex;gap:8px;align-items:center}
+.row>*{min-width:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.four{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.card{padding:16px;background:#f3f6fa;border:1px solid #d5dce5;border-radius:12px;margin-bottom:16px}
+.label{font-size:18px;font-weight:700;display:block;margin-bottom:6px}
+.sub{font-size:17px;color:#4b5a6d;line-height:1.5}
+.step{font-size:17px;color:#0757c8;margin:10px 0 0;font-weight:700}
+.number{font-size:27px;font-weight:700;overflow-wrap:anywhere;line-height:1.4}
+.field{border:2px solid #0757c8;border-radius:10px;padding:12px;min-height:64px;background:#fff}
+.field:empty::before{content:"숫자를 입력하세요";color:#536579;font-size:21px;font-weight:400}
+.error{color:#a32418;background:#fff1ed;border:1px solid #d99589;padding:12px;border-radius:10px;line-height:1.5;font-size:18px;margin:10px 0}
+.error:empty{display:none}
+.small{font-size:15px;display:block;margin-top:5px}
+.bottom{padding:10px 16px 14px;border-top:1px solid #d5dce5;background:#fff;flex-shrink:0}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:10px 16px;flex-shrink:0;background:#f3f6fa}
+.pad button{font-size:26px;height:52px;padding:6px;border-color:#9daec3}
+.pad .delete{font-size:17px}
+.tools{padding:0 16px 10px;display:flex;gap:8px;background:#f3f6fa}
+.tools button{flex:1;font-size:17px}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:8px}
+.quick button{font-size:17px;padding:8px 3px}
+.nav{display:flex;gap:3px;padding:8px 6px;border-top:1px solid #d5dce5;flex-shrink:0}
+.nav button{flex:1;font-size:18px;padding:8px 3px}
+.banklist{display:flex;flex-direction:column;gap:8px}
+.banklist button{text-align:left;min-height:58px;font-size:21px}
+.selected{background:#e5efff;border:2px solid #0757c8;color:#064ba9;font-weight:700}
+.summary{display:grid;gap:14px}
+.summary div{padding-bottom:12px;border-bottom:1px solid #ccd6e2}
+.recv{font-size:22px;line-height:1.5;overflow-wrap:anywhere}
+.money{font-size:32px;font-weight:700;line-height:1.5}
+.hidden,[hidden]{display:none!important}
+.overlay{position:absolute;inset:0;background:rgba(12,25,42,.65);z-index:10;display:flex;align-items:center;padding:20px}
+.dialog{background:#fff;border-radius:14px;padding:22px;width:100%;max-height:750px;overflow-y:auto}
+.dialog button{margin-top:12px;width:100%}
+.dialog input{width:100%;padding:12px;border:2px solid #0757c8;border-radius:8px}
+.center{text-align:center}
+.dots{font-size:36px;letter-spacing:10px;color:#0757c8;margin:22px 0}
+.done-mark{font-size:44px;color:#0757c8}
+.memo{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<div id="phone">
+<section class="screen on" data-screen="home">
+<header>
+  <h2>홍길동님</h2>
+  <div class="four">
+    <button data-action="oos-message">메시지</button>
+    <button data-action="oos-wallet">지갑</button>
+    <button data-action="oos-alarm">알림</button>
+    <button data-action="oos-menu">전체메뉴</button>
+  </div>
+</header>
+<div class="body">
+  <div class="card">
+    <h2>출금계좌</h2>
+    <p>[금융거래한도계좌2]<br>신한 주거래 우대통장<br>(저축예금)</p>
+    <p class="sub">신한 110-000-000000</p>
+    <p class="number" id="home-balance">1,000,000원</p>
+    <button class="primary" data-action="go-recipient">돈 보내기(이체)</button>
+  </div>
+  <button class="wide" data-action="settings-toggle" aria-expanded="false">화면 설정 펼치기</button>
+  <div id="settings" hidden>
+    <button class="wide" data-action="oos-easy-home">쉬운홈</button>
+    <button class="wide" data-action="oos-home-setting">홈화면 설정</button>
+    <button class="wide" data-action="oos-hide-amount">금액 숨기기</button>
+  </div>
+  <div class="card">
+    <h2>노후 준비</h2>
+    <button class="wide" data-action="oos-irp">개인형 퇴직연금 안내<br><span class="sub">절세혜택과 안정적인 노후 준비</span></button>
+  </div>
+  <div class="card">
+    <h2>카드</h2>
+    <p>픽 이 체크캐릭터형(하리보)</p>
+    <p class="sub">금액 숨김</p>
+    <button class="wide" data-action="oos-appcard">앱카드 가입</button>
+  </div>
+  <div class="card">
+    <h2>땡겨요 · 쿠폰</h2>
+    <p>비에이치씨 치킨 최대 9,000원 할인쿠폰</p>
+    <button class="wide" data-action="oos-get-coupon">바로받기</button>
+    <button class="wide" data-action="oos-event">이벤트</button>
+    <button class="wide" data-action="oos-coupon">쿠폰</button>
+    <button class="wide" data-action="oos-point">포인트</button>
+  </div>
+  <div class="card">
+    <h2>7월 소비</h2><p>오늘 쓴 돈 0원</p>
+    <button class="wide" data-action="oos-spend-detail">소비 상세</button>
+  </div>
+  <div class="card">
+    <h2>마이신한포인트</h2><p>카드 쓸 때마다 쌓이고 현금처럼 쓰는 포인트</p>
+    <button class="wide" data-action="oos-my-point">시작하기</button>
+  </div>
+  <div class="card">
+    <h2>추천서비스</h2>
+    <button class="wide" data-action="service" data-title="쏠패밀리">쏠패밀리 · 가족과 함께하는 금융생활</button>
+    <button class="wide" data-action="service" data-title="급여클럽 플러스">급여클럽 플러스 · 급여이체 우대 혜택</button>
+    <button class="wide" data-action="service" data-title="내 카드 승인내역">내 카드 승인내역</button>
+  </div>
+  <div class="card">
+    <h2>자산 연결 이벤트</h2><p>금융자산을 연결하면 커피쿠폰 즉시지급!</p>
+    <button class="wide" data-action="oos-connect-event">이벤트 바로가기</button>
+  </div>
+  <div class="card">
+    <h2>신한금융그룹</h2>
+    <button class="wide" data-action="service" data-title="신한카드">신한카드 · 나에게 맞는 카드 찾기</button>
+    <button class="wide" data-action="service" data-title="신한투자증권">신한투자증권 · 지금 뜨는 주식</button>
+    <button class="wide" data-action="service" data-title="신한라이프">신한라이프 · 보험 보장분석</button>
+  </div>
+</div>
+<div class="nav">
+  <button data-action="oos-tab-home">홈</button>
+  <button data-action="oos-tab-finance">금융</button>
+  <button data-action="oos-tab-goods">상품</button>
+  <button data-action="oos-tab-benefit">혜택</button>
+  <button data-action="oos-tab-stock">주식</button>
+</div>
+</section>
+
+<section class="screen" data-screen="recipient">
+<header><div class="row"><button data-action="previous">이전</button><button data-action="cancel">이체 취소</button></div><p class="step">1단계 · 받는 사람 정하기</p></header>
+<div class="body">
+  <h1>누구에게 보낼까요?</h1>
+  <button class="primary" data-action="go-account">새 계좌번호 입력</button>
+  <p class="sub">계좌번호 직접 입력으로 처음 보내는 계좌를 정할 수 있습니다.</p>
+  <div class="two">
+    <button data-action="oos-multi-transfer">다건이체</button>
+    <button data-action="oos-payee-manage">받는 사람 관리</button>
+  </div>
+  <button class="wide" data-action="oos-search">받는 사람 검색</button>
+  <div class="card">
+    <button class="wide" data-action="oos-frequent">자주쓰는 계좌 · 0개</button>
+    <button class="wide" data-action="frequent-edit">자주쓰는 계좌 편집</button>
+    <p>등록된 계좌가 없습니다.<br>새 계좌번호를 입력하세요.</p>
+  </div>
+  <div class="card">
+    <button class="wide" data-action="oos-my-accounts">내 계좌 · 0개</button>
+    <p>등록된 계좌가 없습니다.<br>새 계좌번호를 입력하세요.</p>
+  </div>
+  <div class="card">
+    <button class="wide" data-action="oos-recent">최근 · 0개</button>
+    <p>등록된 계좌가 없습니다.<br>새 계좌번호를 입력하세요.</p>
+  </div>
+</div>
+</section>
+
+<section class="screen" data-screen="account">
+<header><div class="row"><button data-action="previous">이전</button><button data-action="cancel">이체 취소</button></div><p class="step">2단계 · 계좌번호와 은행 입력</p></header>
+<div class="body">
+  <h1>받는 계좌번호를<br>입력하세요</h1>
+  <label class="label" for="acc-input">계좌번호</label>
+  <p class="sub">하이픈(-) 없이 숫자만 입력하세요</p>
+  <div id="acc-input" class="field number" role="textbox" aria-label="계좌번호" tabindex="0" data-action="acc-field"></div>
+  <div id="acc-error" class="error" role="status"></div>
+  <button id="acc-fix" class="wide" data-action="acc-fix" hidden>계좌번호 고치기</button>
+  <button class="wide" data-action="open-bank">은행 선택 · <span id="picked-bank">선택하지 않음</span></button>
+  <p class="sub">계좌번호와 은행을 확인한 뒤 다음을 누르세요.</p>
+</div>
+<div class="pad" id="acc-pad"></div>
+<div class="tools"><button data-action="acc-del">한 자리 지우기</button><button data-action="acc-clear">모두 지우기</button></div>
+<div class="bottom">
+  <button class="primary" id="acc-next" data-action="account-next">다음 · 금액 입력</button>
+  <p class="sub" id="acc-reason" role="status">계좌번호를 입력하세요</p>
+</div>
+</section>
+
+<section class="screen" data-screen="bank">
+<header><div class="row"><button data-action="close-bank">은행 선택 취소</button><button data-action="cancel">이체 취소</button></div><p class="step">2단계 · 받는 은행 선택</p></header>
+<div class="body">
+  <h1>은행 또는 증권사를<br>선택하세요</h1>
+  <p class="sub" id="bank-current">선택한 은행 없음</p>
+  <div id="bank-error" class="error" role="status"></div>
+  <div class="two">
+    <button id="tab-bank" class="selected" data-action="tab-bank" aria-pressed="true">은행</button>
+    <button id="tab-sec" data-action="tab-sec" aria-pressed="false">증권사</button>
+  </div>
+  <p class="sub">목록을 위로 밀어 더 찾아보세요.</p>
+  <div id="grid-bank" class="banklist"></div>
+  <div id="grid-sec" class="banklist" hidden></div>
+</div>
+</section>
+
+<section class="screen" data-screen="amount">
+<header><div class="row"><button data-action="previous">이전</button><button data-action="cancel">이체 취소</button></div><p class="step">3단계 · 보낼 금액 입력</p></header>
+<div class="body">
+  <div class="card">
+    <span class="label">출금계좌</span>
+    <p>신한 110-000-000000</p>
+    <p class="sub">신한 주거래 우대통장<br>[금융거래한도계좌2] (저축예금)</p>
+    <button class="wide" data-action="oos-from-account">출금계좌 변경</button>
+    <p class="label">받는 계좌</p>
+    <div class="recv"></div>
+  </div>
+  <h1>얼마를 보낼까요?</h1>
+  <span class="label">보낼 금액</span>
+  <div class="money" id="amt-display">금액을 입력하세요</div>
+  <p id="amt-reading" class="sub"></p>
+  <div id="amt-error" class="error" role="status"></div>
+  <p class="sub">출금가능금액 1,000,000원</p>
+  <h3>금액 더하기</h3>
+  <div id="amt-quick" class="quick"></div>
+  <p class="sub">전액은 출금가능금액 전부를 입력합니다.</p>
+</div>
+<div class="pad" id="amt-pad"></div>
+<div class="tools"><button data-action="del">한 자리 지우기</button><button data-action="amt-clear">모두 지우기</button></div>
+<div class="bottom">
+  <button class="primary" id="amt-next" data-action="amount-next">다음 · 이체 내용 확인</button>
+  <p class="sub" id="amt-reason" role="status">보낼 금액을 입력하세요</p>
+</div>
+</section>
+
+<section class="screen" data-screen="confirm">
+<header><div class="row"><button data-action="previous">이전</button><button data-action="cancel">이체 취소</button></div><p class="step">4단계 · 이체 내용 확인</p></header>
+<div class="body">
+  <h1>이체 내용을<br>확인하세요</h1>
+  <div class="card summary">
+    <div><span class="label">받는 계좌</span><p class="recv"></p><button class="wide" data-action="edit-account">받는 계좌 수정</button></div>
+    <div><span class="label">보낼 금액</span><p class="money" id="cf-amt"></p><button class="wide" data-action="edit-amount">금액 수정</button></div>
+    <div><span class="label">출금계좌</span><p>신한 110-000-000000</p><p class="sub">신한 주거래 우대통장<br>[금융거래한도계좌2] (저축예금)</p></div>
+    <div><span class="label">수수료</span><p>무료 · 0원</p></div>
+  </div>
+  <div class="card">
+    <h2>메모</h2>
+    <p class="sub">메모는 예금주 이름이 아닙니다.</p>
+    <p>받는분 메모: <span id="memo-to" class="memo">김철수</span></p>
+    <button class="wide" data-action="edit-memo-to">받는분 메모 수정</button>
+    <p>내통장 메모: <span id="memo-own" class="memo">김철수</span></p>
+    <button class="wide" data-action="edit-memo-own">내통장 메모 수정</button>
+  </div>
+</div>
+<div class="bottom">
+  <p class="sub">비밀번호 확인 뒤 ‘이체하기’를 눌러야 돈이 보내집니다.</p>
+  <button class="primary" data-action="send">확인했어요 · 본인 확인으로</button>
+</div>
+</section>
+
+<section class="screen" data-screen="password">
+<header><div class="row"><button data-action="previous">이전</button><button data-action="cancel">이체 취소</button></div><p class="step">5단계 · 본인 확인</p></header>
+<div class="body center">
+  <h1>출금계좌 비밀번호<br>4자리</h1>
+  <p>신한 110-000-000000</p>
+  <p>입력 후 이체하기를 누르면<br>돈이 보내집니다.</p>
+  <div id="pw-dots" class="dots" aria-hidden="true">○○○○</div>
+  <p id="pw-count" role="status">4자리 중 0자리 입력</p>
+  <p class="money" id="pw-amt"></p>
+  <div class="recv"></div>
+</div>
+<div id="pwpad" class="pad"></div>
+<div class="tools">
+  <button data-action="pw-shuffle">숫자 위치 바꾸기</button>
+  <button data-action="pw-del">한 자리 지우기</button>
+</div>
+<div class="bottom"><button class="primary" id="pw-send" data-action="pw-send" disabled>이체하기</button></div>
+</section>
+
+<section class="screen" data-screen="done">
+<header><h2>이체 완료</h2><p class="step">6단계 · 완료 내역 확인</p></header>
+<div class="body">
+  <div class="center">
+    <div class="done-mark" aria-hidden="true">✓</div>
+    <h1>이체가 완료되었습니다</h1>
+    <p class="money"><span id="dn-amt"></span>원</p>
+    <p>받는 계좌</p><div class="recv"></div>
+  </div>
+  <div class="two">
+    <button data-action="oos-more-transfer">추가이체</button>
+    <button data-action="oos-detail" aria-expanded="false">상세보기</button>
+  </div>
+  <div id="done-detail" class="card" hidden>
+    <h2>완료 내역</h2>
+    <p>출금계좌: 신한 110-000-000000</p>
+    <p>받는 계좌:</p><div class="recv"></div>
+    <p id="detail-amt"></p><p>수수료: 0원</p>
+    <p id="detail-memo" class="memo"></p>
+  </div>
+  <button class="wide" data-action="oos-share">공유</button>
+</div>
+<div class="bottom"><button class="primary" data-action="finish">홈으로</button></div>
+</section>
+
+<div id="panel" class="overlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="panel-title">
+    <h2 id="panel-title"></h2>
+    <p id="panel-text"></p>
+    <input id="memo-input" data-action="memo-input" aria-label="메모 입력" maxlength="30" hidden>
+    <button id="panel-yes" class="primary" data-action="panel-yes" hidden></button>
+    <button id="panel-close" data-action="panel-close">이체로 돌아가기</button>
+  </div>
+</div>
+</div>
+<script id="preserved-data">/* 도구가 넣었다: 입력 HTML 이 가진 선택지 데이터. 모델이 쓴 것이 아니다. */
+window.PRESERVED = {"BANKS": ["신한", "제주", "국민", "기업", "농협", "산업", "수협", "신협", "우리", "하나", "한국씨티", "카카오뱅크", "케이뱅크", "토스뱅크", "경남", "광주", "아이엠뱅크(대구)", "부산", "전북", "회원수협", "새마을", "우체국", "저축은행", "지역농.축협", "도이치", "중국", "중국건설", "중국공상", "BNP파리바", "BOA", "HSBC", "JP모간", "SC", "산림조합", "국세", "지방세", "국고금", "관세"], "SECS": ["신한투자증권", "교보증권", "다올투자증권", "대신증권", "메리츠증권", "미래에셋증권", "부국증권", "삼성증권", "상상인증권", "신영증권", "에스케이증권", "유안타증권", "유진투자증권", "LS증권", "카카오페이증권", "케이프투자증권", "키움증권", "토스증권", "우리투자증권", "하나증권", "아이엠증권", "한국투자증권", "한화투자증권", "현대차증권", "BNK투자증권", "DB증권", "IBK투자증권", "KB증권", "NH투자증권"], "AMT_KEYS": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "00", "0"], "ACC_KEYS": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"], "PW_KEYS": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"], "QUICK": ["10000", "50000", "100000", "all"]};</script>
+<script>
+const P = window.PRESERVED;
+const S = {screen:'home',account:'',bank:'',amount:'',pw:'',accountError:'',bankError:false,amountError:'',memoTo:'김철수',memoOwn:'김철수',panelMode:'',hideBalance:false};
+const $ = id => document.getElementById(id);
+const fmt = n => Number(n).toLocaleString('ko-KR');
+window.__screen = () => S.screen;
+
+function button(action, text, attrs={}){
+  const b=document.createElement('button');
+  b.dataset.action=action;
+  b.textContent=text;
+  Object.entries(attrs).forEach(([k,v])=>b.setAttribute(k,v));
+  return b;
+}
+function keys(id,list,action){
+  $(id).replaceChildren(...list.map(v=>button(action,String(v),{'data-v':String(v)})));
+}
+keys('acc-pad',P.ACC_KEYS,'acc-num');
+keys('amt-pad',P.AMT_KEYS,'num');
+
+const koreanNames={
+  'BNP파리바':'비엔피파리바','BOA':'뱅크오브아메리카','HSBC':'에이치에스비씨',
+  'JP모간':'제이피모간','SC':'에스씨','LS증권':'엘에스증권','BNK투자증권':'비엔케이투자증권',
+  'DB증권':'디비증권','IBK투자증권':'아이비케이투자증권','KB증권':'케이비증권','NH투자증권':'엔에이치투자증권'
+};
+const bankLabel=n=>koreanNames[n]||n;
+function banks(id,list){
+  $(id).replaceChildren(...list.map(n=>button('pick-bank',bankLabel(n),{'data-bank':n})));
+}
+banks('grid-bank',P.BANKS);
+banks('grid-sec',P.SECS);
+function quickLabel(v){
+  if(v==='all') return '전액';
+  return '+'+fmt(Number(v)/10000)+'만 원';
+}
+document.getElementById('amt-quick').replaceChildren(
+  ...window.PRESERVED.QUICK.map(v =>
+    button('quick',quickLabel(String(v)),{'data-v':String(v)})
+  )
+);
+
+function buildPw(shuffle){
+  const list=P.PW_KEYS.slice();
+  if(shuffle){
+    for(let i=list.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));[list[i],list[j]]=[list[j],list[i]];
+    }
+  }
+  keys('pwpad',list,'pw');
+}
+buildPw(true);
+function readMoney(n){
+  if(!n)return '';
+  const digits=['','일','이','삼','사','오','육','칠','팔','구'];
+  const units=['','십','백','천'];
+  function group(v){
+    let out='';
+    String(v).split('').reverse().forEach((d,i)=>{
+      const k=Number(d);
+      if(k)out=(k===1&&i>0?'':digits[k])+units[i]+out;
+    });
+    return out;
+  }
+  const high=Math.floor(n/10000),low=n%10000;
+  return (high?group(high)+'만 ':'')+(low?group(low):'')+' 원';
+}
+function render(){
+  $('acc-input').textContent=S.account;
+  $('picked-bank').textContent=S.bank?bankLabel(S.bank):'선택하지 않음';
+  $('acc-error').textContent=S.accountError;
+  $('acc-fix').hidden=!S.accountError.includes('올바르지');
+  $('acc-reason').textContent=!S.account?'계좌번호를 입력하세요':!S.bank?'은행을 선택하세요':'다음에 보낼 금액을 입력합니다.';
+  $('bank-current').textContent='선택한 은행: '+(S.bank?bankLabel(S.bank):'없음')+(S.account?' · 계좌번호 '+S.account:'');
+  $('bank-error').replaceChildren();
+  if(S.bankError){
+    $('bank-error').append(document.createTextNode('선택한 은행이 받는 계좌의 은행과 맞지 않습니다. 받는 사람에게 은행을 확인하고 다시 선택하세요.'));
+    const code=document.createElement('span');code.className='small';code.textContent='오류 코드 ETA00325';$('bank-error').append(code);
+  }
+  document.querySelectorAll('[data-action="pick-bank"]').forEach(b=>{
+    b.classList.toggle('selected',b.dataset.bank===S.bank);
+    b.setAttribute('aria-pressed',String(b.dataset.bank===S.bank));
+  });
+  document.querySelectorAll('.recv').forEach(el=>el.textContent=(S.bank?bankLabel(S.bank):'')+' '+S.account);
+  $('amt-display').textContent=Number(S.amount)>0?fmt(S.amount)+'원':'금액을 입력하세요';
+  $('amt-reading').textContent=readMoney(Number(S.amount));
+  $('amt-error').textContent=S.amountError;
+  $('amt-reason').textContent=Number(S.amount)>0?'다음에 받는 계좌와 금액을 확인합니다.':'보낼 금액을 입력하세요';
+  $('cf-amt').textContent=fmt(S.amount)+'원';
+  $('pw-amt').textContent=fmt(S.amount)+'원';
+  $('pw-count').textContent='4자리 중 '+S.pw.length+'자리 입력';
+  $('pw-dots').textContent='●'.repeat(S.pw.length)+'○'.repeat(4-S.pw.length);
+  $('pw-send').disabled=S.pw.length!==4;
+  $('dn-amt').textContent=fmt(S.amount);
+  $('detail-amt').textContent='보낸 금액: '+fmt(S.amount)+'원';
+  $('detail-memo').textContent='받는분 메모: '+S.memoTo+' / 내통장 메모: '+S.memoOwn;
+  $('memo-to').textContent=S.memoTo||'없음';
+  $('memo-own').textContent=S.memoOwn||'없음';
+  $('home-balance').textContent=S.hideBalance?'금액 숨김':'1,000,000원';
+}
+function show(name){
+  S.screen=name;
+  document.querySelectorAll('.screen').forEach(el=>el.classList.toggle('on',el.dataset.screen===name));
+  render();
+  const body=document.querySelector('.screen.on .body');
+  if(body)body.scrollTop=0;
+}
+function bankTab(sec){
+  $('grid-bank').hidden=sec;$('grid-sec').hidden=!sec;
+  $('tab-bank').classList.toggle('selected',!sec);$('tab-sec').classList.toggle('selected',sec);
+  $('tab-bank').setAttribute('aria-pressed',String(!sec));$('tab-sec').setAttribute('aria-pressed',String(sec));
+}
+function reset(){
+  S.account='';S.bank='';S.amount='';S.pw='';S.accountError='';S.bankError=false;S.amountError='';
+  S.memoTo='김철수';S.memoOwn='김철수';$('done-detail').hidden=true;
+}
+let returnFocus=null;
+function panel(title,text,mode='',yes=''){
+  returnFocus=document.activeElement;
+  S.panelMode=mode;
+  $('panel-title').textContent=title;$('panel-text').textContent=text;
+  $('memo-input').hidden=mode!=='memoTo'&&mode!=='memoOwn';
+  if(!$('memo-input').hidden)$('memo-input').value=S[mode];
+  $('panel-yes').hidden=!yes;$('panel-yes').textContent=yes;
+  $('panel-close').textContent=mode==='cancel'?'계속 이체하기':mode==='new'?'완료 내역으로 돌아가기':'이체로 돌아가기';
+  $('panel').hidden=false;
+  if(!$('memo-input').hidden)$('memo-input').focus();else $('panel-close').focus();
+}
+function closePanel(){
+  $('panel').hidden=true;
+  if(returnFocus&&returnFocus.isConnected)returnFocus.focus();
+}
+function servicePanel(el,text){
+  panel(el.dataset.title||el.textContent.trim(),text||'현재 이 화면에서는 이 서비스의 조회와 신청을 제공하지 않습니다. 이체로 돌아가 계좌번호와 금액을 입력할 수 있습니다.');
+}
+function setAmount(next){
+  if(next>1000000){
+    S.amountError='출금가능금액을 넘었습니다. 출금가능금액은 1,000,000원입니다. 입력한 금액을 확인하세요.';
+  }else{
+    S.amount=next>0?String(next):'';
+    S.amountError='';
+  }
+  render();
+}
+
+$('phone').addEventListener('click',function(e){
+  const el=e.target.closest('[data-action]');
+  if(!el||!$('phone').contains(el))return;
+  if(!$('panel').hidden&&!$('panel').contains(el))return;
+  const a = el.dataset.action;
+  if(a==='go-recipient'){
+    show('recipient');
+  } else if(a==='go-account'){
+    show('account');
+  } else if(a==='previous'){
+    const prev={recipient:'home',account:'recipient',amount:'account',confirm:'amount',password:'confirm'};
+    show(prev[S.screen]||'home');
+  } else if(a==='cancel'){
+    panel('이체를 취소할까요?','취소하면 입력한 계좌번호, 은행, 금액이 지워집니다.','cancel','입력을 지우고 이체 취소');
+  } else if(a==='panel-close'){
+    closePanel();
+  } else if(a==='panel-yes'){
+    const mode=S.panelMode;
+    if(mode==='cancel'){closePanel();reset();show('home');}
+    else if(mode==='new'){closePanel();reset();show('recipient');}
+    else if(mode==='memoTo'||mode==='memoOwn'){S[mode]=$('memo-input').value.trim();closePanel();render();}
+  } else if(a==='memo-input'){
+    $('memo-input').focus();
+  } else if(a==='acc-field'){
+    $('acc-input').focus();
+  } else if(a==='acc-fix'){
+    S.accountError='';render();$('acc-input').focus();
+  } else if(a==='acc-num'){
+    if(S.account.length<14){S.account+=el.dataset.v;S.accountError='';}
+    else S.accountError='계좌번호는 최대 14자리입니다. 입력한 번호를 확인하세요';
+    render();
+  } else if(a==='acc-del'){
+    S.account=S.account.slice(0,-1);S.accountError='';render();
+  } else if(a==='acc-clear'){
+    S.account='';S.accountError='';render();
+  } else if(a==='open-bank'){
+    bankTab(false);show('bank');
+  } else if(a==='close-bank'){
+    show('account');
+  } else if(a==='tab-bank'){
+    bankTab(false);
+  } else if(a==='tab-sec'){
+    bankTab(true);
+  } else if(a==='pick-bank'){
+    S.bank=el.dataset.bank;S.bankError=false;show('account');
+  } else if(a==='account-next'){
+    if(!S.account){S.accountError='계좌번호를 입력하세요';render();}
+    else if(S.account!=='110234567890'){
+      S.accountError='계좌번호가 올바르지 않습니다. 받는 사람의 계좌번호를 다시 확인하세요';
+      render();
+      const code=document.createElement('span');code.className='small';code.textContent='오류 코드 ELB00016';$('acc-error').append(code);
+      document.querySelector('[data-screen="account"] .body').scrollTop=0;
+    }else if(!S.bank){S.accountError='은행을 선택하세요';render();}
+    else{S.accountError='';show('amount');}
+  } else if(a==='num'){
+    setAmount(Number(S.amount+el.dataset.v));
+  } else if(a==='del'){
+    S.amount=S.amount.slice(0,-1);S.amountError='';render();
+  } else if(a==='amt-clear'){
+    S.amount='';S.amountError='';render();
+  } else if(a==='quick'){
+    setAmount(el.dataset.v==='all'?1000000:Number(S.amount)+Number(el.dataset.v));
+  } else if(a==='amount-next'){
+    if(Number(S.amount)>0)show('confirm');
+    else{S.amountError='보낼 금액을 입력하세요';render();}
+  } else if(a==='edit-account'){
+    show('account');
+  } else if(a==='edit-amount'){
+    show('amount');
+  } else if(a==='edit-memo-to'){
+    panel('받는분 메모 수정','메모는 예금주 이름이 아닙니다.','memoTo','메모 저장');
+  } else if(a==='edit-memo-own'){
+    panel('내통장 메모 수정','메모는 예금주 이름이 아닙니다.','memoOwn','메모 저장');
+  } else if(a==='send'){
+    if(S.bank!=='신한'){S.bankError=true;bankTab(false);show('bank');}
+    else{S.pw='';buildPw(true);show('password');}
+  } else if(a==='pw'){
+    if(S.pw.length<4)S.pw+=el.dataset.v;
+    render();
+  } else if(a==='pw-del'){
+    S.pw=S.pw.slice(0,-1);render();
+  } else if(a==='pw-shuffle'){
+    buildPw(true);
+  } else if(a==='pw-send'){
+    if(S.pw.length===4){S.pw='';show('done');}
+  } else if(a==='finish'){
+    reset();show('home');
+  } else if(a==='settings-toggle'){
+    $('settings').hidden=!$('settings').hidden;
+    el.textContent=$('settings').hidden?'화면 설정 펼치기':'화면 설정 접기';
+    el.setAttribute('aria-expanded',String(!$('settings').hidden));
+  } else if(a==='oos-hide-amount'){
+    S.hideBalance=!S.hideBalance;render();
+    panel('금액 표시 설정',S.hideBalance?'홈의 계좌 잔액을 숨겼습니다. 이체 화면에서는 출금가능금액을 확인할 수 있습니다.':'홈의 계좌 잔액을 표시합니다.');
+  } else if(a==='oos-more-transfer'){
+    panel('새 이체를 시작할까요?','방금 보낸 이체는 완료되었습니다. 추가이체는 받는 사람과 금액을 새로 입력하는 별도의 이체입니다.','new','새 이체 시작');
+  } else if(a==='oos-detail'){
+    $('done-detail').hidden=!$('done-detail').hidden;
+    el.setAttribute('aria-expanded',String(!$('done-detail').hidden));
+    el.textContent=$('done-detail').hidden?'상세보기':'상세보기 접기';
+    if(!$('done-detail').hidden)$('done-detail').scrollIntoView({block:'nearest'});
+  } else if(a==='oos-share'){
+    panel('완료 내역 공유','보낸 금액 '+fmt(S.amount)+'원, 받는 계좌 '+bankLabel(S.bank)+' '+S.account+'. 비밀번호는 공유하지 않습니다. 현재 외부 앱으로 보내는 공유 기능은 제공하지 않습니다.');
+  } else if(a==='oos-frequent'||a==='oos-my-accounts'||a==='oos-recent'||a==='frequent-edit'){
+    servicePanel(el,'등록된 계좌가 없습니다. 현재 이 목록에서는 선택하거나 편집할 계좌가 없습니다. 이체로 돌아가 새 계좌번호를 입력하세요.');
+  } else if(a==='oos-from-account'){
+    servicePanel(el,'현재 선택할 수 있는 출금계좌는 신한 주거래 우대통장, 신한 110-000-000000입니다. 출금가능금액은 1,000,000원입니다.');
+  } else if(a==='oos-message'||
+            a==='oos-wallet'||
+            a==='oos-alarm'||
+            a==='oos-menu'||
+            a==='oos-irp'||
+            a==='oos-appcard'||
+            a==='oos-get-coupon'||
+            a==='oos-event'||
+            a==='oos-coupon'||
+            a==='oos-point'||
+            a==='oos-spend-detail'||
+            a==='oos-my-point'||
+            a==='oos-connect-event'||
+            a==='oos-easy-home'||
+            a==='oos-home-setting'||
+            a==='oos-tab-home'||
+            a==='oos-tab-finance'||
+            a==='oos-tab-goods'||
+            a==='oos-tab-benefit'||
+            a==='oos-tab-stock'||
+            a==='oos-multi-transfer'||
+            a==='oos-payee-manage'||
+            a==='oos-search'||
+            a==='service'){
+    servicePanel(el);
+  }
+});
+render();
+</script>
+</body>
+</html>

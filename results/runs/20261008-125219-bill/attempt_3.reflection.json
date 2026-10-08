@@ -1,0 +1,27 @@
+{
+  "cause": "고객센터와 홈 입구를 접힌 더보기 안에만 두고 해당 화면의 펼침 경로를 흐름 명세에 제공하지 않아 검사기가 실제로 누를 수 없었다.",
+  "plan_changes": [],
+  "keep": [
+    "C1",
+    "C2",
+    "C3",
+    "C4",
+    "C5",
+    "C6",
+    "C7",
+    "C8",
+    "C9",
+    "C10",
+    "C11",
+    "C12",
+    "C13",
+    "home",
+    "menu",
+    "search",
+    "bill-start",
+    "capture",
+    "review",
+    "authenticate",
+    "receipt"
+  ]
+}

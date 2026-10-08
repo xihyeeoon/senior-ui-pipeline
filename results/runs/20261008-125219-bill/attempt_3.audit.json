@@ -1,0 +1,883 @@
+{
+  "passed": true,
+  "fatal": [],
+  "warning": [],
+  "metrics": {
+    "flow": "auto",
+    "derived_from_original": false,
+    "screens_in_flow": [
+      "home",
+      "menu",
+      "search",
+      "search#2",
+      "bill-start",
+      "capture",
+      "review",
+      "review#2",
+      "authenticate",
+      "authenticate#2",
+      "receipt"
+    ],
+    "screens_comparable_to_original": [],
+    "screens_expected": 11,
+    "screens_reached": 11,
+    "screens_unlit": [],
+    "screens_landed_on": {
+      "home": {
+        "hook": "home",
+        "dom": "home"
+      },
+      "menu": {
+        "hook": "menu",
+        "dom": "menu"
+      },
+      "search": {
+        "hook": "search",
+        "dom": "search"
+      },
+      "search#2": {
+        "hook": "search",
+        "dom": "search"
+      },
+      "bill-start": {
+        "hook": "bill-start",
+        "dom": "bill-start"
+      },
+      "capture": {
+        "hook": "capture",
+        "dom": "capture"
+      },
+      "review": {
+        "hook": "review",
+        "dom": "review"
+      },
+      "review#2": {
+        "hook": "review",
+        "dom": "review"
+      },
+      "authenticate": {
+        "hook": "authenticate",
+        "dom": "authenticate"
+      },
+      "authenticate#2": {
+        "hook": "authenticate",
+        "dom": "authenticate"
+      },
+      "receipt": {
+        "hook": "receipt",
+        "dom": "receipt"
+      }
+    },
+    "done_screen": "receipt",
+    "done_amount": "2,160",
+    "data-screen_original": 8,
+    "data-screen_repaired": 8,
+    "data-action_original": 51,
+    "data-action_repaired": 69,
+    "id_original": 83,
+    "id_repaired": 719,
+    "per_screen_attr_loss": {},
+    "injected_dialog_calls": 0,
+    "onclick_added": 0,
+    "dialogs_during_task": 0,
+    "handled_actions": 70,
+    "dead_controls_unverifiable": [],
+    "dead_controls_new": 0,
+    "dead_controls_pre_existing": [],
+    "low_contrast_after": 0,
+    "low_contrast_before": null,
+    "low_contrast_by_screen": {
+      "home": {
+        "before": null,
+        "after": 0
+      },
+      "menu": {
+        "before": null,
+        "after": 0
+      },
+      "search": {
+        "before": null,
+        "after": 0
+      },
+      "search#2": {
+        "before": null,
+        "after": 0
+      },
+      "bill-start": {
+        "before": null,
+        "after": 0
+      },
+      "capture": {
+        "before": null,
+        "after": 0
+      },
+      "review": {
+        "before": null,
+        "after": 0
+      },
+      "review#2": {
+        "before": null,
+        "after": 0
+      },
+      "authenticate": {
+        "before": null,
+        "after": 0
+      },
+      "authenticate#2": {
+        "before": null,
+        "after": 0
+      },
+      "receipt": {
+        "before": null,
+        "after": 0
+      }
+    },
+    "new_inherited_colour": null,
+    "inherited_colour_unreadable": 0,
+    "contrast_undetermined": 0,
+    "contrast_undetermined_before": 2,
+    "low_contrast_gained_text": 0,
+    "overlaps_new": 9,
+    "overflows_new": 0,
+    "screens_much_taller": 0,
+    "newly_wrapped_text": 0,
+    "new_english_words": [],
+    "new_english_words_markup_only": [],
+    "state_pairs_checked": 1,
+    "state_pairs_collapsed": 0,
+    "undefined_classes_new": [],
+    "choice_groups_original": {
+      "menu-item": 289,
+      "pick-bill": 18,
+      "pw": 10
+    },
+    "choice_groups_not_choices": {
+      "menu-tab": {
+        "values": 7,
+        "reason": "분야로 스크롤하는 탭 — 찾아가는 수단"
+      },
+      "menu-chip": {
+        "values": 60,
+        "reason": "분류로 스크롤하는 표지판 — 찾아가는 수단"
+      }
+    },
+    "choice_values_removed_by_design": {},
+    "choice_values_kept": {
+      "menu-item": 289,
+      "pick-bill": 18,
+      "pw": 10
+    },
+    "choice_values_selectable": {
+      "menu-item": 289,
+      "pick-bill": 18,
+      "pw": 10
+    },
+    "choice_values_shown_in_original": {
+      "menu-item": 289,
+      "pick-bill": 18,
+      "pw": 10
+    },
+    "choice_values_not_selectable": {},
+    "choice_values_missing": {},
+    "reveal": {
+      "menu-item": {
+        "at": "menu",
+        "values": 385,
+        "error": null
+      },
+      "pick-bill": {
+        "at": "bill-start",
+        "values": 385,
+        "error": null
+      },
+      "pw": {
+        "at": "authenticate",
+        "values": 385,
+        "error": null
+      },
+      "account-select": {
+        "at": "review",
+        "values": 385,
+        "error": null
+      },
+      "more-toggle": {
+        "at": "menu",
+        "values": 385,
+        "error": null
+      },
+      "oos-chat": {
+        "at": "menu",
+        "values": 385,
+        "error": null
+      },
+      "oos-settings": {
+        "at": "menu",
+        "values": 385,
+        "error": null
+      },
+      "oos-logout": {
+        "at": "menu",
+        "values": 385,
+        "error": null
+      }
+    },
+    "entrances_original": 32,
+    "entrances_kept": 32,
+    "entrances_missing": [],
+    "entrances_hidden": [],
+    "entrances_not_in_original": [],
+    "entrances_shown_as": {
+      "B1": {
+        "text": "메시지",
+        "aria": ""
+      },
+      "B2": {
+        "text": "지갑",
+        "aria": ""
+      },
+      "B3": {
+        "text": "알림",
+        "aria": ""
+      },
+      "B4": {
+        "text": "개인형 퇴직연금 안내",
+        "aria": ""
+      },
+      "B5": {
+        "text": "앱카드 가입",
+        "aria": ""
+      },
+      "B6": {
+        "text": "바로받기",
+        "aria": ""
+      },
+      "B7": {
+        "text": "이벤트",
+        "aria": ""
+      },
+      "B8": {
+        "text": "쿠폰",
+        "aria": ""
+      },
+      "B9": {
+        "text": "포인트",
+        "aria": ""
+      },
+      "B10": {
+        "text": "소비 상세",
+        "aria": ""
+      },
+      "B11": {
+        "text": "시작하기",
+        "aria": ""
+      },
+      "B12": {
+        "text": "자산 연결 이벤트 금융자산 연결하고 커피쿠폰 받기",
+        "aria": ""
+      },
+      "B13": {
+        "text": "홈화면 설정",
+        "aria": ""
+      },
+      "B14": {
+        "text": "금액 숨기기",
+        "aria": ""
+      },
+      "B15": {
+        "text": "금융",
+        "aria": ""
+      },
+      "B16": {
+        "text": "상품",
+        "aria": ""
+      },
+      "B17": {
+        "text": "혜택",
+        "aria": ""
+      },
+      "B18": {
+        "text": "주식",
+        "aria": ""
+      },
+      "B19": {
+        "text": "고객센터 채팅",
+        "aria": ""
+      },
+      "B20": {
+        "text": "설정",
+        "aria": ""
+      },
+      "B21": {
+        "text": "로그아웃",
+        "aria": ""
+      },
+      "B22": {
+        "text": "검색",
+        "aria": ""
+      },
+      "B24": {
+        "text": "고객센터",
+        "aria": ""
+      },
+      "B25": {
+        "text": "홈",
+        "aria": ""
+      },
+      "B26": {
+        "text": "조회하기 전자고지서 확인",
+        "aria": ""
+      },
+      "B27": {
+        "text": "자주 쓰는 지로번호 등록",
+        "aria": ""
+      },
+      "B28": {
+        "text": "고객센터",
+        "aria": ""
+      },
+      "B29": {
+        "text": "홈",
+        "aria": ""
+      },
+      "B30": {
+        "text": "고객센터",
+        "aria": ""
+      },
+      "R2": {
+        "text": "이체",
+        "aria": ""
+      },
+      "R3": {
+        "text": "쉬운홈",
+        "aria": ""
+      },
+      "R4": {
+        "text": "홈",
+        "aria": ""
+      }
+    },
+    "entrance_distance": [
+      {
+        "id": "B1",
+        "label": "메시지",
+        "action": "oos-message",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "B2",
+        "label": "지갑",
+        "action": "oos-wallet",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "B3",
+        "label": "알림",
+        "action": "oos-alarm",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "B4",
+        "label": "IRP 안내",
+        "action": "oos-irp",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "B5",
+        "label": "앱카드 가입",
+        "action": "oos-appcard",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 233
+        }
+      },
+      {
+        "id": "B6",
+        "label": "바로받기",
+        "action": "oos-get-coupon",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 437
+        }
+      },
+      {
+        "id": "B7",
+        "label": "이벤트",
+        "action": "oos-event",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 509
+        }
+      },
+      {
+        "id": "B8",
+        "label": "쿠폰",
+        "action": "oos-coupon",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 509
+        }
+      },
+      {
+        "id": "B9",
+        "label": "포인트",
+        "action": "oos-point",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 509
+        }
+      },
+      {
+        "id": "B10",
+        "label": "소비 상세",
+        "action": "oos-spend-detail",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 712
+        }
+      },
+      {
+        "id": "B11",
+        "label": "마이신한포인트",
+        "action": "oos-my-point",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 87
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 939
+        }
+      },
+      {
+        "id": "B12",
+        "label": "자산 연결 이벤트",
+        "action": "oos-connect-event",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 471
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 1399
+        }
+      },
+      {
+        "id": "B13",
+        "label": "홈화면 설정",
+        "action": "oos-home-setting",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 782
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 1865
+        }
+      },
+      {
+        "id": "B14",
+        "label": "금액 숨기기",
+        "action": "oos-hide-amount",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 782
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 1927
+        }
+      },
+      {
+        "id": "B15",
+        "label": "금융",
+        "action": "oos-tab-finance",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "B16",
+        "label": "상품",
+        "action": "oos-tab-goods",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "B17",
+        "label": "혜택",
+        "action": "oos-tab-benefit",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "B18",
+        "label": "주식",
+        "action": "oos-tab-stock",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "B19",
+        "label": "고객센터 채팅",
+        "action": "oos-chat",
+        "original": {
+          "visit": "menu",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "menu",
+          "reveal": 1,
+          "via": "more-toggle",
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "B20",
+        "label": "설정",
+        "action": "oos-settings",
+        "original": {
+          "visit": "menu",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "menu",
+          "reveal": 1,
+          "via": "more-toggle",
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "B21",
+        "label": "로그아웃",
+        "action": "oos-logout",
+        "original": {
+          "visit": "menu",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "menu",
+          "reveal": 1,
+          "via": "more-toggle",
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "B22",
+        "label": "검색",
+        "action": "oos-search-submit",
+        "original": {
+          "visit": "search",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "search",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "B24",
+        "label": "고객센터",
+        "action": "oos-support",
+        "original": {
+          "visit": "bill-home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "bill-start",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "B25",
+        "label": "홈",
+        "action": "oos-home",
+        "original": {
+          "visit": "bill-home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "bill-start",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "B26",
+        "label": "조회하기",
+        "action": "oos-bill-inquiry",
+        "original": {
+          "visit": "bill-home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "bill-start",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "B27",
+        "label": "자주쓰는 지로번호 등록",
+        "action": "oos-giro-register",
+        "original": {
+          "visit": "bill-home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "bill-start",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "B28",
+        "label": "고객센터",
+        "action": "oos-info-support",
+        "original": {
+          "visit": "info",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "review",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "B29",
+        "label": "홈",
+        "action": "oos-info-home",
+        "original": {
+          "visit": "info",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "review",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "B30",
+        "label": "고객센터",
+        "action": "oos-done-support",
+        "original": {
+          "visit": "done",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "receipt",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "R2",
+        "label": "이체",
+        "action": "oos-transfer",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "R3",
+        "label": "쉬운홈",
+        "action": "oos-easy-home",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 782
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      },
+      {
+        "id": "R4",
+        "label": "홈",
+        "action": "oos-tab-home",
+        "original": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        },
+        "build": {
+          "visit": "home",
+          "reveal": 0,
+          "scroll_px": 0
+        }
+      }
+    ],
+    "fatal_duplicates_removed": 0,
+    "fatal_total": 0,
+    "fatal_derived": 0,
+    "fatal_root": 0,
+    "stopped_at": null,
+    "js_error_details": [],
+    "flow_notes": [],
+    "checks_stood_down": [
+      "A/preservation (new design, nothing to preserve)",
+      "A/per-screen attribute loss",
+      "D/저명암 개수 전후 비교 (합계·화면별) - 새 설계라 짝이 되는 원본 화면이 없다. 화면 이름이 같다고 같은 화면이 아니므로, 견주면 두 설계가 다른 것을 결함으로 읽는다.",
+      "D/gained-text (저대비 요소에 글이 늘었는지) - 새 설계라 짝이 되는 원본 화면이 없다. 화면 이름이 같다고 같은 화면이 아니므로, 견주면 두 설계가 다른 것을 결함으로 읽는다.",
+      "E/newly-wrapped text and height growth (no shared screens)",
+      "I/menu-chip 선택지 무리 60개 - 과제가 선택지가 아니라고 선언했다: 분류로 스크롤하는 표지판 — 찾아가는 수단",
+      "I/menu-tab 선택지 무리 7개 - 과제가 선택지가 아니라고 선언했다: 분야로 스크롤하는 탭 — 찾아가는 수단",
+      "J/흐름에 오류 경로가 없다 - 정답 경로만 걸었다",
+      "D/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다.",
+      "E/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다.",
+      "G/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다.",
+      "H/스테이지 밖 (와이어프레임) - 시각 디테일이 아직 없는 단계입니다. 대비·레이아웃·상태 색은 스타일 이식 후에 봅니다."
+    ],
+    "stage": "wireframe",
+    "stage_checks": [
+      "A",
+      "B",
+      "C",
+      "F",
+      "I",
+      "J",
+      "K"
+    ]
+  },
+  "inputs": {
+    "original": "http://localhost:51055/inputs/original_bill.html",
+    "repaired": "http://localhost:51055/outputs/restructure_auto/20261008-125219-bill/attempt_3.html",
+    "flow": "C:\\Users\\xihye\\senior-ui-pipeline\\outputs\\restructure_auto\\20261008-125219-bill\\attempt_3.flow.json",
+    "stage": "wireframe",
+    "flow_author": "model"
+  }
+}
