@@ -9,6 +9,12 @@ r"""모델에게 말하는 대상 문구를 과제 파일 한 칸으로 (11-8 4)
 기준값 tests/baseline/prompt · bill/prompt 가 그대로다 - test_baseline 이 본다). 다듬기
 프롬프트만 "60대 이상 사용자가" 가 "60대 이상 고령 사용자가" 로 바뀐다 (다듬기는 꺼 두었다).
 
+2026-10-08 (11-8b): 연구자가 값을 모집 기준에 맞춰 "65세 이상 고령 사용자" 로 바꿨다. 과제 파일의
+`note` 에 이전 값이 남는다. 11-8 이 그대로 둔 세 곳 - 진단·계획의 "각 화면에서 고령 사용자가
+어디서 멈추고", 진단 칸 모양 "<고령 사용자가 어디서 왜 막히는지>", 다듬기 비평 칸 모양 "<고령
+사용자가 어디서 왜 막히는가>" - 도 `{{AUDIENCE}}` 자리가 되었다. 대상을 "일반 성인 사용자" 로
+바꾸면 세 프롬프트 어디에도 "고령" 이 남지 않는다.
+
   .\.venv\Scripts\python.exe -m pytest tests/test_audience.py
 """
 import io
@@ -23,7 +29,7 @@ import _api
 T = _api.tasks_module
 P = _api.prompt_module
 ROOT = _api.ROOT_DIR
-NOW = "60대 이상 고령 사용자"
+NOW = "65세 이상 고령 사용자"
 TASKS = ("transfer", "bill")
 
 
@@ -34,6 +40,8 @@ TASKS = ("transfer", "bill")
 def test_the_task_file_has_the_audience_as_it_was(task):
     raw = json.load(io.open(T.task_path(task), encoding="utf-8"))
     assert raw["audience"] == NOW
+    # 바꾼 날과 이전 값은 과제 파일의 note 에 (11-8b)
+    assert any("2026-10-08" in line and "60대 이상 고령 사용자" in line for line in raw["note"])
     # 설명에는 문구가 아니라 자리가 있다 - 문구는 한 칸에만 있다
     desc = "\n".join(raw["description"])
     assert "{{AUDIENCE}}" in desc and NOW not in desc
@@ -83,7 +91,22 @@ def test_the_slot_is_written_in_the_prompt_file_and_the_task_files_only():
     for name in ("PLAN_PROMPT", "PROMPT", "REFINE_PROMPT", "CONTRACT", "REVEAL", "REFLECT"):
         assert NOW not in P.load_block(name, doc), name
         assert "60대" not in P.load_block(name, doc), name
+        # 대상을 말하는 곳은 모두 자리다 (11-8b) - 블록에 "고령" 이 남지 않는다
+        assert "고령" not in P.load_block(name, doc), name
     assert "{{AUDIENCE}}" in P.load_block("REFINE_PROMPT", doc)
+    assert "{{AUDIENCE}}" in P.load_block("PLAN_PROMPT", doc)
+
+
+@pytest.mark.parametrize("task", TASKS)
+def test_the_three_places_left_by_11_8_carry_the_value(task):
+    """진단·계획의 "각 화면에서 …가 어디서 멈추고", 진단 칸 모양, 다듬기 비평 칸 모양 (11-8b).
+    "고령 사용자가" 는 대상 문구 안에만 있다."""
+    plan, refine = P.load_plan_template(task), P.load_refine_template(task)
+    assert "각 화면에서 %s가 어디서 멈추고" % NOW in plan
+    assert '"problem": "<%s가 어디서 왜 막히는지>"' % NOW in plan
+    assert '"problem": "<%s가 어디서 왜 막히는가>"' % NOW in refine
+    for t in (plan, P.load_template(task), refine):
+        assert t.count("고령 사용자가") == t.count(NOW + "가")
 
 
 # 받침이 있는 값이면 조사가 "이" 다 - 값을 바꿔도 프롬프트의 말이 틀리지 않게.
@@ -130,6 +153,27 @@ def test_a_changed_value_reaches_every_prompt_template(new_audience):
               P.load_refine_template("transfer")):
         assert NEW + "가" in t
         assert "60대" not in t
+
+
+ADULT = "일반 성인 사용자"
+
+
+@pytest.mark.parametrize("task", TASKS)
+def test_a_non_elderly_value_leaves_no_elderly_word(task, tmp_path, monkeypatch):
+    """대상을 바꾼 대조 실행: 세 프롬프트 어디에도 "고령" 이 남지 않는다 (11-8b)."""
+    for name in TASKS:
+        shutil.copy(T.task_path(name), str(tmp_path / ("%s.json" % name)))
+    raw = json.load(io.open(str(tmp_path / ("%s.json" % task)), encoding="utf-8"))
+    raw["audience"] = ADULT
+    (tmp_path / ("%s.json" % task)).write_text(json.dumps(raw, ensure_ascii=False, indent=2),
+                                               encoding="utf-8")
+    monkeypatch.setattr(T, "TASKS_DIR", str(tmp_path))
+    plan, gen, refine = (P.load_plan_template(task), P.load_template(task),
+                         P.load_refine_template(task))
+    for t in (plan, gen, refine):
+        assert ADULT + "가" in t and "고령" not in t
+    assert "각 화면에서 %s가 어디서 멈추고" % ADULT in plan
+    assert '"problem": "<%s가 어디서 왜 막히는가>"' % ADULT in refine
 
 
 from test_restructure_bugs import fake_run_env, make_args, out_root  # noqa: E402,F401

@@ -8,7 +8,7 @@ r"""과제 정의 읽기. 과제 하나가 tasks/<이름>.json 하나다.
 
     {"id": "transfer",
      "label": "이체",
-     "audience": "60대 이상 고령 사용자",
+     "audience": "65세 이상 고령 사용자",
      "description": ["프롬프트의 {{TASK}} 에 들어갈 글, 한 줄에 한 원소 - {{AUDIENCE}} 자리"],
      "original": "inputs/original_transfer.html",
      "flow": "flows/original.json",
@@ -47,7 +47,7 @@ DEFAULT_TASK = "transfer"
 #                     경고한다. {truth 키: 경고에 쓸 이름}
 #   dialog_ok_values  대화상자가 말해도 되는 숫자 (truth 키). 그 밖의 숫자를
 #                     말하는 대화상자는 검사 B 가 그 숫자를 함께 적는다
-#   audience          프롬프트가 말하는 대상 ("60대 이상 고령 사용자"). description 과
+#   audience          프롬프트가 말하는 대상 ("65세 이상 고령 사용자"). description 과
 #                     다듬기 프롬프트의 {{AUDIENCE}} 자리에 들어가고 summary.json 에 남는다
 #                     (fill_audience · restructure/prompt.py). 한 칸에 둔 이유: 대상을 바꾼
 #                     대조 실행과 모집 기준(65세 이상 여부)에 맞춘 문구 수정을 코드 수정 없이
