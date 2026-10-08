@@ -187,6 +187,20 @@ def test_the_contract_says_folded_values_must_be_shown(task):
         assert " ".join(t.split()).count(FOLDED) == 1
 
 
+@pytest.mark.parametrize("task", ["transfer", "bill"])
+def test_the_choices_summary_says_the_same_sentence(task):
+    """"원본이 가진 선택지" 칸(prompt.choices_block)도 계약과 글자까지 같은 문장을 말한다 (11-8b).
+    기준값은 test_baseline 이 지금 출력과 견주므로, 기준값에서 세면 지금 프롬프트에서 센 것이다.
+    진단·계획에는 계약이 없어 선택지 칸의 한 번, 생성에는 계약과 선택지 칸의 두 번."""
+    d = os.path.join(ROOT, "tests", "baseline", *([] if task == "transfer" else ["bill"]))
+
+    def flat(name):
+        return " ".join(io.open(os.path.join(d, "prompt", name), encoding="utf-8").read().split())
+    assert flat("choices_block.txt").count(FOLDED) == 1
+    assert flat("plan.txt").count(FOLDED) == 1
+    assert flat("attempt_1.txt").count(FOLDED) == 2
+
+
 # ===================================================================== #
 # 실제로 걷는다 (pytest -m browser)
 # ===================================================================== #

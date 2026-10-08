@@ -80,7 +80,7 @@
       "calls": [
         {
           "stage": "plan",
-          "estimated_prompt": 19831,
+          "estimated_prompt": 19903,
           "method": "tiktoken:o200k_base(대체)",
           "max_tokens": 25000,
           "usage": null,
@@ -90,7 +90,7 @@
         },
         {
           "stage": "generate",
-          "estimated_prompt": 15707,
+          "estimated_prompt": 15779,
           "method": "tiktoken:o200k_base(대체)",
           "max_tokens": 32000,
           "usage": null,
@@ -189,7 +189,7 @@
     "by_stage": {
       "plan": {
         "calls": 1,
-        "estimated_prompt": 19831,
+        "estimated_prompt": 19903,
         "images": 15,
         "estimated_images": 6330,
         "max_tokens": 25000,
@@ -199,7 +199,7 @@
       },
       "generate": {
         "calls": 1,
-        "estimated_prompt": 15707,
+        "estimated_prompt": 15779,
         "images": 0,
         "estimated_images": 0,
         "max_tokens": 32000,
@@ -210,7 +210,7 @@
     },
     "total": {
       "calls": 2,
-      "estimated_prompt": 35538,
+      "estimated_prompt": 35682,
       "images": 15,
       "estimated_images": 6330,
       "max_tokens": 57000,
@@ -220,7 +220,7 @@
     },
     "first_attempt": {
       "calls": 2,
-      "estimated_prompt": 35538,
+      "estimated_prompt": 35682,
       "images": 15,
       "estimated_images": 6330,
       "max_tokens": 57000,
